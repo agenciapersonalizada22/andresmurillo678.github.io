@@ -12,13 +12,15 @@ import * as THREE from '../lib/three.module.min.js';
 import { CONFIG } from './config.js';
 import { crearGenerador, LADO, ALTO, CAPA } from './generador.js';
 import { mallar, P, PCAPA } from './mallador.js';
-import { B, SOLIDO, SOMBREA } from './bloques.js';
+import { B, SOLIDO, SOMBREA, EMISION } from './bloques.js';
+import { buscarEmisores, calcularLuz } from './luz.js';
 
 const clave = (cx, cz) => (cx + 32768) * 65536 + (cz + 32768);
 const claveX = (k) => Math.floor(k / 65536) - 32768;
 const claveZ = (k) => (k % 65536) - 32768;
 
 const VOL = new Uint8Array(PCAPA * (ALTO + 2));
+const LUZ = new Uint8Array(PCAPA * (ALTO + 2));  // luz de antorchas de cada celda del volumen
 const CIMA = new Int16Array(PCAPA); // por columna: el bloque más alto que da sombra
 // Para copiar las orillas de los vecinos: [desde, hasta, corrimiento]
 const RANGO = { '-1': [15, 15, -15], '0': [0, 15, 1], '1': [0, 0, 17] };
@@ -40,17 +42,29 @@ export class Mundo {
     this.gen = null;
     this.cuadros = 0;
     this.hayCambiosSinGuardar = false;
+    this.version = 0;               // sube cada vez que cambia algo dibujado (para redibujar sombras)
+    this.versionGen = 2;            // 1 = mundo viejo (sin biomas), 2 = con biomas
+    this.puntosNuevos = [];         // lugares de vehículos de chunks recién creados
+    this.abiertos = new Set();      // cofres que ya se abrieron ("x,y,z")
+    this.vehiculosUsados = new Set(); // lugares de vehículos que ya se usaron
+    this.bloqueados = null;
   }
 
   // Empieza un mundo nuevo (o uno guardado) con su semilla y sus cambios
-  reiniciar(semilla, cambiosGuardados) {
+  // opciones: { version (del generador), bloqueados (chunks viejos sin estructuras), abiertos, vehiculosUsados }
+  reiniciar(semilla, cambiosGuardados, opciones = {}) {
     for (const ch of this.chunks.values()) this.quitarMallas(ch);
     this.chunks.clear();
     this.sucios.clear();
     this.cambios = new Map();
     this.originales = new Map();
     this.semilla = semilla | 0;
-    this.gen = crearGenerador(this.semilla);
+    this.versionGen = opciones.version || 2;
+    this.abiertos = new Set(opciones.abiertos || []);
+    this.vehiculosUsados = new Set(opciones.vehiculosUsados || []);
+    this.puntosNuevos = [];
+    this.bloqueados = opciones.bloqueados ? new Set(opciones.bloqueados) : null;
+    this.gen = crearGenerador(this.semilla, this.versionGen, { bloqueados: this.bloqueados, estructuras: CONFIG.estructuras.activas });
     if (cambiosGuardados && typeof cambiosGuardados === 'object') {
       for (const texto of Object.keys(cambiosGuardados)) {
         const [cx, cz] = texto.split(',').map(Number);
@@ -152,7 +166,13 @@ export class Mundo {
     if (ch.datos[i] === id) return false;
     const antes = ch.datos[i];
     ch.datos[i] = id;
+    this.version++;
     if (id !== B.AIRE && y > ch.alturaMax) ch.alturaMax = Math.min(ALTO - 1, y);
+    const luces = EMISION[antes] > 0 || EMISION[id] > 0;
+    if (luces) {
+      ch.emisores = ch.emisores.filter((e) => !(e[0] === lx && e[1] === y && e[2] === lz));
+      if (EMISION[id] > 0) ch.emisores.push([lx, y, lz, EMISION[id]]);
+    }
     if (registrar) {
       let m = this.cambios.get(k);
       if (!m) { m = new Map(); this.cambios.set(k, m); }
@@ -166,8 +186,11 @@ export class Mundo {
 
     // hay que redibujar este chunk y, si el bloque está en la orilla, también al vecino
     const dxs = [0], dzs = [0];
-    if (lx === 0) dxs.push(-1); else if (lx === 15) dxs.push(1);
-    if (lz === 0) dzs.push(-1); else if (lz === 15) dzs.push(1);
+    if (luces) { dxs.push(-1, 1); dzs.push(-1, 1); } // la luz llega lejos: se redibujan los 8 vecinos
+    else {
+      if (lx === 0) dxs.push(-1); else if (lx === 15) dxs.push(1);
+      if (lz === 0) dzs.push(-1); else if (lz === 15) dzs.push(1);
+    }
     for (const dx of dxs) for (const dz of dzs) this.sucios.add(clave(cx + dx, cz + dz));
     return true;
   }
@@ -175,8 +198,9 @@ export class Mundo {
   // ----------------------------------------------------------- Crear chunks
   generar(cx, cz) {
     const k = clave(cx, cz);
-    const { datos, alturaMax } = this.gen.generarChunk(cx, cz);
-    const ch = { cx, cz, datos, alturaMax, mallas: [null, null, null], mallado: false };
+    const { datos, alturaMax, humos, puntos } = this.gen.generarChunk(cx, cz);
+    const ch = { cx, cz, datos, alturaMax, mallas: [null, null, null], mallado: false, emisores: null, humos };
+    for (const p of puntos) if (!this.vehiculosUsados.has(p.id)) this.puntosNuevos.push(p);
     const m = this.cambios.get(k);
     if (m) {
       let o = this.originales.get(k);
@@ -188,6 +212,7 @@ export class Mundo {
         if (id !== B.AIRE && y > ch.alturaMax) ch.alturaMax = Math.min(ALTO - 1, y);
       }
     }
+    ch.emisores = buscarEmisores(datos, ch.alturaMax);
     this.chunks.set(k, ch);
     return ch;
   }
@@ -240,8 +265,10 @@ export class Mundo {
 
   construirMalla(ch) {
     this.llenarVolumen(ch);
-    const datos = mallar(VOL, CIMA, ch.alturaMax, this.hojasDetalladas);
+    const conLuz = calcularLuz(this.chunks, clave, ch, LUZ, ch.alturaMax);
+    const datos = mallar(VOL, CIMA, ch.alturaMax, this.hojasDetalladas, conLuz ? LUZ : null);
     this.quitarMallas(ch);
+    this.version++;
     for (let i = 0; i < 3; i++) {
       const d = datos[i];
       if (!d) continue;
@@ -257,6 +284,7 @@ export class Mundo {
       malla.position.set(ch.cx * LADO, 0, ch.cz * LADO);
       malla.matrixAutoUpdate = false;
       malla.updateMatrix();
+      if (i < 2) malla.layers.enable(1); // la capa 1 es la que ve el sol para hacer sombras (el agua no)
       this.grupo.add(malla);
       ch.mallas[i] = malla;
     }

@@ -6,7 +6,7 @@ import * as THREE from '../lib/three.module.min.js';
 import { CONFIG } from './config.js';
 
 const $ = (id) => document.getElementById(id);
-const P = new THREE.Vector3();
+const P = new THREE.Vector3(), Q = new THREE.Vector3();
 
 export class Hud {
   constructor() {
@@ -15,7 +15,7 @@ export class Hud {
       puntaje: $('hPuntaje'), oleada: $('hOleada'), enemigos: $('hEnemigos'), vida: $('hVida'),
       aviso: $('aviso'), estado: $('estado'), recarga: $('recarga'), hRecarga: $('hRecarga'),
       modulos: $('modulos'), mOrugas: $('mOrugas'), mTorreta: $('mTorreta'), mMotor: $('mMotor'),
-      dano: $('dano'), marcadores: $('marcadores'), radar: $('radar'),
+      dano: $('dano'), miraRaton: $('miraRaton'), lead: $('lead'), marcadores: $('marcadores'), radar: $('radar'),
     };
     this.cache = {};
     this.rctx = this.el.radar.getContext('2d');
@@ -38,9 +38,14 @@ export class Hud {
     fn(valor);
   }
 
-  modo(m) {
+  modo(m, avion) {
     document.body.classList.toggle('modoAvion', m === 'avion');
     document.body.classList.toggle('modoTanque', m === 'tanque');
+    // botones táctiles según el armamento del avión elegido
+    const sec = avion && avion.sec.n > 0;
+    $('btnMisil').classList.toggle('oculto', m === 'avion' && !sec);
+    $('btnBomba').classList.toggle('oculto', m === 'avion' && avion.bombas === 0);
+    if (sec) $('btnMisil').textContent = avion.sec.nombre.slice(0, -1);
     this.el.modulos.classList.toggle('oculto', m !== 'tanque');
     this.el.recarga.classList.toggle('oculto', m !== 'tanque');
     this.cache = {};
@@ -128,6 +133,25 @@ export class Hud {
       if (!fuera) el.firstChild.textContent = (d | 0) + ' m';
     }
     for (let i = n; i < this.marcas.length; i++) this.marcas[i].style.display = 'none';
+  }
+
+  // Cursor del ratón (punto de vuelo) y mira de adelanto sobre el enemigo
+  indicadores(camara, anchoPx, altoPx, dirAim, punto) {
+    this._situar(this.el.miraRaton, dirAim ? P.copy(camara.position).addScaledVector(dirAim, 1000) : null, camara, anchoPx, altoPx);
+    this._situar(this.el.lead, punto, camara, anchoPx, altoPx);
+  }
+
+  _situar(el, pos, camara, anchoPx, altoPx) {
+    let v = null;
+    if (pos) {
+      Q.copy(pos).project(camara);
+      if (Q.z < 1 && Math.abs(Q.x) < 1.1 && Math.abs(Q.y) < 1.1) v = `translate(${((Q.x + 1) / 2) * anchoPx}px, ${((1 - Q.y) / 2) * altoPx}px)`;
+    }
+    const clave = v || 'x';
+    if (el._v === clave) return;
+    el._v = clave;
+    el.style.display = v ? 'block' : 'none';
+    if (v) el.style.transform = v;
   }
 
   // Radar redondo con el mapa girando según hacia dónde miras

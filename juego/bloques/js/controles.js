@@ -3,7 +3,7 @@
 //  Compu:   clic para "atrapar" el ratón, mover el ratón para mirar,
 //           WASD o flechas para caminar, Espacio saltar, Shift
 //           correr (o bajar volando), W dos veces rápido = correr
-//           (o volar rápido), F volar, E bloques, Esc pausa,
+//           (o volar rápido), F volar, E subir/bajar de vehículo (o bloques), I bloques, Esc pausa,
 //           1-9 o la rueda para elegir bloque, F3 datos, M música.
 //           (No usamos Ctrl: Ctrl+W cierra la pestaña del navegador.)
 //  Celular: joystick a la izquierda para caminar, arrastrar el dedo
@@ -106,7 +106,7 @@ export class Controles {
   }
 
   // Calcula la entrada de este cuadro (teclado + joystick + botones)
-  actualizar(volando) {
+  actualizar(volando, enVehiculo = false) {
     const t = this.teclas;
     let ad = (t.has('KeyW') || t.has('ArrowUp') ? 1 : 0) - (t.has('KeyS') || t.has('ArrowDown') ? 1 : 0);
     let de = (t.has('KeyD') || t.has('ArrowRight') ? 1 : 0) - (t.has('KeyA') || t.has('ArrowLeft') ? 1 : 0);
@@ -117,7 +117,7 @@ export class Controles {
     const shift = t.has('ShiftLeft') || t.has('ShiftRight');
     this.entrada.saltar = t.has('Space') || this.botonSaltar;
     this.entrada.bajar = (volando && shift) || this.botonBajar;
-    this.entrada.correr = this.carrera || (!volando && shift) || this.joy.correr;
+    this.entrada.correr = (this.carrera && !enVehiculo) || (!volando && shift) || this.joy.correr;
   }
 
   // ----------------------------------------------------------- Teclado
@@ -157,7 +157,11 @@ export class Controles {
       if (/^Numpad[1-9]$/.test(c)) { this.alAccion('ranura', Number(c.slice(6)) - 1); return; }
       switch (c) {
         case 'KeyF': this.alAccion('volar'); break;
-        case 'KeyE': case 'KeyI': this.alAccion('inventario'); break;
+        case 'KeyE': this.alAccion('teclaE'); break;
+        case 'KeyI': this.alAccion('inventario'); break;
+        case 'KeyC': this.alAccion('camara'); break;
+        case 'KeyT': this.alAccion('repostar'); break;
+        case 'KeyL': this.alAccion('luces'); break;
         case 'Escape': this.alAccion('pausa', 'esc'); break;
         case 'F3': case 'KeyG': e.preventDefault(); this.alAccion('depuracion'); break;
         case 'KeyM': this.alAccion('musica'); break;

@@ -3,13 +3,14 @@
 //  Cada tipo tiene un grupo fijo de objetos que se reciclan.
 // =============================================================
 import * as THREE from '../lib/three.module.min.js';
-import { mat, geoTrazadora, geoMisil, geoBomba, geoObus, geoFlak } from './modelos.js';
+import { mat, geoTrazadora, geoMisil, geoCohete, geoBomba, geoObus, geoFlak } from './modelos.js';
 import { Sonido } from './sonido.js';
 
 const TIPOS = {
   bala: { n: 160, vel: 650, vida: 1.1, dano: 8, splash: 0, grav: 0 },
   misil: { n: 14, vel: 340, vida: 7, dano: 70, splash: 24, grav: 0, giro: 2.6, acel: 220 },
-  bomba: { n: 10, vel: 0, vida: 25, dano: 160, splash: 48, grav: 24 },
+  cohete: { n: 40, vel: 380, vida: 3.4, dano: 44, splash: 15, grav: 2.5 },
+  bomba: { n: 18, vel: 0, vida: 25, dano: 160, splash: 48, grav: 24 },
   obus: { n: 24, vel: 320, vida: 3.2, dano: 40, splash: 6, grav: 3 },
   flak: { n: 36, vel: 300, vida: 3.2, dano: 14, splash: 12, grav: 0, prox: 14 },
 };
@@ -20,6 +21,7 @@ const EJE = new THREE.Vector3();
 function geometria(tipo) {
   if (tipo === 'bala') return geoTrazadora();
   if (tipo === 'misil') return geoMisil();
+  if (tipo === 'cohete') return geoCohete();
   if (tipo === 'bomba') return geoBomba();
   if (tipo === 'obus') return geoObus();
   return geoFlak();
@@ -28,6 +30,7 @@ function geometria(tipo) {
 function material(tipo, equipo) {
   if (tipo === 'bala') return mat(equipo === 'jugador' ? 0xffe066 : 0xff5a4a, { basico: true, aditivo: true });
   if (tipo === 'misil') return mat(0xdedede);
+  if (tipo === 'cohete') return mat(0xc9c2b0);
   if (tipo === 'bomba') return mat(0x4a5238);
   if (tipo === 'obus') return mat(equipo === 'jugador' ? 0xffd34d : 0xff7a4a, { basico: true, aditivo: true });
   return mat(0xff6a30, { basico: true, aditivo: true });
@@ -115,8 +118,8 @@ export class Proyectiles {
         p.vel.y -= T.grav * dt;
         p.pos.addScaledVector(p.vel, dt);
         p.mesh.lookAt(A.copy(p.pos).add(p.vel));
-        if (tipo === 'misil') {
-          this.efectos.estela(p.pos, true, 1);
+        if (tipo === 'misil' || tipo === 'cohete') {
+          this.efectos.estela(p.pos, true, tipo === 'misil' ? 1 : 0.6);
           this.efectos.llama(p.pos, 0.4);
         } else if (tipo === 'bomba' && Math.random() < 0.2) {
           this.efectos.estela(p.pos, false, 0.6);

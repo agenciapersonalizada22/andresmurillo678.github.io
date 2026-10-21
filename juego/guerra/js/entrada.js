@@ -15,6 +15,7 @@ export function detectarTactil() {
   }
 }
 
+const CODIGOS_MANDO = ['PadRT', 'PadLT', 'PadLB', 'PadRB', 'PadA', 'PadUp', 'PadDown', 'PadStart'];
 const BLOQUEAR = new Set(['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab', 'ControlLeft', 'ControlRight']);
 
 export class Entrada {
@@ -26,6 +27,14 @@ export class Entrada {
     this.der = { x: 0, y: 0 };
     this.mdx = 0;
     this.mdy = 0;
+    this.mIzq = { x: 0, y: 0 };
+    this.mDer = { x: 0, y: 0 };
+    this.mando = null;
+    this.padEst = {};
+    this.alMando = null;
+    this.cx = 0;
+    this.cy = 0;
+    this.ratonMovido = false;
     this.izqRaton = false;
     this.derRaton = false;
     this.alTecla = null;
@@ -34,6 +43,64 @@ export class Entrada {
     this._unirTeclado();
     this._unirRaton();
     this._unirTactil();
+    this._unirMando();
+  }
+
+  // ---- Mando (Gamepad API, mapeo estándar Xbox / PlayStation)
+  _unirMando() {
+    addEventListener('gamepadconnected', (e) => {
+      this.mando = e.gamepad;
+      if (this.alMando) this.alMando(true, e.gamepad.id);
+    });
+    addEventListener('gamepaddisconnected', () => {
+      this.mando = null;
+      this.mIzq.x = this.mIzq.y = this.mDer.x = this.mDer.y = 0;
+      for (const c of CODIGOS_MANDO) this.teclas.delete(c);
+      if (this.alMando) this.alMando(false, '');
+    });
+  }
+
+  // Zona muerta circular y curva suave (precisión al centro, fuerza al borde)
+  _stick(x, y, salida) {
+    const m = Math.hypot(x, y), ZM = 0.15;
+    if (m < ZM) { salida.x = salida.y = 0; return; }
+    const f = Math.pow(Math.min(1, (m - ZM) / (1 - ZM)), 1.5) / m;
+    salida.x = x * f;
+    salida.y = y * f;
+  }
+
+  // Se llama una vez por frame, también en pausa (Start reanuda)
+  leerMando() {
+    let g = null;
+    try {
+      const l = navigator.getGamepads ? navigator.getGamepads() : [];
+      for (const p of l) if (p && p.connected) { g = p; break; }
+    } catch (e) { g = null; }
+    if (!g) {
+      if (this.mando) {
+        this.mando = null;
+        this.mIzq.x = this.mIzq.y = this.mDer.x = this.mDer.y = 0;
+        for (const c of CODIGOS_MANDO) { this.teclas.delete(c); this.padEst[c] = false; }
+        if (this.alMando) this.alMando(false, '');
+      }
+      return;
+    }
+    if (!this.mando) { this.mando = g; if (this.alMando) this.alMando(true, g.id); }
+    const a = g.axes || [], b = g.buttons || [];
+    const pres = (i, umbral = 0.35) => !!b[i] && (b[i].pressed || b[i].value > umbral);
+    this._stick(a[0] || 0, a[1] || 0, this.mIzq);
+    this._stick(a[2] || 0, a[3] || 0, this.mDer);
+    const estado = {
+      PadRT: pres(7), PadLT: pres(6), PadLB: pres(4), PadRB: pres(5), PadA: pres(0),
+      PadUp: pres(12), PadDown: pres(13), PadStart: pres(9),
+    };
+    // flanco = pulso (una vez por pulsación); si algo vació las teclas con el botón aún pulsado, se repone sin pulso
+    for (const c of CODIGOS_MANDO) {
+      if (estado[c] && !this.padEst[c]) this._poner(c);
+      else if (estado[c]) this.teclas.add(c);
+      else this.teclas.delete(c);
+      this.padEst[c] = estado[c];
+    }
   }
 
   k(...codigos) {
@@ -63,6 +130,7 @@ export class Entrada {
     this.derRaton = false;
     this.mdx = 0;
     this.mdy = 0;
+    this.ratonMovido = false;
   }
 
   capturarRaton() {
@@ -99,6 +167,9 @@ export class Entrada {
     const l = this.lienzo;
     addEventListener('mousemove', (e) => {
       if (!this.activa) return;
+      this.cx = (e.clientX / innerWidth) * 2 - 1;
+      this.cy = -((e.clientY / innerHeight) * 2 - 1);
+      this.ratonMovido = true;
       this.mdx += e.movementX || 0;
       this.mdy += e.movementY || 0;
     });
