@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#05030f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Ajedrez 3D</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2305030f'/%3E%3Ctext x='32' y='47' font-size='44' text-anchor='middle' fill='%233df5ff'%3E%E2%99%9E%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="enInicio">
+  <div id="app">
+    <header id="barraSup">
+      <a class="volver" href="../">← Menú</a>
+      <h1 class="titulo">AJEDREZ</h1>
+      <div class="acciones">
+        <button type="button" class="icono" id="btnSonido" aria-label="Sonido" title="Sonido">♪</button>
+        <button type="button" class="icono" id="btnMusica" aria-label="Música" title="Música ambiental">♫</button>
+        <button type="button" class="icono" id="btnAjustes" aria-label="Ajustes" title="Ajustes">⚙</button>
+      </div>
+    </header>
+
+    <section id="jugArriba" class="jugador"></section>
+
+    <main id="escena">
+      <div id="ventaja" aria-label="Ventaja de material"><i></i><b id="ventajaTxt">0</b></div>
+      <div id="estado" aria-live="polite"></div>
+      <div id="revision" class="oculto"><span id="revisionTxt"></span><button type="button" id="btnContinuar2">Continuar desde aquí</button></div>
+    </main>
+
+    <section id="jugAbajo" class="jugador"></section>
+
+    <aside id="lateral">
+      <div id="jugadasCaja">
+        <div id="navJug">
+          <button type="button" data-nav="ini" aria-label="Al inicio">⏮</button>
+          <button type="button" data-nav="atras" aria-label="Jugada anterior">◀</button>
+          <button type="button" data-nav="adelante" aria-label="Jugada siguiente">▶</button>
+          <button type="button" data-nav="fin" aria-label="Al final">⏭</button>
+        </div>
+        <div id="jugadas" role="list"></div>
+      </div>
+      <div id="controles">
+        <button type="button" data-acc="deshacer" class="prim"><span>↶</span>Deshacer</button>
+        <button type="button" data-acc="rehacer" class="prim"><span>↷</span>Rehacer</button>
+        <button type="button" data-acc="pista" class="prim"><span>✦</span>Pista</button>
+        <button type="button" data-acc="vista" class="prim"><span>◎</span>Vista</button>
+        <button type="button" data-acc="mas" class="prim solo-movil"><span>⋯</span>Más</button>
+        <div id="masCaja">
+          <button type="button" data-acc="nueva"><span>＋</span>Nueva</button>
+          <button type="button" data-acc="girar"><span>⇅</span>Girar</button>
+          <button type="button" data-acc="tablas"><span>½</span>Tablas</button>
+          <button type="button" data-acc="rendirse"><span>⚑</span>Rendirse</button>
+          <button type="button" data-acc="pgn"><span>≡</span>PGN</button>
+          <button type="button" data-acc="fen"><span>⌗</span>FEN</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Inicio / nueva partida -->
+  <div id="pantallaInicio" class="pantalla">
+    <div class="tarjeta ancha">
+      <h2 class="titulo grande"><span>AJEDREZ</span><span>3D</span></h2>
+      <p class="sub">reglas completas · motor propio · tablero en 3D</p>
+      <button type="button" id="btnReanudar" class="principal oculto">CONTINUAR PARTIDA</button>
+      <p id="infoReanudar" class="info oculto"></p>
+      <div id="panelNueva">
+        <div class="campo"><label>Modo</label>
+          <div class="fichas" data-campo="modo">
+            <button type="button" data-v="ia" class="sel">VS COMPUTADORA</button>
+            <button type="button" data-v="dos">2 JUGADORES</button>
+          </div></div>
+        <div class="campo" data-solo="ia"><label>Juegas con</label>
+          <div class="fichas" data-campo="color">
+            <button type="button" data-v="blancas" class="sel">BLANCAS</button>
+            <button type="button" data-v="negras">NEGRAS</button>
+            <button type="button" data-v="azar">AL AZAR</button>
+          </div></div>
+        <div class="campo" data-solo="ia"><label>Nivel</label>
+          <div class="fichas" data-campo="nivel" id="fichasNivel"></div>
+          <p class="info" id="descNivel"></p></div>
+        <div class="campo"><label>Reloj</label>
+          <select id="selReloj"></select></div>
+        <div class="campo" data-solo="dos"><label class="check"><input type="checkbox" id="chkGirarAuto"> Girar el tablero en cada turno</label></div>
+        <details class="avanzado"><summary>Cargar posición (FEN)</summary>
+          <input id="campoFenInicio" type="text" placeholder="vacío = posición inicial" autocomplete="off" spellcheck="false">
+          <p class="info" id="errFenInicio"></p></details>
+        <button type="button" id="btnEmpezar" class="principal">EMPEZAR</button>
+      </div>
+      <div class="fila"><button type="button" id="btnStats">ESTADÍSTICAS</button><button type="button" id="btnAjustes2">AJUSTES</button></div>
+      <p class="pista solo-compu">clic o arrastra una pieza · arrastra el fondo para girar · rueda para acercar</p>
+      <p class="pista solo-tactil">toca una pieza y su destino · arrastra el fondo para girar · pellizca para acercar</p>
+    </div>
+  </div>
+
+  <!-- Ajustes -->
+  <div id="pantallaAjustes" class="pantalla oculto">
+    <div class="tarjeta">
+      <h2 class="titulo">AJUSTES</h2>
+      <div class="campo"><label>Tema</label><div class="fichas" id="fichasTema"></div></div>
+      <div class="campo"><label>Calidad gráfica</label><div class="fichas" id="fichasCalidad"></div>
+        <p class="info">Alta: sombras suaves y partículas. Baja: más rápido en celulares lentos.</p></div>
+      <div class="campo"><label class="check"><input type="checkbox" id="chkSonido"> Sonidos</label></div>
+      <div class="campo"><label class="check"><input type="checkbox" id="chkMusica"> Música ambiental</label></div>
+      <div class="campo"><label for="rngVol">Volumen</label><input type="range" id="rngVol" min="0" max="100" value="70"></div>
+      <div class="campo"><label class="check"><input type="checkbox" id="chkAyuda"> Mostrar jugadas posibles</label></div>
+      <div class="campo"><label class="check"><input type="checkbox" id="chkGirar"> Girar el tablero en cada turno (2 jugadores)</label></div>
+      <div class="fila"><button type="button" id="btnCerrarAjustes" class="principal">LISTO</button></div>
+    </div>
+  </div>
+
+  <!-- Coronación -->
+  <div id="pantallaCoronar" class="pantalla oculto">
+    <div class="tarjeta">
+      <h2 class="titulo">CORONAR</h2>
+      <div class="coronar" id="opcCoronar"></div>
+      <div class="fila"><button type="button" id="btnCancelarCoronar">CANCELAR</button></div>
+    </div>
+  </div>
+
+  <!-- Fin de la partida -->
+  <div id="pantallaFin" class="pantalla oculto">
+    <div class="tarjeta">
+      <h2 class="titulo" id="finTitulo"></h2>
+      <p class="sub" id="finTexto"></p>
+      <div class="fila">
+        <button type="button" id="btnRevancha" class="principal">REVANCHA</button>
+        <button type="button" id="btnFinNueva">NUEVA</button>
+        <button type="button" id="btnFinVer">VER TABLERO</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estadísticas -->
+  <div id="pantallaStats" class="pantalla oculto">
+    <div class="tarjeta">
+      <h2 class="titulo">ESTADÍSTICAS</h2>
+      <table id="tablaStats"></table>
+      <div class="fila"><button type="button" id="btnBorrarStats">BORRAR</button><button type="button" id="btnCerrarStats" class="principal">CERRAR</button></div>
+    </div>
+  </div>
+
+  <!-- Texto (PGN / FEN) -->
+  <div id="pantallaTexto" class="pantalla oculto">
+    <div class="tarjeta ancha">
+      <h2 class="titulo" id="textoTitulo"></h2>
+      <textarea id="textoArea" rows="9" spellcheck="false"></textarea>
+      <p class="info" id="textoInfo"></p>
+      <div class="fila">
+        <button type="button" id="btnTextoAccion" class="principal"></button>
+        <button type="button" id="btnTextoDescargar" class="oculto">DESCARGAR</button>
+        <button type="button" id="btnTextoCerrar">CERRAR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmación -->
+  <div id="pantallaConfirmar" class="pantalla oculto">
+    <div class="tarjeta">
+      <h2 class="titulo" id="confTitulo"></h2>
+      <p class="sub" id="confTexto"></p>
+      <div class="fila">
+        <button type="button" id="btnConfSi" class="principal">SÍ</button>
+        <button type="button" id="btnConfNo">NO</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" aria-live="polite"></div>
+  <script type="module" src="js/principal.js"></script>
+</body>
+</html>
