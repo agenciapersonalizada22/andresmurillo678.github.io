@@ -57,6 +57,23 @@ function dibujarPersona(g, x, y, ang, colores, fase, opciones) {
     g.beginPath(); g.arc(-paso * 0.8, -10, 2.8, 0, Math.PI * 2); g.fill();
     g.beginPath(); g.arc(paso * 0.8, 10, 2.8, 0, Math.PI * 2); g.fill();
   }
+  if (op.arma) {
+    // Arma extendida hacia el frente con la mano derecha
+    const esc = op.arma === 'escopeta';
+    const largo = esc ? 19 : 11;
+    g.fillStyle = esc ? '#6b4a2b' : '#2b2f3a';
+    g.fillRect(2, 4, esc ? 6 : 4, 3);
+    g.fillStyle = '#1a1c22';
+    g.fillRect(esc ? 8 : 5, esc ? 4.5 : 4, largo - (esc ? 6 : 1), esc ? 2 : 3);
+    g.fillStyle = colores.piel;
+    g.beginPath(); g.arc(4, 5.5, 2.6, 0, Math.PI * 2); g.fill();
+    if (op.destello) {
+      g.fillStyle = '#fff2a0';
+      g.beginPath(); g.arc(largo + 6, 5.5, 4.5, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#ff9a2a';
+      g.beginPath(); g.arc(largo + 5, 5.5, 2.4, 0, Math.PI * 2); g.fill();
+    }
+  }
   // Cuerpo (hombros)
   g.fillStyle = colores.ropa;
   g.beginPath(); g.ellipse(0, 0, 6, 10, 0, 0, Math.PI * 2); g.fill();
@@ -337,7 +354,7 @@ class Jugador {
     this.colores = { ropa: '#13d6e8', piel: '#e0ac69', pelo: '#1b120c' };
   }
 
-  // eje: dirección {x, y} (largo 0 a 1); correr: true/false
+  // eje: dirección {x, y} (largo 0 a 1); correr: true = correr, false = caminar
   actualizar(dt, eje, correr) {
     this.tiempo += dt;
     if (this.carro) {
@@ -353,7 +370,7 @@ class Jugador {
     } else {
       const mag = Math.min(1, Math.hypot(eje.x, eje.y));
       const C = CONFIG.jugador;
-      const vel = (correr || mag > 0.92 && Entrada.tactil ? C.correr : C.caminar) * (Entrada.tactil ? Math.max(mag, 0.35) : 1);
+      const vel = (correr ? C.correr : C.caminar) * Math.max(mag, 0.35);
       if (mag > 0.05) {
         const ux = eje.x / (Math.hypot(eje.x, eje.y) || 1), uy = eje.y / (Math.hypot(eje.x, eje.y) || 1);
         this.vx = ux * vel; this.vy = uy * vel;
@@ -386,6 +403,8 @@ class Jugador {
       angCaido: this.angCaido,
       tiempo: this.tiempo,
       quieto: Math.hypot(this.vx, this.vy) < 5,
+      arma: this.caido > 0 ? null : Armas.actual,
+      destello: Armas.destello > 0,
       contorno: 'rgba(61,245,255,0.9)',
     });
   }

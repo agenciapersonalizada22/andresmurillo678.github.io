@@ -123,6 +123,11 @@ body.en-mapa #tactil { display: none !important; }
 #bFreno { color: #ff5c96; border-color: #ff3d81; }
 #bRadio { color: #ffb13d; border-color: #ffb13d; }
 #bClaxon { color: #ffd23d; border-color: #ffd23d; }
+#bDisparo { color: #ff6b4b; border-color: #ff6b4b; display: none; font-size: 9px; }
+#bArma { color: #ffb13d; border-color: #ffb13d; display: none; }
+/* A pie y con un arma, DISPARA y ARMA reemplazan a RADIO y CLAXON */
+body.a-pie.armado #bDisparo, body.a-pie.armado #bArma { display: block; }
+body.a-pie.armado #bRadio, body.a-pie.armado #bClaxon { display: none; }
 
 @media (max-height: 460px) {
   #botones { grid-template-columns: repeat(2, 58px); gap: 8px; }
@@ -227,6 +232,7 @@ h2 {
 .c-entrega { color: #c86bff !important; }
 .c-carrera { color: #ff3d81 !important; }
 .c-taller { color: #7dff6b !important; }
+.c-tienda { color: #ff8a3d !important; }
 
 body.tactil .solo-teclado { display: none; }
 body:not(.tactil) .solo-tactil { display: none; }
@@ -287,3 +293,25 @@ body:not(.tactil) .solo-tactil { display: none; }
   .col { flex-basis: 100%; }
   .ayuda .col:last-child { display: none; }
 }
+
+/* ---------------------------------------------------------- Tienda */
+#tienda .acciones { width: min(420px, 100%); margin-left: auto; margin-right: auto; }
+#tienda .acciones button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+}
+#tienda .acciones button small { flex: 1; color: #9a8cff; font-weight: 600; text-align: right; }
+#tienda .acciones button b { color: #7dff9a; font-family: Orbitron, ui-monospace, monospace; }
+#tienda .acciones button:disabled { opacity: 0.45; }
+#tienda .sub b { color: #7dff9a; font-family: Orbitron, ui-monospace, monospace; }
+#tienda { overflow-y: auto; align-items: flex-start; }
+#tienda .caja { margin: auto; }
+@media (max-height: 520px) {
+  #tienda .acciones { gap: 6px; margin-bottom: 8px; }
+  #tienda .acciones button { padding: 8px 16px; font-size: 13px; }
+}
+#tienda { background: rgba(5, 3, 15, 0.88); }

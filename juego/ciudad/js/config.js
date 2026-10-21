@@ -79,6 +79,22 @@ const CONFIG = {
       velMax: 740, acel: 540, freno: 1150, giroMax: 3.2, radioGiro: 32, agarre: 10.5, masa: 1.25, vida: 150,
       colores: ['#f4f6fb'],
     },
+    // Moto: ágil, rápida y frágil. Camión: pesado y lento. Ambulancia: grande y estable.
+    moto: {
+      nombre: 'Moto', largo: 34, ancho: 15,
+      velMax: 720, acel: 780, freno: 1100, giroMax: 4.3, radioGiro: 20, agarre: 14, masa: 0.4, vida: 55,
+      colores: ['#e94b3c', '#3df5ff', '#ffd23d', '#2e2e36', '#7dff6b', '#ff8a00'],
+    },
+    camion: {
+      nombre: 'Camión', largo: 92, ancho: 36,
+      velMax: 380, acel: 190, freno: 700, giroMax: 1.9, radioGiro: 56, agarre: 6.5, masa: 3.4, vida: 280,
+      colores: ['#d8d8d8', '#2f6d8a', '#c98a2e', '#8a3a2f', '#5b6b3a'],
+    },
+    ambulancia: {
+      nombre: 'Ambulancia', largo: 66, ancho: 31,
+      velMax: 620, acel: 380, freno: 950, giroMax: 2.7, radioGiro: 38, agarre: 8.5, masa: 1.9, vida: 190,
+      colores: ['#f4f6fb'],
+    },
   },
 
   fisica: {
@@ -101,7 +117,7 @@ const CONFIG = {
     velocidad: 230,        // velocidad normal del tráfico
     probPolicia: 0.07,     // probabilidad de que un carro del tráfico sea patrulla
     // Qué tan común es cada tipo de carro (más número = más común)
-    mezcla: { compacto: 6, camioneta: 2, taxi: 2, deportivo: 1 },
+    mezcla: { compacto: 6, camioneta: 2, taxi: 2, deportivo: 1, moto: 2, camion: 1, ambulancia: 0.6 },
     pitar: true,           // los carros pitan si les estorbas
   },
 
@@ -134,6 +150,7 @@ const CONFIG = {
     robarVisto: 1.0,       // robar un carro con la policía mirando
     robarPatrulla: 1.6,    // ¡robar una patrulla!
     choqueCivil: 0.18,     // chocar carros (muchos choques = estrellas)
+    disparo: 0.12,         // cada disparo que ve la policía
   },
 
   // ----------------------------------------------------------- Misiones
@@ -145,6 +162,22 @@ const CONFIG = {
   },
 
   dinero: { inicial: 250 },
+
+  // ----------------------------------------------------------- Armas (a pie)
+  // alcance en pixeles · cadencia en segundos entre disparos · balas por compra
+  armas: {
+    pistola: { nombre: 'Pistola', precio: 150, alcance: 560, cadencia: 0.28, perdigones: 1, dispersion: 0.03, municionMax: 60, paquete: 24, precioPaquete: 60 },
+    escopeta: { nombre: 'Escopeta', precio: 450, alcance: 300, cadencia: 0.85, perdigones: 6, dispersion: 0.2, municionMax: 24, paquete: 8, precioPaquete: 80 },
+    ropa: { precio: 40 },   // cambiar de ropa en la tienda
+  },
+
+  // ----------------------------------------------------------- Clima
+  clima: {
+    probLluvia: 0.35,      // probabilidad de que el próximo cambio de clima sea lluvia
+    duracionMin: 50,       // segundos que dura cada clima (mínimo)
+    duracionMax: 110,
+    agarreMojado: 0.4,     // cuánto agarre pierden los carros con lluvia fuerte (0 a 1)
+  },
 
   // ----------------------------------------------------------- Día y noche
   dia: {

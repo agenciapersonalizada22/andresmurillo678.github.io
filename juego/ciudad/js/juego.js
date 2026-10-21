@@ -5,7 +5,7 @@
 
 // "J" es todo lo que está pasando en la partida.
 const J = {
-  modo: 'titulo',          // titulo | jugando | pausa | mapa | atrapado
+  modo: 'titulo',          // titulo | jugando | pausa | mapa | atrapado | tienda
   tiempo: 0,
   carros: [],
   peatones: [],
@@ -30,6 +30,10 @@ const J = {
   carroCerca: null,
   multa: 0,
   relojAtrapado: 0,
+  lluvia: 0,               // 0 = cielo despejado, 1 = lluvia fuerte
+  lluviaObj: 0,
+  climaReloj: 35,
+  waypoint: null,          // destino marcado en el mapa
 };
 if (typeof J.dinero !== 'number' || !isFinite(J.dinero)) J.dinero = CONFIG.dinero.inicial;
 if (!J.stats || typeof J.stats !== 'object') J.stats = {};
@@ -143,9 +147,9 @@ J.mostrarDinero = J.dinero;
     let cantidad = B[tipo] || 0;
     const testigo = testigoPolicia(x, y);
     if (tipo === 'atropello' && testigo) cantidad = B.atropelloVisto;
-    if (tipo === 'robo') {
+    if (tipo === 'robo' || tipo === 'disparo') {
       if (!testigo) return;
-      cantidad = B.robarVisto;
+      cantidad = tipo === 'robo' ? B.robarVisto : B.disparo;
     }
     if (!cantidad) return;
     J.buscado.calor += cantidad;
@@ -179,6 +183,7 @@ J.mostrarDinero = J.dinero;
         J.ultimoChoquePolicia = J.tiempo;
         J.delito('chocarPolicia', otro.x, otro.y);
         if (!(otro.ia instanceof IAPolicia)) otro.ia = new IAPolicia(otro);
+        else if (J.buscado.estrellas > 0) otro.ia.reanudar();
       }
     } else if (otro.conductor === 'ia' && fuerza > 170) {
       J.delito('choqueCivil', otro.x, otro.y);
@@ -196,6 +201,7 @@ J.mostrarDinero = J.dinero;
     const tipo = Math.random() < CONFIG.trafico.probPolicia ? 'policia' : Util.elegirPorPeso(CONFIG.trafico.mezcla);
     const car = new Carro(tipo, c.x, c.y, c.dir * Math.PI / 2, { conductor: 'ia' });
     car.ia = new IATrafico(car, c);
+    if (tipo === 'ambulancia') car.sirena = Math.random() < 0.4;
     const v = car.ia.velBase * 0.7;
     car.vx = Math.cos(car.ang) * v;
     car.vy = Math.sin(car.ang) * v;
@@ -233,7 +239,7 @@ J.mostrarDinero = J.dinero;
       e.decidido = true;
       const prob = e.tipo === 'deportivo' ? 1 : e.tipo === 'policia' ? 0.4 : e.tipo === 'taxi' ? 0.7 : 0.45;
       if (Math.random() > prob || !libre(e.x, e.y, 46)) continue;
-      const tipo = e.tipo || Util.elegirPorPeso({ compacto: 5, camioneta: 2, deportivo: 1 });
+      const tipo = e.tipo || Util.elegirPorPeso({ compacto: 5, camioneta: 2, deportivo: 1, moto: 2 });
       const car = new Carro(tipo, e.x, e.y, e.ang, { estacionado: true, espacio: e });
       e.carro = car;
       J.carros.push(car);
@@ -269,7 +275,7 @@ J.mostrarDinero = J.dinero;
       const policia = c.ia instanceof IAPolicia;
       let limite = c.estacionado ? 1450 : 1550;
       if (policia) limite = c.ia.modo === 'retirada' ? 800 : 2200;
-      if (c.averiado && !policia) limite = 1000;
+      if (c.averiado) limite = Math.min(limite, 1000);
       if ((d > limite && !ve) || (c.ia && c.ia.perdido > 6 && !ve)) quitarCarro(k);
     }
     for (let k = J.peatones.length - 1; k >= 0; k--) {
@@ -316,6 +322,7 @@ J.mostrarDinero = J.dinero;
       if (!c.esPolicia || c.conductor !== 'ia' || c.averiado) continue;
       const d = Math.hypot(c.x - p.x, c.y - p.y);
       if (c.ia instanceof IAPolicia) {
+        if (c.ia.modo === 'retirada' && b.estrellas > 0 && d < P.vision * 0.8) c.ia.reanudar();
         if (c.ia.modo === 'perseguir') {
           persiguiendo++;
           if (c.ia.ve) visto = true;
@@ -398,6 +405,8 @@ J.mostrarDinero = J.dinero;
     j.ang = -Math.PI / 2;
     J.limpiarBuscado(true);
     J.cam.x = j.x; J.cam.y = j.y;
+    prepararVista();
+    Mundo.precargar(j.x, j.y, 900);
     J.modo = 'jugando';
     J.avisar('COMISARÍA', `Pagaste una multa de ${Util.dinero(J.multa)}`, '#5c8dff');
   }
@@ -509,17 +518,19 @@ J.mostrarDinero = J.dinero;
         m.giro = tecl.x;
       }
       m.freno = Entrada.mantenida('Space');
+      if (c.tipo === 'ambulancia') c.sirena = Entrada.mantenida('KeyH');
       if (Misiones.retener) { m.gas = 0; m.freno = true; }
       const kmPorPx = 1 / 16000;
       J.stats.km = (J.stats.km || 0) + c.velocidad * dt * kmPorPx;
     } else {
       let eje = { x: tecl.x, y: tecl.y };
       if (eje.x && eje.y) { eje.x *= Math.SQRT1_2; eje.y *= Math.SQRT1_2; }
+      let correr = Entrada.mantenida('ShiftLeft') || Entrada.mantenida('ShiftRight') || Entrada.mantenida('Space');
       if (joy.fuerza > 0.12) {
         const f = Math.max(1, Math.hypot(joy.x, joy.y));
         eje = { x: joy.x / f, y: joy.y / f };
+        if (joy.fuerza > 0.92) correr = true;
       }
-      const correr = Entrada.mantenida('ShiftLeft') || Entrada.mantenida('ShiftRight') || Entrada.mantenida('Space');
       j.actualizar(dt, eje, correr);
     }
 
@@ -632,6 +643,55 @@ J.mostrarDinero = J.dinero;
     return 1 - (h - 5) / 2;
   }
 
+  // ----------------------------------------------------------- Clima
+  function actualizarClima(dt) {
+    const C = CONFIG.clima;
+    J.climaReloj -= dt;
+    if (J.climaReloj <= 0) {
+      J.climaReloj = Util.azar(C.duracionMin, C.duracionMax);
+      const llueve = Math.random() < C.probLluvia;
+      J.lluviaObj = llueve ? Util.azar(0.5, 1) : 0;
+      if (llueve && J.modo === 'jugando') J.pista('Empieza a llover: el piso estará resbaloso');
+    }
+    J.lluvia += (J.lluviaObj - J.lluvia) * Math.min(1, dt * 0.3);
+    if (J.lluvia < 0.005 && J.lluviaObj === 0) J.lluvia = 0;
+    Sonido.actualizarLluvia(J.lluvia);
+  }
+
+  // ----------------------------------------------------------- Destino del mapa
+  function dibujarDestino(g, t) {
+    const w = J.waypoint;
+    if (!w || !visible(w.x, w.y, 80)) return;
+    const pul = 1 + Math.sin(t * 5) * 0.1;
+    g.save();
+    g.strokeStyle = '#3df5ff';
+    g.fillStyle = 'rgba(61,245,255,0.2)';
+    g.lineWidth = 4;
+    g.beginPath(); g.arc(w.x, w.y, 34 * pul, 0, Math.PI * 2); g.fill(); g.stroke();
+    g.fillStyle = '#3df5ff';
+    g.beginPath(); g.moveTo(w.x, w.y - 8); g.lineTo(w.x + 9, w.y - 24); g.lineTo(w.x, w.y - 40 - Math.abs(Math.sin(t * 4)) * 6); g.lineTo(w.x - 9, w.y - 24); g.closePath();
+    g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.6)';
+    g.lineWidth = 2;
+    g.stroke();
+    g.restore();
+  }
+
+  function tocarMapa(t) {
+    const z = J.zonaMapa;
+    if (!z || t.x < z.x0 || t.x > z.x0 + z.tam || t.y < z.y0 || t.y > z.y0 + z.tam) return false;
+    const x = (t.x - z.x0) / z.tam * Mundo.TAM, y = (t.y - z.y0) / z.tam * Mundo.TAM;
+    if (J.waypoint && Math.hypot(J.waypoint.x - x, J.waypoint.y - y) < 260) {
+      J.waypoint = null;
+      J.pista('Destino quitado');
+    } else {
+      J.waypoint = { x, y };
+      Sonido.checkpoint();
+      J.pista('Destino marcado: sigue la flecha');
+    }
+    return true;
+  }
+
   // ----------------------------------------------------------- Pantallas (HTML)
   const capaPortada = document.getElementById('portada');
   const capaPausa = document.getElementById('pausa');
@@ -662,6 +722,7 @@ J.mostrarDinero = J.dinero;
   function pausar() {
     if (J.modo !== 'jugando' && J.modo !== 'mapa') return;
     J.modo = 'pausa';
+    Entrada.soltarTodo();
     document.body.classList.remove('en-mapa');
     capaPausa.classList.remove('oculto');
     bAbandonar.style.display = Misiones.activa ? '' : 'none';
@@ -681,6 +742,7 @@ J.mostrarDinero = J.dinero;
   function abrirMapa() {
     if (J.modo !== 'jugando') return;
     J.modo = 'mapa';
+    Entrada.soltarTodo();
     document.body.classList.add('en-mapa');
     Sonido.callarContinuos();
     Radio.amortiguar(true);
@@ -750,6 +812,11 @@ J.mostrarDinero = J.dinero;
       if (Entrada.pulso('Enter', 'Space', 'KeyE')) iniciarPartida();
       return;
     }
+    if (J.modo === 'tienda') {
+      Entrada.tomarToques();
+      if (Entrada.pulso('KeyP', 'Escape', 'KeyE', 'Enter')) Armas.cerrarTienda();
+      return;
+    }
     if (Entrada.pulso('KeyP', 'Escape')) {
       if (J.modo === 'mapa') cerrarMapa();
       else if (J.modo === 'pausa') seguir();
@@ -761,11 +828,14 @@ J.mostrarDinero = J.dinero;
       else abrirMapa();
     }
     const toques = Entrada.tomarToques();
-    if (J.modo === 'mapa' && toques.length) { cerrarMapa(); return; }
+    if (J.modo === 'mapa' && toques.length) {
+      if (!toques.every(tocarMapa)) cerrarMapa();
+      return;
+    }
     if (J.modo === 'jugando') {
       const z = J.zonaMinimapa;
       if (z && toques.some((t) => Math.hypot(t.x - z.x, t.y - z.y) < z.r + 8)) abrirMapa();
-      if (Entrada.pulso('KeyE', 'Enter', 'KeyF')) subirOBajar();
+      if (Entrada.pulso('KeyE', 'Enter')) subirOBajar();
       if (Entrada.pulso('KeyR')) cambiarRadio();
     }
   }
@@ -782,6 +852,7 @@ J.mostrarDinero = J.dinero;
     gestionarPoblacion(dt);
     J.hora = (J.hora + dt * 24 / CONFIG.dia.duracion) % 24;
     J.noche = nocheDe(J.hora);
+    actualizarClima(dt);
   }
 
   function actualizarTitulo(dt) {
@@ -805,10 +876,12 @@ J.mostrarDinero = J.dinero;
     J.mostrarDinero += (J.dinero - J.mostrarDinero) * Math.min(1, dt * 6);
     if (Math.abs(J.dinero - J.mostrarDinero) < 1) J.mostrarDinero = J.dinero;
 
-    if (J.modo === 'pausa' || J.modo === 'mapa') return;
+    if (J.modo === 'pausa' || J.modo === 'mapa' || J.modo === 'tienda') return;
     if (J.modo === 'atrapado') {
       J.relojAtrapado -= dt;
       actualizarMundo(dt * 0.25);
+      actualizarCamara(dt);
+      prepararVista();
       if (J.relojAtrapado <= 0) reaparecer();
       return;
     }
@@ -823,6 +896,12 @@ J.mostrarDinero = J.dinero;
     actualizarMundo(dt);
     const j = J.jugador;
     if (j.carro) j.actualizar(dt);
+    Armas.actualizar(dt);
+    if (J.waypoint && Math.hypot(J.waypoint.x - (j.carro || j).x, J.waypoint.y - (j.carro || j).y) < 75) {
+      J.waypoint = null;
+      J.avisar('¡LLEGASTE!', 'Destino alcanzado', '#3df5ff', 2);
+      Sonido.checkpoint();
+    }
     J.carroCerca = j.carro ? null : buscarCarroCerca();
     Misiones.actualizar(dt);
     gestionarPolicia(dt);
@@ -882,9 +961,11 @@ J.mostrarDinero = J.dinero;
 
     enMundo();
     Misiones.dibujarSuelo(g, J.tiempo, v);
+    dibujarDestino(g, J.tiempo);
     Efectos.dibujarTextos(g, s / J.dpr);
 
     g.setTransform(J.dpr, 0, 0, J.dpr, 0, 0);
+    Efectos.dibujarLluvia(g, J.W, J.H, J.lluvia, J.tiempo);
     if (J.modo !== 'titulo') HUD.dibujar(g, J.W, J.H, J.tiempo);
 
     // Botones táctiles que cambian de nombre
@@ -895,6 +976,8 @@ J.mostrarDinero = J.dinero;
       bSubir.classList.toggle('listo', !enCarro && !!J.carroCerca);
       const tf = enCarro ? 'FRENO' : 'CORRER';
       if (bFreno.textContent !== tf) bFreno.textContent = tf;
+      document.body.classList.toggle('a-pie', !enCarro);
+      document.body.classList.toggle('armado', Armas.alguna);
     }
   }
 
@@ -917,6 +1000,7 @@ J.mostrarDinero = J.dinero;
 
   // ----------------------------------------------------------- Arranque
   J.jugador = new Jugador(Mundo.lugares.inicio.x, Mundo.lugares.inicio.y);
+  Armas.aplicarRopa();
   J.cam.x = Mundo.lugares.inicio.x;
   J.cam.y = Mundo.lugares.inicio.y;
   J.cam.zoom = 0.95;
@@ -939,6 +1023,8 @@ J.mostrarDinero = J.dinero;
       j.x = x; j.y = y;
       J.cam.x = x; J.cam.y = y;
     },
+    lluvia(v) { J.lluvia = J.lluviaObj = v; J.climaReloj = 9999; },
+    armas: Armas,
     estrellas(n) { J.buscado.calor = n; actualizarEstrellas(); },
     hora(h) { J.hora = h; J.noche = nocheDe(h); },
     carroNuevo(tipo) {

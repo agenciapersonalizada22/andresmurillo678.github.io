@@ -28,6 +28,8 @@
     <div id="botones">
       <button type="button" class="boton" id="bRadio" data-tecla="KeyR">RADIO</button>
       <button type="button" class="boton" id="bClaxon" data-tecla="KeyH">CLAXON</button>
+      <button type="button" class="boton" id="bDisparo" data-tecla="KeyF">DISPARA</button>
+      <button type="button" class="boton" id="bArma" data-tecla="KeyQ">ARMA</button>
       <button type="button" class="boton" id="bFreno" data-tecla="Space">FRENO</button>
       <button type="button" class="boton" id="bSubir" data-tecla="KeyE">SUBIR</button>
     </div>
@@ -47,7 +49,7 @@
             <li><b>WASD / flechas</b> manejar o caminar</li>
             <li><b>Espacio</b> freno de mano (¡derrapa!)</li>
             <li><b>E</b> subir / bajar del carro</li>
-            <li><b>Shift</b> correr</li>
+            <li><b>Shift</b> correr · <b>F</b> disparar · <b>Q</b> cambiar arma</li>
             <li><b>H</b> claxon · <b>R</b> radio</li>
             <li><b>M</b> mapa · <b>P / Esc</b> pausa</li>
           </ul>
@@ -59,6 +61,7 @@
             <li><b>SUBIR / BAJAR</b> del carro</li>
             <li><b>FRENO</b> derrapa · a pie: <b>CORRER</b></li>
             <li><b>RADIO</b> cambia de estación · <b>CLAXON</b></li>
+            <li>A pie con arma: <b>DISPARA</b> y <b>ARMA</b></li>
             <li>Toca el <b>minimapa</b> para ver el mapa</li>
           </ul>
         </div>
@@ -69,6 +72,8 @@
             <li><b class="c-entrega">E</b> Entregas: ¡cuidado si es frágil!</li>
             <li><b class="c-carrera">C</b> Carrera contra el reloj</li>
             <li><b class="c-taller">R</b> Taller: repara y despista a la policía</li>
+            <li><b class="c-tienda">A</b> Armería: armas, munición y ropa (a pie)</li>
+            <li>Toca el mapa para marcar un destino</li>
           </ul>
         </div>
       </div>
@@ -90,6 +95,16 @@
     </div>
   </div>
 
+  <!-- Tienda: armería y ropa -->
+  <div id="tienda" class="capa oculto">
+    <div class="caja">
+      <h2>ARMERÍA</h2>
+      <p class="sub">Tu dinero: <b id="tiendaDinero"></b></p>
+      <div id="tiendaLista" class="acciones"></div>
+      <div class="acciones"><button id="bTiendaCerrar" type="button" class="principal">SALIR</button></div>
+    </div>
+  </div>
+
   <!-- El orden importa: config primero, juego al final -->
   <script src="js/config.js"></script>
   <script src="js/util.js"></script>
@@ -101,6 +116,7 @@
   <script src="js/vehiculos.js"></script>
   <script src="js/personajes.js"></script>
   <script src="js/misiones.js"></script>
+  <script src="js/armas.js"></script>
   <script src="js/hud.js"></script>
   <script src="js/juego.js"></script>
 </body>

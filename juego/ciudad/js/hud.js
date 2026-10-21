@@ -57,6 +57,13 @@ const HUD = (() => {
     }
   }
 
+  // A dónde apunta la flecha: la misión, o si no hay, el destino marcado en el mapa
+  function destino() {
+    const o = Misiones.objetivo();
+    if (o) return o;
+    return J.waypoint ? { x: J.waypoint.x, y: J.waypoint.y, color: '#3df5ff' } : null;
+  }
+
   // ----------------------------------------------------------- Minimapa
   function iconoLetra(g, x, y, r, color, letra) {
     g.fillStyle = 'rgba(10,8,25,0.9)';
@@ -136,8 +143,8 @@ const HUD = (() => {
     const dentro = (q) => Math.hypot(q.x - cx, q.y - cy) < R - 4;
     dibujarIconos(g, aPant, Util.limitar(R / 70, 0.8, 1.2), t, dentro);
 
-    // Objetivo de la misión (si está lejos, se pega a la orilla)
-    const obj = Misiones.objetivo();
+    // Objetivo de la misión o destino (si está lejos, se pega a la orilla)
+    const obj = destino();
     if (obj) {
       let q = aPant(obj.x, obj.y);
       const d = Math.hypot(q.x - cx, q.y - cy);
@@ -168,6 +175,7 @@ const HUD = (() => {
     const txt = `${String(hh).padStart(2, '0')}:${String(Math.floor(mm / 5) * 5).padStart(2, '0')}`;
     const noche = J.noche > 0.5;
     texto(g, txt, x + 7 * u, y, 13 * u, '#ffffff', 800, 'center');
+    if (J.lluvia > 0.25) textoNormal(g, 'LLUVIA', x, y + 17 * u, 10 * u, '#9fc4ff', 'center', 800);
     const ix = x - 26 * u;
     if (noche) {
       g.fillStyle = '#e8ecff';
@@ -233,6 +241,20 @@ const HUD = (() => {
       c.averiado ? '#ff6b6b' : (est ? (destello ? '#ffffff' : est.color) : '#8a84b0'), 'left', 800);
   }
 
+  function panelArma(g, x, y, w, u) {
+    const a = Armas.info();
+    const h = 40 * u;
+    panel(g, x, y, w, h, 'rgba(255,138,61,0.6)');
+    textoNormal(g, a.nombre.toUpperCase(), x + 12 * u, y + 14 * u, 11 * u, '#ff8a3d', 'left', 800);
+    const sin = a.balas <= 0;
+    textoNormal(g, sin ? 'SIN MUNICIÓN' : `${a.balas} / ${a.max}`, x + 12 * u, y + 29 * u, 12 * u, sin ? '#ff6b6b' : '#ffffff', 'left', 800);
+    const bw = 8 * u;
+    for (let k = 0; k < Math.min(a.balas, 12); k++) {
+      g.fillStyle = '#ffd23d';
+      g.fillRect(x + w - 12 * u - (k + 1) * (bw / 2 + 2 * u), y + h - 16 * u, bw / 2, 11 * u);
+    }
+  }
+
   function panelMision(g, x, y, w, u, info, t) {
     const h = 56 * u;
     panel(g, x, y, w, h);
@@ -265,7 +287,7 @@ const HUD = (() => {
   }
 
   function flechaObjetivo(g, W, H, u, t) {
-    const obj = Misiones.objetivo();
+    const obj = destino();
     if (!obj) return;
     const j = J.jugador;
     const p = j.carro || j;
@@ -292,6 +314,7 @@ const HUD = (() => {
     g.shadowBlur = 0;
     g.stroke();
     g.restore();
+    textoNormal(g, `${Math.round(Math.hypot(obj.x - p.x, obj.y - p.y) / 16)} m`, ps.x + Math.cos(ang) * (r + 24 * u), ps.y + Math.sin(ang) * (r + 24 * u), 10 * u, '#ffffff', 'center', 700);
   }
 
   function avisoCentral(g, W, H, u) {
@@ -400,6 +423,15 @@ const HUD = (() => {
     const aPant = (x, y) => ({ x: x0 + x * k, y: y0 + y * k });
     const ei = Util.limitar(tam / 400, 0.9, 1.6);
     dibujarIconos(g, aPant, ei, t, () => true);
+    J.zonaMapa = { x0, y0, tam };
+    if (J.waypoint) {
+      const q = aPant(J.waypoint.x, J.waypoint.y);
+      g.fillStyle = '#3df5ff';
+      g.strokeStyle = '#0a0d18';
+      g.lineWidth = 2;
+      g.beginPath(); g.moveTo(q.x, q.y); g.lineTo(q.x + 6 * ei, q.y - 12 * ei); g.lineTo(q.x, q.y - 22 * ei); g.lineTo(q.x - 6 * ei, q.y - 12 * ei);
+      g.closePath(); g.fill(); g.stroke();
+    }
     const obj = Misiones.objetivo();
     if (obj) {
       const q = aPant(obj.x, obj.y);
@@ -415,8 +447,8 @@ const HUD = (() => {
     if (!angosto) texto(g, 'MAPA', W / 2, 30, 20 * u, '#3df5ff', 800, 'center');
     // Leyenda
     const items = [['T', 'Taxi', Misiones.INFO.taxi.color], ['E', 'Entregas', Misiones.INFO.entrega.color],
-      ['C', 'Carrera', Misiones.INFO.carrera.color], ['R', 'Taller', Misiones.INFO.taller.color], ['P', 'Policía', '#5c8dff']];
-    const porFila = angosto ? 3 : 5;
+      ['C', 'Carrera', Misiones.INFO.carrera.color], ['R', 'Taller', Misiones.INFO.taller.color], ['A', 'Armería', Misiones.INFO.tienda.color], ['P', 'Policía', '#5c8dff']];
+    const porFila = angosto ? 3 : 6;
     const paso = Math.min(110 * u, (W - 20) / porFila);
     items.forEach(([l, n, c], i) => {
       const fila = Math.floor(i / porFila), col = i % porFila;
@@ -426,7 +458,8 @@ const HUD = (() => {
       iconoLetra(g, lx - 26 * u, ly, 8 * u, c, l);
       textoNormal(g, n, lx - 14 * u, ly, 11 * u, '#ffffff', 'left', 700);
     });
-    textoNormal(g, Entrada.tactil ? 'Toca para cerrar' : 'Pulsa M para cerrar', W / 2, H - 14, 12 * u, '#b9b2ff', 'center', 700);
+    textoNormal(g, Entrada.tactil ? 'Toca el mapa para marcar un destino · fuera del mapa para cerrar' : 'Clic en el mapa: marcar destino · M para cerrar',
+      W / 2, H - 14, Math.min(12 * u, (W - 20) / 52), '#b9b2ff', 'center', 700);
   }
 
   // ----------------------------------------------------------- Todo junto
@@ -490,6 +523,18 @@ const HUD = (() => {
         x = mIzq; y = H - 74 * u - mAbajo;
       }
       panelCarro(g, x, y, w, u);
+    }
+
+    if (!J.jugador.carro && Armas.info()) {
+      const w = 150 * u;
+      let x, y;
+      if (Entrada.tactil) {
+        if (H > W) { x = W - w - 12 - s.r; y = H - 172 - 56 * u - s.b; }
+        else { x = W / 2 - w / 2; y = H - 40 * u - 12 - s.b; }
+      } else {
+        x = mIzq; y = H - 40 * u - mAbajo;
+      }
+      panelArma(g, x, y, w, u);
     }
 
     // La flecha va al final para que ningún panel la tape

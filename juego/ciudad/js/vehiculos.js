@@ -38,6 +38,29 @@ const SpritesCarro = (() => {
     g.stroke();
   }
 
+  function moto(g, L, A, color) {
+    g.fillStyle = '#15161a';
+    Util.rectRedondo(g, L / 2 - 11, -2.3, 10, 4.6, 2); g.fill();
+    Util.rectRedondo(g, -L / 2 + 1, -2.6, 10, 5.2, 2); g.fill();
+    g.fillStyle = '#23262e';
+    g.fillRect(L / 2 - 15, -A / 2, 3, A);                  // manubrio
+    const gr = g.createLinearGradient(0, -5, 0, 5);
+    gr.addColorStop(0, Util.tono(color, -0.3));
+    gr.addColorStop(0.5, Util.tono(color, 0.2));
+    gr.addColorStop(1, Util.tono(color, -0.3));
+    g.fillStyle = gr;
+    g.beginPath(); g.ellipse(3, 0, 11, 4.6, 0, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.55)';
+    g.lineWidth = 1;
+    g.stroke();
+    g.fillStyle = '#1b1c22';
+    g.beginPath(); g.ellipse(-5, 0, 5.5, 3.4, 0, 0, Math.PI * 2); g.fill();   // asiento
+    g.fillStyle = '#fff6c8';
+    g.fillRect(L / 2 - 3, -2, 2.5, 4);
+    g.fillStyle = '#b3122a';
+    g.fillRect(-L / 2, -2, 2, 4);
+  }
+
   function crear(tipo, color) {
     const t = CONFIG.carros[tipo];
     const L = t.largo, A = t.ancho;
@@ -45,6 +68,10 @@ const SpritesCarro = (() => {
     const g = lienzo.getContext('2d');
     g.scale(ESC, ESC);
     g.translate(M + L / 2, M + A / 2);
+    if (tipo === 'moto') {
+      moto(g, L, A, color);
+      return { lienzo, w: L + M * 2, h: A + M * 2 };
+    }
 
     // Llantas
     g.fillStyle = '#15161a';
@@ -52,7 +79,7 @@ const SpritesCarro = (() => {
       for (const sy of [-1, 1]) g.fillRect(L * sx - 6, sy * A / 2 - 2.5, 12, 5);
     }
 
-    const base = tipo === 'policia' ? '#f4f6fb' : color;
+    const base = tipo === 'policia' || tipo === 'ambulancia' ? '#f4f6fb' : color;
     cuerpo(g, L, A, base);
     const a = A / 2;
 
@@ -66,6 +93,32 @@ const SpritesCarro = (() => {
       g.fillStyle = Util.tono(color, 0.1);
       g.fillRect(-L * 0.06, -a + 3.5, L * 0.16, A - 7);
       vidrio(g, -L * 0.08, -L * 0.04, a - 4, a - 4);
+    } else if (tipo === 'camion') {
+      // Caja de carga atrás y cabina adelante
+      g.fillStyle = '#e4e7ee';
+      Util.rectRedondo(g, -L / 2 + 2, -a + 2, L * 0.64, A - 4, 3); g.fill();
+      g.strokeStyle = 'rgba(0,0,0,0.3)';
+      g.lineWidth = 1;
+      g.stroke();
+      g.fillStyle = 'rgba(0,0,0,0.12)';
+      for (let k = 1; k < 7; k++) g.fillRect(-L / 2 + 2 + k * L * 0.09, -a + 2, 1.5, A - 4);
+      g.fillStyle = Util.tono(color, 0.1);
+      g.fillRect(-L / 2 + 6, -3, L * 0.22, 6);                // franja de color
+      vidrio(g, L * 0.3, L * 0.4, a - 4, a - 6);
+      g.fillStyle = Util.tono(color, 0.08);
+      g.fillRect(L * 0.17, -a + 3.5, L * 0.12, A - 7);
+    } else if (tipo === 'ambulancia') {
+      g.fillStyle = '#d8283a';
+      g.fillRect(-L / 2 + 4, -a + 2.5, L * 0.62, 2);
+      g.fillRect(-L / 2 + 4, a - 4.5, L * 0.62, 2);
+      g.fillStyle = '#e8ecf3';
+      g.fillRect(-L * 0.36, -a + 4.5, L * 0.46, A - 9);
+      g.fillStyle = '#d8283a';                                // cruz en el techo
+      g.fillRect(-L * 0.2, -2, L * 0.24, 4);
+      g.fillRect(-L * 0.1, -a * 0.55, L * 0.04 + 2, a * 1.1);
+      vidrio(g, L * 0.2, L * 0.34, a - 3, a - 5.5);
+      g.fillStyle = '#1d2c4f';
+      Util.rectRedondo(g, L * 0.34, -a + 1, L * 0.16 - 1, A - 2, 5); g.fill();
     } else {
       const deportivo = tipo === 'deportivo';
       const fr0 = deportivo ? 0.02 : 0.08, fr1 = deportivo ? 0.2 : 0.22;
@@ -175,6 +228,7 @@ class Carro {
 
   get velocidad() { return Math.hypot(this.vx, this.vy); }
   get esPolicia() { return this.tipo === 'policia'; }
+  get emergencia() { return this.tipo === 'policia' || this.tipo === 'ambulancia'; }
   get vidaMax() { return this.t.vida; }
 
   reparar() {
@@ -187,6 +241,7 @@ class Carro {
     const t = this.t;
     const F = CONFIG.fisica;
     const m = this.mando;
+    const mojado = (J.lluvia || 0) * CONFIG.clima.agarreMojado;
     const fx = Math.cos(this.ang), fy = Math.sin(this.ang);
     let vf = this.vx * fx + this.vy * fy;
     let vl = -this.vx * fy + this.vy * fx;
@@ -205,10 +260,10 @@ class Carro {
     if (this.averiado && (gas > 0 || vf <= 15)) gas = 0;
     this.frenando = false;
     if (gas > 0) {
-      if (vf < -15) { vf += t.freno * gas * dt; this.frenando = true; }
+      if (vf < -15) { vf += t.freno * (1 - mojado * 0.5) * gas * dt; this.frenando = true; }
       else if (vf < velMax) vf += t.acel * factor * gas * dt * (1 - 0.5 * Math.max(0, vf) / velMax);
     } else if (gas < 0) {
-      if (vf > 15) { vf += t.freno * gas * dt; this.frenando = true; }
+      if (vf > 15) { vf += t.freno * (1 - mojado * 0.5) * gas * dt; this.frenando = true; }
       else if (vf > -velMax * 0.38) vf += t.acel * 0.65 * gas * dt;
     } else {
       const fb = F.frenoMotor * dt;
@@ -217,7 +272,7 @@ class Carro {
     vf -= vf * F.rozamiento * dt;
     if (vf > velMax) vf -= (vf - velMax) * 2.5 * dt;
 
-    let agarre = t.agarre;
+    let agarre = t.agarre * (1 - mojado);
     if (m.freno) {
       agarre *= F.agarreFrenoMano;
       const fb = 430 * dt;
@@ -293,6 +348,7 @@ class Carro {
       this.vida = 0;
       this.averiado = true;
       this.sirena = false;
+      if (J.cercaDeCamara(this.x, this.y, 900)) Efectos.explosion(this.x, this.y, this.largo);
       if (this.conductor === 'jugador') {
         J.avisar('¡MOTOR AVERIADO!', 'Bájate y busca otro carro', '#ff8a3d');
         Sonido.averia();
@@ -329,14 +385,19 @@ class Carro {
       const fx = Math.cos(this.ang), fy = Math.sin(this.ang);
       const bx = this.x - fx * this.largo * 0.3, by = this.y - fy * this.largo * 0.3;
       const px = -fy * this.ancho * 0.38, py = fx * this.ancho * 0.38;
-      if (this.ultimaMarca) {
-        const u = this.ultimaMarca;
-        if (Math.hypot(bx - u.x, by - u.y) < 60) {
+      const u = this.ultimaMarca;
+      if (!u) {
+        this.ultimaMarca = { x: bx, y: by, px, py };
+      } else {
+        const d = Math.hypot(bx - u.x, by - u.y);
+        if (d >= 60) {
+          this.ultimaMarca = { x: bx, y: by, px, py };
+        } else if (d >= 8) {
           Efectos.marca(u.x + u.px, u.y + u.py, bx + px, by + py);
           Efectos.marca(u.x - u.px, u.y - u.py, bx - px, by - py);
+          u.x = bx; u.y = by; u.px = px; u.py = py;
         }
       }
-      this.ultimaMarca = { x: bx, y: by, px, py };
       if (Math.random() < dt * 12) Efectos.polvo(bx, by);
     } else {
       this.ultimaMarca = null;
@@ -378,22 +439,38 @@ class Carro {
       g.fill();
     }
     // Luces de freno y reversa
+    const moto = this.tipo === 'moto';
     if (this.frenando && this.conductor) {
       g.fillStyle = '#ff2a3d';
-      g.fillRect(-L / 2 - 1, -A / 2 + 2, 4, 8);
-      g.fillRect(-L / 2 - 1, A / 2 - 10, 4, 8);
-    } else if (this.vf < -10 && this.conductor) {
+      if (moto) g.fillRect(-L / 2 - 1, -3, 3, 6);
+      else {
+        g.fillRect(-L / 2 - 1, -A / 2 + 2, 4, 8);
+        g.fillRect(-L / 2 - 1, A / 2 - 10, 4, 8);
+      }
+    } else if (this.vf < -10 && this.conductor && !moto) {
       g.fillStyle = '#ffffff';
       g.fillRect(-L / 2 - 1, -A / 2 + 4, 3, 5);
       g.fillRect(-L / 2 - 1, A / 2 - 9, 3, 5);
     }
-    // Torreta de la patrulla
-    if (this.esPolicia) {
+    if (moto && this.conductor) {
+      // Piloto con casco, inclinado al girar
+      const inc = Util.limitar(this.mando.giro * Math.min(1, Math.abs(this.vf) / 300), -1, 1) * 2.5;
+      g.fillStyle = this.conductor === 'jugador' ? '#13d6e8' : '#8a8f9c';
+      g.beginPath(); g.ellipse(-2, inc, 4.5, 6.5, 0, 0, Math.PI * 2); g.fill();
+      g.fillStyle = this.conductor === 'jugador' ? '#e8f7ff' : '#d33a3a';
+      g.beginPath(); g.arc(1, inc, 4.2, 0, Math.PI * 2); g.fill();
+      g.fillStyle = 'rgba(20,30,50,0.8)';
+      g.fillRect(2.5, inc - 2.6, 2.4, 5.2);
+    }
+    // Torreta de la patrulla / ambulancia
+    if (this.emergencia) {
       const prendida = this.sirena;
       const fase = prendida ? Math.floor(tiempo * 8) % 2 : -1;
+      const amb = this.tipo === 'ambulancia';
       g.fillStyle = fase === 0 ? '#ff2a2a' : (prendida ? '#7a1010' : '#8a2020');
       g.fillRect(-L * 0.08, -A / 2 + 3, 6, A / 2 - 3);
-      g.fillStyle = fase === 1 ? '#2a6bff' : (prendida ? '#10237a' : '#20308a');
+      if (amb) g.fillStyle = fase === 1 ? '#ffffff' : (prendida ? '#9aa0b0' : '#c9ceda');
+      else g.fillStyle = fase === 1 ? '#2a6bff' : (prendida ? '#10237a' : '#20308a');
       g.fillRect(-L * 0.08, 0, 6, A / 2 - 3);
     }
     g.restore();
@@ -598,7 +675,7 @@ class IATrafico {
     const dif = Util.difAngulo(angObj, c.ang);
     const giro = Util.limitar(dif * 2.6, -1, 1);
 
-    let vDeseada = vLim;
+    let vDeseada = vLim * (1 - 0.15 * (J.lluvia || 0));
     if (Math.abs(dif) > 0.6) vDeseada = Math.min(vDeseada, 110);
     const obs = this.obstaculo();
     if (obs.v < vDeseada) vDeseada = obs.v;
@@ -680,6 +757,16 @@ class IAPolicia {
       (c) => Math.hypot(c.x - jx, c.y - jy) > 1300);
     this.destino = lejos ? { x: lejos.x, y: lejos.y } : { x: Mundo.TAM / 2, y: Mundo.TAM / 2 };
     this.nodoObj = null;
+  }
+
+  // Vuelve a perseguir (si hay estrellas otra vez)
+  reanudar() {
+    if (this.modo === 'perseguir') return;
+    this.modo = 'perseguir';
+    this.carro.sirena = true;
+    this.nodoObj = null;
+    this.relojRuta = 0;
+    this.perdido = 0;
   }
 
   // Elige el siguiente cruce para llegar a (tx, ty) por las calles

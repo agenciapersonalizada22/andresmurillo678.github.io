@@ -4,8 +4,10 @@
 // =============================================================
 const Efectos = (() => {
   const particulas = [];
-  const marcas = [];
+  const marcas = new Float32Array(700 * 4);   // buffer circular de segmentos
+  let marcaIni = 0, marcaN = 0;
   const textos = [];
+  const trazas = [];
   const MAX_PARTICULAS = 350;
   const MAX_MARCAS = 700;
 
@@ -56,9 +58,34 @@ const Efectos = (() => {
     }
   }
 
+  function explosion(x, y, tam) {
+    const k = Util.limitar((tam || 54) / 54, 0.7, 1.8);
+    chispas(x, y, 16);
+    for (let n = 0; n < 7; n++) {
+      const a = Math.random() * Math.PI * 2, v = Util.azar(20, 90) * k;
+      agregar({
+        tipo: 'humo', x: x + Math.cos(a) * 6, y: y + Math.sin(a) * 6, vx: Math.cos(a) * v, vy: Math.sin(a) * v,
+        vida: 0, max: Util.azar(0.35, 0.7), tam: Util.azar(7, 12) * k, crece: 45 * k,
+        color: n % 2 ? 'rgb(255,170,50)' : 'rgb(255,100,30)',
+      });
+    }
+    for (let n = 0; n < 5; n++) humo(x + Util.azar(-10, 10), y + Util.azar(-10, 10), 0.9, 1.5 * k);
+    J.sacudir(9 * k);
+    Sonido.choque(1);
+  }
+
+  // Línea de un disparo (se apaga en un instante) y destello en la boca del arma
+  function traza(x1, y1, x2, y2) {
+    if (trazas.length > 24) trazas.shift();
+    trazas.push({ x1, y1, x2, y2, vida: 0 });
+    agregar({ tipo: 'chispa', x: x1, y: y1, vx: 0, vy: 0, vida: 0, max: 0.08, tam: 7, color: '#fff2a0' });
+  }
+
   function marca(x1, y1, x2, y2) {
-    marcas.push(x1, y1, x2, y2);
-    if (marcas.length > MAX_MARCAS * 4) marcas.splice(0, 4);
+    const k = ((marcaIni + marcaN) % MAX_MARCAS) * 4;
+    marcas[k] = x1; marcas[k + 1] = y1; marcas[k + 2] = x2; marcas[k + 3] = y2;
+    if (marcaN < MAX_MARCAS) marcaN++;
+    else marcaIni = (marcaIni + 1) % MAX_MARCAS;
   }
 
   function texto(x, y, txt, color, tam) {
@@ -80,6 +107,10 @@ const Efectos = (() => {
         p.vx *= 0.9; p.vy *= 0.9;
       }
     }
+    for (let k = trazas.length - 1; k >= 0; k--) {
+      trazas[k].vida += dt;
+      if (trazas[k].vida > 0.09) trazas.splice(k, 1);
+    }
     for (let k = textos.length - 1; k >= 0; k--) {
       const t = textos[k];
       t.vida += dt;
@@ -89,12 +120,13 @@ const Efectos = (() => {
   }
 
   function dibujarMarcas(g, vista) {
-    if (!marcas.length) return;
+    if (!marcaN) return;
     g.strokeStyle = 'rgba(15,15,18,0.38)';
     g.lineWidth = 5;
     g.lineCap = 'round';
     g.beginPath();
-    for (let k = 0; k < marcas.length; k += 4) {
+    for (let n = 0; n < marcaN; n++) {
+      const k = ((marcaIni + n) % MAX_MARCAS) * 4;
       const x = marcas[k], y = marcas[k + 1];
       if (x < vista.x0 || x > vista.x1 || y < vista.y0 || y > vista.y1) continue;
       g.moveTo(x, y);
@@ -118,6 +150,35 @@ const Efectos = (() => {
       }
     }
     g.globalAlpha = 1;
+    if (trazas.length) {
+      g.strokeStyle = '#fff2a0';
+      g.lineWidth = 1.6;
+      g.beginPath();
+      for (const t of trazas) { g.moveTo(t.x1, t.y1); g.lineTo(t.x2, t.y2); }
+      g.stroke();
+    }
+  }
+
+  // Lluvia en coordenadas de pantalla (CSS px). Las gotas son fijas y solo se desplazan.
+  const GOTAS = 230;
+  const gotaX = new Float32Array(GOTAS), gotaY = new Float32Array(GOTAS), gotaV = new Float32Array(GOTAS);
+  for (let k = 0; k < GOTAS; k++) { gotaX[k] = Math.random(); gotaY[k] = Math.random(); gotaV[k] = 1.1 + Math.random() * 0.9; }
+  function dibujarLluvia(g, W, H, lluvia, t) {
+    if (lluvia <= 0.02) return;
+    g.fillStyle = `rgba(12,22,42,${0.3 * lluvia})`;
+    g.fillRect(0, 0, W, H);
+    const n = Math.round(GOTAS * Math.min(1, lluvia));
+    const largo = 14 + lluvia * 10;
+    g.strokeStyle = 'rgba(200,220,255,0.55)';
+    g.lineWidth = 1.2;
+    g.beginPath();
+    for (let k = 0; k < n; k++) {
+      const y = ((gotaY[k] + t * gotaV[k]) % 1) * (H + largo) - largo;
+      const x = gotaX[k] * (W + 60) + y * 0.18 - 30;
+      g.moveTo(x, y);
+      g.lineTo(x - largo * 0.18, y + largo);
+    }
+    g.stroke();
   }
 
   function dibujarTextos(g, escala) {
@@ -249,18 +310,18 @@ const Efectos = (() => {
           g.drawImage(brilloCalido, x - 16, y - 16, 32, 32);
         }
       }
-      if (c.esPolicia && c.sirena) {
+      if (c.emergencia && c.sirena) {
         const fase = Math.floor(tiempo * 8) % 2;
         g.globalAlpha = Math.max(0.35, noche);
-        g.drawImage(fase ? brilloAzul : brilloRojo, c.x - 45, c.y - 45, 90, 90);
+        g.drawImage(fase ? (c.esPolicia ? brilloAzul : brilloCalido) : brilloRojo, c.x - 45, c.y - 45, 90, 90);
       }
     }
     g.restore();
   }
 
   return {
-    humo, chispas, polvo, confeti, marca, texto, actualizar,
+    humo, chispas, polvo, confeti, marca, texto, actualizar, explosion, traza, dibujarLluvia,
     dibujarMarcas, dibujarParticulas, dibujarTextos, dibujarNoche,
-    limpiar() { particulas.length = 0; textos.length = 0; marcas.length = 0; },
+    limpiar() { particulas.length = 0; textos.length = 0; trazas.length = 0; marcaIni = 0; marcaN = 0; },
   };
 })();
