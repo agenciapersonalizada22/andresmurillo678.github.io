@@ -287,7 +287,7 @@ export function crearBote(color = 0xe8eef4) {
   g.add(franja2);
   // cubierta de popa y de proa
   caja(g, 1.74, 0.06, 0.9, 0, 0.58, 1.55, madera);
-  const proa = loft([{ z: -2.3, puntos: [[-0.02, 0.78], [0.02, 0.78]] }, { z: -1.2, puntos: [[-0.7, 0.67], [0.7, 0.67]] }, { z: -0.7, puntos: [[-0.78, 0.63], [0.78, 0.63]] }], mat(0xdfe5ea, { brillo: 60, dosCaras: true }));
+  const proa = loft([{ z: -2.3, puntos: [[0.02, 0.78], [-0.02, 0.78]] }, { z: -1.2, puntos: [[0.7, 0.67], [-0.7, 0.67]] }, { z: -0.7, puntos: [[0.78, 0.63], [-0.78, 0.63]] }], mat(0xdfe5ea, { brillo: 40, dosCaras: true, emisivo: 0x2c3034 }));
   g.add(proa);
   // piso de madera y bancas
   caja(g, 1.5, 0.05, 2.0, 0, 0.18, 0.2, madera);

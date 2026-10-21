@@ -147,7 +147,7 @@ function ruidoBucle() {
 }
 
 function motorIniciar(clase) {
-  if (!ctx || ctx.state !== 'running') return;
+  if (!ctx || !efectosActivos) return;
   motorParar(true);
   const m = { clase, nodos: [] };
   const salida = ctx.createGain();

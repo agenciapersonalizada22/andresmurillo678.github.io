@@ -141,6 +141,7 @@ const FRAGMENTO_MUNDO = /* glsl */`
     float borde0 = max(abs(c0.x), abs(c0.y));
     if (borde0 < 0.94 && s0.z > 0.0 && s0.z < 1.0) {
       float v = pcf(uSombra0, s0, uSombraTexel.xy, 1.8, uSombraBias.x);
+      if (uNumCasc < 1.5) v = mix(v, 1.0, smoothstep(0.7, 0.94, borde0)); // con una sola cascada la sombra se desvanece en la orilla
       if (uNumCasc > 1.5) {
         // mezcla suave hacia el mapa grande en la orilla del chico
         float k = smoothstep(0.7, 0.94, borde0);
@@ -193,10 +194,11 @@ const FRAGMENTO_MUNDO = /* glsl */`
     if (dot(N, V) < 0.0) N = -N;
 
     // relieve falso: se pierde con la distancia (si no, brilla y tiembla)
+    // (las derivadas y la lectura de la textura se hacen fuera del "if" para que funcionen en todas las tarjetas)
+    vec3 nm = texture2D(mapN, vUv).xyz * 2.0 - 1.0;
+    vec2 duv1 = dFdx(vUv), duv2 = dFdy(vUv);
     float rel = uBump * (1.0 - smoothstep(18.0, 55.0, dist));
     if (rel > 0.01) {
-      vec3 nm = texture2D(mapN, vUv).xyz * 2.0 - 1.0;
-      vec2 duv1 = dFdx(vUv), duv2 = dFdy(vUv);
       vec3 dp2perp = cross(dpy, N), dp1perp = cross(N, dpx);
       vec3 T = dp2perp * duv1.x + dp1perp * duv2.x;
       vec3 Bt = dp2perp * duv1.y + dp1perp * duv2.y;

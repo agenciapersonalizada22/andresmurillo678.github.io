@@ -31,14 +31,12 @@ export const CONFIG = {
 
   // ----------------------------------------------------- Lo que se ve
   vista: {
-    distancia: 5,           // radio de chunks (pedazos de 16x16) que se ven en compu
-    distanciaMovil: 3,      // lo mismo en el celular (más chico = más fluido)
+    distancia: 5,           // radio de chunks (pedazos de 16x16) al empezar (la calidad gráfica lo cambia: Baja 4, Media 6, Alta 8, Ultra 11)
+    distanciaMovil: 3,      // lo mismo en el celular
     distanciaMinima: 2,     // límites del botón de "distancia" del menú de pausa
     distanciaMaxima: 12,
     campoVision: 75,        // ángulo de visión en grados
     campoVisionCorriendo: 83, // se abre un poquito al correr
-    pixelesMax: 1.5,        // nitidez máxima en compu (más alto = más bonito pero más lento)
-    pixelesMaxMovil: 1,     // nitidez máxima en celular
     presupuestoMs: 7,       // milisegundos por cuadro para crear chunks en compu
     presupuestoMsMovil: 4,  // lo mismo en celular
     hojasDetalladas: true,  // hojas con "relleno" (más bonito, un poco más pesado)

@@ -688,3 +688,36 @@ body.enVehiculo #barra, body.enVehiculo #nombreBloque { display: none; }
 @media (max-height: 500px) { #rejillaInventario, #rejillaVehiculos { max-height: 46vh; } }
 
 body.enVehiculo:not(.vehAire) #mira { display: none; }
+
+#pistaVehiculo {
+  position: absolute;
+  left: 50%;
+  top: 62%;
+  transform: translateX(-50%);
+  padding: 7px 16px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 2px solid rgba(125, 217, 87, 0.7);
+  font-size: 14px;
+  font-weight: 800;
+  color: #f0fff0;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+#pistaVehiculo.visible { opacity: 1; }
+body.tactil #pistaVehiculo { display: none; }
+
+/* En el celular el tablero va arriba y chiquito, para no tapar el camino */
+body.tactil #tablero {
+  top: calc(54px + var(--seguro-arriba));
+  bottom: auto;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  width: 150px;
+  padding: 5px 10px 6px;
+  text-align: center;
+}
+body.tactil #tablero .velocidad b { font-size: 24px; }
+body.tactil #tablero p { display: none; }

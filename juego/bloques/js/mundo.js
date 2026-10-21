@@ -64,7 +64,7 @@ export class Mundo {
     this.vehiculosUsados = new Set(opciones.vehiculosUsados || []);
     this.puntosNuevos = [];
     this.bloqueados = opciones.bloqueados ? new Set(opciones.bloqueados) : null;
-    this.gen = crearGenerador(this.semilla, this.versionGen, { bloqueados: this.bloqueados });
+    this.gen = crearGenerador(this.semilla, this.versionGen, { bloqueados: this.bloqueados, estructuras: CONFIG.estructuras.activas });
     if (cambiosGuardados && typeof cambiosGuardados === 'object') {
       for (const texto of Object.keys(cambiosGuardados)) {
         const [cx, cz] = texto.split(',').map(Number);

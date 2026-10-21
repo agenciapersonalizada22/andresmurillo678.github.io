@@ -309,8 +309,12 @@ export class Interfaz {
     this.el.tabTexto.classList.toggle('alerta', !!info.sinCombustible);
   }
 
-  cercaVehiculo(si) {
+  cercaVehiculo(si, texto = '') {
     document.body.classList.toggle('cercaVeh', si);
+    const e = $('pistaVehiculo');
+    if (!e) return;
+    e.classList.toggle('visible', !!texto);
+    if (texto && e.textContent !== texto) e.textContent = texto;
   }
 
   actualizarBarra(barra, seleccion) {

@@ -74,7 +74,8 @@ const FRAG_DOMO = /* glsl */`
     vec3 ld = -solDir;
     float md = dot(d, ld);
     float disL = smoothstep(0.99955, 0.99975, md);
-    float crateres = 0.82 + 0.18 * ruido(d * 120.0) + 0.1 * ruido(d * 300.0);
+    float crateres = 0.9;
+    if (disL > 0.001) crateres = 0.82 + 0.18 * ruido(d * 120.0) + 0.1 * ruido(d * 300.0);
     c += vec3(0.86, 0.9, 1.0) * (disL * crateres + pow(max(md, 0.0), 110.0) * 0.32 + pow(max(md, 0.0), 14.0) * 0.07) * noche * smoothstep(-0.12, 0.04, ld.y);
     // estrellas que titilan
     if (estrellas > 0.5 && noche > 0.02 && h > -0.08) {
@@ -103,8 +104,9 @@ const FRAG_NUBES = /* glsl */`
   uniform float cobertura;
   uniform float capa;
   uniform float octavas;
+  uniform float altura;
   uniform vec3 solDir;
-  varying vec3 vP;
+  varying vec3 vDir;
   float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
   float ruido(vec2 p) {
     vec2 i = floor(p), f = fract(p);
@@ -122,7 +124,13 @@ const FRAG_NUBES = /* glsl */`
     return s;
   }
   void main() {
-    vec2 p = (vP.xz + viento * tiempo) * escala + vec2(capa * 31.7, capa * 12.3);
+    // la nube vive en un plano a esa altura: se busca dónde lo cruza la mirada
+    vec3 d = normalize(vDir);
+    float dy = d.y;
+    float t = (altura - camara.y) / (abs(dy) < 0.0005 ? 0.0005 : dy);
+    if (t <= 0.0 || t > 6000.0) discard;
+    vec2 xz = camara.xz + d.xz * t;
+    vec2 p = (xz + viento * tiempo) * escala + vec2(capa * 31.7, capa * 12.3);
     float n = fbm(p);
     float dens = smoothstep(cobertura, cobertura + 0.22, n);
     if (dens < 0.01) discard;
@@ -131,12 +139,11 @@ const FRAG_NUBES = /* glsl */`
     float n2 = fbm(p + haciaSol * 10.0);
     float luz = clamp(0.62 + (n - n2) * 5.0, 0.0, 1.0);
     vec3 col = mix(sombraNube, luzNube, luz);
-    float d = length(vP.xz - camara.xz);
-    float lejos = smoothstep(260.0, 700.0, d);
-    col = mix(col, colorNiebla, lejos * 0.8);
-    float alfa = dens * opacidad * (1.0 - smoothstep(420.0, 740.0, d));
-    // si vuelas a la altura de la nube se desvanece (para no ver una raya)
-    alfa *= smoothstep(2.0, 12.0, abs(camara.y - vP.y));
+    float lejos = smoothstep(300.0, 2600.0, t);
+    col = mix(col, colorNiebla, lejos * 0.75);
+    float alfa = dens * opacidad * (1.0 - smoothstep(1800.0, 4800.0, t));
+    alfa *= smoothstep(0.0, 0.09, abs(dy));                        // cerca del horizonte se funden
+    alfa *= smoothstep(2.0, 12.0, abs(camara.y - altura));        // si vuelas a su altura se desvanecen
     gl_FragColor = vec4(col, alfa);
   }`;
 
@@ -183,7 +190,7 @@ export class Cielo {
       solDir: this.uniformes.solDir,
     };
     if (this.nubesActivas) {
-      const geo = new THREE.PlaneGeometry(1500, 1500);
+      const geo = new THREE.SphereGeometry(1, 36, 16, 0, Math.PI * 2, 0, Math.PI);
       for (let i = 0; i < 4; i++) {
         const mat = new THREE.ShaderMaterial({
           uniforms: {
@@ -194,16 +201,16 @@ export class Cielo {
             cobertura: { value: 0.5 + i * 0.012 },
             capa: { value: i },
             octavas: { value: 5 },
+            altura: { value: CONFIG.vista.alturaNubes + i * 6 },
           },
-          vertexShader: `varying vec3 vP; void main(){ vec4 w = modelMatrix * vec4(position,1.0); vP = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+          vertexShader: `varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
           fragmentShader: FRAG_NUBES,
           transparent: true,
           depthWrite: false,
-          side: THREE.DoubleSide,
+          side: THREE.BackSide,
           fog: false,
         });
         const m = new THREE.Mesh(geo, mat);
-        m.rotation.x = -Math.PI / 2;
         m.frustumCulled = false;
         m.renderOrder = -5 + i;
         escena.add(m);
@@ -297,8 +304,9 @@ export class Cielo {
       this.compartidas.sombraNube.value.setRGB(l * 0.58 + atardecer * 0.25, l * 0.64, l * 0.78 - atardecer * 0.1);
       const alturaNubes = CONFIG.vista.alturaNubes;
       this.capasNubes.forEach((m, i) => {
-        m.position.set(p.x, alturaNubes + i * 6, p.z);
-        m.visible = i < (this.nCapas || 1) && !this.escondido && p.y < alturaNubes + 250;
+        m.position.copy(p);
+        m.scale.setScalar(lejos * 0.88);
+        m.visible = i < (this.nCapas || 1) && !this.escondido;
       });
     }
     return this.luz;

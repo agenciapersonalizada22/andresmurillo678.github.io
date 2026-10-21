@@ -66,11 +66,11 @@ export function planTemplo(inst, gen) {
   T.caja(8, 1, 0, 8, 3, 0, B.ARENISCA_CINCELADA); T.caja(12, 1, 0, 12, 3, 0, B.ARENISCA_CINCELADA);
   T.caja(8, 4, 0, 12, 4, 0, B.ARENISCA_CINCELADA);
   // sala central
-  T.caja(5, 1, 5, 15, 6, 15, AIRE);
+  T.caja(5, 1, 5, 15, 4, 15, AIRE);          // el techo (piso 5) se queda
   T.caja(5, 0, 5, 15, 0, 15, B.ARENISCA);
   for (const [a, c] of [[7, 7], [13, 7], [7, 13], [13, 13]]) {
-    T.caja(a, 1, c, a, 5, c, B.ARENISCA_CINCELADA);
-    T.pon(a, 6, c, B.PIEDRA_LUMINOSA);
+    T.caja(a, 1, c, a, 3, c, B.ARENISCA_CINCELADA);
+    T.pon(a, 4, c, B.PIEDRA_LUMINOSA);
   }
   T.pon(10, 0, 10, B.TERRACOTA_AZUL);
   T.caja(9, 0, 9, 11, 0, 11, B.TERRACOTA_NARANJA);

@@ -958,8 +958,10 @@ function actualizarTableroVehiculo(dt) {
   if (tiempoTablero > 0) return;
   tiempoTablero = 0.1;
   interfaz.tablero(vehiculos.info());
-  if (!vehiculos.actual) interfaz.cercaVehiculo(estado === 'jugando' && !esperandoMundo && !!vehiculos.cercano(jugador.x, jugador.y + 0.9, jugador.z));
-  else interfaz.cercaVehiculo(true);
+  if (!vehiculos.actual) {
+    const v = estado === 'jugando' && !esperandoMundo ? vehiculos.cercano(jugador.x, jugador.y + 0.9, jugador.z) : null;
+    interfaz.cercaVehiculo(!!v, v ? 'E · subir al ' + v.T.nombre : '');
+  } else interfaz.cercaVehiculo(true);
 }
 
 // Si el juego va lento y no elegiste la calidad tú, la baja un escalón

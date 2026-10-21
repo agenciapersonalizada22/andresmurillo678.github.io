@@ -31,7 +31,7 @@ export const TIPOS = {
     distCam: 7.5, altCam: 2.2, ancho: 1.0, largo: 2.0, base: 2.4, via: 2.0, alto: 2.2, vmax: 25, subir: 1.06,
   },
   bote: {
-    nombre: 'Bote', crear: crearBote, clase: 'agua', tanque: 100, consumo: 0.1, asiento: [0.4, 1.15, -0.5],
+    nombre: 'Bote', crear: crearBote, clase: 'agua', tanque: 100, consumo: 0.1, asiento: [0.4, 1.4, -0.1],
     distCam: 8, altCam: 2.4, ancho: 0.9, largo: 2.1, vmax: 17,
   },
   avioneta: {
@@ -86,7 +86,7 @@ export class Vehiculos {
     const v = {
       id: id || 'v' + (contadorId++), tipo, T, modelo, partes: modelo.partes,
       x, y, z, yaw, pitch: 0, roll: 0, vx: 0, vz: 0, vy: 0, vel: 0, giro: 0, giroRueda: 0,
-      combustible: combustible ?? (VC.combustible ? T.tanque : T.tanque), luces: false, freno: 0,
+      combustible: combustible ?? T.tanque, luces: false, freno: 0,
       acelerador: 0, motor: false, asentado: false, enSuelo: true, rpm: 0, tiempo: Math.random() * 10,
       throttle: 0, stick: { x: 0, y: 0 }, eje: 'x', activo: false, ocupado: false, choque: 0, hundido: false,
     };
@@ -235,7 +235,6 @@ export class Vehiculos {
     // alturas de las 4 ruedas
     const hs = this.alturasRuedas(v, T);
     const yObj = (hs.fl + hs.fr + hs.rl + hs.rr) / 4;
-    const antesY = v.y;
     if (yObj >= v.y - 0.001) {
       v.y += (yObj - v.y) * Math.min(1, 16 * dt);
       if (v.vy < 0) { v.choque = Math.max(v.choque, -v.vy * 0.5); v.vy = 0; }
@@ -245,8 +244,8 @@ export class Vehiculos {
       v.y += v.vy * dt;
       if (v.y <= yObj) { v.y = yObj; if (v.vy < -5) Sonido.aterrizaje('piedra'); v.vy = 0; v.enSuelo = true; } else v.enSuelo = false;
     }
-    const pitchObj = Math.atan2((hs.fl + hs.fr) / 2 - (hs.rl + hs.rr) / 2, T.base);
-    const rollObj = Math.atan2((hs.fr + hs.rr) / 2 - (hs.fl + hs.rl) / 2, T.via);
+    const pitchObj = lim(Math.atan2((hs.fl + hs.fr) / 2 - (hs.rl + hs.rr) / 2, T.base), -0.45, 0.45);
+    const rollObj = lim(Math.atan2((hs.fr + hs.rr) / 2 - (hs.fl + hs.rl) / 2, T.via), -0.45, 0.45);
     const acelLong = (vf - (v.vfAnterior ?? vf)) / Math.max(dt, 1e-3);
     v.vfAnterior = vf;
     const squat = lim(-acelLong * 0.0045, -0.07, 0.07);
@@ -257,13 +256,12 @@ export class Vehiculos {
     v.enAgua = DIBUJO[mundo.obtener(Math.floor(v.x), Math.floor(v.y + 0.3), Math.floor(v.z))] === DIBUJO_AGUA;
     v.rpm = lim(Math.abs(vf) / vmax, 0, 1.2);
     v.motor = tiene && manejando;
-    return antesY;
   }
 
   alturasRuedas(v, T) {
     const s = Math.sin(v.yaw), c = Math.cos(v.yaw);
     const f = [-s, -c], r = [c, -s];
-    const h = (pf, pr) => Math.max(this.suelo(v.x + f[0] * pf + r[0] * pr, v.z + f[1] * pf + r[1] * pr, v.y + 1.15), v.y - 3);
+    const h = (pf, pr) => lim(this.suelo(v.x + f[0] * pf + r[0] * pr, v.z + f[1] * pf + r[1] * pr, v.y + 1.15), v.y - 1.6, v.y + 1.2);
     const a = T.base / 2, b = T.via / 2;
     return { fl: h(a, -b), fr: h(a, b), rl: h(-a, -b), rr: h(-a, b) };
   }
@@ -375,7 +373,9 @@ export class Vehiculos {
     if (v.enSuelo) {
       pitchObj = v.vel > VR ? Math.max(0, pitchObj) * 0.7 + 0.02 : 0;
     }
-    if (v.vel < 11 && !v.enSuelo) pitchObj = Math.min(pitchObj, -0.15 - (11 - v.vel) * 0.1);  // entra en pérdida: baja la nariz
+    v.recup = Math.max(0, (v.recup || 0) - dt);
+    const agl = v.y - Math.max(this.suelo(v.x, v.z, v.y + 1.4), 0);   // altura sobre el suelo
+    if (v.vel < 11 && !v.enSuelo && !v.recup && agl > 3) pitchObj = Math.min(pitchObj, -0.15 - (11 - v.vel) * 0.1);  // entra en pérdida: baja la nariz
     pitchObj = lim(pitchObj, -1.0, 0.85);
     v.pitch += lim(pitchObj - v.pitch, -1.3 * dt, 1.3 * dt);
     const rollObj = lim(-yawRate * 0.9 + (manejando ? -(v.stick.x + entrX) * 0.25 : 0), -0.8, 0.8);
@@ -386,16 +386,19 @@ export class Vehiculos {
     v.vx = -sp * cosP * v.vel;
     v.vz = -cp * cosP * v.vel;
     let vy = Math.sin(v.pitch) * v.vel;
-    if (v.vel < 12 && !v.enSuelo) vy -= (12 - v.vel) * 1.1;
+    if (v.vel < 12 && !v.enSuelo) vy -= (12 - v.vel) * (v.recup ? 0.5 : 1.1);
     v.vy = vy;
     if (VC.combustible && manejando && v.combustible > 0) v.combustible = Math.max(0, v.combustible - T.consumo * (0.25 + v.throttle * 1.1) * dt);
 
     // mover con choques (alas y nariz)
     const antes = [v.x, v.y, v.z];
+    const dentro = (puntos) => { for (const [px, py, pz] of puntos) if (mundo.esSolido(Math.floor(px), Math.floor(py), Math.floor(pz))) return true; return false; };
     v.x += v.vx * dt; v.y += v.vy * dt; v.z += v.vz * dt;
-    const cuerpo = this.puntosAvion(v);
-    let choco = false;
-    for (const [px, py, pz] of cuerpo) if (mundo.esSolido(Math.floor(px), Math.floor(py), Math.floor(pz))) { choco = true; break; }
+    let choco = dentro(this.puntosAvion(v));
+    // si ya estaba metido en un bloque (por un choque anterior) se sube poco a poco para salir
+    if (choco && dentro(this.puntosAvion({ ...v, x: antes[0], y: antes[1], z: antes[2] }))) {
+      v.x = antes[0]; v.z = antes[2]; v.y = antes[1] + 6 * dt; v.vel *= 0.8; choco = false;
+    }
     // las ruedas tocan el piso
     const hr = Math.max(this.suelo(v.x, v.z, v.y + 1.4), 0);
     const tren = hr;
@@ -407,6 +410,9 @@ export class Vehiculos {
       v.choque = Math.max(v.choque, fuerza);
       v.vel *= 0.2;
       v.vy = 0;
+      v.pitch += (0 - v.pitch) * 0.7;      // la nariz se levanta para no quedar clavada
+      v.roll *= 0.5;
+      v.recup = 1.5;                        // un momento sin "pérdida" para poder volver a arrancar
       if (fuerza > 14 && this.particulas) this.particulas.humo(v.x, v.y + 1.2, v.z, 10, 0.5);
     }
     if (v.y <= tren + 0.001) {
@@ -495,8 +501,8 @@ export class Vehiculos {
       const hs = this.alturasRuedas(v, T);
       const yObj = (hs.fl + hs.fr + hs.rl + hs.rr) / 4;
       if (v.y > yObj + 0.02) { v.vy -= 30 * dt; v.y = Math.max(yObj, v.y + v.vy * dt); } else { v.y = yObj; v.vy = 0; v.asentado = true; }
-      v.pitch += (Math.atan2((hs.fl + hs.fr) / 2 - (hs.rl + hs.rr) / 2, T.base) - v.pitch) * Math.min(1, 8 * dt);
-      v.roll += (Math.atan2((hs.fr + hs.rr) / 2 - (hs.fl + hs.rl) / 2, T.via) - v.roll) * Math.min(1, 8 * dt);
+      v.pitch += (lim(Math.atan2((hs.fl + hs.fr) / 2 - (hs.rl + hs.rr) / 2, T.base), -0.45, 0.45) - v.pitch) * Math.min(1, 8 * dt);
+      v.roll += (lim(Math.atan2((hs.fr + hs.rr) / 2 - (hs.fl + hs.rl) / 2, T.via), -0.45, 0.45) - v.roll) * Math.min(1, 8 * dt);
     } else if (T.clase === 'agua') {
       const sup = this.superficieAgua(v.x, v.z, v.y);
       v.enAgua = sup >= 0;
