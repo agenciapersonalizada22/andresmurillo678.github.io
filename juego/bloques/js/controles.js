@@ -51,6 +51,7 @@ export class Controles {
     this.botonSaltar = false;
     this.botonBajar = false;
     this.modoArrastre = false;
+    this.erroresBloqueo = 0;
     this.arrastre = null;
     this.ultimoEspacio = 0;
     this.ultimoAdelante = 0;
@@ -77,7 +78,7 @@ export class Controles {
     if (!el.requestPointerLock) { this.modoArrastre = true; return; }
     try {
       const r = el.requestPointerLock();
-      if (r && typeof r.catch === 'function') r.catch(() => { this.modoArrastre = true; });
+      if (r && typeof r.catch === 'function') r.catch(() => { if (++this.erroresBloqueo >= 2) this.modoArrastre = true; });
     } catch (e) {
       this.modoArrastre = true;
     }
@@ -122,6 +123,7 @@ export class Controles {
   // ----------------------------------------------------------- Teclado
   escucharTeclado() {
     window.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return; // atajos del navegador (Ctrl+W, Alt+←…)
       const tag = e.target && e.target.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
       const c = e.code;
@@ -156,7 +158,7 @@ export class Controles {
       switch (c) {
         case 'KeyF': this.alAccion('volar'); break;
         case 'KeyE': case 'KeyI': this.alAccion('inventario'); break;
-        case 'Escape': this.alAccion('pausa'); break;
+        case 'Escape': this.alAccion('pausa', 'esc'); break;
         case 'F3': case 'KeyG': e.preventDefault(); this.alAccion('depuracion'); break;
         case 'KeyM': this.alAccion('musica'); break;
         case 'KeyQ': this.alAccion('rueda', -1); break;
@@ -177,18 +179,22 @@ export class Controles {
     document.addEventListener('pointerlockchange', () => {
       if (this.bloqueado) {
         this.modoArrastre = false;
+        this.erroresBloqueo = 0;
         this.arrastre = null;
       }
       this.alCambioBloqueo(this.bloqueado);
     });
-    document.addEventListener('pointerlockerror', () => { this.modoArrastre = true; });
+    document.addEventListener('pointerlockerror', () => {
+      // un error suelto es normal (el navegador pide esperar un poco tras Esc); si se repite, se mira arrastrando
+      if (++this.erroresBloqueo >= 2) this.modoArrastre = true;
+    });
 
     l.addEventListener('contextmenu', (e) => e.preventDefault());
     l.addEventListener('mousedown', (e) => {
       if (this.tactil || !this.puedeJugar()) return;
       e.preventDefault();
+      // este clic solo atrapa el ratón: no rompe ni pone nada
       if (!this.bloqueado && !this.modoArrastre) { this.pedirBloqueo(); return; }
-      if (!this.bloqueado) this.pedirBloqueo(); // por si ahora sí se puede atrapar el ratón
       if (this.bloqueado) {
         if (e.button === 0) { this.pulsos.romper = true; this.mantener.romper = true; }
         else if (e.button === 2) { this.pulsos.poner = true; this.mantener.poner = true; }

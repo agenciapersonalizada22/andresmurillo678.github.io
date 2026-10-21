@@ -31,6 +31,7 @@ export class Mundo {
     escena.add(this.grupo);
     this.chunks = new Map();
     this.cambios = new Map();     // clave de chunk -> Map(índice -> bloque)
+    this.originales = new Map();  // clave de chunk -> Map(índice -> bloque que generó el terreno)
     this.sucios = new Set();      // chunks que hay que volver a dibujar ya
     this.radio = 4;
     this.orden = [];
@@ -47,6 +48,7 @@ export class Mundo {
     this.chunks.clear();
     this.sucios.clear();
     this.cambios = new Map();
+    this.originales = new Map();
     this.semilla = semilla | 0;
     this.gen = crearGenerador(this.semilla);
     if (cambiosGuardados && typeof cambiosGuardados === 'object') {
@@ -138,7 +140,8 @@ export class Mundo {
     return -1;
   }
 
-  poner(x, y, z, id) {
+  // registrar = false: el cambio se ve pero no se guarda (lo hace el juego, no el jugador)
+  poner(x, y, z, id, registrar = true) {
     if (y < 0 || y >= ALTO) return false;
     const cx = x >> 4, cz = z >> 4;
     const k = clave(cx, cz);
@@ -147,12 +150,19 @@ export class Mundo {
     const lx = x & 15, lz = z & 15;
     const i = y * CAPA + lz * LADO + lx;
     if (ch.datos[i] === id) return false;
+    const antes = ch.datos[i];
     ch.datos[i] = id;
     if (id !== B.AIRE && y > ch.alturaMax) ch.alturaMax = Math.min(ALTO - 1, y);
-    let m = this.cambios.get(k);
-    if (!m) { m = new Map(); this.cambios.set(k, m); }
-    m.set(i, id);
-    this.hayCambiosSinGuardar = true;
+    if (registrar) {
+      let m = this.cambios.get(k);
+      if (!m) { m = new Map(); this.cambios.set(k, m); }
+      let o = this.originales.get(k);
+      if (!o) { o = new Map(); this.originales.set(k, o); }
+      if (!o.has(i)) o.set(i, antes);
+      // si vuelve a ser lo que generó el terreno, ya no es un cambio
+      if (o.get(i) === id) { m.delete(i); o.delete(i); } else m.set(i, id);
+      this.hayCambiosSinGuardar = true;
+    }
 
     // hay que redibujar este chunk y, si el bloque está en la orilla, también al vecino
     const dxs = [0], dzs = [0];
@@ -169,7 +179,10 @@ export class Mundo {
     const ch = { cx, cz, datos, alturaMax, mallas: [null, null, null], mallado: false };
     const m = this.cambios.get(k);
     if (m) {
+      let o = this.originales.get(k);
+      if (!o) { o = new Map(); this.originales.set(k, o); }
       for (const [idx, id] of m) {
+        if (!o.has(idx)) o.set(idx, datos[idx]);
         datos[idx] = id;
         const y = Math.floor(idx / CAPA);
         if (id !== B.AIRE && y > ch.alturaMax) ch.alturaMax = Math.min(ALTO - 1, y);

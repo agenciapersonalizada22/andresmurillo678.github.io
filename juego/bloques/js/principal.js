@@ -18,6 +18,7 @@ import { Jugador } from './jugador.js';
 import { lanzarRayo } from './rayo.js';
 import { Cielo } from './cielo.js';
 import { Particulas } from './particulas.js';
+import { Animales } from './animales.js';
 import { Controles, detectarTactil } from './controles.js';
 import { Interfaz } from './interfaz.js';
 import { Sonido } from './sonido.js';
@@ -71,6 +72,7 @@ const mundo = new Mundo(escena, materialesMundo);
 mundo.hojasDetalladas = tactil ? V.hojasDetalladasMovil : V.hojasDetalladas;
 const cielo = new Cielo(escena);
 const particulas = new Particulas(escena);
+const animales = new Animales(escena, mundo);
 const jugador = new Jugador();
 
 // Cuadrito negro alrededor del bloque al que apuntas
@@ -178,8 +180,8 @@ const controles = new Controles({
         break;
       case 'pausa':
         if (estado === 'jugando') pausar();
-        else if (estado === 'inventario') cerrarInventario();
-        else if (estado === 'pausa') seguir();
+        else if (estado === 'inventario') cerrarInventario(dato === 'esc');
+        else if (estado === 'pausa') seguir(dato === 'esc');
         break;
       case 'depuracion': alternarDepuracion(); break;
       case 'musica': alternarMusica(); break;
@@ -292,7 +294,8 @@ function actualizarObjetivo() {
 }
 
 // ----------------------------------------------------------- Guardar
-function guardar() {
+let avisoGuardadoDado = false;
+function guardar(silencio = false) {
   if (!partidaIniciada) return false;
   const datos = {
     version: 1,
@@ -311,14 +314,18 @@ function guardar() {
   if (ok) {
     partida = datos;
     mundo.hayCambiosSinGuardar = false;
+    avisoGuardadoDado = false;
+  } else if (!silencio && !avisoGuardadoDado) {
+    avisoGuardadoDado = true;
+    interfaz.aviso('No se pudo guardar (¿poco espacio o modo incógnito?)');
   }
   return ok;
 }
 
-window.addEventListener('pagehide', () => guardar());
+window.addEventListener('pagehide', () => guardar(true));
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
-    guardar();
+    guardar(true);
     if (estado === 'jugando' && controles.tactil) pausar();
   }
 });
@@ -340,6 +347,7 @@ function actualizarTitulo() {
 
 function mostrarTitulo() {
   estado = 'titulo';
+  animales.limpiar();
   esperandoMundo = false;
   controles.soltarTodo();
   controles.soltarBloqueo();
@@ -433,10 +441,11 @@ function pausar() {
   interfaz.pantalla('pausa');
 }
 
-function seguir() {
+// Con Esc el navegador no deja atrapar el ratón (no cuenta como clic): ahí se pide con el siguiente clic
+function seguir(conEsc = false) {
   estado = 'jugando';
   interfaz.pantalla(null);
-  controles.pedirBloqueo();
+  if (!conEsc) controles.pedirBloqueo();
 }
 
 function abrirInventario() {
@@ -446,11 +455,11 @@ function abrirInventario() {
   interfaz.pantalla('inventario');
 }
 
-function cerrarInventario() {
+function cerrarInventario(conEsc = false) {
   if (estado !== 'inventario') return;
   estado = 'jugando';
   interfaz.pantalla(null);
-  controles.pedirBloqueo();
+  if (!conEsc) controles.pedirBloqueo();
 }
 
 // Empieza a jugar: un mundo nuevo o el guardado
@@ -472,10 +481,12 @@ function comenzar(nuevo, textoSemilla) {
     hora = CONFIG.dia.horaInicio;
     buscarSuelo = true;
   } else {
+    if ((partida.semilla | 0) !== mundo.semilla) mundo.reiniciar(partida.semilla, partida.cambios);
     restaurarJugador(partida);
     buscarSuelo = false;
   }
   partidaIniciada = true;
+  animales.limpiar();
   interfaz.volando(jugador.volando);
   interfaz.actualizarBarra(barra, seleccion);
   esperandoMundo = true;
@@ -547,7 +558,7 @@ function pararseEnSuelo() {
   }
   // una flor o pasto alto donde aparecemos se quita (para no verla pegada a la cara)
   if (DIBUJO[mundo.obtener(mejor.x, mejor.y + 1, mejor.z)] === DIBUJO_PLANTA) {
-    mundo.poner(mejor.x, mejor.y + 1, mejor.z, B.AIRE);
+    mundo.poner(mejor.x, mejor.y + 1, mejor.z, B.AIRE, false);
   }
   jugador.ponerEn(mejor.x + 0.5, mejor.y + 1, mejor.z + 0.5);
   jugador.yaw = direccionConVista(mejor.x, mejor.y, mejor.z);
@@ -597,7 +608,7 @@ boton('btnMusica', () => alternarMusica());
 boton('btnEfectos', () => { Sonido.alternarEfectos(); actualizarBotonesPausa(); });
 boton('btnDepuracion', () => alternarDepuracion());
 boton('btnGuardar', () => {
-  interfaz.aviso(guardar() ? 'Mundo guardado ✓' : 'No se pudo guardar (¿modo incógnito?)');
+  interfaz.aviso(guardar(true) ? 'Mundo guardado ✓' : 'No se pudo guardar (¿poco espacio o modo incógnito?)');
 });
 boton('btnTitulo', () => { guardar(); mostrarTitulo(); });
 boton('btnMenosDistancia', () => cambiarDistancia(-1));
@@ -709,6 +720,7 @@ function cuadro(ahora) {
   }
   renderer.setClearColor(escena.fog.color);
   interfaz.bajoAgua(bajoAgua);
+  interfaz.clicContinuar(estado === 'jugando' && !esperandoMundo && !controles.tactil && !controles.bloqueado && !controles.modoArrastre);
   cielo.bajoAgua(bajoAgua); // bajo el agua no se ve el cielo, solo azul
   Musica.ponerAnimo(dia > 0.4 ? 'dia' : 'noche');
 
@@ -720,8 +732,18 @@ function cuadro(ahora) {
   actualizarObjetivo();
   if (estado === 'jugando') accionesRepetidas(dt);
   particulas.actualizar(dt, mundo);
+  if (CONFIG.animales.activos && estado === 'jugando' && !esperandoMundo) {
+    animales.tintar(r, g, b);
+    animales.actualizar(dt, jugador, dia, tactil ? CONFIG.animales.maximoMovil : CONFIG.animales.maximo);
+  }
 
   renderer.render(escena, camara);
+
+  // Brújula: 0 = norte (-Z), 90 = este (+X)
+  if (estado !== 'titulo') {
+    dirTmp.set(0, 0, -1).applyEuler(camara.rotation);
+    interfaz.brujula((Math.atan2(dirTmp.x, -dirTmp.z) * 180 / Math.PI + 360) % 360);
+  }
 
   // Datos (F3)
   tiempoDepuracion -= dt;
@@ -748,7 +770,7 @@ function cuadro(ahora) {
     tiempoGuardar += dt;
     if (tiempoGuardar >= CONFIG.guardado.cadaSegundos) {
       tiempoGuardar = 0;
-      guardar();
+      if (mundo.hayCambiosSinGuardar) guardar();
     }
   }
 }
@@ -768,7 +790,7 @@ requestAnimationFrame(cuadro);
 
 // Para hacer pruebas desde la consola del navegador
 window.BLOQUES = {
-  mundo, jugador, camara, renderer,
+  mundo, jugador, camara, renderer, animales,
   get estado() { return estado; },
   get esperando() { return esperandoMundo; },
   get objetivo() { return objetivo; },

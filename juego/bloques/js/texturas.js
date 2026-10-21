@@ -19,6 +19,7 @@ export const LISTA_TEXTURAS = [
   'tronco_lado', 'tronco_arriba', 'hojas', 'tablas', 'vidrio', 'ladrillo', 'ladrillo_piedra', 'nieve',
   'carbon', 'hierro', 'oro', 'lecho', 'flor_roja', 'flor_amarilla', 'pasto_alto', 'lana_blanca',
   'lana_roja', 'lana_naranja', 'lana_amarilla', 'lana_verde', 'lana_azul', 'lana_morada', 'lana_rosa', 'calabaza',
+  'arenisca_arriba', 'arenisca_lado', 'adoquin_musgoso', 'obsidiana', 'hielo', 'lana_negra', 'lana_gris', 'tablas_oscuras',
 ];
 
 export const TAM = 16;          // pixeles por textura
@@ -390,6 +391,74 @@ function pintarCalabaza(p, azar) {
   }
 }
 
+// Capas de arenisca: bandas horizontales con granito
+function pintarArenisca(p, azar, lado) {
+  for (let y = 0; y < TAM; y++) {
+    const banda = lado ? (y % 5 === 4 ? -16 : y % 5 === 0 ? 7 : 0) : 0;
+    for (let x = 0; x < TAM; x++) {
+      let c = [218, 202, 144];
+      if (azar() < 0.14) c = [200, 182, 124];
+      else if (azar() > 0.92) c = [232, 218, 164];
+      p(x, y, variar([c[0] + banda, c[1] + banda, c[2] + banda * 1.1], 4, azar));
+    }
+  }
+}
+
+function pintarAdoquinMusgoso(p, azar) {
+  pintarAdoquin(p, azar);
+  const mapa = celdas(azar, 7);
+  const musgo = [];
+  for (let i = 0; i < 7; i++) musgo.push(azar() < 0.55);
+  for (let y = 0; y < TAM; y++) {
+    for (let x = 0; x < TAM; x++) {
+      if (!musgo[mapa[y * TAM + x].cual] || azar() < 0.3) continue;
+      p(x, y, variar(azar() < 0.5 ? [62, 112, 44] : [84, 140, 56], 8, azar));
+    }
+  }
+}
+
+// Vidrio volcánico: casi negro con destellos morados
+function pintarObsidiana(p, azar) {
+  for (let y = 0; y < TAM; y++) {
+    for (let x = 0; x < TAM; x++) {
+      const v = azar();
+      let c = [24, 16, 38];
+      if (v < 0.1) c = [14, 8, 24];
+      else if (v > 0.93) c = [86, 56, 132];
+      else if ((x + y * 2) % 11 === 0) c = [44, 30, 70];
+      p(x, y, variar(c, 4, azar));
+    }
+  }
+}
+
+function pintarHielo(p, azar) {
+  for (let y = 0; y < TAM; y++) {
+    for (let x = 0; x < TAM; x++) {
+      let c = [150, 200, 240];
+      const diag = (x + y) % 8;
+      if (diag === 0 || diag === 1) c = [196, 228, 252];
+      else if (azar() < 0.12) c = [124, 176, 226];
+      const borde = x === 0 || y === 0 || x === 15 || y === 15;
+      p(x, y, variar(borde ? [128, 182, 230] : c, 4, azar));
+    }
+  }
+}
+
+function pintarTablasOscuras(p, azar) {
+  const tonos = [[96, 66, 40], [88, 60, 36], [92, 63, 38], [82, 56, 34]];
+  const uniones = [5, 12, 2, 9];
+  for (let y = 0; y < TAM; y++) {
+    const tabla = Math.floor(y / 4);
+    const veta = (azar() * 2 - 1) * 7;
+    for (let x = 0; x < TAM; x++) {
+      let c = tonos[tabla];
+      if (y % 4 === 3 || x === uniones[tabla]) c = [52, 34, 20];
+      else c = [c[0] + veta, c[1] + veta, c[2] + veta * 0.7];
+      p(x, y, variar(c, 4, azar));
+    }
+  }
+}
+
 const PINTORES = {
   pasto_arriba: pintarPasto,
   pasto_lado: pintarPastoLado,
@@ -423,6 +492,14 @@ const PINTORES = {
   lana_morada: (p, a) => pintarLana(p, a, [132, 64, 192]),
   lana_rosa: (p, a) => pintarLana(p, a, [242, 142, 184]),
   calabaza: pintarCalabaza,
+  arenisca_arriba: (p, a) => pintarArenisca(p, a, false),
+  arenisca_lado: (p, a) => pintarArenisca(p, a, true),
+  adoquin_musgoso: pintarAdoquinMusgoso,
+  obsidiana: pintarObsidiana,
+  hielo: pintarHielo,
+  lana_negra: (p, a) => pintarLana(p, a, [34, 34, 40]),
+  lana_gris: (p, a) => pintarLana(p, a, [128, 130, 136]),
+  tablas_oscuras: pintarTablasOscuras,
 };
 
 // Achica una imagen a la mitad promediando cuadritos de 2x2.

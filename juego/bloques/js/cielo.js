@@ -11,13 +11,17 @@ import * as THREE from '../lib/three.module.min.js';
 import { CONFIG } from './config.js';
 import { azarConSemilla } from './ruido.js';
 
-const COLORES = {
-  diaArriba: new THREE.Color('#3f8fe8'),
-  diaHorizonte: new THREE.Color('#acd8ff'),
-  nocheArriba: new THREE.Color('#050a1c'),
-  nocheHorizonte: new THREE.Color('#16224a'),
-  atardecer: new THREE.Color('#ff8a3d'),
-};
+// Se crean al armar el cielo (no al cargar el módulo) para que ya esté
+// desactivado ColorManagement y los colores se lean tal cual están escritos.
+function crearColores() {
+  return {
+    diaArriba: new THREE.Color('#3f8fe8'),
+    diaHorizonte: new THREE.Color('#acd8ff'),
+    nocheArriba: new THREE.Color('#050a1c'),
+    nocheHorizonte: new THREE.Color('#16224a'),
+    atardecer: new THREE.Color('#ff8a3d'),
+  };
+}
 
 const suave = (a, b, x) => {
   const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
@@ -38,11 +42,13 @@ function texturaCuadro(tam, pintar) {
 export class Cielo {
   constructor(escena) {
     this.escena = escena;
+    THREE.ColorManagement.enabled = false;
+    this.colores = crearColores();
     this.uniformes = {
       arriba: { value: new THREE.Color() },
       horizonte: { value: new THREE.Color() },
       solDir: { value: new THREE.Vector3(0, 1, 0) },
-      colorAtardecer: { value: COLORES.atardecer.clone() },
+      colorAtardecer: { value: this.colores.atardecer.clone() },
       fuerzaAtardecer: { value: 0 },
     };
     const domo = new THREE.Mesh(
@@ -184,10 +190,10 @@ export class Cielo {
     const atardecer = Math.exp(-Math.pow(altura / 0.2, 2)) * (hora < 0.12 || (hora > 0.38 && hora < 0.62) ? 1 : 0.4);
     this.factorDia = dia;
 
-    const arriba = this.uniformes.arriba.value.copy(COLORES.nocheArriba).lerp(COLORES.diaArriba, dia);
-    const horizonte = this.uniformes.horizonte.value.copy(COLORES.nocheHorizonte).lerp(COLORES.diaHorizonte, dia);
-    horizonte.lerp(COLORES.atardecer, atardecer * 0.35);
-    arriba.lerp(COLORES.atardecer, atardecer * 0.08);
+    const arriba = this.uniformes.arriba.value.copy(this.colores.nocheArriba).lerp(this.colores.diaArriba, dia);
+    const horizonte = this.uniformes.horizonte.value.copy(this.colores.nocheHorizonte).lerp(this.colores.diaHorizonte, dia);
+    horizonte.lerp(this.colores.atardecer, atardecer * 0.35);
+    arriba.lerp(this.colores.atardecer, atardecer * 0.08);
     this.uniformes.fuerzaAtardecer.value = atardecer * 0.6;
     this.colorNiebla.copy(horizonte);
 

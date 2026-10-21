@@ -25,6 +25,7 @@ export const B = {
   CARBON: 15, HIERRO: 16, ORO: 17, LECHO: 18, FLOR_ROJA: 19, FLOR_AMARILLA: 20, PASTO_ALTO: 21,
   LANA_BLANCA: 22, LANA_ROJA: 23, LANA_NARANJA: 24, LANA_AMARILLA: 25, LANA_VERDE: 26,
   LANA_AZUL: 27, LANA_MORADA: 28, LANA_ROSA: 29, CALABAZA: 30, AGUA_PUESTA: 31,
+  ARENISCA: 32, ADOQUIN_MUSGOSO: 33, OBSIDIANA: 34, HIELO: 35, LANA_NEGRA: 36, LANA_GRIS: 37, TABLAS_OSCURAS: 38,
 };
 
 const solo = (t) => [t, t, t];
@@ -62,6 +63,13 @@ export const BLOQUES = [
   { id: B.LANA_ROSA, clave: 'lana_rosa', nombre: 'Bloque rosa', dibujo: 'solido', caras: solo('lana_rosa'), sonido: 'lana', enMenu: true },
   { id: B.CALABAZA, clave: 'calabaza', nombre: 'Calabaza', dibujo: 'solido', caras: solo('calabaza'), sonido: 'madera', enMenu: true },
   { id: B.AGUA_PUESTA, clave: 'agua_puesta', nombre: 'Agua', dibujo: 'agua', caras: solo('agua'), sonido: 'agua', enMenu: true, orden: B.AGUA },
+  { id: B.ARENISCA, clave: 'arenisca', nombre: 'Arenisca', dibujo: 'solido', caras: ['arenisca_arriba', 'arenisca_lado', 'arenisca_arriba'], sonido: 'piedra', enMenu: true },
+  { id: B.ADOQUIN_MUSGOSO, clave: 'adoquin_musgoso', nombre: 'Adoquín con musgo', dibujo: 'solido', caras: solo('adoquin_musgoso'), sonido: 'piedra', enMenu: true },
+  { id: B.OBSIDIANA, clave: 'obsidiana', nombre: 'Obsidiana', dibujo: 'solido', caras: solo('obsidiana'), sonido: 'piedra', enMenu: true },
+  { id: B.HIELO, clave: 'hielo', nombre: 'Hielo', dibujo: 'solido', caras: solo('hielo'), sonido: 'vidrio', enMenu: true },
+  { id: B.LANA_NEGRA, clave: 'lana_negra', nombre: 'Bloque negro', dibujo: 'solido', caras: solo('lana_negra'), sonido: 'lana', enMenu: true },
+  { id: B.LANA_GRIS, clave: 'lana_gris', nombre: 'Bloque gris', dibujo: 'solido', caras: solo('lana_gris'), sonido: 'lana', enMenu: true },
+  { id: B.TABLAS_OSCURAS, clave: 'tablas_oscuras', nombre: 'Tablas oscuras', dibujo: 'solido', caras: solo('tablas_oscuras'), sonido: 'madera', enMenu: true },
 ];
 
 // ----------------------------------------------------------- Tablas rápidas
