@@ -603,3 +603,121 @@ body.enTitulo #hud { display: none; }
   .tarjeta .bloqueMenu { padding: 5px 2px 4px; font-size: 10px; }
   .bloqueMenu img { width: 30px; height: 30px; }
 }
+
+/* ---------------------------------------------------------- Vehículos, mochila y calidad */
+#mochila {
+  position: absolute;
+  left: calc(10px + var(--seguro-izq));
+  bottom: calc(14px + var(--seguro-abajo));
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.42);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-size: 12px;
+  color: #f0fff0;
+}
+#mochila .obj { display: flex; align-items: center; gap: 6px; }
+#mochila img { width: 18px; height: 18px; image-rendering: pixelated; }
+#mochila b { color: var(--verde); min-width: 18px; }
+body.tactil #mochila { display: none; }
+
+#tablero {
+  position: absolute;
+  right: calc(16px + var(--seguro-der));
+  bottom: calc(18px + var(--seguro-abajo));
+  width: 190px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(0, 8, 12, 0.55);
+  border: 2px solid rgba(61, 245, 255, 0.45);
+  color: #eaffff;
+  text-align: right;
+}
+#tablero .velocidad b { font-size: 34px; letter-spacing: 1px; color: var(--cian); text-shadow: 0 0 10px rgba(61, 245, 255, 0.6); }
+#tablero .velocidad span { margin-left: 6px; font-size: 11px; opacity: 0.8; }
+#tablero .medidor { position: relative; height: 14px; margin-top: 6px; border-radius: 7px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+#tablero .medidor i { position: absolute; inset: 0 auto 0 0; width: 100%; background: linear-gradient(90deg, #ff5a3d, #ffd23d 45%, #7dd957); border-radius: 7px; transition: width 0.2s; }
+#tablero .medidor.gas i { background: linear-gradient(90deg, #3df5ff, #7d9bff); }
+#tablero .medidor em { position: absolute; left: 8px; top: 0; font-style: normal; font-size: 8px; line-height: 14px; letter-spacing: 1px; color: #001018; font-weight: 800; }
+#tablero p { margin: 8px 0 0; min-height: 1.2em; font-family: system-ui, sans-serif; font-size: 11px; line-height: 1.35; opacity: 0.9; }
+#tablero p.alerta { color: #ff8a70; font-weight: 700; }
+body.tactil #tablero { right: auto; left: calc(50% - 95px); bottom: calc(96px + var(--seguro-abajo)); width: 190px; text-align: center; pointer-events: none; }
+
+#btnVehiculo, #btnCamara, #btnLuces, #btnRepostar {
+  right: calc(10px + var(--seguro-der));
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  font-size: 10px;
+  display: none;
+}
+#btnVehiculo { top: calc(62px + var(--seguro-arriba)); border-color: rgba(125, 217, 87, 0.9); }
+#btnCamara { top: calc(120px + var(--seguro-arriba)); }
+#btnLuces { top: calc(178px + var(--seguro-arriba)); }
+#btnRepostar { top: calc(236px + var(--seguro-arriba)); }
+body.cercaVeh #btnVehiculo, body.enVehiculo #btnVehiculo,
+body.enVehiculo #btnCamara, body.enVehiculo #btnLuces, body.enVehiculo #btnRepostar { display: flex; }
+body.enVehiculo #btnRomper, body.enVehiculo #btnPoner, body.enVehiculo #btnVolar, body.enVehiculo #btnBajar,
+body.enVehiculo #btnInventario { display: none; }
+body.enVehiculo #barra, body.enVehiculo #nombreBloque { display: none; }
+
+.pestanas { margin-bottom: 8px; }
+.pestanas button.activa { background: rgba(125, 217, 87, 0.3); border-color: var(--verde); }
+#rejillaVehiculos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  max-height: 52vh;
+  overflow-y: auto;
+  padding: 4px;
+}
+.tarjetaVeh {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 6px; border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08); border: 2px solid rgba(255, 255, 255, 0.22);
+  color: #fff; font-size: 11px; font-weight: 800;
+}
+.tarjetaVeh:hover, .tarjetaVeh:focus-visible { border-color: var(--verde); background: rgba(125, 217, 87, 0.2); outline: none; }
+.tarjetaVeh img { width: 84px; height: 56px; image-rendering: auto; }
+.tarjetaVeh small { font-weight: 400; font-size: 10px; opacity: 0.8; font-family: system-ui, sans-serif; text-align: center; }
+#listaMochila { text-align: left; margin: 6px 0; font-family: system-ui, sans-serif; font-size: 13px; }
+#rejillaInventario { max-height: 54vh; overflow-y: auto; padding: 2px; }
+@media (max-height: 500px) { #rejillaInventario, #rejillaVehiculos { max-height: 46vh; } }
+
+body.enVehiculo:not(.vehAire) #mira { display: none; }
+
+#pistaVehiculo {
+  position: absolute;
+  left: 50%;
+  top: 62%;
+  transform: translateX(-50%);
+  padding: 7px 16px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 2px solid rgba(125, 217, 87, 0.7);
+  font-size: 14px;
+  font-weight: 800;
+  color: #f0fff0;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+#pistaVehiculo.visible { opacity: 1; }
+body.tactil #pistaVehiculo { display: none; }
+
+/* En el celular el tablero va arriba y chiquito, para no tapar el camino */
+body.tactil #tablero {
+  top: calc(54px + var(--seguro-arriba));
+  bottom: auto;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  width: 150px;
+  padding: 5px 10px 6px;
+  text-align: center;
+}
+body.tactil #tablero .velocidad b { font-size: 24px; }
+body.tactil #tablero p { display: none; }
