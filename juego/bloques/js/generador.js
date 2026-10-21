@@ -5,14 +5,17 @@
 //  árboles, flores y pasto alto.
 //  Todo sale del "ruido" de ruido.js, así que la misma semilla
 //  siempre da el mismo mundo.
+//  Hay dos versiones del generador: la 1 (mundos viejos) es igual
+//  que siempre; la 2 (mundos nuevos) agrega biomas: llanura, bosque,
+//  desierto, taiga y tundra. Las dos ponen estructuras encima.
 // =============================================================
 import { CONFIG } from './config.js';
 import { crearRuido, hash2, hash3 } from './ruido.js';
 import { B } from './bloques.js';
+import { LADO, ALTO, CAPA } from './medidas.js';
+import { crearEstructuras } from './estructuras.js';
 
-export const LADO = 16;                // un chunk mide 16 x 16 bloques
-export const ALTO = CONFIG.mundo.alto; // y de alto lo que diga la configuración
-export const CAPA = LADO * LADO;       // bloques en un piso de un chunk
+export { LADO, ALTO, CAPA };
 
 // Posición dentro del arreglo de un chunk
 export const indice = (x, y, z) => y * CAPA + z * LADO + x;
@@ -22,7 +25,7 @@ const suave = (a, b, x) => {
   return t * t * (3 - 2 * t);
 };
 
-export function crearGenerador(semilla) {
+export function crearGenerador(semilla, version = 1, opciones = {}) {
   const M = CONFIG.mundo;
   const MAR = M.nivelMar;
   const esc = M.escalaTerreno || 1;
@@ -34,6 +37,23 @@ export function crearGenerador(semilla) {
   const rDetalle = crearRuido(s ^ 0x27d4eb2d);
   const rBosque = crearRuido((s + 777) | 0);
   const rCuevas = crearRuido(s ^ 0x1b873593);
+  const rTemp = crearRuido(s ^ 0x3c6ef372);
+  const rHum = crearRuido((s + 424242) | 0);
+  const v2 = version >= 2;
+
+  // Biomas (solo en la versión 2): 0 llanura, 1 bosque, 2 desierto, 3 tundra, 4 taiga
+  const NOMBRE_BIOMA = ['llanura', 'bosque', 'desierto', 'tundra', 'taiga'];
+  function codigoBioma(x, z) {
+    if (!v2) return 0;
+    const t = rTemp.capas2(x / 520, z / 520, 3);
+    const h = rHum.capas2(x / 420 + 50, z / 420 - 30, 3);
+    if (t > 0.2 && h < 0.12) return 2;
+    if (t < -0.3) return 3;
+    if (t < -0.13) return 4;
+    if (h > 0.2) return 1;
+    return 0;
+  }
+  const biomaEn = (x, z) => NOMBRE_BIOMA[codigoBioma(x, z)];
 
   // ¿Qué tan alto es el suelo en (x, z)?
   function alturaEn(x, z) {
@@ -53,7 +73,7 @@ export function crearGenerador(semilla) {
   }
 
   // ¿De qué es el bloque de hasta arriba?
-  function superficieEn(x, z, h, pendiente) {
+  function superficieEn(x, z, h, pendiente, bio = 0) {
     if (h <= MAR) {
       if (h < MAR - 5 && rDetalle.simplex2(x / 23 + 40, z / 23) > 0.2) return B.GRAVA;
       return B.ARENA;
@@ -63,8 +83,12 @@ export function crearGenerador(semilla) {
     if (h >= nieve) return B.NIEVE;
     if (pendiente >= 4 && h > MAR + 10) return B.PIEDRA;          // acantilados
     if (h > nieve - 12 && pendiente >= 2) return B.PIEDRA;        // montaña rocosa
+    if (bio === 2) return B.ARENA;
+    if (bio === 3) return B.NIEVE;
     return B.PASTO;
   }
+
+  const est = crearEstructuras(s, { alturaEn, biomaEn }, { bloqueados: opciones.bloqueados });
 
   const EXT = 3;                 // miramos 3 bloques más allá del chunk (para árboles y pendientes)
   const AN = LADO + EXT * 2;
@@ -79,6 +103,7 @@ export function crearGenerador(semilla) {
       for (let i = 0; i < AN; i++) alt[j * AN + i] = alturaEn(x0 + i - EXT, z0 + j - EXT);
     }
     const sup = new Uint8Array(AN * AN);
+    const bio = new Uint8Array(AN * AN);
     for (let j = 1; j < AN - 1; j++) {
       for (let i = 1; i < AN - 1; i++) {
         const k = j * AN + i;
@@ -86,7 +111,9 @@ export function crearGenerador(semilla) {
         const pend = Math.max(
           Math.abs(h - alt[k - 1]), Math.abs(h - alt[k + 1]),
           Math.abs(h - alt[k - AN]), Math.abs(h - alt[k + AN]));
-        sup[k] = superficieEn(x0 + i - EXT, z0 + j - EXT, h, pend);
+        const b = codigoBioma(x0 + i - EXT, z0 + j - EXT);
+        bio[k] = b;
+        sup[k] = superficieEn(x0 + i - EXT, z0 + j - EXT, h, pend, b);
       }
     }
 
@@ -99,11 +126,13 @@ export function crearGenerador(semilla) {
         const h = alt[k];
         const su = sup[k];
         const wx = x0 + x, wz = z0 + z;
-        const capa = su === B.PASTO ? B.TIERRA : su === B.NIEVE ? B.PIEDRA : su;
+        const bi = bio[k];
+        const capa = su === B.PASTO ? B.TIERRA : su === B.NIEVE ? (bi === 3 ? B.TIERRA : B.PIEDRA) : su;
         const hondo = 3 + (hash2(wx, wz, s + 3) < 0.5 ? 1 : 0);
         const col = z * LADO + x;
+        const desierto = bi === 2 && su === B.ARENA && h > MAR;
         for (let y = 1; y <= h; y++) {
-          datos[y * CAPA + col] = y === h ? su : y > h - hondo ? capa : B.PIEDRA;
+          datos[y * CAPA + col] = y === h ? su : y > h - hondo ? (desierto && y < h - 1 ? B.ARENISCA : capa) : B.PIEDRA;
         }
         datos[col] = B.LECHO;
         if (hash2(wx, wz, s + 1) < 0.6) datos[CAPA + col] = B.LECHO;
@@ -177,47 +206,89 @@ export function crearGenerador(semilla) {
     for (let j = 1; j < AN - 1; j++) {
       for (let i = 1; i < AN - 1; i++) {
         const k = j * AN + i;
-        if (sup[k] !== B.PASTO) continue;
+        const bi = bio[k];
         const h = alt[k];
-        if (h < MAR + 2 || h > ALTO - 14) continue;
         const wx = x0 + i - EXT, wz = z0 + j - EXT;
+        if (bi === 2) {
+          // cactus en el desierto
+          if (sup[k] !== B.ARENA || h <= MAR + 1 || hash2(wx, wz, s + 51) >= 0.007) continue;
+          const lx = wx - x0, lz = wz - z0;
+          if (lx < 0 || lx >= LADO || lz < 0 || lz >= LADO) continue;
+          const alto = 1 + Math.floor(hash2(wx, wz, s + 52) * 3);
+          for (let y = h + 1; y <= h + alto; y++) datos[y * CAPA + lz * LADO + lx] = B.CACTUS;
+          if (h + alto > alturaMax) alturaMax = h + alto;
+          continue;
+        }
+        if (bi === 3 ? sup[k] !== B.NIEVE : sup[k] !== B.PASTO) continue;
+        if (h < MAR + 2 || h > ALTO - 14) continue;
         const bosque = suave(-0.25, 0.45, rBosque.simplex2(wx / 170, wz / 170));
-        const densidad = M.densidadArboles * (0.1 + 1.9 * bosque);
+        let densidad = M.densidadArboles * (0.1 + 1.9 * bosque);
+        if (bi === 1) densidad = M.densidadArboles * (1.2 + 1.8 * bosque);
+        else if (bi === 4) densidad = M.densidadArboles * (0.9 + 1.6 * bosque);
+        else if (bi === 3) densidad = M.densidadArboles * 0.25;
         if (hash2(wx, wz, s + 31) >= densidad) continue;
+        const abeto = bi === 3 || bi === 4;
+        const abedul = bi === 1 && hash2(wx, wz, s + 34) < 0.4;
+        const idTronco = abeto ? B.TRONCO_ABETO : abedul ? B.TRONCO_ABEDUL : B.TRONCO;
+        const idHojas = abeto ? B.HOJAS_ABETO : abedul ? B.HOJAS_ABEDUL : B.HOJAS;
 
-        const tope = h + 4 + Math.floor(hash2(wx, wz, s + 32) * 3);
-        if (tope + 2 > alturaMax) alturaMax = tope + 2;
-        for (let dy = -2; dy <= 1; dy++) {
-          const r = dy < 0 ? 2 : 1;
-          const y = tope + dy;
-          for (let dz = -r; dz <= r; dz++) {
-            for (let dx = -r; dx <= r; dx++) {
-              if (r === 2 && Math.abs(dx) === 2 && Math.abs(dz) === 2 &&
-                  hash3(wx + dx, y, wz + dz, s + 33) < 0.6) continue;
-              if (dy === 1 && dx !== 0 && dz !== 0) continue;
-              const lx = wx + dx - x0, lz = wz + dz - z0;
-              if (lx < 0 || lx >= LADO || lz < 0 || lz >= LADO) continue;
-              const q = y * CAPA + lz * LADO + lx;
-              if (datos[q] === B.AIRE) datos[q] = B.HOJAS;
+        let tope;
+        if (abeto) {
+          tope = h + 5 + Math.floor(hash2(wx, wz, s + 32) * 4);
+          if (tope + 2 > alturaMax) alturaMax = tope + 2;
+          for (let L = 0; L <= 6; L++) {
+            const y = tope + 1 - L;
+            const r = L === 0 ? 0 : Math.min(2, (L + 1) >> 1);
+            for (let dz = -r; dz <= r; dz++) {
+              for (let dx = -r; dx <= r; dx++) {
+                if (r === 2 && Math.abs(dx) === 2 && Math.abs(dz) === 2 && hash3(wx + dx, y, wz + dz, s + 33) < 0.6) continue;
+                const lx = wx + dx - x0, lz = wz + dz - z0;
+                if (lx < 0 || lx >= LADO || lz < 0 || lz >= LADO) continue;
+                const q = y * CAPA + lz * LADO + lx;
+                if (datos[q] === B.AIRE) datos[q] = idHojas;
+              }
+            }
+          }
+        } else {
+          tope = h + 4 + Math.floor(hash2(wx, wz, s + 32) * 3) + (abedul ? 1 : 0);
+          if (tope + 2 > alturaMax) alturaMax = tope + 2;
+          for (let dy = -2; dy <= 1; dy++) {
+            const r = dy < 0 ? 2 : 1;
+            const y = tope + dy;
+            for (let dz = -r; dz <= r; dz++) {
+              for (let dx = -r; dx <= r; dx++) {
+                if (r === 2 && Math.abs(dx) === 2 && Math.abs(dz) === 2 &&
+                    hash3(wx + dx, y, wz + dz, s + 33) < 0.6) continue;
+                if (dy === 1 && dx !== 0 && dz !== 0) continue;
+                const lx = wx + dx - x0, lz = wz + dz - z0;
+                if (lx < 0 || lx >= LADO || lz < 0 || lz >= LADO) continue;
+                const q = y * CAPA + lz * LADO + lx;
+                if (datos[q] === B.AIRE) datos[q] = idHojas;
+              }
             }
           }
         }
         const lx = wx - x0, lz = wz - z0;
         if (lx >= 0 && lx < LADO && lz >= 0 && lz < LADO) {
-          for (let y = h + 1; y <= tope; y++) datos[y * CAPA + lz * LADO + lx] = B.TRONCO;
+          for (let y = h + 1; y <= tope; y++) datos[y * CAPA + lz * LADO + lx] = idTronco;
           datos[h * CAPA + lz * LADO + lx] = B.TIERRA;
         }
       }
     }
 
-    // 5) Flores, pasto alto y alguna calabaza
+    // 5) Flores, pasto alto y alguna calabaza (y arbustos secos en el desierto)
     for (let z = 0; z < LADO; z++) {
       for (let x = 0; x < LADO; x++) {
         const k = (z + EXT) * AN + (x + EXT);
-        if (sup[k] !== B.PASTO) continue;
         const h = alt[k];
         if (h + 1 >= ALTO) continue;
         const col = z * LADO + x;
+        if (bio[k] === 2) {
+          if (sup[k] === B.ARENA && h > MAR && datos[h * CAPA + col] === B.ARENA && datos[(h + 1) * CAPA + col] === B.AIRE &&
+              hash2(x0 + x, z0 + z, s + 43) < 0.014) datos[(h + 1) * CAPA + col] = B.ARBUSTO_MUERTO;
+          continue;
+        }
+        if (sup[k] !== B.PASTO) continue;
         if (datos[h * CAPA + col] !== B.PASTO || datos[(h + 1) * CAPA + col] !== B.AIRE) continue;
         const wx = x0 + x, wz = z0 + z;
         const campo = rBosque.simplex2(wx / 45 + 300, wz / 45) > 0.45; // campos de flores
@@ -232,7 +303,16 @@ export function crearGenerador(semilla) {
       }
     }
 
-    return { datos, alturaMax: Math.min(ALTO - 1, alturaMax + 1) };
+    // 6) Estructuras (aldeas, templos, mazmorras...): una capa extra encima del terreno
+    let humos = [], puntos = [];
+    if (opciones.estructuras !== false) {
+      const r = est.aplicarChunk(datos, cx, cz);
+      if (r.tope > alturaMax) alturaMax = r.tope;
+      humos = r.humos;
+      puntos = r.puntos;
+    }
+
+    return { datos, alturaMax: Math.min(ALTO - 1, alturaMax + 1), humos, puntos };
   }
 
   // Busca un buen lugar en tierra firme para aparecer (cerca del centro)
@@ -251,5 +331,5 @@ export function crearGenerador(semilla) {
     return { x: 0.5, z: 0.5, y: alturaEn(0, 0) + 1 };
   }
 
-  return { generarChunk, alturaEn, buscarInicio };
+  return { generarChunk, alturaEn, buscarInicio, biomaEn, version, estructuras: est };
 }

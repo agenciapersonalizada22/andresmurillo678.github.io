@@ -101,6 +101,7 @@ export class Animales {
       const malla = new THREE.Mesh(CAJA, mats[1]);
       poner(malla, [m[0], m[1], m[2], m[3], m[4], m[5]]);
     }
+    g.traverse((o) => { if (o.isMesh) o.layers.enable(1); }); // dan sombra
     this.grupo.add(g);
     return g;
   }

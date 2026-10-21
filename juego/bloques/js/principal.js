@@ -9,16 +9,22 @@ import { CONFIG } from './config.js';
 import { semillaDeTexto } from './ruido.js';
 import { crearAtlas } from './texturas.js';
 import {
-  B, POR_CLAVE, DIBUJO, DIBUJO_AGUA, DIBUJO_PLANTA, SOLIDO, OPACO, TEXTURA_CARA, EN_MENU,
-  nombreBloque, sonidoBloque, esIrrompible, esValido,
+  B, POR_CLAVE, DIBUJO, DIBUJO_AGUA, DIBUJO_PLANTA, SOLIDO, OPACO, TEXTURA_CARA, EN_MENU, USABLE, BASE, ORIENTADOS, DIRS,
+  nombreBloque, sonidoBloque, esIrrompible, esValido, orientacionDeYaw, variante,
 } from './bloques.js';
 import { ALTO } from './generador.js';
 import { Mundo } from './mundo.js';
 import { Jugador } from './jugador.js';
 import { lanzarRayo } from './rayo.js';
 import { Cielo } from './cielo.js';
+import { crearUniformes, crearMaterialesMundo } from './materiales.js';
+import { Sombras } from './sombras.js';
+import { CALIDADES, NIVELES, nivelRecomendado } from './calidad.js';
 import { Particulas } from './particulas.js';
 import { Animales } from './animales.js';
+import { Ambiente } from './ambiente.js';
+import { Vehiculos, TIPOS as TIPOS_VEH } from './vehiculos.js';
+import { Mochila, botinDe, OBJETOS } from './botin.js';
 import { Controles, detectarTactil } from './controles.js';
 import { Interfaz } from './interfaz.js';
 import { Sonido } from './sonido.js';
@@ -28,6 +34,7 @@ import { cargarPartida, guardarPartida, cargarOpciones, guardarOpciones } from '
 const V = CONFIG.vista;
 const J = CONFIG.jugador;
 const $ = (id) => document.getElementById(id);
+const lim = (v, a, b) => (v < a ? a : v > b ? b : v);
 
 // ----------------------------------------------------------- Pantalla y 3D
 THREE.ColorManagement.enabled = false; // los colores se ven tal cual los escribimos
@@ -38,7 +45,7 @@ const opciones = cargarOpciones();
 
 let renderer;
 try {
-  renderer = new THREE.WebGLRenderer({ canvas: lienzo, antialias: !tactil, powerPreference: 'high-performance' });
+  renderer = new THREE.WebGLRenderer({ canvas: lienzo, antialias: !tactil && !/[?&]sinaa/.test(location.search), powerPreference: 'high-performance' });
 } catch (e) {
   $('sinWebgl').classList.remove('oculto');
   $('pantallaTitulo').classList.add('oculto');
@@ -52,21 +59,24 @@ const camara = new THREE.PerspectiveCamera(V.campoVision, 1, 0.05, 400);
 camara.rotation.order = 'YXZ';
 
 // Atlas de texturas con sus versiones chiquitas (mipmaps) para lo lejano
-const { lienzo: lienzoAtlas, niveles, promedios } = crearAtlas();
-const atlas = new THREE.Texture(lienzoAtlas);
-atlas.mipmaps = niveles;
-atlas.generateMipmaps = false;
-atlas.magFilter = THREE.NearestFilter;
-atlas.minFilter = THREE.NearestMipmapLinearFilter;
-atlas.anisotropy = tactil ? 1 : Math.min(4, renderer.capabilities.getMaxAnisotropy());
-atlas.needsUpdate = true;
+const { lienzo: lienzoAtlas, niveles, normales, promedios } = crearAtlas();
+function crearTextura(lista) {
+  const t = new THREE.Texture(lista[0]);
+  t.mipmaps = lista;
+  t.generateMipmaps = false;
+  t.magFilter = THREE.NearestFilter;
+  t.minFilter = THREE.NearestMipmapLinearFilter;
+  t.anisotropy = tactil ? 1 : Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  t.needsUpdate = true;
+  return t;
+}
+const atlas = crearTextura(niveles);
+const atlasNormal = crearTextura(normales);
+atlasNormal.magFilter = THREE.LinearFilter;
 
-const matSolido = new THREE.MeshBasicMaterial({ map: atlas, vertexColors: true });
-const matRecorte = new THREE.MeshBasicMaterial({ map: atlas, vertexColors: true, alphaTest: 0.5 });
-const matAgua = new THREE.MeshBasicMaterial({
-  map: atlas, vertexColors: true, transparent: true, opacity: 0.88, depthWrite: false, side: THREE.DoubleSide,
-});
-const materialesMundo = [matSolido, matRecorte, matAgua];
+const uniformes = crearUniformes(atlas, atlasNormal);
+const materialesMundo = crearMaterialesMundo(uniformes);
+const sombras = new Sombras(renderer, escena, uniformes);
 
 const mundo = new Mundo(escena, materialesMundo);
 mundo.hojasDetalladas = tactil ? V.hojasDetalladasMovil : V.hojasDetalladas;
@@ -74,6 +84,11 @@ const cielo = new Cielo(escena);
 const particulas = new Particulas(escena);
 const animales = new Animales(escena, mundo);
 const jugador = new Jugador();
+const ambiente = new Ambiente(escena, mundo, uniformes, promedios);
+const vehiculos = new Vehiculos(escena, mundo, uniformes);
+vehiculos.cielo = cielo;
+vehiculos.particulas = ambiente;
+const mochila = new Mochila();
 
 // Cuadrito negro alrededor del bloque al que apuntas
 const contorno = new THREE.LineSegments(
@@ -118,9 +133,35 @@ function aplicarRadio() {
   $('valorDistancia').textContent = String(radio);
 }
 
+// ----------------------------------------------------------- Calidad gráfica
+const calidadURL = (/[?&]calidad=(\w+)/.exec(location.search) || [])[1]; // ?calidad=ultra para probar
+let nivelCalidad = NIVELES.includes(calidadURL) ? calidadURL : NIVELES.includes(opciones.calidad) ? opciones.calidad : nivelRecomendado(renderer, tactil);
+let calidadElegida = NIVELES.includes(calidadURL) || NIVELES.includes(opciones.calidad); // si la elegiste tú, el juego no la baja solo
+let Q = CALIDADES[nivelCalidad];
+
+function aplicarCalidad(nivel, guardar = false) {
+  nivelCalidad = nivel;
+  Q = CALIDADES[nivel];
+  if (guardar) { opciones.calidad = nivel; calidadElegida = true; guardarOpciones(opciones); }
+  sombras.configurar(Q.sombras, Q.tamSombra, Q.rangoSombra);
+  uniformes.uBump.value = Q.relieve;
+  uniformes.uAguaCalidad.value = Q.olas;
+  uniformes.uViento.value = Q.viento;
+  cielo.ponerCalidadNubes(Q.nubesCapas, Q.nubesOctavas);
+  cielo.ponerEstrellas(Q.estrellas);
+  const hojas = tactil ? V.hojasDetalladasMovil && Q.hojasDetalladas : Q.hojasDetalladas;
+  if (mundo.hojasDetalladas !== hojas) { mundo.hojasDetalladas = hojas; mundo.redibujarTodo(); }
+  ajustarTamano();
+  if (!Number.isFinite(opciones.distancia)) {
+    radio = Math.max(V.distanciaMinima, Math.min(V.distanciaMaxima, tactil ? Q.distanciaMovil : Q.distancia));
+    aplicarRadio();
+  }
+  if ($('btnCalidad')) $('btnCalidad').textContent = 'GRÁFICOS: ' + Q.nombre;
+}
+
 function ajustarTamano() {
   const w = window.innerWidth, h = window.innerHeight;
-  const maxPix = tactil ? V.pixelesMaxMovil : V.pixelesMax;
+  const maxPix = Q ? Q.pixeles : 1;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxPix));
   renderer.setSize(w, h);
   camara.aspect = w / Math.max(1, h);
@@ -142,8 +183,22 @@ const interfaz = new Interfaz(lienzoAtlas, {
     Sonido.clic();
     cerrarInventario();
   },
+  alElegirVehiculo: (tipo) => colocarVehiculo(tipo),
+  alElegirObjeto: (obj) => {
+    mochila.agregar(obj, 1);
+    interfaz.mochila(mochila.exportar());
+    interfaz.aviso('+1 ' + OBJETOS[obj].nombre);
+    Sonido.tesoro();
+    mundo.hayCambiosSinGuardar = true;
+  },
 });
 interfaz.modoTactil(tactil);
+interfaz.crearTarjetasVehiculos([
+  { tipo: 'jeep', nombre: 'Jeep', nota: 'Todoterreno: sube escalones de 1 bloque' },
+  { tipo: 'bote', nombre: 'Bote', nota: 'Solo sobre el agua' },
+  { tipo: 'avioneta', nombre: 'Avioneta', nota: 'Acelera, mueve el ratón arriba y despega' },
+  { tipo: 'vagoneta', nombre: 'Vagoneta', nota: 'Solo sobre rieles (las minas tienen)' },
+]);
 
 function elegirRanura(i) {
   seleccion = ((i % 9) + 9) % 9;
@@ -158,6 +213,7 @@ const controles = new Controles({
   tactil,
   puedeJugar: () => estado === 'jugando' && !esperandoMundo,
   alMirar: (dx, dy) => {
+    if (vehiculos.actual) { vehiculos.mirar(dx, dy); return; }
     jugador.yaw -= dx;
     jugador.pitch -= dy;
     const lim = Math.PI / 2 - 0.01;
@@ -173,7 +229,15 @@ const controles = new Controles({
     switch (accion) {
       case 'ranura': if (estado === 'jugando' || estado === 'inventario') elegirRanura(dato); break;
       case 'rueda': if (estado === 'jugando') elegirRanura(seleccion + dato); break;
-      case 'volar': if (estado === 'jugando') alternarVuelo(); break;
+      case 'volar': if (estado === 'jugando' && !vehiculos.actual) alternarVuelo(); break;
+      case 'teclaE':
+        if (estado === 'jugando') { if (!tecleoVehiculo()) abrirInventario(); }
+        else if (estado === 'inventario') cerrarInventario();
+        break;
+      case 'vehiculo': if (estado === 'jugando') tecleoVehiculo(); break;
+      case 'camara': if (estado === 'jugando' && vehiculos.actual) vehiculos.alternarCamara(); break;
+      case 'luces': if (estado === 'jugando' && vehiculos.actual) { vehiculos.actual.lucesManual = true; vehiculos.alternarLuces(); } break;
+      case 'repostar': if (estado === 'jugando') vehiculos.repostar(mochila); break;
       case 'inventario':
         if (estado === 'jugando') abrirInventario();
         else if (estado === 'inventario') cerrarInventario();
@@ -227,11 +291,13 @@ function alternarMusica() {
 }
 
 function elegirDeLaMira() {
-  if (!objetivo || !EN_MENU.includes(objetivo.id)) return;
-  const ya = barra.indexOf(objetivo.id);
+  if (!objetivo) return;
+  const id = BASE[objetivo.id] || objetivo.id;
+  if (!EN_MENU.includes(id)) return;
+  const ya = barra.indexOf(id);
   if (ya >= 0) elegirRanura(ya);
   else {
-    barra[seleccion] = objetivo.id;
+    barra[seleccion] = id;
     elegirRanura(seleccion);
   }
 }
@@ -241,7 +307,7 @@ function colorDe(id) {
 }
 
 function romper() {
-  if (!objetivo) return false;
+  if (!objetivo || vehiculos.actual) return false;
   const { x, y, z, id } = objetivo;
   if (esIrrompible(id)) {
     interfaz.aviso('Esa roca no se puede romper');
@@ -255,6 +321,7 @@ function romper() {
     if (mundo.obtener(x + dx, y + dy, z + dz) === B.AGUA) { nuevo = B.AGUA; break; }
   }
   if (!mundo.poner(x, y, z, nuevo)) return false;
+  quitarPareja(x, y, z, id, nuevo);
   // una flor sin suelo se cae
   if (DIBUJO[mundo.obtener(x, y + 1, z)] === DIBUJO_PLANTA) mundo.poner(x, y + 1, z, B.AIRE);
   particulas.explotar(x, y, z, colorDe(id), DIBUJO[id] === DIBUJO_PLANTA ? 8 : 18);
@@ -262,9 +329,66 @@ function romper() {
   return true;
 }
 
+// Las puertas (2 bloques de alto) y las camas (2 de largo) se rompen completas
+function quitarPareja(x, y, z, id, nuevo) {
+  if (BASE[id] === B.PUERTA_X) {
+    for (const dy of [-1, 1]) if (BASE[mundo.obtener(x, y + dy, z)] === B.PUERTA_X) mundo.poner(x, y + dy, z, B.AIRE);
+  } else if (id >= B.CAMA_PIE && id < B.CAMA_PIE + 4) {
+    const [dx, dz] = DIRS[id - B.CAMA_PIE];
+    const o = mundo.obtener(x + dx, y, z + dz);
+    if (o === B.CAMA_CABEZA + (id - B.CAMA_PIE)) mundo.poner(x + dx, y, z + dz, B.AIRE);
+  } else if (id >= B.CAMA_CABEZA && id < B.CAMA_CABEZA + 4) {
+    const f = id - B.CAMA_CABEZA;
+    const [dx, dz] = DIRS[f];
+    const o = mundo.obtener(x - dx, y, z - dz);
+    if (o === B.CAMA_PIE + f) mundo.poner(x - dx, y, z - dz, B.AIRE);
+  }
+}
+
+const libre = (x, y, z) => {
+  const b = mundo.obtener(x, y, z);
+  return b === B.AIRE || DIBUJO[b] === DIBUJO_AGUA || DIBUJO[b] === DIBUJO_PLANTA;
+};
+
+// Clic derecho sobre cofres, puertas y camas
+function usarBloque(o) {
+  const { x, y, z, id } = o;
+  const tipo = USABLE[id];
+  if (!tipo) return false;
+  if (BASE[id] === B.PUERTA_X) {
+    const abierta = id === B.PUERTA_X_ABIERTA || id === B.PUERTA_Z_ABIERTA;
+    const nuevoId = id === B.PUERTA_X ? B.PUERTA_X_ABIERTA : id === B.PUERTA_Z ? B.PUERTA_Z_ABIERTA : id === B.PUERTA_X_ABIERTA ? B.PUERTA_X : B.PUERTA_Z;
+    mundo.poner(x, y, z, nuevoId);
+    for (const dy of [-1, 1]) if (BASE[mundo.obtener(x, y + dy, z)] === B.PUERTA_X) mundo.poner(x, y + dy, z, nuevoId);
+    Sonido.puerta();
+    return abierta || true;
+  }
+  if (id >= B.COFRE && id < B.COFRE + 4) {
+    const clave = x + ',' + y + ',' + z;
+    if (mundo.abiertos.has(clave)) { interfaz.aviso('El cofre está vacío'); Sonido.clic(); return true; }
+    mundo.abiertos.add(clave);
+    const loot = botinDe(x, y, z, mundo.semilla, CONFIG.mundo.nivelMar);
+    for (const [obj, n] of loot) mochila.agregar(obj, n);
+    interfaz.mochila(mochila.exportar());
+    interfaz.aviso('Cofre: ' + loot.map(([obj, n]) => '+' + n + ' ' + OBJETOS[obj].nombre).join(' · '), 3.6);
+    Sonido.cofre();
+    if (loot.some(([obj]) => obj === 'diamante' || obj === 'esmeralda')) Sonido.tesoro();
+    mundo.hayCambiosSinGuardar = true;
+    return true;
+  }
+  if (tipo === 'cama') {
+    if (cielo.factorDia < 0.45) { hora = 0.0; interfaz.aviso('Dormiste hasta la mañana'); mundo.hayCambiosSinGuardar = true; }
+    else interfaz.aviso('Solo puedes dormir de noche');
+    Sonido.clic();
+    return true;
+  }
+  return false;
+}
+
 function poner() {
-  if (!objetivo) return false;
-  const id = barra[seleccion];
+  if (!objetivo || vehiculos.actual) return false;
+  if (USABLE[objetivo.id] && usarBloque(objetivo)) return true;
+  let id = barra[seleccion];
   if (!esValido(id)) return false;
   let { x, y, z } = objetivo;
   if (DIBUJO[objetivo.id] !== DIBUJO_PLANTA) {
@@ -273,15 +397,114 @@ function poner() {
   if (y < 0 || y >= ALTO) return false;
   const actual = mundo.obtener(x, y, z);
   if (actual !== B.AIRE && DIBUJO[actual] !== DIBUJO_AGUA && DIBUJO[actual] !== DIBUJO_PLANTA) return false;
+  const fv = orientacionDeYaw(jugador.yaw); // hacia dónde mira el jugador (0 sur, 1 oeste, 2 norte, 3 este)
+  const base = BASE[id];
+  // bloques con orientación y de varias partes
+  if (base === B.COFRE) id = variante(B.COFRE, (fv + 2) & 3);
+  else if (base === B.PUERTA_X) {
+    id = variante(B.PUERTA_X, fv);
+    if (!libre(x, y + 1, z) || !SOLIDO[mundo.obtener(x, y - 1, z)]) return false;
+    if (jugador.tocaBloque(x, y, z)) return false;
+    mundo.poner(x, y, z, id);
+    mundo.poner(x, y + 1, z, id);
+    Sonido.poner(sonidoBloque(id));
+    return true;
+  } else if (base === B.CAMA_PIE) {
+    const [dx, dz] = DIRS[fv];
+    if (!libre(x + dx, y, z + dz) || !SOLIDO[mundo.obtener(x, y - 1, z)] || !SOLIDO[mundo.obtener(x + dx, y - 1, z + dz)]) return false;
+    if (jugador.tocaBloque(x, y, z) || jugador.tocaBloque(x + dx, y, z + dz)) return false;
+    mundo.poner(x, y, z, B.CAMA_PIE + fv);
+    mundo.poner(x + dx, y, z + dz, B.CAMA_CABEZA + fv);
+    Sonido.poner(sonidoBloque(id));
+    return true;
+  } else if (ORIENTADOS[base]) id = variante(base, fv);
   if (SOLIDO[id] && jugador.tocaBloque(x, y, z)) return false;          // no dentro de ti
   if (DIBUJO[id] === DIBUJO_PLANTA && !OPACO[mundo.obtener(x, y - 1, z)]) return false; // flores en el suelo
+  if ((id === B.ANTORCHA || BASE[id] === B.RIEL_X) && !SOLIDO[mundo.obtener(x, y - 1, z)]) return false; // antorchas y rieles sobre el suelo
   if (!mundo.poner(x, y, z, id)) return false;
   Sonido.poner(sonidoBloque(id));
   return true;
 }
 
+// ----------------------------------------------------------- Vehículos
+function tecleoVehiculo() {
+  if (vehiculos.actual) {
+    if (vehiculos.bajar(false, jugador)) {
+      jugador.desatorar(mundo);
+      interfaz.tablero(null);
+      camara.fov = V.campoVision;
+      camara.updateProjectionMatrix();
+      mundo.hayCambiosSinGuardar = true;
+    } else mostrarAvisosVehiculo();
+    return true;
+  }
+  const v = vehiculos.cercano(jugador.x, jugador.y + 0.9, jugador.z);
+  if (!v) return false;
+  vehiculos.camaraTercera = CONFIG.vehiculos.camaraTercera;
+  vehiculos.subir(v, jugador);
+  interfaz.volando(false);
+  interfaz.ocultarAyuda();
+  interfaz.aviso(v.T.nombre + (v.T.clase === 'aire' ? ' · W/S motor · mueve el ratón para subir y girar' : v.T.clase === 'agua' ? ' · WASD navegar' : v.T.clase === 'riel' ? ' · W/S mover' : ' · WASD manejar'), 3);
+  mundo.hayCambiosSinGuardar = true;
+  return true;
+}
+
+function mostrarAvisosVehiculo() {
+  while (vehiculos.avisos.length) interfaz.aviso(vehiculos.avisos.shift());
+}
+
+// Pone un vehículo nuevo frente al jugador
+function colocarVehiculo(tipo) {
+  cerrarInventario();
+  if (vehiculos.actual) return;
+  const fx = -Math.sin(jugador.yaw), fz = -Math.cos(jugador.yaw);
+  const largo = tipo === 'avioneta' ? 5 : 3;
+  let lugar = null;
+  for (let d = 5; d <= 12 && !lugar; d++) {
+    const x = jugador.x + fx * d, z = jugador.z + fz * d;
+    const sx = Math.floor(x), sz = Math.floor(z);
+    if (!mundo.estaListo(x, z)) continue;
+    if (tipo === 'bote') {
+      const sup = vehiculos.superficieAgua(x, z, jugador.y);
+      if (sup >= 0) lugar = { x, y: sup - 0.3, z, yaw: jugador.yaw };
+      continue;
+    }
+    const h = mundo.alturaSuelo(sx, sz);
+    if (h < 0) continue;
+    const y = h + 1;
+    if (DIBUJO[mundo.obtener(sx, y, sz)] === DIBUJO_AGUA) continue;
+    if (tipo === 'vagoneta') {
+      const r = mundo.obtener(sx, y, sz);
+      if (r === B.RIEL_X || r === B.RIEL_Z) lugar = { x: sx + 0.5, y, z: sz + 0.5, yaw: r === B.RIEL_X ? -Math.PI / 2 : Math.PI };
+      continue;
+    }
+    // espacio libre alrededor
+    let ok = true;
+    for (let k = -largo; k <= largo && ok; k += 2) {
+      for (let j = -1; j <= 1 && ok; j++) {
+        const cx = Math.floor(x - fz * j * 2 + fx * k), cz = Math.floor(z + fx * j * 2 + fz * k);
+        for (let dy = 0; dy <= 2; dy++) if (mundo.esSolido(cx, y + dy, cz)) ok = false;
+      }
+    }
+    if (ok) lugar = { x, y, z, yaw: jugador.yaw };
+  }
+  if (!lugar) {
+    interfaz.aviso(tipo === 'bote' ? 'El bote va en el agua: acércate a un lago o al mar' : tipo === 'vagoneta' ? 'La vagoneta va sobre rieles: ponlos con el bloque Riel' : 'No hay espacio libre aquí');
+    return;
+  }
+  // no pasa de 12 vehículos: se quita el más viejo que nadie esté usando
+  if (vehiculos.lista.length >= 12) {
+    const viejo = vehiculos.lista.find((v) => !v.ocupado);
+    if (viejo) vehiculos.quitar(viejo);
+  }
+  vehiculos.crear(tipo, lugar.x, lugar.y, lugar.z, lugar.yaw);
+  interfaz.aviso(TIPOS_VEH[tipo].nombre + ' listo: acércate y pulsa E');
+  Sonido.poner('madera');
+  mundo.hayCambiosSinGuardar = true;
+}
+
 function actualizarObjetivo() {
-  if (estado !== 'jugando' || esperandoMundo) { objetivo = null; contorno.visible = false; return; }
+  if (estado !== 'jugando' || esperandoMundo || vehiculos.actual) { objetivo = null; contorno.visible = false; return; }
   const dir = new THREE.Vector3(0, 0, -1).applyEuler(camara.rotation);
   const o = camara.position;
   objetivo = lanzarRayo(mundo, o.x, o.y, o.z, dir.x, dir.y, dir.z, J.alcance);
@@ -294,13 +517,37 @@ function actualizarObjetivo() {
 }
 
 // ----------------------------------------------------------- Guardar
+// Una partida vieja (sin "gen") conserva el generador 1: mismo terreno de siempre, sin biomas.
+function opcionesDePartida(p) {
+  const version = p ? (p.gen >= 2 ? 2 : 1) : 2;
+  let bloqueados = null;
+  if (version === 1) bloqueados = Array.isArray(p.bloqueados) ? p.bloqueados : Object.keys(p.cambios || {});
+  return {
+    version, bloqueados,
+    abiertos: p && Array.isArray(p.abiertos) ? p.abiertos : [],
+    vehiculosUsados: p && Array.isArray(p.vehiculosUsados) ? p.vehiculosUsados : [],
+  };
+}
+
+function aplicarExtrasDePartida(p) {
+  vehiculos.importar(p && p.vehiculos);
+  mochila.importar(p && p.mochila);
+  interfaz.mochila(mochila.exportar());
+}
+
 let avisoGuardadoDado = false;
 function guardar(silencio = false) {
   if (!partidaIniciada) return false;
   const datos = {
-    version: 1,
+    version: 2,
+    gen: mundo.versionGen,          // 1 = terreno de mundos viejos, 2 = con biomas
     semilla: mundo.semilla,
     cambios: mundo.exportarCambios(),
+    bloqueados: mundo.bloqueados ? [...mundo.bloqueados] : undefined, // chunks de mundos viejos donde no hay estructuras
+    abiertos: [...mundo.abiertos],
+    vehiculos: vehiculos.exportar(),
+    vehiculosUsados: [...mundo.vehiculosUsados],
+    mochila: mochila.exportar(),
     jugador: {
       x: +jugador.x.toFixed(3), y: +jugador.y.toFixed(3), z: +jugador.z.toFixed(3),
       yaw: +jugador.yaw.toFixed(4), pitch: +jugador.pitch.toFixed(4), volando: jugador.volando,
@@ -347,7 +594,9 @@ function actualizarTitulo() {
 
 function mostrarTitulo() {
   estado = 'titulo';
+  if (vehiculos.actual) { vehiculos.bajar(true); interfaz.tablero(null); }
   animales.limpiar();
+  ambiente.limpiar();
   esperandoMundo = false;
   controles.soltarTodo();
   controles.soltarBloqueo();
@@ -470,7 +719,10 @@ function comenzar(nuevo, textoSemilla) {
     if (texto) semilla = semillaDeTexto(texto);
     else if (!partida && mundo.semilla === semillaVistaPrevia && mundo.cuantosCambios() === 0) semilla = semillaVistaPrevia;
     else semilla = semillaAlAzar();
-    if (semilla !== mundo.semilla || mundo.cuantosCambios() > 0) mundo.reiniciar(semilla, null);
+    if (semilla !== mundo.semilla || mundo.cuantosCambios() > 0 || mundo.versionGen !== 2) mundo.reiniciar(semilla, null, { version: 2 });
+    mundo.abiertos.clear();
+    mundo.vehiculosUsados.clear();
+    aplicarExtrasDePartida(null);
     const inicio = mundo.gen.buscarInicio();
     jugador.ponerEn(inicio.x, inicio.y + 1, inicio.z);
     jugador.yaw = Math.PI * 0.25;
@@ -481,8 +733,10 @@ function comenzar(nuevo, textoSemilla) {
     hora = CONFIG.dia.horaInicio;
     buscarSuelo = true;
   } else {
-    if ((partida.semilla | 0) !== mundo.semilla) mundo.reiniciar(partida.semilla, partida.cambios);
+    const opc = opcionesDePartida(partida);
+    if ((partida.semilla | 0) !== mundo.semilla || mundo.versionGen !== opc.version) mundo.reiniciar(partida.semilla, partida.cambios, opc);
     restaurarJugador(partida);
+    aplicarExtrasDePartida(partida);
     buscarSuelo = false;
   }
   partidaIniciada = true;
@@ -496,9 +750,9 @@ function comenzar(nuevo, textoSemilla) {
   controles.pedirBloqueo();
   if (nuevo) guardar();
   const textoAyuda = controles.tactil
-    ? '<b>Joystick</b> caminar · <b>arrastra</b> para mirar<br><b>toca</b> = poner · <b>mantén el dedo</b> = romper'
+    ? '<b>Joystick</b> caminar · <b>arrastra</b> para mirar<br><b>toca</b> = poner o usar · <b>mantén el dedo</b> = romper · <b>SUBIR</b> cerca de un vehículo'
     : '<b>WASD</b> caminar · <b>Espacio</b> saltar · <b>Shift</b> o <b>W W</b> correr · <b>F</b> volar<br>' +
-      '<b>Clic izq.</b> romper · <b>Clic der.</b> poner · <b>1-9 / rueda</b> elegir · <b>E</b> bloques · <b>M</b> música · <b>F3</b> datos · <b>Esc</b> pausa';
+      '<b>Clic izq.</b> romper · <b>Clic der.</b> poner / abrir cofres y puertas · <b>1-9 / rueda</b> elegir · <b>E</b> vehículo o bloques · <b>I</b> inventario · <b>Esc</b> pausa';
   interfaz.ayuda(textoAyuda, 12);
 }
 
@@ -611,6 +865,16 @@ boton('btnGuardar', () => {
   interfaz.aviso(guardar(true) ? 'Mundo guardado ✓' : 'No se pudo guardar (¿poco espacio o modo incógnito?)');
 });
 boton('btnTitulo', () => { guardar(); mostrarTitulo(); });
+boton('btnCalidad', () => {
+  const i = NIVELES.indexOf(nivelCalidad);
+  aplicarCalidad(NIVELES[(i + 1) % NIVELES.length], true);
+  interfaz.aviso('Gráficos: ' + Q.nombre + (nivelCalidad === 'ultra' ? ' (necesita buena tarjeta de video)' : ''));
+});
+boton('btnMochila', () => {
+  const items = mochila.exportar();
+  const texto = Object.keys(items).map((k) => items[k] + ' ' + OBJETOS[k].nombre).join(' · ');
+  interfaz.aviso(texto ? 'Mochila: ' + texto : 'Mochila vacía: abre cofres de aldeas, minas y templos', 4);
+});
 boton('btnMenosDistancia', () => cambiarDistancia(-1));
 boton('btnMasDistancia', () => cambiarDistancia(1));
 boton('btnCerrarInventario', () => cerrarInventario());
@@ -624,8 +888,30 @@ function cambiarDistancia(d) {
 
 // ----------------------------------------------------------- Ciclo del juego
 const colorAgua = new THREE.Color('#123f7a');
+let tiempoTotal = 0;
+
+// Pasa a los shaders la hora, el sol, la niebla, etc.
+function actualizarUniformes(bajoAgua) {
+  const u = uniformes;
+  u.uTiempo.value = tiempoTotal;
+  u.uCamPos.value.copy(camara.position);
+  u.uSolDir.value.copy(cielo.luzDir);
+  u.uSolColor.value.copy(cielo.luzColor);
+  u.uAmbCielo.value.copy(cielo.ambCielo);
+  u.uAmbSuelo.value.copy(cielo.ambSuelo);
+  u.uCieloArriba.value.copy(cielo.arriba);
+  u.uCieloHoriz.value.copy(cielo.horizonte);
+  u.uNiebla.value.copy(escena.fog.color);
+  u.uNieblaCerca.value = escena.fog.near;
+  u.uNieblaLejos.value = escena.fog.far;
+  if (bajoAgua) {
+    u.uAmbCielo.value.multiplyScalar(0.8);
+    u.uSolColor.value.multiplyScalar(0.5);
+  }
+}
 const dirTmp = new THREE.Vector3();
 let ultimo = performance.now();
+function vehiculosActivos() { return !!vehiculos.actual || animales.lista.length > 0 || vehiculos.lista.some((v) => v.T.clase === 'agua'); }
 
 function accionesRepetidas(dt) {
   for (const accion of ['romper', 'poner']) {
@@ -654,6 +940,45 @@ function sonidosDelJugador() {
   }
 }
 
+// Los vehículos que esperan en garajes y minas aparecen cuando se crea su chunk
+function nacenVehiculosDeEstructuras() {
+  while (mundo.puntosNuevos.length) {
+    const p = mundo.puntosNuevos.pop();
+    if (mundo.vehiculosUsados.has(p.id)) continue;
+    mundo.vehiculosUsados.add(p.id);
+    if (!TIPOS_VEH[p.tipo]) continue;
+    vehiculos.crear(p.tipo, p.x, p.y, p.z, p.yaw, null, 'p:' + p.id);
+    mundo.hayCambiosSinGuardar = true;
+  }
+}
+
+let tiempoTablero = 0;
+function actualizarTableroVehiculo(dt) {
+  tiempoTablero -= dt;
+  if (tiempoTablero > 0) return;
+  tiempoTablero = 0.1;
+  interfaz.tablero(vehiculos.info());
+  if (!vehiculos.actual) interfaz.cercaVehiculo(estado === 'jugando' && !esperandoMundo && !!vehiculos.cercano(jugador.x, jugador.y + 0.9, jugador.z));
+  else interfaz.cercaVehiculo(true);
+}
+
+// Si el juego va lento y no elegiste la calidad tú, la baja un escalón
+let lentos = 0, tiempoVigilar = 0;
+function vigilarRendimiento(dt) {
+  if (calidadElegida || estado !== 'jugando' || esperandoMundo) { lentos = 0; return; }
+  tiempoVigilar += dt;
+  if (tiempoVigilar < 2) return;
+  tiempoVigilar = 0;
+  const idx = NIVELES.indexOf(nivelCalidad);
+  if (fps > 0 && fps < 24 && idx > 0) {
+    if (++lentos >= 3) {
+      lentos = 0;
+      aplicarCalidad(NIVELES[idx - 1]);
+      interfaz.aviso('Gráficos: ' + Q.nombre + ' (para que vaya más fluido; cámbialo en Pausa)', 4);
+    }
+  } else lentos = 0;
+}
+
 function cuadro(ahora) {
   requestAnimationFrame(cuadro);
   let dt = (ahora - ultimo) / 1000;
@@ -665,7 +990,8 @@ function cuadro(ahora) {
   tiempoFps += dt;
   if (tiempoFps >= 0.5) { fps = Math.round(cuadrosFps / tiempoFps); cuadrosFps = 0; tiempoFps = 0; }
 
-  controles.actualizar(jugador.volando);
+  const enVeh = !!vehiculos.actual;
+  controles.actualizar(jugador.volando, enVeh);
 
   // ¿ya está el terreno bajo tus pies?
   if (estado === 'jugando' && esperandoMundo) {
@@ -679,15 +1005,30 @@ function cuadro(ahora) {
     }
   }
 
-  if (estado === 'jugando' && !esperandoMundo) {
+  if (estado === 'jugando' && !esperandoMundo && !enVeh) {
     jugador.actualizar(dt, controles.entrada, mundo, controles.tactil);
     if (!jugador.volando) interfaz.volando(false);
     sonidosDelJugador();
   }
 
+  // Vehículos: los parados se asientan en el suelo y el que manejas se mueve (y pone la cámara)
+  vehiculos.radioVista = (radio + 3) * 16;
+  if (estado !== 'titulo') {
+    nacenVehiculosDeEstructuras();
+    vehiculos.actualizar(dt, controles.entrada, jugador, camara, esperandoMundo || estado !== 'jugando');
+    mostrarAvisosVehiculo();
+    actualizarTableroVehiculo(dt);
+  }
+
   // Cámara
   if (estado === 'titulo') {
     moverCamaraTitulo(dt);
+  } else if (vehiculos.actual) {
+    const fovObjetivo = V.campoVision + Math.min(16, Math.abs(vehiculos.actual.vel) * 0.4);
+    if (Math.abs(camara.fov - fovObjetivo) > 0.05) {
+      camara.fov += (fovObjetivo - camara.fov) * Math.min(1, dt * 5);
+      camara.updateProjectionMatrix();
+    }
   } else {
     camara.position.set(jugador.x, jugador.y + J.ojos, jugador.z);
     camara.rotation.set(jugador.pitch, jugador.yaw, 0, 'YXZ');
@@ -703,12 +1044,14 @@ function cuadro(ahora) {
   if (estado === 'jugando' || estado === 'titulo') hora = (hora + dt / CONFIG.dia.duracion) % 1;
 
   // Cielo, luz y niebla
-  const luz = cielo.actualizar(hora, camara, lejos, dt);
+  tiempoTotal += dt;
+  const luz = cielo.actualizar(hora, camara, lejos, dt, tiempoTotal);
   const dia = cielo.factorDia;
   const r = luz * (0.86 + 0.14 * dia), g = luz * (0.9 + 0.1 * dia), b = luz;
-  for (const m of materialesMundo) m.color.setRGB(r, g, b);
   particulas.material.color.setRGB(r, g, b);
-  const bajoAgua = estado !== 'titulo' && jugador.cabezaEnAgua;
+  const bajoAgua = estado !== 'titulo' && (enVeh
+    ? DIBUJO[mundo.obtener(Math.floor(camara.position.x), Math.floor(camara.position.y), Math.floor(camara.position.z))] === DIBUJO_AGUA
+    : jugador.cabezaEnAgua);
   if (bajoAgua) {
     escena.fog.color.copy(colorAgua).multiplyScalar(0.4 + 0.6 * luz);
     escena.fog.near = 0.5;
@@ -719,14 +1062,17 @@ function cuadro(ahora) {
     escena.fog.far = radio * 16 * 0.92;
   }
   renderer.setClearColor(escena.fog.color);
+  actualizarUniformes(bajoAgua);
   interfaz.bajoAgua(bajoAgua);
   interfaz.clicContinuar(estado === 'jugando' && !esperandoMundo && !controles.tactil && !controles.bloqueado && !controles.modoArrastre);
   cielo.bajoAgua(bajoAgua); // bajo el agua no se ve el cielo, solo azul
   Musica.ponerAnimo(dia > 0.4 ? 'dia' : 'noche');
 
   // Crear/dibujar chunks cerca de donde está la cámara
-  const presupuesto = esperandoMundo ? 40 : (tactil ? V.presupuestoMsMovil : V.presupuestoMs);
-  const centro = estado === 'titulo' ? centroTitulo : jugador;
+  const presupuesto = esperandoMundo ? 40 : (tactil ? Math.min(V.presupuestoMsMovil, Q.presupuesto) : Math.max(V.presupuestoMs - 2, Q.presupuesto));
+  // al manejar, los chunks se crean un poco más adelante de hacia donde vas
+  const va = vehiculos.actual;
+  const centro = estado === 'titulo' ? centroTitulo : va ? { x: jugador.x + lim(va.vx * 0.9, -45, 45), z: jugador.z + lim(va.vz * 0.9, -45, 45) } : jugador;
   mundo.actualizar(centro.x, centro.z, presupuesto);
 
   actualizarObjetivo();
@@ -737,7 +1083,12 @@ function cuadro(ahora) {
     animales.actualizar(dt, jugador, dia, tactil ? CONFIG.animales.maximoMovil : CONFIG.animales.maximo);
   }
 
+  ambiente.alturaPantalla = renderer.domElement.height;
+  ambiente.actualizar(dt, camara, cielo, Q.particulas, estado === 'jugando' && !esperandoMundo);
+  const fuerzaSol = Math.max(cielo.luzColor.r, cielo.luzColor.g, cielo.luzColor.b);
+  sombras.actualizar(camara, cielo.luzDir, mundo.version, vehiculosActivos(), fuerzaSol);
   renderer.render(escena, camara);
+  vigilarRendimiento(dt);
 
   // Brújula: 0 = norte (-Z), 90 = este (+X)
   if (estado !== 'titulo') {
@@ -770,6 +1121,7 @@ function cuadro(ahora) {
     tiempoGuardar += dt;
     if (tiempoGuardar >= CONFIG.guardado.cadaSegundos) {
       tiempoGuardar = 0;
+      if (vehiculos.actual) mundo.hayCambiosSinGuardar = true;
       if (mundo.hayCambiosSinGuardar) guardar();
     }
   }
@@ -777,20 +1129,24 @@ function cuadro(ahora) {
 
 // ----------------------------------------------------------- Arranque
 aplicarRadio();
-ajustarTamano();
-mundo.reiniciar(semillaVistaPrevia, partida ? partida.cambios : null);
-if (partida) restaurarJugador(partida);
+mundo.reiniciar(semillaVistaPrevia, partida ? partida.cambios : null, opcionesDePartida(partida));
+if (partida) { restaurarJugador(partida); aplicarExtrasDePartida(partida); }
 else {
   const inicio = mundo.gen.buscarInicio();
   jugador.ponerEn(inicio.x, inicio.y + 1, inicio.z);
 }
 interfaz.actualizarBarra(barra, seleccion);
+aplicarCalidad(nivelCalidad);
 mostrarTitulo();
 requestAnimationFrame(cuadro);
 
 // Para hacer pruebas desde la consola del navegador
 window.BLOQUES = {
-  mundo, jugador, camara, renderer, animales,
+  mundo, jugador, camara, renderer, animales, vehiculos, ambiente, mochila, sombras, uniformes, cielo,
+  get calidad() { return nivelCalidad; },
+  ponerCalidad: (n) => aplicarCalidad(n),
+  colocarVehiculo, usarBloque, tecleoVehiculo,
+  get opcionesPartida() { return partida; },
   get estado() { return estado; },
   get esperando() { return esperandoMundo; },
   get objetivo() { return objetivo; },
@@ -813,4 +1169,24 @@ window.BLOQUES = {
   cerrarInventario,
   alternarVuelo,
   moverCamaraTitulo,
+  // Para pruebas: lleva al jugador junto a la estructura más cercana de ese tipo
+  irA(tipo, o = {}) {
+    const r = mundo.gen.estructuras.buscar(tipo, o.desdeX ?? jugador.x, o.desdeZ ?? jugador.z, 12);
+    if (!r) return null;
+    const d = o.dist ?? 30, alto = o.alto ?? 14;
+    const yaw = o.yaw ?? Math.PI;
+    const ox = Math.sin(yaw) * d, oz = Math.cos(yaw) * d;
+    jugador.ponerEn(r.cx + 0.5 + ox + (o.dx ?? 0), r.y + alto, r.cz + 0.5 + oz + (o.dz ?? 0));
+    jugador.yaw = yaw;
+    jugador.pitch = o.pitch ?? -Math.atan2(alto - 4, d);
+    jugador.volando = o.volando ?? true;
+    interfaz.volando(jugador.volando);
+    esperandoMundo = true; buscarSuelo = false;
+    return r;
+  },
+  distancia(n) { radio = Math.max(V.distanciaMinima, Math.min(V.distanciaMaxima, n)); aplicarRadio(); },
+  teletransportar(x, y, z, yaw = 0, pitch = 0, volando = true) {
+    jugador.ponerEn(x, y, z); jugador.yaw = yaw; jugador.pitch = pitch; jugador.volando = volando;
+    interfaz.volando(volando); esperandoMundo = true; buscarSuelo = false;
+  },
 };

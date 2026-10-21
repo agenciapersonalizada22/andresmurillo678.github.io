@@ -8,6 +8,8 @@
 //  Ojo: si cambias cosas del TERRENO (la sección "mundo"), los
 //  mundos que ya tenías guardados se van a ver distintos, porque
 //  la misma semilla ahora dibuja otro paisaje.
+//  (La calidad gráfica —sombras, nitidez, distancia— no está aquí:
+//   se elige en el menú de pausa y vive en calidad.js.)
 // =============================================================
 export const CONFIG = {
   titulo: 'MUNDO DE BLOQUES',
@@ -32,7 +34,7 @@ export const CONFIG = {
     distancia: 5,           // radio de chunks (pedazos de 16x16) que se ven en compu
     distanciaMovil: 3,      // lo mismo en el celular (más chico = más fluido)
     distanciaMinima: 2,     // límites del botón de "distancia" del menú de pausa
-    distanciaMaxima: 9,
+    distanciaMaxima: 12,
     campoVision: 75,        // ángulo de visión en grados
     campoVisionCorriendo: 83, // se abre un poquito al correr
     pixelesMax: 1.5,        // nitidez máxima en compu (más alto = más bonito pero más lento)
@@ -71,6 +73,19 @@ export const CONFIG = {
     activos: true,          // false = sin animales
     maximo: 7,              // cuántos puede haber cerca de ti en compu
     maximoMovil: 4,         // lo mismo en el celular
+  },
+
+  // ----------------------------------------------------- Estructuras
+  // Aldeas, templos, torres, mazmorras, minas, barcos hundidos... (se agregan encima del
+  // terreno, no lo cambian). En mundos viejos no tocan los chunks donde ya construiste.
+  estructuras: {
+    activas: true,
+  },
+
+  // ----------------------------------------------------- Vehículos
+  vehiculos: {
+    combustible: true,      // false = nunca se acaba la gasolina
+    camaraTercera: true,    // empiezas viendo el vehículo desde atrás (C cambia a primera persona)
   },
 
   // ----------------------------------------------------- Día y noche

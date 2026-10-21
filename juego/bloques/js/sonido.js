@@ -134,7 +134,127 @@ function golpe(material, fuerza) {
   if (r.burbuja) tono(t, 300 * varia, 0.18, 0.12 * fuerza, 'sine', 700);
 }
 
+// ----------------------------------------------------------- Motores
+// El motor son dos "zumbidos" (ondas) cuya nota sube con las revoluciones, un filtro que
+// se abre al acelerar y un poco de ruido; según el vehículo cambian las notas y el ruido.
+let mot = null;
+
+function ruidoBucle() {
+  const f = ctx.createBufferSource();
+  f.buffer = ruidoBuffer();
+  f.loop = true;
+  return f;
+}
+
+function motorIniciar(clase) {
+  if (!ctx || ctx.state !== 'running') return;
+  motorParar(true);
+  const m = { clase, nodos: [] };
+  const salida = ctx.createGain();
+  salida.gain.value = 0;
+  salida.connect(efectos);
+  m.salida = salida;
+  const filtro = ctx.createBiquadFilter();
+  filtro.type = 'lowpass';
+  filtro.frequency.value = 500;
+  filtro.Q.value = 1.1;
+  filtro.connect(salida);
+  m.filtro = filtro;
+  const tipoA = clase === 'aire' ? 'sawtooth' : 'sawtooth';
+  m.a = ctx.createOscillator(); m.a.type = tipoA; m.a.frequency.value = 50;
+  m.b = ctx.createOscillator(); m.b.type = clase === 'agua' ? 'triangle' : 'square'; m.b.frequency.value = 100;
+  const ga = ctx.createGain(); ga.gain.value = 0.55;
+  const gb = ctx.createGain(); gb.gain.value = 0.22;
+  m.a.connect(ga); ga.connect(filtro);
+  m.b.connect(gb); gb.connect(filtro);
+  // pulsos de los cilindros o de las aspas
+  m.lfo = ctx.createOscillator(); m.lfo.frequency.value = 20;
+  m.lfoG = ctx.createGain(); m.lfoG.gain.value = clase === 'riel' ? 0.0 : 0.18;
+  m.lfo.connect(m.lfoG); m.lfoG.connect(salida.gain);
+  // ruido: viento de la hélice, chorro del agua, traqueteo de la vía
+  m.ruido = ruidoBucle();
+  m.filtroRuido = ctx.createBiquadFilter();
+  m.filtroRuido.type = clase === 'aire' ? 'bandpass' : clase === 'riel' ? 'bandpass' : 'lowpass';
+  m.filtroRuido.frequency.value = clase === 'aire' ? 900 : clase === 'riel' ? 260 : 700;
+  m.filtroRuido.Q.value = 0.8;
+  m.gRuido = ctx.createGain(); m.gRuido.gain.value = 0;
+  m.ruido.connect(m.filtroRuido); m.filtroRuido.connect(m.gRuido); m.gRuido.connect(efectos);
+  // chirrido de llantas
+  m.chirrido = ruidoBucle();
+  m.filtroCh = ctx.createBiquadFilter(); m.filtroCh.type = 'bandpass'; m.filtroCh.frequency.value = 2100; m.filtroCh.Q.value = 6;
+  m.gCh = ctx.createGain(); m.gCh.gain.value = 0;
+  m.chirrido.connect(m.filtroCh); m.filtroCh.connect(m.gCh); m.gCh.connect(efectos);
+  m.a.start(); m.b.start(); m.lfo.start(); m.ruido.start(0, Math.random()); m.chirrido.start(0, Math.random());
+  mot = m;
+}
+
+function motorActualizar(rpm, carga, encendido, enAgua, deslizamiento) {
+  if (!mot || !ctx) return;
+  const t = ctx.currentTime;
+  const m = mot;
+  const k = 0.06;
+  let fa, vol, filt, pulso, ruido = 0;
+  if (m.clase === 'aire') {
+    fa = 42 + rpm * 70; filt = 500 + rpm * 1100; vol = 0.07 + carga * 0.09; pulso = 2 * (6 + rpm * 28) / 2; ruido = 0.05 + rpm * 0.17;
+  } else if (m.clase === 'agua') {
+    fa = 36 + rpm * 62; filt = 380 + rpm * 700; vol = (enAgua ? 0.07 : 0.025) + carga * 0.08; pulso = 6 + rpm * 20; ruido = (enAgua ? 0.03 : 0) + rpm * 0.1;
+  } else if (m.clase === 'riel') {
+    fa = 28 + rpm * 60; filt = 220 + rpm * 400; vol = 0.02 + rpm * 0.035; pulso = 2 + rpm * 24; ruido = rpm * 0.18;
+  } else {
+    fa = 34 + rpm * 112; filt = 330 + rpm * 800 + carga * 450; vol = 0.055 + carga * 0.09 + rpm * 0.03; pulso = 14 + rpm * 62; ruido = 0.01 + rpm * 0.03;
+  }
+  if (!encendido && m.clase !== 'riel') { vol = 0; ruido *= 0.2; }
+  m.a.frequency.setTargetAtTime(fa, t, k);
+  m.b.frequency.setTargetAtTime(fa * 2.003, t, k);
+  m.filtro.frequency.setTargetAtTime(filt, t, k);
+  m.lfo.frequency.setTargetAtTime(pulso, t, k);
+  m.salida.gain.setTargetAtTime(vol, t, 0.08);
+  m.lfoG.gain.setTargetAtTime(m.clase === 'riel' ? 0 : vol * 0.35, t, 0.08);
+  m.gRuido.gain.setTargetAtTime(ruido, t, 0.1);
+  m.gCh.gain.setTargetAtTime(Math.min(0.1, Math.max(0, deslizamiento - 3) * 0.02) * (m.clase === 'tierra' ? 1 : 0), t, 0.05);
+}
+
+function motorParar(rapido = false) {
+  if (!mot) return;
+  const m = mot;
+  mot = null;
+  const t = ctx.currentTime;
+  try {
+    m.salida.gain.cancelScheduledValues(t);
+    m.salida.gain.setTargetAtTime(0, t, rapido ? 0.01 : 0.12);
+    m.gRuido.gain.setTargetAtTime(0, t, 0.05);
+    m.gCh.gain.setTargetAtTime(0, t, 0.05);
+    for (const n of [m.a, m.b, m.lfo, m.ruido, m.chirrido]) n.stop(t + 0.5);
+  } catch (e) { /* ya parado */ }
+}
+
 export const Sonido = {
+  motorIniciar,
+  motorActualizar,
+  motorParar,
+  puerta() {
+    if (!listo('puerta', 0.1)) return;
+    golpe('madera', 0.9);
+    tono(ctx.currentTime, 90, 0.16, 0.14, 'triangle', 60);
+  },
+  golpeVehiculo(fuerza = 0.5) {
+    if (!listo('golpeveh', 0.25)) return;
+    const t = ctx.currentTime;
+    ruido(t, 0.3, 0.5 * fuerza + 0.1, 'lowpass', 900, 1, 0.8);
+    tono(t, 120, 0.25, 0.2 * fuerza + 0.05, 'sawtooth', 50);
+  },
+  cofre() {
+    if (!listo('cofre', 0.2)) return;
+    const t = ctx.currentTime;
+    tono(t, 180, 0.28, 0.1, 'sawtooth', 340);
+    ruido(t, 0.12, 0.2, 'bandpass', 1400, 2, 1);
+    tono(t + 0.18, 880, 0.2, 0.05, 'sine', 1320);
+  },
+  tesoro() {
+    if (!listo('tesoro', 0.3)) return;
+    const t = ctx.currentTime;
+    for (let i = 0; i < 4; i++) tono(t + i * 0.07, 660 * Math.pow(1.26, i), 0.2, 0.06, 'triangle');
+  },
   iniciar,
   contexto: () => ctx,
   salidaMusica: () => busMusica,

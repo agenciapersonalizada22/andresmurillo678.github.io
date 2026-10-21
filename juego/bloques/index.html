@@ -26,12 +26,23 @@
     <div id="clicContinuar">Haz clic para continuar</div>
     <div id="nombreBloque"></div>
     <div id="barra"></div>
+    <div id="mochila" class="oculto"></div>
+    <div id="tablero" class="oculto">
+      <div class="velocidad"><b id="tabVel">0</b><span>km/h</span></div>
+      <div class="medidor"><i id="tabComb"></i><em>COMBUSTIBLE</em></div>
+      <div class="medidor gas oculto" id="tabGasCaja"><i id="tabGas"></i><em>MOTOR</em></div>
+      <p id="tabTexto"></p>
+    </div>
   </div>
 
   <!-- Controles para celular -->
   <div id="tactil">
     <div id="joystick"><div id="palanca"></div></div>
     <button type="button" class="btnTactil" id="btnPausa" data-accion="pausa" aria-label="Pausa">II</button>
+    <button type="button" class="btnTactil" id="btnVehiculo" data-accion="vehiculo">SUBIR</button>
+    <button type="button" class="btnTactil" id="btnCamara" data-accion="camara">VISTA</button>
+    <button type="button" class="btnTactil" id="btnLuces" data-accion="luces">LUZ</button>
+    <button type="button" class="btnTactil" id="btnRepostar" data-accion="repostar">GAS</button>
     <button type="button" class="btnTactil" id="btnInventario" data-accion="inventario" aria-label="Bloques">▦</button>
     <button type="button" class="btnTactil" id="btnVolar" data-accion="volar">VOLAR</button>
     <button type="button" class="btnTactil" id="btnBajar" data-accion="bajar">BAJAR</button>
@@ -80,8 +91,12 @@
         <button type="button" id="btnMasDistancia" aria-label="Ver más lejos">+</button>
       </div>
       <div class="fila">
-        <button type="button" id="btnDepuracion">DATOS: NO</button>
+        <button type="button" id="btnCalidad">GRÁFICOS: ALTA</button>
         <button type="button" id="btnGuardar">GUARDAR</button>
+      </div>
+      <div class="fila">
+        <button type="button" id="btnDepuracion">DATOS: NO</button>
+        <button type="button" id="btnMochila">MOCHILA</button>
       </div>
       <p id="avisoPausa" class="info" aria-live="polite"></p>
       <button type="button" id="btnTitulo">SALIR AL TÍTULO</button>
@@ -89,7 +104,8 @@
       <p class="pista solo-compu">WASD caminar · Espacio saltar (2 veces = volar) · Shift correr ·
         W 2 veces rápido = correr o volar rápido · F volar (Espacio sube, Shift baja) ·
         clic izq. romper · clic der. poner · clic rueda copiar bloque · 1-9 / rueda elegir ·
-        E bloques · M música · F3 datos · Esc pausa</p>
+        E subir/bajar de vehículo (o bloques) · I bloques · clic der. usa puertas, cofres y camas ·
+        en vehículo: WASD, Espacio freno, Shift turbo, C vista, L luces, T bidón · M música · F3 datos · Esc pausa</p>
       <p class="pista solo-tactil">joystick caminar (hasta el fondo = correr) · arrastra mirar ·
         toca poner · mantén romper · ▦ bloques</p>
     </div>
@@ -98,9 +114,14 @@
   <!-- Inventario (todos los bloques) -->
   <div id="pantallaInventario" class="pantalla oculto">
     <div class="tarjeta ancha">
-      <h2>BLOQUES</h2>
-      <p class="info">Elige un bloque para la ranura marcada de tu barra</p>
+      <h2>INVENTARIO</h2>
+      <div class="fila pestanas">
+        <button type="button" id="pestBloques" class="activa">BLOQUES</button>
+        <button type="button" id="pestVehiculos">VEHÍCULOS</button>
+      </div>
+      <p class="info" id="infoInventario">Elige un bloque para la ranura marcada de tu barra</p>
       <div id="rejillaInventario"></div>
+      <div id="rejillaVehiculos" class="oculto"></div>
       <button type="button" id="btnCerrarInventario">CERRAR</button>
     </div>
   </div>
