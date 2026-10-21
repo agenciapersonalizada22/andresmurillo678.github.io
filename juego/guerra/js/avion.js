@@ -5,7 +5,7 @@
 import * as THREE from '../lib/three.module.min.js';
 import { crearAvion } from './modelos.js';
 import { Sonido } from './sonido.js';
-import { CONFIG } from './config.js';
+import { CONFIG, ENEMIGOS_AIRE } from './config.js';
 
 const EX = new THREE.Vector3(1, 0, 0), EY = new THREE.Vector3(0, 1, 0), EZ = new THREE.Vector3(0, 0, 1);
 const V1 = new THREE.Vector3(), V2 = new THREE.Vector3(), V3 = new THREE.Vector3(), V4 = new THREE.Vector3();
@@ -14,9 +14,9 @@ const Q1 = new THREE.Quaternion(), Q2 = new THREE.Quaternion(), M1 = new THREE.M
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 class Avion {
-  constructor(ctx, cuerpo, ala) {
+  constructor(ctx, modelo, colores) {
     this.ctx = ctx;
-    this.grupo = crearAvion(cuerpo, ala);
+    this.grupo = crearAvion(modelo, colores);
     ctx.escena.add(this.grupo);
     this.pos = this.grupo.position;
     this.q = this.grupo.quaternion;
@@ -65,25 +65,33 @@ class Avion {
 
 // ------------------------------------------------------------------ Jugador
 export class AvionJugador extends Avion {
-  constructor(ctx) {
-    super(ctx, 0x7a9cc0, 0x56789e);
+  constructor(ctx, def) {
+    super(ctx, def.modelo, def.colores);
+    this.def = def;
+    this.radio = def.radio;
+    this.vidaMax = def.vida;
+    this.sigilo = def.sigilo;
     this.equipo = 'jugador';
     this.w = new THREE.Vector3();
     this.palo = { x: 0, y: 0 };
+    this.aim = new THREE.Vector3(0, 0, -1);
+    this.lead = null;
+    this.aimVisible = false;
     this.invertido = false;
     this.reiniciar();
   }
 
   reiniciar() {
-    this.pos.set(0, 170, 260);
+    const ini = this.ctx.mapa.inicio;
+    this.pos.set(ini.x, ini.y, ini.z);
     this.q.identity();
     this.velocidad = 95;
     this.empuje = 0.55;
     this.vida = this.vidaMax;
     this.vivo = true;
     this.grupo.visible = true;
-    this.misiles = 6;
-    this.bombas = 4;
+    this.misiles = this.def.sec.n;
+    this.bombas = this.def.bombas;
     this.cdArma = 0;
     this.cdMisil = 0;
     this.lado = 1;
@@ -95,47 +103,70 @@ export class AvionJugador extends Avion {
     this.cercaSuelo = false;
     this.w.set(0, 0, 0);
     this.palo.x = this.palo.y = 0;
+    this.aim.set(0, 0, -1);
+    this.lead = null;
     this.regMisil = 0;
   }
 
   reabastecer() {
-    this.misiles = 6;
-    this.bombas = 4;
+    this.misiles = this.def.sec.n;
+    this.bombas = this.def.bombas;
     this.vida = Math.min(this.vidaMax, this.vida + 30);
   }
 
   actualizar(dt, ent, candidatos) {
     if (!this.vivo) return;
-    const { terreno, proyectiles, efectos } = this.ctx;
+    const { terreno, efectos } = this.ctx;
+    const D = this.def, VL = D.vel, GR = D.giro;
     // --- entradas
     const r = ent.consumirRaton();
-    this.palo.x = clamp(this.palo.x + r.dx * 0.004, -1, 1);
-    this.palo.y = clamp(this.palo.y + r.dy * 0.004, -1, 1);
-    const dec = Math.exp(-1.6 * dt);
-    this.palo.x *= dec;
-    this.palo.y *= dec;
+    const sens = this.ctx.opciones.sens || 1;
+    const aim = this.ctx.opciones.raton !== 'joystick';
+    this.fwd.set(0, 0, -1).applyQuaternion(this.q);
     const sgn = this.invertido ? -1 : 1;
-    let cab = (ent.k('KeyS', 'ArrowDown') ? 1 : 0) - (ent.k('KeyW', 'ArrowUp') ? 1 : 0) + ent.izq.y + this.palo.y;
-    let ala = (ent.k('KeyD', 'ArrowRight') ? 1 : 0) - (ent.k('KeyA', 'ArrowLeft') ? 1 : 0) + ent.izq.x + this.palo.x;
-    const gui = (ent.k('KeyE') ? 1 : 0) - (ent.k('KeyQ') ? 1 : 0);
+    // mandos manuales: teclado, mando y joystick táctil (stick abajo = morro arriba)
+    let cab = (ent.k('KeyS', 'ArrowDown') ? 1 : 0) - (ent.k('KeyW', 'ArrowUp') ? 1 : 0) + ent.izq.y + ent.mIzq.y;
+    let ala = (ent.k('KeyD', 'ArrowRight') ? 1 : 0) - (ent.k('KeyA', 'ArrowLeft') ? 1 : 0) + ent.izq.x + ent.mIzq.x;
     cab = clamp(cab, -1, 1) * sgn;
     ala = clamp(ala, -1, 1);
-    if (ent.k('ShiftLeft', 'ShiftRight')) this.empuje = Math.min(1, this.empuje + 0.5 * dt);
-    if (ent.k('ControlLeft', 'ControlRight', 'KeyC')) this.empuje = Math.max(0, this.empuje - 0.5 * dt);
+    const manual = Math.abs(cab) + Math.abs(ala) > 0.05 || ent.k('KeyE', 'KeyQ', 'PadRB', 'PadLB');
+    this.aimVisible = false;
+    if (aim) {
+      // ratón tipo War Thunder: el cursor marca hacia dónde quieres volar y el avión se orienta solo
+      if (manual) this.aim.copy(this.fwd);
+      else {
+        const m = this._ratonApuntar(r, ent, sens);
+        cab = m.cab;
+        ala = m.ala;
+        this.aimVisible = true;
+      }
+    } else {
+      // joystick virtual con el ratón: lo que mueves se mantiene y se centra poco a poco
+      this.palo.x = clamp(this.palo.x + r.dx * 0.005 * sens, -1, 1);
+      this.palo.y = clamp(this.palo.y + r.dy * 0.005 * sens * sgn, -1, 1);
+      const dec = Math.exp(-0.7 * dt);
+      this.palo.x *= dec;
+      this.palo.y *= dec;
+      cab = clamp(cab + this.palo.y * sgn, -1, 1);
+      ala = clamp(ala + this.palo.x, -1, 1);
+    }
+    const gui = (ent.k('KeyE', 'PadRB') ? 1 : 0) - (ent.k('KeyQ', 'PadLB') ? 1 : 0);
+    if (ent.k('ShiftLeft', 'ShiftRight', 'PadUp')) this.empuje = Math.min(1, this.empuje + 0.5 * dt);
+    if (ent.k('ControlLeft', 'ControlRight', 'KeyC', 'PadDown')) this.empuje = Math.max(0, this.empuje - 0.5 * dt);
 
     // --- velocidad y pérdida de sustentación
     this.fwd.set(0, 0, -1).applyQuaternion(this.q);
-    const objetivo = 52 + this.empuje * 100;
-    this.velocidad += (objetivo - this.velocidad) * 0.4 * dt - this.fwd.y * 30 * dt;
-    this.velocidad = clamp(this.velocidad, 30, 200);
-    this.perdida = clamp((60 - this.velocidad) / 18, 0, 1);
+    const objetivo = VL.min + this.empuje * VL.rango;
+    this.velocidad += (objetivo - this.velocidad) * 0.4 * dt - this.fwd.y * VL.grav * dt;
+    this.velocidad = clamp(this.velocidad, VL.perdida - 30, VL.tope);
+    this.perdida = clamp((VL.perdida - this.velocidad) / 18, 0, 1);
     const autoridad = 1 - 0.7 * this.perdida;
 
     // --- giros (suavizados)
-    const k = 1 - Math.exp(-7 * dt);
-    this.w.x += (cab * 1.2 * autoridad - this.w.x) * k;
-    this.w.z += (-ala * 2.7 * autoridad - this.w.z) * k;
-    this.w.y += (-gui * 0.6 - this.w.y) * k;
+    const k = 1 - Math.exp(-GR.resp * dt);
+    this.w.x += (cab * GR.cab * autoridad - this.w.x) * k;
+    this.w.z += (-ala * GR.ala * autoridad - this.w.z) * k;
+    this.w.y += (-gui * GR.gui - this.w.y) * k;
     Q1.setFromAxisAngle(EX, this.w.x * dt - this.perdida * 0.9 * dt);
     Q2.setFromAxisAngle(EZ, this.w.z * dt);
     this.q.multiply(Q1).multiply(Q2);
@@ -193,17 +224,18 @@ export class AvionJugador extends Avion {
     // --- armas
     this.cdArma -= dt;
     this.cdMisil -= dt;
-    if (this.misiles < 6) {
+    if (D.sec.n > 0 && this.misiles < D.sec.n) {
       this.regMisil += dt;
-      if (this.regMisil > 14) { this.regMisil = 0; this.misiles++; }
+      if (this.regMisil > D.sec.regen) { this.regMisil = 0; this.misiles++; }
     }
     this._apuntar(dt, candidatos);
-    if (ent.k('Space', 'Mouse0') && this.cdArma <= 0) this._ametrallar();
-    if (ent.pulso('KeyF', 'Mouse2', 'KeyM') && this.misiles > 0 && this.cdMisil <= 0) this._misil();
-    if (ent.pulso('KeyB') && this.bombas > 0) this._bomba();
+    if (ent.k('Space', 'Mouse0', 'PadRT') && this.cdArma <= 0) this._ametrallar();
+    if ((this.def.sec.tipo === 'cohete' ? ent.k('KeyF', 'Mouse2', 'PadLT') : ent.pulso('KeyF', 'Mouse2', 'PadLT')) && this.misiles > 0 && this.cdMisil <= 0) this._misil();
+    if (ent.pulso('KeyB', 'PadA') && this.bombas > 0) this._bomba();
 
     // --- aspecto
     this.grupo.userData.llama.scale.set(1, 1, 0.5 + this.empuje * 1.2 + Math.random() * 0.2);
+    if (this.grupo.userData.helice) this.grupo.userData.helice.rotation.z += (14 + this.empuje * 40) * dt;
     this._humoDanio(dt);
     if (Math.random() < 0.5 && this.empuje > 0.7) {
       V1.set(0, 0, 5).applyQuaternion(this.q).add(this.pos);
@@ -211,8 +243,42 @@ export class AvionJugador extends Avion {
     }
   }
 
+  // Mueve el punto de mira (aim) y calcula cuánto girar para ir hacia él
+  _ratonApuntar(r, ent, sens) {
+    const MAX = 1.25;
+    if (document.pointerLockElement) {
+      const s = 0.0022 * sens;
+      Q1.setFromAxisAngle(EY, -r.dx * s);
+      this.aim.applyQuaternion(Q1);
+      H.crossVectors(this.aim, EY);
+      if (H.lengthSq() > 1e-6) {
+        Q1.setFromAxisAngle(H.normalize(), -r.dy * s * (this.invertido ? -1 : 1));
+        this.aim.applyQuaternion(Q1);
+      }
+    } else if (ent.ratonMovido) {
+      // sin pointer lock: el cursor de pantalla es el punto de mira
+      this.aim.set(ent.cx, ent.cy, 0.5).unproject(this.ctx.camera).sub(this.ctx.camera.position);
+    }
+    this.aim.y = clamp(this.aim.y / (this.aim.length() || 1), -0.93, 0.93);
+    this.aim.normalize();
+    const c = clamp(this.aim.dot(this.fwd), -1, 1);
+    if (Math.acos(c) > MAX) {
+      H.copy(this.aim).addScaledVector(this.fwd, -c).normalize();
+      this.aim.copy(this.fwd).multiplyScalar(Math.cos(MAX)).addScaledVector(H, Math.sin(MAX));
+    }
+    D.copy(this.aim).applyQuaternion(Q2.copy(this.q).invert());
+    // ángulo al objetivo y hacia qué lado del avión queda (0 = justo encima)
+    const a = Math.acos(clamp(-D.z, -1, 1));
+    if (a < 0.1) return { cab: clamp(D.y * 8, -1, 1), ala: clamp(D.x * 8, -1, 1) };
+    const err = Math.atan2(D.x, D.y);
+    const ala = (Math.abs(err) < 0.12 ? err * 8 : Math.sign(err)) * (a < 0.3 ? a / 0.3 + 0.2 : 1);
+    // tira de la palanca cuando el objetivo ya queda hacia "arriba" del avión (viraje cerrado)
+    const cab = Math.max(0, Math.cos(err)) * Math.min(1, a * 3) + (D.z > 0 ? 0.3 : 0);
+    return { cab: clamp(cab, -1, 1), ala: clamp(ala, -1, 1) };
+  }
+
   _apuntar(dt, candidatos) {
-    let mejor = null, mejorA = 0.2;
+    let mejor = null, mejorA = 0.28;
     for (const e of candidatos) {
       if (!e.vivo) continue;
       V1.copy(e.centro).sub(this.pos);
@@ -224,6 +290,17 @@ export class AvionJugador extends Avion {
     if (mejor && mejor === this.apuntado) this.tBloqueo += dt;
     else this.tBloqueo = 0;
     this.apuntado = mejor;
+    // punto de mira de adelanto para las ametralladoras (bala a 650 m/s más tu velocidad)
+    if (mejor) {
+      V1.copy(mejor.centro).sub(this.pos);
+      V2.set(0, 0, 0);
+      if (mejor.vel) V2.copy(mejor.vel);
+      V2.sub(this.vel);
+      let t = V1.length() / 650;
+      for (let i = 0; i < 3; i++) t = V3.copy(V1).addScaledVector(V2, t).length() / 650;
+      if (!this.lead) this.lead = new THREE.Vector3();
+      this.lead.copy(mejor.centro).addScaledVector(V2, t);
+    } else this.lead = null;
     const antes = this.bloqueado;
     this.bloqueado = mejor && this.tBloqueo > 0.8 ? mejor : null;
     if (this.bloqueado && !antes) Sonido.bip();
@@ -231,9 +308,10 @@ export class AvionJugador extends Avion {
 
   _ametrallar() {
     const { proyectiles } = this.ctx;
-    this.cdArma = 0.065;
+    const A = this.def.ametra;
+    this.cdArma = A.cd;
     this.lado = -this.lado;
-    V1.set(this.lado * 1.7, -0.3, -2.2).applyQuaternion(this.q).add(this.pos);
+    V1.set(this.lado * A.lado, -0.3, -2.2).applyQuaternion(this.q).add(this.pos);
     V2.copy(this.fwd);
     // ayuda de puntería: se inclina un poco hacia el enemigo cercano al centro
     const e = this.apuntado;
@@ -245,18 +323,28 @@ export class AvionJugador extends Avion {
         V2.lerp(V3, 0.55);
       }
     }
-    V2.x += (Math.random() - 0.5) * 0.014;
-    V2.y += (Math.random() - 0.5) * 0.014;
-    V2.z += (Math.random() - 0.5) * 0.014;
+    V2.x += (Math.random() - 0.5) * A.disp;
+    V2.y += (Math.random() - 0.5) * A.disp;
+    V2.z += (Math.random() - 0.5) * A.disp;
     V2.normalize();
-    proyectiles.disparar('bala', 'jugador', V1, V2, this.vel);
+    proyectiles.disparar('bala', 'jugador', V1, V2, this.vel, { dano: A.dano });
     Sonido.disparo('ametralladora', 0.9);
   }
 
   _misil() {
-    this.cdMisil = 0.9;
+    const S = this.def.sec;
+    this.cdMisil = S.cd;
     this.misiles--;
     V1.set(this.misiles % 2 ? 2.4 : -2.4, -0.5, -0.5).applyQuaternion(this.q).add(this.pos);
+    if (S.tipo === 'cohete') {
+      V2.copy(this.fwd);
+      V2.x += (Math.random() - 0.5) * 0.012;
+      V2.y += (Math.random() - 0.5) * 0.012;
+      V2.normalize();
+      this.ctx.proyectiles.disparar('cohete', 'jugador', V1, V2, this.vel);
+      Sonido.disparo('misil', 0.7);
+      return;
+    }
     this.ctx.proyectiles.disparar('misil', 'jugador', V1, this.fwd, this.vel, { vel: 60, objetivo: this.bloqueado, giro: 2.8 });
     Sonido.disparo('misil', 1);
   }
@@ -278,15 +366,18 @@ export class AvionJugador extends Avion {
 
 // ------------------------------------------------------------------ Enemigo
 export class AvionEnemigo extends Avion {
-  constructor(ctx, oleada) {
-    super(ctx, 0xc0604c, 0x8c3a2e);
+  constructor(ctx, oleada, variante = 'caza') {
+    const V = ENEMIGOS_AIRE[variante] || ENEMIGOS_AIRE.caza;
+    super(ctx, V.modelo, V.colores);
+    this.V = V;
+    this.radio = V.radio;
     this.equipo = 'enemigo';
     this.tipo = 'aire';
-    this.puntos = 100 + oleada * 20;
-    this.vidaMax = this.vida = Math.min(80, 28 + oleada * 7);
-    this.base = Math.min(118, 78 + oleada * 5);
+    this.puntos = Math.round((100 + oleada * 20) * V.puntos);
+    this.vidaMax = this.vida = Math.round(Math.min(80, 28 + oleada * 7) * V.vida);
+    this.base = Math.min(118, 78 + oleada * 5) * V.vel;
     this.velocidad = this.base;
-    this.giro = Math.min(1.35, 0.7 + oleada * 0.1);
+    this.giro = Math.min(1.35, 0.7 + oleada * 0.1) * V.giro;
     this.oleada = oleada;
     this.bank = 0;
     this.romper = 0;
@@ -295,7 +386,7 @@ export class AvionEnemigo extends Avion {
     this.cdRafaga = 2 + Math.random() * 2;
     this.cdMisil = 8 + Math.random() * 8;
     this.cdBala = 0;
-    this.dispersion = Math.max(0.012, 0.045 - oleada * 0.005);
+    this.dispersion = Math.max(0.012, 0.045 - oleada * 0.005) * V.disp;
   }
 
   colocar(x, y, z, hacia) {
@@ -323,12 +414,13 @@ export class AvionEnemigo extends Avion {
     const haciaJ = H.copy(jp.pos).sub(pos);
     const dist = haciaJ.length();
     haciaJ.divideScalar(dist || 1);
+    const sig = jp.sigilo || 1;
     const miraAMi = jp.fwd.dot(V2.copy(haciaJ).negate());
     // punto de tiro con adelanto
     const deseo = D.copy(jp.pos).addScaledVector(jp.vel, Math.min(dist / 650, 1.2) * 0.8).sub(pos).normalize();
     const lado = L.set(-fwd.z, 0, fwd.x).normalize();
 
-    if (this.romper <= 0 && ((miraAMi > 0.94 && dist < 500 && Math.random() < dt * 1.3) || (dist < 110 && fwd.dot(haciaJ) > 0.2))) {
+    if (this.romper <= 0 && ((miraAMi > 0.94 && dist < 500 * sig && Math.random() < dt * 1.3) || (dist < 110 && fwd.dot(haciaJ) > 0.2))) {
       this.romper = 1.5 + Math.random();
       this.signo = Math.random() < 0.5 ? 1 : -1;
     }
@@ -343,7 +435,7 @@ export class AvionEnemigo extends Avion {
       if (d < 80) deseo.addScaledVector(V2.copy(pos).sub(a.pos), 0.9 / Math.max(d, 1));
     }
     // evitar el suelo
-    const adelante = Math.max(terreno.altura(pos.x + fwd.x * 260, pos.z + fwd.z * 260), terreno.altura(pos.x, pos.z), 0);
+    const adelante = Math.max(terreno.techo(pos.x + fwd.x * 260, pos.z + fwd.z * 260), terreno.techo(pos.x + fwd.x * 130, pos.z + fwd.z * 130), terreno.techo(pos.x, pos.z), 0);
     if (pos.y + fwd.y * 260 < adelante + 60 || pos.y < adelante + 45) deseo.set(fwd.x * 0.4, 1, fwd.z * 0.4);
     if (pos.y > 650) deseo.y = Math.min(deseo.y, -0.3);
     if (Math.hypot(pos.x, pos.z) > 1050) {
@@ -367,14 +459,14 @@ export class AvionEnemigo extends Avion {
     this.velocidad += ((this.base * (dist < 250 ? 0.85 : 1)) - this.velocidad) * dt;
     this.vel.copy(fwd).multiplyScalar(this.velocidad);
     pos.addScaledVector(this.vel, dt);
-    if (pos.y < Math.max(terreno.altura(pos.x, pos.z), 0) + 2) { this.morir(); return; }
+    if (pos.y < Math.max(terreno.altura(pos.x, pos.z), 0) + 2 || terreno.colision(pos.x, pos.y, pos.z, 1)) { this.morir(); return; }
 
     // disparos
     this.cdRafaga -= dt;
     this.cdBala -= dt;
     this.cdMisil -= dt;
     const alineado = fwd.dot(haciaJ);
-    if (this.rafaga <= 0 && this.cdRafaga <= 0 && dist < 560 && alineado > 0.985 && jp.vivo) {
+    if (this.rafaga <= 0 && this.cdRafaga <= 0 && dist < 560 * sig && alineado > 0.985 && jp.vivo) {
       this.rafaga = 0.6 + Math.random() * 0.5;
       this.cdRafaga = 2.2 + Math.random() * 2;
     }
@@ -388,16 +480,17 @@ export class AvionEnemigo extends Avion {
         V2.z += (Math.random() - 0.5) * this.dispersion * 2;
         V2.normalize();
         V3.copy(fwd).multiplyScalar(2).add(pos);
-        proyectiles.disparar('bala', 'enemigo', V3, V2, this.vel, { dano: 3 + this.oleada * 0.4 });
+        proyectiles.disparar('bala', 'enemigo', V3, V2, this.vel, { dano: (3 + this.oleada * 0.4) * this.V.dano });
         Sonido.disparo('ametralladora', Sonido.porDistancia(dist) * 0.6);
       }
     }
-    if (this.oleada >= 3 && this.cdMisil <= 0 && dist > 450 && dist < 1300 && alineado > 0.96 && jp.vivo) {
+    if (this.oleada >= this.V.misil && this.cdMisil <= 0 && dist > 450 && dist < 1300 * sig && alineado > 0.96 && jp.vivo) {
       this.cdMisil = 11 + Math.random() * 6;
       proyectiles.disparar('misil', 'enemigo', pos, fwd, this.vel, { vel: 40, objetivo: jp, giro: 1.25, dano: 34, vida: 8 });
       Sonido.disparo('misil', Sonido.porDistancia(dist));
     }
     this.grupo.userData.llama.scale.set(1, 1, 0.9);
+    if (this.grupo.userData.helice) this.grupo.userData.helice.rotation.z += 40 * dt;
     this._humoDanio(dt);
   }
 

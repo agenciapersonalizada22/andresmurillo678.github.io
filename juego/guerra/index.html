@@ -21,6 +21,8 @@
     <div id="dano"></div>
     <div id="marcadores"></div>
     <div id="mira" aria-hidden="true"><i></i></div>
+    <div id="miraRaton" aria-hidden="true"></div>
+    <div id="lead" aria-hidden="true"></div>
     <div id="datos">
       <div>PUNTAJE <b id="hPuntaje">0</b></div>
       <div>OLEADA <b id="hOleada">1/5</b></div>
@@ -46,6 +48,8 @@
     <button type="button" class="btnTactil solo-avion" id="btnFreno" data-tecla="ControlLeft">FRENO</button>
   </div>
 
+  <div id="toastMando" class="oculto"></div>
+
   <a id="volverMenu" class="volver" href="../">← Menú</a>
 
   <!-- Pantalla de inicio -->
@@ -53,6 +57,13 @@
     <div class="tarjeta ancha">
       <h1 class="titulo"><span>ALAS</span><span>Y ACERO</span></h1>
       <p class="sub">combate aéreo · batalla de tanques</p>
+      <h3 class="selTitulo">MAPA</h3>
+      <div id="selMapas" class="selMapas"></div>
+      <p id="infoMapa" class="info"></p>
+      <h3 class="selTitulo">TU AVIÓN</h3>
+      <div id="selAviones" class="selAviones"></div>
+      <div id="fichaAvion" class="ficha"></div>
+      <h3 class="selTitulo">JUGAR</h3>
       <div class="modos">
         <button type="button" class="modo" id="btnAvion" style="--color:#3df5ff">
           <b>AVIÓN DE CAZA</b>
@@ -81,12 +92,16 @@
         <button type="button" id="btnEfectos">SONIDOS: SÍ</button>
       </div>
       <button type="button" id="btnInvertir">CABECEO: NORMAL</button>
+      <button type="button" id="btnRaton" class="solo-avion-pausa">RATÓN: APUNTAR</button>
+      <label class="sens" for="rangoSens"><span>SENSIBILIDAD <b id="valSens">1.0</b></span><input type="range" id="rangoSens" min="0.3" max="2.5" step="0.1" value="1"></label>
       <div class="fila">
         <button type="button" id="btnReiniciar">REINICIAR</button>
         <button type="button" id="btnTitulo">MODOS</button>
       </div>
       <p class="pista solo-compu">Avión: S/↓ sube, W/↑ baja (palanca clásica) · ratón también guía · Shift/Ctrl empuje · Espacio ametralladora · F misil (fíjalo un momento) · B bomba · M música</p>
       <p class="pista solo-compu">Tanque: W/S/A/D casco · ratón o flechas = torreta · clic o Espacio = cañón (recarga) · traseras y lados duelen más</p>
+      <p class="pista solo-mando">MANDO: stick izq. cabeceo y alabeo · stick der. mirar · RT ametralladoras · LT misil/cohete · LB/RB guiñada · A bomba · cruceta arriba/abajo empuje · Start pausa. Tanque: stick izq. casco, stick der. torreta, RT dispara.</p>
+      <p class="pista solo-compu">Ratón (avión): mueve el cursor para marcar hacia dónde volar (círculo cian); el avión gira hacia él. El cuadro naranja es la mira de adelanto: dispara ahí. Con teclas de vuelo el ratón se desactiva un momento.</p>
       <p class="pista solo-tactil">Apunta con el centro de la pantalla. Fija un enemigo con la mira para lanzar misiles.</p>
       <a class="enlace" href="../">← Volver al menú de juegos</a>
     </div>

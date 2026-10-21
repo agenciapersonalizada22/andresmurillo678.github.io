@@ -297,6 +297,41 @@ h2 { margin: 0 0 12px; color: var(--cian); letter-spacing: 3px; text-shadow: 0 0
 .modo span { display: block; margin: 8px 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 0; color: #d6d0ff; line-height: 1.4; }
 .modo em { display: block; font-style: normal; font-size: 11px; color: var(--suave); }
 
+/* ---------------------------------------------------------- Selectores del menú */
+.selTitulo { margin: 16px 0 6px; font-size: 12px; letter-spacing: 4px; color: var(--naranja); text-align: left; }
+.selMapas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tarjeta button.chip {
+  margin: 0; padding: 6px 6px 8px; font-size: 10px; letter-spacing: 0.5px; line-height: 1.2;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.chip i { display: block; width: 100%; height: 34px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.25); }
+.tarjeta button.sel { border-color: var(--cian); background: rgba(61, 245, 255, 0.2); box-shadow: 0 0 12px rgba(61, 245, 255, 0.4); }
+.selAviones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tarjeta button.carta {
+  position: relative; margin: 0; padding: 4px 4px 7px; font-size: 11px; letter-spacing: 0.5px; line-height: 1.2;
+  overflow: hidden;
+}
+.carta img { display: block; width: 100%; height: auto; aspect-ratio: 8 / 5; object-fit: contain; pointer-events: none; }
+.carta b { display: block; font-size: 11px; letter-spacing: 1px; }
+.carta small { display: block; margin-top: 2px; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0; color: #c9c2f0; }
+.carta u { display: none; text-decoration: none; }
+.tarjeta button.carta.vista:not(.sel) { border-color: var(--naranja); }
+.carta.bloqueado img { filter: brightness(0.35) grayscale(0.6); }
+.carta.bloqueado u {
+  display: block; position: absolute; left: 0; right: 0; top: 36%; font-size: 9px; font-weight: 800; letter-spacing: 1px; color: var(--rojo);
+}
+.ficha { margin-top: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(154, 140, 255, 0.5); background: rgba(154, 140, 255, 0.08); text-align: left; }
+.ficha h4 { margin: 0 0 4px; font-size: 13px; letter-spacing: 2px; color: var(--cian); }
+.ficha p { margin: 4px 0 8px; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; font-size: 12px; line-height: 1.4; color: #d6d0ff; }
+.fila-barra { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+.fila-barra em { flex: 0 0 96px; font-style: normal; font-size: 10px; letter-spacing: 1px; color: var(--suave); }
+.bar { flex: 1; height: 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.15); overflow: hidden; }
+.bar span { display: block; height: 100%; background: linear-gradient(90deg, #3df5ff, #3df58a); }
+.ficha p.armas { margin: 8px 0 0; font-family: inherit; font-size: 10px; letter-spacing: 1px; color: #fff; }
+.ficha p.aviso-bloq { margin: 6px 0 0; color: #ff8aa0; }
+.ficha p.aviso-ok { margin: 6px 0 0; font-family: inherit; font-size: 10px; letter-spacing: 2px; color: #3df58a; }
+@media (max-width: 380px) { .selMapas, .selAviones { grid-template-columns: repeat(2, 1fr); } }
+
 body.tactil .solo-compu { display: none; }
 body:not(.tactil) .solo-tactil { display: none; }
 body.enTitulo #hud { display: none; }
@@ -316,3 +351,23 @@ body.enTitulo #hud { display: none; }
   body.modoTanque #btnFuego { bottom: calc(130px + var(--seguro-abajo)); }
   #aviso { top: 14%; }
 }
+
+/* ---------------------------------------------------------- Mira del ratón, adelanto y mando */
+#miraRaton, #lead { position: absolute; left: 0; top: 0; display: none; pointer-events: none; will-change: transform; }
+#miraRaton { width: 26px; height: 26px; margin: -13px 0 0 -13px; border: 2px solid var(--cian); border-radius: 50%; box-shadow: 0 0 8px var(--cian); }
+#miraRaton::after { content: ''; position: absolute; left: 10px; top: 10px; width: 4px; height: 4px; border-radius: 50%; background: var(--cian); }
+#lead { width: 16px; height: 16px; margin: -8px 0 0 -8px; border: 2px solid var(--naranja); transform-origin: center; box-shadow: 0 0 8px var(--naranja); }
+body.modoTanque #miraRaton, body.modoTanque #lead { display: none !important; }
+.sens { display: block; margin: 8px 0; text-align: left; font-size: 12px; letter-spacing: 2px; color: var(--suave); }
+.sens b { color: #fff; float: right; }
+.sens input { width: 100%; margin-top: 6px; accent-color: var(--cian); }
+body:not(.modoAvion) #btnRaton { display: none; }
+.solo-mando { display: none; }
+body.conMando .solo-mando { display: block; }
+body.conMando .solo-compu { display: none; }
+#toastMando {
+  position: fixed; top: calc(14px + var(--seguro-arriba)); left: 50%; transform: translateX(-50%); z-index: 70;
+  padding: 8px 16px; border-radius: 999px; background: rgba(5, 3, 15, 0.8); border: 2px solid #3df58a;
+  color: #3df58a; font-size: 12px; font-weight: 800; letter-spacing: 2px; white-space: nowrap; pointer-events: none;
+}
+body:not(.modoAvion) .sens { display: none; }

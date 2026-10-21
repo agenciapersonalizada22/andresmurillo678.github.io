@@ -4,9 +4,9 @@
 //  actualizar(dt) y destruir(); aquí solo se les da la hora.
 // =============================================================
 import * as THREE from '../lib/three.module.min.js';
-import { CONFIG } from './config.js';
+import { CONFIG, MAPAS, AVIONES } from './config.js';
 import { Terreno } from './terreno.js';
-import { Cielo, DIR_SOL } from './cielo.js';
+import { Cielo } from './cielo.js';
 import { Efectos } from './efectos.js';
 import { Proyectiles } from './proyectiles.js';
 import { Hud } from './hud.js';
@@ -15,7 +15,8 @@ import { Sonido } from './sonido.js';
 import { Musica } from './musica.js';
 import { ModoAvion } from './modoAvion.js';
 import { ModoTanque } from './modoTanque.js';
-import { cargarRecords, guardarRecord, cargarOpciones, guardarOpciones } from './guardado.js';
+import { cargarRecords, guardarRecord, claveRecord, mejorPuntaje, cargarOpciones, guardarOpciones } from './guardado.js';
+import { Menu } from './menu.js';
 
 const $ = (id) => document.getElementById(id);
 THREE.ColorManagement.enabled = false;
@@ -37,21 +38,43 @@ renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 const escena = new THREE.Scene();
 escena.background = new THREE.Color(0xc7dbed);
 escena.fog = new THREE.FogExp2(0xc7dbed, CONFIG.vista.niebla);
-escena.add(new THREE.HemisphereLight(0xdcebff, 0x7a8a60, 2.1));
+const hemi = new THREE.HemisphereLight(0xdcebff, 0x7a8a60, 2.1);
+escena.add(hemi);
 const sol = new THREE.DirectionalLight(0xfff0d2, 2.4);
-sol.position.copy(DIR_SOL).multiplyScalar(500);
 escena.add(sol);
 
 const camera = new THREE.PerspectiveCamera(CONFIG.vista.fov, 1, 0.5, CONFIG.vista.lejos);
 const opciones = cargarOpciones();
-const terreno = new Terreno(escena, (Math.random() * 1e9) | 0);
+let terreno = null;
 const cielo = new Cielo(escena);
 const efectos = new Efectos(escena);
-const proyectiles = new Proyectiles(escena, terreno, efectos);
+const proyectiles = new Proyectiles(escena, null, efectos);
 const hud = new Hud();
 const entrada = new Entrada(lienzo);
 entrada.tactil = tactil;
-const ctx = { escena, camera, renderer, terreno, efectos, proyectiles, hud, entrada, opciones, ancho: 1, alto: 1 };
+const ctx = { escena, camera, renderer, terreno: null, mapa: null, avionId: '', efectos, proyectiles, hud, entrada, opciones, ancho: 1, alto: 1 };
+
+// ----------------------------------------------------------- Mapa elegido
+// Al cambiar de mapa se libera el terreno anterior y se genera el nuevo (semilla fija)
+function cargarMapa(id) {
+  if (terreno && terreno.id === id) return;
+  const d = MAPAS[id];
+  if (terreno) terreno.destruir();
+  terreno = new Terreno(escena, id);
+  ctx.terreno = terreno;
+  ctx.mapa = d;
+  proyectiles.terreno = terreno;
+  cielo.aplicar(d.cielo);
+  escena.background.set(d.cielo.horizonte);
+  escena.fog.color.set(d.cielo.horizonte);
+  escena.fog.density = d.niebla;
+  hemi.color.set(d.luz.cielo);
+  hemi.groundColor.set(d.luz.suelo);
+  hemi.intensity = d.luz.hemi;
+  sol.color.set(d.luz.sol);
+  sol.intensity = d.luz.solInt;
+  sol.position.copy(cielo.dirSol).multiplyScalar(500);
+}
 
 // ----------------------------------------------------------- Pantalla
 function ajustar() {
@@ -81,15 +104,37 @@ let bloqueado = false;
 function textoRecords() {
   const r = cargarRecords();
   const f = (x) => (x ? `Récord: ${x.puntaje} (oleada ${x.oleada})` : 'Récord: 0');
-  $('recAvion').textContent = f(r.avion);
-  $('recTanque').textContent = f(r.tanque);
+  $('recAvion').textContent = f(r[claveRecord('avion', ctx.mapa.id)]);
+  $('recTanque').textContent = f(r[claveRecord('tanque', ctx.mapa.id)]);
 }
+
+// ----------------------------------------------------------- Selección de mapa y avión
+function elegir(mapa, avion) {
+  if (mapa) cargarMapa(mapa);
+  if (avion) ctx.avionId = avion;
+  guardarOpciones({ ...cargarOpciones(), mapa: ctx.mapa.id, avion: ctx.avionId });
+  textoRecords();
+}
+const disponible = (id) => mejorPuntaje('avion') >= AVIONES[id].desbloqueo;
+const guardado = cargarOpciones();
+const mapaInicial = MAPAS[guardado.mapa] ? guardado.mapa : CONFIG.predeterminado.mapa;
+cargarMapa(mapaInicial);
+ctx.avionId = AVIONES[guardado.avion] && disponible(guardado.avion) ? guardado.avion : CONFIG.predeterminado.avion;
+const menu = new Menu(renderer, { mapa: ctx.mapa.id, avion: ctx.avionId }, {
+  mapa: (id) => elegir(id, null),
+  avion: (id) => elegir(null, id),
+  disponible,
+  mejor: () => mejorPuntaje('avion'),
+});
 
 function actualizarBotones() {
   $('btnMusica').textContent = 'MÚSICA: ' + (Musica.activa() ? 'SÍ' : 'NO');
   $('btnEfectos').textContent = 'SONIDOS: ' + (Sonido.efectosActivos() ? 'SÍ' : 'NO');
   $('btnInvertir').textContent = 'CABECEO: ' + (opciones.invertido ? 'INVERTIDO' : 'NORMAL');
-  $('btnInvertir').classList.toggle('oculto', !modo || modo.nombre !== 'avion');
+  $('btnInvertir').classList.toggle('oculto', !modo);
+  $('btnRaton').textContent = 'RATÓN: ' + (opciones.raton === 'joystick' ? 'JOYSTICK VIRTUAL' : 'APUNTAR');
+  $('rangoSens').value = opciones.sens || 1;
+  $('valSens').textContent = (opciones.sens || 1).toFixed(1);
 }
 
 function empezar(nombre) {
@@ -141,6 +186,7 @@ function volverTitulo() {
   document.body.classList.add('enTitulo');
   document.body.classList.remove('modoAvion', 'modoTanque');
   textoRecords();
+  menu.refrescar();
   mostrar('pantallaTitulo');
 }
 
@@ -150,10 +196,10 @@ function terminar(r) {
   entrada.soltarTodo();
   entrada.soltarRaton();
   Sonido.motor.parar();
-  const nuevo = guardarRecord(modo.nombre, r.puntaje, r.oleada);
+  const nuevo = guardarRecord(modo.nombre, ctx.mapa.id, r.puntaje, r.oleada);
   $('finTitulo').textContent = r.victoria ? '¡VICTORIA!' : 'DERROTA';
-  $('finDatos').textContent = `Puntaje: ${r.puntaje} · Oleada: ${r.oleada}/${CONFIG.oleadas}`;
-  const rec = cargarRecords()[modo.nombre];
+  $('finDatos').textContent = `Puntaje: ${r.puntaje} · Oleada: ${r.oleada}/${CONFIG.oleadas} · ${ctx.mapa.nombre}`;
+  const rec = cargarRecords()[claveRecord(modo.nombre, ctx.mapa.id)];
   $('finRecord').textContent = nuevo ? '¡Nuevo récord!' : `Récord: ${rec ? rec.puntaje : 0}`;
   $('finTitulo').style.color = r.victoria ? '#3df58a' : '#ff4d6d';
   mostrar('pantallaFin');
@@ -174,10 +220,31 @@ $('btnInvertir').addEventListener('click', () => {
   if (modo && modo.jugador) modo.jugador.invertido = opciones.invertido;
   actualizarBotones();
 });
+$('btnRaton').addEventListener('click', () => {
+  opciones.raton = opciones.raton === 'joystick' ? 'apuntar' : 'joystick';
+  guardarOpciones({ ...cargarOpciones(), raton: opciones.raton });
+  actualizarBotones();
+});
+$('rangoSens').addEventListener('input', (e) => {
+  opciones.sens = parseFloat(e.target.value) || 1;
+  guardarOpciones({ ...cargarOpciones(), sens: opciones.sens });
+  actualizarBotones();
+});
 $('btnPausa').addEventListener('click', pausar);
 
+// Mando: aviso al conectarlo y textos de ayuda según haya mando o no
+let tToast = 0;
+entrada.alMando = (conectado, nombre) => {
+  document.body.classList.toggle('conMando', conectado);
+  const t = $('toastMando');
+  t.textContent = conectado ? 'MANDO CONECTADO' : 'MANDO DESCONECTADO';
+  t.classList.remove('oculto');
+  clearTimeout(tToast);
+  tToast = setTimeout(() => t.classList.add('oculto'), 3200);
+};
+
 entrada.alTecla = (codigo) => {
-  if (codigo === 'Escape' || codigo === 'KeyP') {
+  if (codigo === 'Escape' || codigo === 'KeyP' || codigo === 'PadStart') {
     if (estado === 'jugando') pausar();
     else if (estado === 'pausa') reanudar();
   } else if (codigo === 'KeyM') {
@@ -214,6 +281,7 @@ function bucle(ahora) {
   const dt = Math.min(0.05, Math.max(0.001, (ahora - ultimo) / 1000));
   ultimo = ahora;
   tiempo += dt;
+  entrada.leerMando();
   terreno.actualizar(tiempo);
   if (estado === 'jugando') {
     modo.actualizar(dt);
@@ -229,7 +297,8 @@ function bucle(ahora) {
     efectos.actualizar(dt);
   } else if (estado === 'titulo') {
     const a = tiempo * 0.06;
-    camera.position.set(Math.cos(a) * 520, 190, Math.sin(a) * 520);
+    const cx = Math.cos(a) * 520, cz = Math.sin(a) * 520;
+    camera.position.set(cx, Math.max(190, terreno.techo(cx, cz) + 60), cz);
     camera.lookAt(0, 30, 0);
   }
   cielo.seguir(camera.position);
@@ -241,5 +310,7 @@ textoRecords();
 actualizarBotones();
 requestAnimationFrame(bucle);
 
-// Solo para pruebas automáticas
-window.__guerra = { get estado() { return estado; }, get modo() { return modo; }, ctx };
+// Solo para pruebas automáticas: abre la página con ?debug
+if (new URLSearchParams(location.search).has('debug')) {
+  window.__guerra = { get estado() { return estado; }, get modo() { return modo; }, ctx, empezar, elegir, menu, volverTitulo };
+}
