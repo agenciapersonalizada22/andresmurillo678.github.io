@@ -66,6 +66,13 @@ export const CONFIG = {
     dobleEspacioVuela: true,    // tocar Espacio dos veces rápido activa/desactiva el vuelo
   },
 
+  // ----------------------------------------------------- Animales
+  animales: {
+    activos: true,          // false = sin animales
+    maximo: 7,              // cuántos puede haber cerca de ti en compu
+    maximoMovil: 4,         // lo mismo en el celular
+  },
+
   // ----------------------------------------------------- Día y noche
   dia: {
     duracion: 600,          // segundos que dura un día completo (con su noche)

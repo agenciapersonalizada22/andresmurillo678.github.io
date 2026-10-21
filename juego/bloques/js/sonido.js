@@ -168,6 +168,22 @@ export const Sonido = {
     ruido(t, 0.45, 0.5, 'lowpass', 1200, 1, 1);
     for (let i = 0; i < 5; i++) tono(t + i * 0.05, 250 + Math.random() * 300, 0.12, 0.05, 'sine', 700);
   },
+  // Ruidito de animal: tipo 'oink', 'be' o 'muu'; fuerza de 0 (lejos) a 1 (cerca)
+  animal(tipo, fuerza = 1) {
+    if (!listo('animal', 0.4)) return;
+    const t = ctx.currentTime + 0.01;
+    const v = 0.04 + 0.16 * fuerza * fuerza;
+    const varia = 0.9 + Math.random() * 0.2;
+    if (tipo === 'oink') {
+      tono(t, 210 * varia, 0.1, v, 'sawtooth', 130);
+      tono(t + 0.13, 190 * varia, 0.14, v, 'sawtooth', 110);
+    } else if (tipo === 'be') {
+      for (let i = 0; i < 4; i++) tono(t + i * 0.07, (340 + (i % 2) * 30) * varia, 0.09, v * 0.8, 'sawtooth', 300 * varia);
+    } else {
+      tono(t, 120 * varia, 0.7, v * 1.1, 'triangle', 90 * varia);
+      tono(t, 240 * varia, 0.7, v * 0.3, 'sine', 180 * varia);
+    }
+  },
   clic() {
     if (listo('clic', 0.03)) tono(ctx.currentTime, 880, 0.05, 0.08, 'square', 660);
   },

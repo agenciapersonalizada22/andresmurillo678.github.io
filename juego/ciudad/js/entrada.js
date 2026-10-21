@@ -25,25 +25,29 @@ const Entrada = (() => {
     document.body.classList.add('tactil');
   }
 
+  function ocultarTactil() {
+    if (!tactil) return;
+    tactil = false;
+    document.body.classList.remove('tactil');
+    soltarTodo();
+  }
+
   function configurar() {
     window.addEventListener('keydown', (e) => {
       if (SIN_DESPLAZAR.includes(e.code)) e.preventDefault();
       if (!e.repeat) pulsadas.add(e.code);
       teclas.add(e.code);
       ultimoTeclado = performance.now();
+      // Una tecla física (no un botón de pantalla): volvemos a los controles de teclado
+      ocultarTactil();
     });
     window.addEventListener('keyup', (e) => teclas.delete(e.code));
-    window.addEventListener('blur', () => {
-      teclas.clear();
-      botonesMantenidos.clear();
-      soltarJoy();
-    });
+    window.addEventListener('blur', soltarTodo);
     window.addEventListener('contextmenu', (e) => e.preventDefault());
 
-    const hayTactil = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) ||
-      (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
-    if (hayTactil) mostrarTactil();
+    // Solo se activa con un toque real (las laptops con pantalla táctil siguen con teclado)
     window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') mostrarTactil(); }, true);
+    window.addEventListener('touchstart', mostrarTactil, { capture: true, passive: true });
 
     // Joystick: aparece donde pones el dedo (mitad izquierda de la pantalla)
     zona = document.getElementById('zonaJoy');
@@ -108,6 +112,14 @@ const Entrada = (() => {
     });
   }
 
+  // Suelta teclas, botones y joystick (al pausar, abrir el mapa o perder el foco)
+  function soltarTodo() {
+    teclas.clear();
+    botonesMantenidos.clear();
+    document.querySelectorAll('[data-tecla].apretado').forEach((b) => b.classList.remove('apretado'));
+    soltarJoy();
+  }
+
   function soltarJoy() {
     joy.id = null;
     joy.x = 0;
@@ -135,6 +147,7 @@ const Entrada = (() => {
 
   return {
     configurar,
+    soltarTodo,
     get tactil() { return tactil; },
     get usandoTeclado() { return performance.now() - ultimoTeclado < 4000; },
 

@@ -4,6 +4,7 @@
 //   E = Entrega (lleva un paquete; si es frágil, ¡no choques!)
 //   C = Carrera (pasa por los puntos antes de que acabe el tiempo)
 //   R = Taller (repara y pinta tu carro; la policía te pierde)
+//   A = Armería (a pie: compra armas, munición y ropa)
 // =============================================================
 const Misiones = (() => {
   const M = CONFIG.misiones;
@@ -12,13 +13,28 @@ const Misiones = (() => {
     entrega: { nombre: 'ENTREGA', color: '#c86bff', letra: 'E', etiqueta: 'ENTREGAS' },
     carrera: { nombre: 'CARRERA', color: '#ff3d81', letra: 'C', etiqueta: 'CARRERA' },
     taller: { nombre: 'TALLER', color: '#7dff6b', letra: 'R', etiqueta: 'TALLER $' + M.taller.precio },
+    tienda: { nombre: 'ARMERÍA', color: '#ff8a3d', letra: 'A', etiqueta: 'ARMERÍA' },
   };
+  const sinMision = (tipo) => tipo === 'taller' || tipo === 'tienda'; // se usan aunque haya una misión activa
+
+  // La armería queda en una banqueta cerca del inicio
+  function lugarTienda() {
+    let mejor = null, md = Infinity;
+    for (const q of Mundo.paradas) {
+      const d = Math.hypot(q.x - L.inicio.x, q.y - L.inicio.y);
+      if (d < 380 || d > 1100) continue;
+      if (Math.hypot(q.x - L.taller.x, q.y - L.taller.y) < 300) continue;
+      if (d < md) { md = d; mejor = q; }
+    }
+    return mejor ? { x: mejor.x, y: mejor.y } : { x: L.inicio.x + 220, y: L.inicio.y };
+  }
   const L = Mundo.lugares;
   const marcadores = [
     { tipo: 'taxi', x: L.taxi.x, y: L.taxi.y, armado: true },
     { tipo: 'entrega', x: L.almacen.x, y: L.almacen.y, armado: true },
     { tipo: 'carrera', x: L.carrera.x, y: L.carrera.y, armado: true },
     { tipo: 'taller', x: L.taller.x, y: L.taller.y, armado: true },
+    Object.assign({ tipo: 'tienda', armado: true }, lugarTienda()),
   ];
   let activa = null;
   let relojPista = 0;
@@ -49,13 +65,17 @@ const Misiones = (() => {
   // ----------------------------------------------------------- Inicio
   function activar(m) {
     const carro = J.jugador.carro;
+    if (m.tipo === 'tienda') {
+      if (!carro) Armas.abrirTienda();
+      return;
+    }
     if (m.tipo === 'taller') {
       if (!carro) return pista('Trae un carro al taller para repararlo');
       const precio = M.taller.precio;
       if (J.dinero < precio) return pista(`Necesitas ${Util.dinero(precio)} para el taller`);
       J.gastar(precio);
       carro.reparar();
-      if (carro.tipo !== 'policia' && carro.tipo !== 'taxi') {
+      if (!carro.emergencia && carro.tipo !== 'taxi') {
         const otros = carro.t.colores.filter((c) => c !== carro.color);
         if (otros.length) carro.pintar(Util.elegir(otros));
       }
@@ -179,8 +199,9 @@ const Misiones = (() => {
     const p = pos();
     for (const m of marcadores) {
       const d = Math.hypot(p.x - m.x, p.y - m.y);
+      if (m.tipo === 'tienda' && J.jugador.carro) { if (d > 100) m.armado = true; continue; }
       if (d < 55) {
-        if (m.armado && (!activa || m.tipo === 'taller')) { m.armado = false; activar(m); }
+        if (m.armado && (!activa || sinMision(m.tipo))) { m.armado = false; activar(m); }
       } else if (d > 100) {
         m.armado = true;
       }
@@ -360,7 +381,7 @@ const Misiones = (() => {
     for (const m of marcadores) {
       if (!visible(m.x, m.y, 100)) continue;
       const info = INFO[m.tipo];
-      const apagado = activa && m.tipo !== 'taller';
+      const apagado = activa && !sinMision(m.tipo);
       dibujarMarcador(g, m.x, m.y, info.color, info.letra, t, info.etiqueta, apagado);
     }
     if (!activa) return;

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#05030f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Alas y Acero</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="enTitulo">
+  <canvas id="lienzo" aria-label="Combate aéreo y de tanques en 3D"></canvas>
+
+  <!-- Lo que se ve mientras juegas -->
+  <div id="hud" class="oculto">
+    <div id="dano"></div>
+    <div id="marcadores"></div>
+    <div id="mira" aria-hidden="true"><i></i></div>
+    <div id="datos">
+      <div>PUNTAJE <b id="hPuntaje">0</b></div>
+      <div>OLEADA <b id="hOleada">1/5</b></div>
+      <div>ENEMIGOS <b id="hEnemigos">0</b></div>
+      <div class="barra" aria-label="Vida"><span id="hVida"></span></div>
+      <div id="modulos" class="oculto"><span id="mOrugas">ORUGAS</span><span id="mTorreta">TORRETA</span><span id="mMotor">MOTOR</span></div>
+    </div>
+    <div id="aviso"></div>
+    <div id="estado"></div>
+    <div id="recarga" class="oculto"><span id="hRecarga"></span></div>
+    <canvas id="radar" width="300" height="300" aria-label="Radar"></canvas>
+  </div>
+
+  <!-- Controles para celular -->
+  <div id="tactil">
+    <div id="joyIzq" class="joy"><div class="palanca"></div></div>
+    <div id="joyDer" class="joy"><div class="palanca"></div></div>
+    <button type="button" class="btnTactil" id="btnPausa" data-accion="pausa" aria-label="Pausa">II</button>
+    <button type="button" class="btnTactil" id="btnFuego" data-tecla="Space">FUEGO</button>
+    <button type="button" class="btnTactil solo-avion" id="btnMisil" data-tecla="KeyF">MISIL</button>
+    <button type="button" class="btnTactil solo-avion" id="btnBomba" data-tecla="KeyB">BOMBA</button>
+    <button type="button" class="btnTactil solo-avion" id="btnAcel" data-tecla="ShiftLeft">ACEL</button>
+    <button type="button" class="btnTactil solo-avion" id="btnFreno" data-tecla="ControlLeft">FRENO</button>
+  </div>
+
+  <a id="volverMenu" class="volver" href="../">← Menú</a>
+
+  <!-- Pantalla de inicio -->
+  <div id="pantallaTitulo" class="pantalla">
+    <div class="tarjeta ancha">
+      <h1 class="titulo"><span>ALAS</span><span>Y ACERO</span></h1>
+      <p class="sub">combate aéreo · batalla de tanques</p>
+      <div class="modos">
+        <button type="button" class="modo" id="btnAvion" style="--color:#3df5ff">
+          <b>AVIÓN DE CAZA</b>
+          <span>Vuela, derriba cazas y bombardea objetivos</span>
+          <em id="recAvion">Récord: 0</em>
+        </button>
+        <button type="button" class="modo" id="btnTanque" style="--color:#ff9d3d">
+          <b>TANQUE</b>
+          <span>Torreta propia, cañón y combate en tierra</span>
+          <em id="recTanque">Récord: 0</em>
+        </button>
+      </div>
+      <p class="pista solo-compu">AVIÓN: W/S cabeceo · A/D alabeo · Q/E guiñada · Shift/Ctrl empuje · Espacio ametralladora · F misil · B bomba<br>
+        TANQUE: W/S avanzar · A/D girar · ratón o flechas apuntan · clic / Espacio dispara · Esc pausa</p>
+      <p class="pista solo-tactil">Joystick para mover · botones para disparar. En tanque, el joystick derecho apunta la torreta.</p>
+    </div>
+  </div>
+
+  <!-- Pausa -->
+  <div id="pantallaPausa" class="pantalla oculto">
+    <div class="tarjeta">
+      <h2>PAUSA</h2>
+      <button type="button" id="btnSeguir" class="principal">SEGUIR</button>
+      <div class="fila">
+        <button type="button" id="btnMusica">MÚSICA: SÍ</button>
+        <button type="button" id="btnEfectos">SONIDOS: SÍ</button>
+      </div>
+      <button type="button" id="btnInvertir">CABECEO: NORMAL</button>
+      <div class="fila">
+        <button type="button" id="btnReiniciar">REINICIAR</button>
+        <button type="button" id="btnTitulo">MODOS</button>
+      </div>
+      <p class="pista solo-compu">Avión: S/↓ sube, W/↑ baja (palanca clásica) · ratón también guía · Shift/Ctrl empuje · Espacio ametralladora · F misil (fíjalo un momento) · B bomba · M música</p>
+      <p class="pista solo-compu">Tanque: W/S/A/D casco · ratón o flechas = torreta · clic o Espacio = cañón (recarga) · traseras y lados duelen más</p>
+      <p class="pista solo-tactil">Apunta con el centro de la pantalla. Fija un enemigo con la mira para lanzar misiles.</p>
+      <a class="enlace" href="../">← Volver al menú de juegos</a>
+    </div>
+  </div>
+
+  <!-- Fin de la partida -->
+  <div id="pantallaFin" class="pantalla oculto">
+    <div class="tarjeta">
+      <h2 id="finTitulo">DERROTA</h2>
+      <p id="finDatos" class="info"></p>
+      <p id="finRecord" class="info"></p>
+      <button type="button" id="btnReintentar" class="principal">REINTENTAR</button>
+      <button type="button" id="btnFinTitulo">CAMBIAR MODO</button>
+    </div>
+  </div>
+
+  <div id="sinWebgl" class="pantalla oculto">
+    <div class="tarjeta">
+      <h2>UPS</h2>
+      <p class="info">Tu navegador no puede dibujar 3D (WebGL). Prueba con otro navegador o actualízalo.</p>
+    </div>
+  </div>
+
+  <script type="module" src="js/principal.js"></script>
+</body>
+</html>

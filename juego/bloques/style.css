@@ -119,9 +119,41 @@ button {
   white-space: pre;
 }
 
+#brujula {
+  position: absolute;
+  top: calc(10px + var(--seguro-arriba));
+  left: 50%;
+  width: min(200px, 38vw);
+  height: 26px;
+  transform: translateX(-50%);
+  overflow: hidden;
+  border-radius: 13px;
+  background: rgba(0, 0, 0, 0.42);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 26px;
+  text-align: center;
+  color: #e8ffe0;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent);
+  pointer-events: none;
+}
+#brujula span { position: absolute; top: 0; width: 24px; margin-left: -12px; }
+#brujula span.norte { color: #ff6a5c; }
+#brujula::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 2px;
+  height: 5px;
+  margin-left: -1px;
+  background: var(--cian);
+}
+
 #ayuda {
   position: absolute;
-  top: calc(12px + var(--seguro-arriba));
+  top: calc(46px + var(--seguro-arriba));
   left: 50%;
   transform: translateX(-50%);
   max-width: min(92vw, 760px);
@@ -156,6 +188,24 @@ button {
   transition: opacity 0.3s;
 }
 #aviso.visible { opacity: 1; }
+
+#clicContinuar {
+  position: absolute;
+  top: 58%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  font-size: 15px;
+  font-weight: 800;
+  color: #f0fff0;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+#clicContinuar.visible { opacity: 1; }
 
 /* Los avisos en pausa salen dentro de la tarjeta (el de arriba quedaría tapado) */
 #avisoPausa {

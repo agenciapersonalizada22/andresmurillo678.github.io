@@ -55,6 +55,7 @@ export class Interfaz {
       barra: $('barra'),
       nombre: $('nombreBloque'),
       aviso: $('aviso'),
+      clic: $('clicContinuar'),
       avisoPausa: $('avisoPausa'),
       ayuda: $('ayuda'),
       depuracion: $('depuracion'),
@@ -112,6 +113,16 @@ export class Interfaz {
       this.el.rejilla.appendChild(b);
     }
 
+    // Brújula: 8 letras que se deslizan según hacia dónde miras
+    this.letrasBrujula = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'].map((t, i) => {
+      const s = document.createElement('span');
+      s.textContent = t;
+      if (i === 0) s.className = 'norte';
+      $('brujula').appendChild(s);
+      return s;
+    });
+    this.rumboBrujula = -1;
+
     this.tiempoNombre = null;
     this.tiempoAviso = null;
     this.tiempoAyuda = null;
@@ -146,6 +157,22 @@ export class Interfaz {
     e.classList.add('visible');
     clearTimeout(this.tiempoAviso);
     this.tiempoAviso = setTimeout(() => e.classList.remove('visible'), segundos * 1000);
+  }
+
+  // rumbo en grados: 0 = norte, 90 = este
+  brujula(rumbo) {
+    if (Math.abs(rumbo - this.rumboBrujula) < 0.4) return;
+    this.rumboBrujula = rumbo;
+    const ancho = $('brujula').clientWidth || 200;
+    this.letrasBrujula.forEach((s, i) => {
+      const d = ((i * 45 - rumbo + 540) % 360) - 180;   // -180..180 respecto a donde miras
+      s.style.left = (ancho / 2 + (d / 90) * (ancho / 2)) + 'px';
+      s.style.visibility = Math.abs(d) < 100 ? 'visible' : 'hidden';
+    });
+  }
+
+  clicContinuar(si) {
+    this.el.clic.classList.toggle('visible', si);
   }
 
   ayuda(html, segundos) {

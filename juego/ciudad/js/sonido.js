@@ -17,6 +17,7 @@ const Sonido = (() => {
   let sirena = null;
   let claxon = null;
   let chirrido = null;
+  let lluvia = null;
 
   // El navegador solo deja sonar audio después de que el jugador toca algo.
   function iniciar() {
@@ -94,6 +95,14 @@ const Sonido = (() => {
     rs.connect(rf); rf.connect(rg); rg.connect(efectos);
     rs.start();
     chirrido = { gan: rg, filtro: rf };
+
+    // Lluvia: ruido suave y agudo
+    const ls = ctx.createBufferSource(); ls.buffer = ruidoBuffer(); ls.loop = true;
+    const lf = ctx.createBiquadFilter(); lf.type = 'bandpass'; lf.frequency.value = 3200; lf.Q.value = 0.5;
+    const lg = ctx.createGain(); lg.gain.value = 0;
+    ls.connect(lf); lf.connect(lg); lg.connect(efectos);
+    ls.start();
+    lluvia = { gan: lg };
   }
 
   function listo() { return ctx && ctx.state === 'running'; }
@@ -198,8 +207,12 @@ const Sonido = (() => {
       suave(chirrido.gan.gain, i * 0.05, 0.05);
       suave(chirrido.filtro.frequency, 1800 + i * 900, 0.1);
     },
+    actualizarLluvia(intensidad) {
+      if (lluvia) suave(lluvia.gan.gain, Util.limitar(intensidad, 0, 1) * 0.07, 0.4);
+    },
     callarContinuos() {
       if (!ctx) return;
+      this.actualizarLluvia(0);
       this.actualizarMotor(false, 0, 0);
       this.actualizarSirena(0);
       this.actualizarClaxon(false);
@@ -212,6 +225,19 @@ const Sonido = (() => {
       ruido(0.25 + fuerza * 0.4, 0.25 + fuerza * 0.45, 900 + fuerza * 2400);
       tono(120, 0.18 + fuerza * 0.2, 'sine', 0.2 + fuerza * 0.25, 45);
       if (fuerza > 0.5) tono(1800, 0.12, 'triangle', 0.05, 900, 0.02);
+    },
+    disparo(fuerte) {
+      if (!permitido('disparo', 0.07)) return;
+      ruido(fuerte ? 0.35 : 0.2, fuerte ? 0.6 : 0.45, fuerte ? 2200 : 3200);
+      tono(fuerte ? 90 : 140, fuerte ? 0.3 : 0.18, 'square', fuerte ? 0.2 : 0.14, 40);
+    },
+    vacia() {
+      if (permitido('vacia', 0.25)) ruido(0.04, 0.2, 2500, 'bandpass');
+    },
+    comprar() {
+      if (!permitido('comprar', 0.1)) return;
+      tono(988, 0.07, 'square', 0.06);
+      tono(1319, 0.14, 'square', 0.06, null, 0.07);
     },
     puerta() {
       if (!permitido('puerta', 0.15)) return;
