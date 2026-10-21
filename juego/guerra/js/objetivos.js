@@ -6,6 +6,7 @@ import { Sonido } from './sonido.js';
 const DATOS = {
   antiaerea: { vida: 45, puntos: 200, radio: 4.5, centroY: 2.2 },
   deposito: { vida: 60, puntos: 120, radio: 5, centroY: 2.6 },
+  barco: { vida: 90, puntos: 220, radio: 7, centroY: 3 },
   camion: { vida: 30, puntos: 80, radio: 3.8, centroY: 1.6 },
   radar: { vida: 50, puntos: 150, radius: 4.5, radio: 4.5, centroY: 2 },
 };
@@ -26,7 +27,7 @@ export class ObjetivoTierra {
     const m = crearObjetivo(tipo);
     this.grupo = m.grupo;
     this.cabeza = m.cabeza;
-    const y = ctx.terreno.altura(x, z);
+    const y = tipo === 'barco' ? ctx.terreno.nivelAgua : ctx.terreno.altura(x, z);
     this.grupo.position.set(x, y, z);
     this.grupo.rotation.y = Math.random() * 6.28;
     ctx.escena.add(this.grupo);
@@ -39,9 +40,9 @@ export class ObjetivoTierra {
   actualizar(dt, jp) {
     if (!this.vivo) return;
     if (this.clase === 'radar' && this.cabeza) this.cabeza.rotation.y += dt;
-    if (this.clase !== 'antiaerea' || !jp.vivo) return;
+    if ((this.clase !== 'antiaerea' && this.clase !== 'barco') || !jp.vivo) return;
     const dist = this.centro.distanceTo(jp.pos);
-    if (dist > 1000) return;
+    if (dist > 1000 * (jp.sigilo || 1)) return;
     V.copy(jp.pos).addScaledVector(jp.vel, dist / 330).sub(this.centro);
     const yaw = Math.atan2(-V.x, -V.z) - this.grupo.rotation.y;
     this.cabeza.rotation.y = yaw;

@@ -17,14 +17,29 @@ function escribir(clave, valor) {
 
 export function cargarRecords() { return leer(CONFIG.guardado.clave); }
 
-// Guarda si supera el récord de ese modo. Devuelve true si es nuevo récord.
-export function guardarRecord(modo, puntaje, oleada) {
+// El mapa por defecto conserva la clave antigua ("avion", "tanque"); los demás: "avion:desierto"
+export function claveRecord(modo, mapa) {
+  return !mapa || mapa === CONFIG.predeterminado.mapa ? modo : modo + ':' + mapa;
+}
+
+// Guarda si supera el récord de ese modo y mapa. Devuelve true si es nuevo récord.
+export function guardarRecord(modo, mapa, puntaje, oleada) {
   const r = cargarRecords();
-  const antes = r[modo] ? r[modo].puntaje : 0;
+  const clave = claveRecord(modo, mapa);
+  const antes = r[clave] ? r[clave].puntaje : 0;
   if (puntaje <= antes) return false;
-  r[modo] = { puntaje, oleada };
+  r[clave] = { puntaje, oleada };
   escribir(CONFIG.guardado.clave, r);
   return true;
+}
+
+// Mejor puntaje de un modo en cualquier mapa (para desbloquear aviones)
+export function mejorPuntaje(modo) {
+  let m = 0;
+  for (const [k, v] of Object.entries(cargarRecords())) {
+    if ((k === modo || k.startsWith(modo + ':')) && v && v.puntaje > m) m = v.puntaje;
+  }
+  return m;
 }
 
 export function cargarOpciones() { return leer(CONFIG.guardado.opciones); }

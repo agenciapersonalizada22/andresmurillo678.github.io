@@ -18,9 +18,9 @@ export class ModoTanque {
   iniciar() {
     const c = this.ctx;
     this.jugador = new Tanque(c, 'jugador');
-    const ciudades = c.terreno.zonas.filter((z) => z.tipo === 'ciudad');
-    const zo = ciudades.length ? ciudades[0] : c.terreno.zonas[0];
-    const p = c.terreno.puntoLibre(zo, 128, 165, 9);
+    const zo = c.terreno.zonaTanque();
+    const sp = zo.spawn || [128, 165];
+    const p = c.terreno.puntoLibre(zo, sp[0], sp[1], 9);
     this.jugador.colocar(p.x, p.z, Math.random() * 6.28);
     this.jugador.alMorir = () => { this.tFin = 2.6; c.hud.aviso('TANQUE DESTRUIDO', 2.6, true); };
     this.enemigos = [];
@@ -53,9 +53,7 @@ export class ModoTanque {
     j.vida = Math.min(j.vidaMax, j.vida + j.vidaMax * 0.35);
     j.modulos.orugas = j.modulos.torreta = j.modulos.motor = 0;
     for (let i = 0; i < n; i++) {
-      const r = Math.random();
-      const pesado = Math.min(0.35, (this.oleada - 2) * 0.12);
-      const tipo = r < pesado ? 'pesado' : r < pesado + 0.45 ? 'medio' : 'ligero';
+      const tipo = this._tipoEnemigo();
       const e = new Tanque(c, tipo, this.oleada);
       const p = c.terreno.puntoLibre(j.pos, 260, 480, 9);
       e.colocar(p.x, p.z, Math.atan2(-(j.pos.x - p.x), -(j.pos.z - p.z)));
@@ -63,6 +61,15 @@ export class ModoTanque {
       this.enemigos.push(e);
     }
     c.hud.aviso('OLEADA ' + this.oleada, 2.6);
+  }
+
+  // Mezcla de tanques según el mapa; los pesados llegan con las oleadas
+  _tipoEnemigo() {
+    const w = this.ctx.mapa.tanques;
+    const pes = w.pesado * Math.min(1, Math.max(0, (this.oleada - 1) / 2));
+    let r = Math.random() * (w.ligero + w.medio + pes);
+    if ((r -= pes) < 0) return 'pesado';
+    return r < w.medio ? 'medio' : 'ligero';
   }
 
   actualizar(dt) {
@@ -73,18 +80,18 @@ export class ModoTanque {
     for (const e of this.enemigos) if (e.vivo) { this.blancos.push(e); vivos++; }
 
     if (j.vivo) {
-      const fw = (ent.k('KeyW') ? 1 : 0) - (ent.k('KeyS') ? 1 : 0) - ent.izq.y;
-      const gi = (ent.k('KeyA') ? 1 : 0) - (ent.k('KeyD') ? 1 : 0) - ent.izq.x;
+      const fw = (ent.k('KeyW') ? 1 : 0) - (ent.k('KeyS') ? 1 : 0) - ent.izq.y - ent.mIzq.y;
+      const gi = (ent.k('KeyA') ? 1 : 0) - (ent.k('KeyD') ? 1 : 0) - ent.izq.x - ent.mIzq.x;
       this.cmd.av = Math.max(-1, Math.min(1, fw));
       this.cmd.gi = Math.max(-1, Math.min(1, gi));
       j.actualizar(dt, this.cmd);
       const r = ent.consumirRaton();
       const sens = 0.0024;
-      const dYaw = -r.dx * sens + ((ent.k('ArrowLeft') ? 1 : 0) - (ent.k('ArrowRight') ? 1 : 0) - ent.der.x) * 1.9 * dt;
-      const dEl = -r.dy * sens + ((ent.k('ArrowUp') ? 1 : 0) - (ent.k('ArrowDown') ? 1 : 0) - ent.der.y) * 1.2 * dt;
+      const dYaw = -r.dx * sens + ((ent.k('ArrowLeft') ? 1 : 0) - (ent.k('ArrowRight') ? 1 : 0) - ent.der.x - ent.mDer.x) * 1.9 * dt;
+      const dEl = -r.dy * sens + ((ent.k('ArrowUp') ? 1 : 0) - (ent.k('ArrowDown') ? 1 : 0) - ent.der.y - (this.ctx.opciones.invertido ? -ent.mDer.y : ent.mDer.y)) * 1.2 * dt;
       j.rotarTorreta(dYaw, dEl, dt);
       this._camara();
-      if (ent.k('Space', 'Mouse0') && j.cdRecarga <= 0) this._disparar();
+      if (ent.k('Space', 'Mouse0', 'PadRT') && j.cdRecarga <= 0) this._disparar();
     }
     for (const e of this.enemigos) e.pensar(dt, j);
     this._separar();
