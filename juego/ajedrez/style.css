@@ -1,0 +1,465 @@
+/* =============================================================
+   AJEDREZ 3D — estilos
+   Colores principales (cámbialos aquí):
+     cian #3df5ff  ·  magenta #ff4fd8  ·  fondo #05030f
+   ============================================================= */
+:root {
+  --cian: #3df5ff;
+  --magenta: #ff4fd8;
+  --lila: #9a8cff;
+  --fondo: #05030f;
+  --panel: rgba(12, 9, 34, 0.9);
+  --borde: rgba(154, 140, 255, 0.35);
+  --texto: #ffffff;
+  --suave: #b9b0ff;
+  --seguro-abajo: env(safe-area-inset-bottom, 0px);
+  --seguro-arriba: env(safe-area-inset-top, 0px);
+  --seguro-izq: env(safe-area-inset-left, 0px);
+  --seguro-der: env(safe-area-inset-right, 0px);
+  --figuras: "Segoe UI Symbol", "Noto Sans Symbols 2", "DejaVu Sans", "Apple Symbols", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: radial-gradient(ellipse at top, #1a0f40 0%, var(--fondo) 62%) fixed, var(--fondo);
+  color: var(--texto);
+  font-family: Orbitron, ui-monospace, Menlo, Consolas, monospace;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+button { font-family: inherit; cursor: pointer; color: inherit; -webkit-tap-highlight-color: transparent; }
+.oculto { display: none !important; }
+
+/* ---------------------------------------------------------- Estructura */
+#app {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-areas: "sup lat" "arr lat" "esc lat" "aba lat";
+  padding: var(--seguro-arriba) var(--seguro-der) var(--seguro-abajo) var(--seguro-izq);
+}
+#barraSup { grid-area: sup; }
+#jugArriba { grid-area: arr; }
+#escena { grid-area: esc; }
+#jugAbajo { grid-area: aba; }
+#lateral { grid-area: lat; }
+
+#escena {
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  touch-action: none;
+}
+#escena canvas, #lienzo { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+
+/* ---------------------------------------------------------- Barra superior */
+#barraSup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+}
+.volver {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(5, 3, 15, 0.7);
+  border: 2px solid rgba(61, 245, 255, 0.7);
+  color: var(--cian);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  box-shadow: 0 0 12px rgba(61, 245, 255, 0.3);
+}
+.volver:hover, .volver:focus-visible { background: rgba(61, 245, 255, 0.18); outline: none; }
+.titulo {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: var(--cian);
+  text-shadow: 0 0 14px rgba(61, 245, 255, 0.55);
+  flex: 1;
+  text-align: center;
+}
+.acciones { display: flex; gap: 6px; }
+.icono {
+  width: 38px; height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--borde);
+  font-size: 17px;
+  line-height: 1;
+  padding: 0;
+}
+.icono:hover, .icono:focus-visible { border-color: var(--cian); outline: none; }
+.icono.apagado { opacity: 0.45; text-decoration: line-through; }
+.icono.encendido { border-color: var(--magenta); color: var(--magenta); box-shadow: 0 0 10px rgba(255, 79, 216, 0.35); }
+
+/* ---------------------------------------------------------- Jugadores */
+.jugador {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 14px;
+  min-height: 46px;
+  background: rgba(12, 9, 34, 0.55);
+  border-top: 1px solid rgba(154, 140, 255, 0.12);
+  border-bottom: 1px solid rgba(154, 140, 255, 0.12);
+}
+.jugador .ficha {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-family: var(--figuras);
+  font-size: 20px;
+  flex: none;
+}
+.jugador .ficha.b { background: #f3efe4; color: #222; }
+.jugador .ficha.n { background: #1c1c26; color: #eee; border: 1px solid #555; }
+.jugador .nombre { font-size: 12px; font-weight: 800; letter-spacing: 1px; white-space: nowrap; }
+.jugador .nombre small { display: block; font-weight: 500; color: var(--suave); font-size: 10px; letter-spacing: 0.5px; }
+.jugador .capt { flex: 1; min-width: 0; font-family: var(--figuras); font-size: 16px; letter-spacing: -2px; white-space: nowrap; overflow: hidden; text-overflow: clip; color: #e8e4ff; }
+.jugador .capt em { font-style: normal; font-family: Orbitron, monospace; font-size: 11px; letter-spacing: 0; margin-left: 6px; color: var(--cian); }
+.jugador .reloj {
+  min-width: 82px;
+  text-align: center;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--borde);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  font-variant-numeric: tabular-nums;
+}
+.jugador .reloj.corre { border-color: var(--cian); color: var(--cian); box-shadow: 0 0 10px rgba(61, 245, 255, 0.35); }
+.jugador .reloj.poco { color: #ff6a6a; border-color: #ff6a6a; }
+.jugador .reloj.oculto { display: none; }
+.jugador.turno { background: rgba(61, 245, 255, 0.1); }
+.jugador.turno .ficha { box-shadow: 0 0 0 2px var(--cian), 0 0 12px rgba(61, 245, 255, 0.7); }
+
+/* ---------------------------------------------------------- Sobre el tablero */
+#ventaja {
+  position: absolute;
+  left: 10px; top: 14%; bottom: 14%;
+  width: 12px;
+  border-radius: 6px;
+  background: #15141f;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 3;
+}
+#ventaja i { position: absolute; left: 0; right: 0; bottom: 0; height: 50%; background: #f3efe4; transition: height 0.5s; }
+#ventaja b {
+  position: absolute; left: 18px; top: 50%;
+  font-size: 11px; font-weight: 800; color: var(--cian);
+  transform: translateY(-50%); white-space: nowrap;
+  text-shadow: 0 0 6px #000;
+}
+#ventaja { overflow: visible; }
+#ventaja i { border-radius: 5px; }
+
+#estado {
+  position: absolute;
+  left: 50%; top: 10px;
+  transform: translateX(-50%);
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: rgba(8, 6, 26, 0.82);
+  border: 1px solid var(--borde);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 3;
+  transition: opacity 0.2s;
+}
+#estado:empty { opacity: 0; }
+#estado.pensando { color: var(--magenta); border-color: var(--magenta); }
+#estado.pensando::after { content: ''; display: inline-block; width: 1.4em; text-align: left; animation: puntos 1.2s steps(4) infinite; }
+#estado.jaque { color: #ff6a6a; border-color: #ff6a6a; }
+#estado.fin { color: var(--cian); border-color: var(--cian); }
+@keyframes puntos { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+
+#revision {
+  position: absolute;
+  left: 50%; bottom: 10px;
+  transform: translateX(-50%);
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 8px 6px 14px;
+  border-radius: 999px;
+  background: rgba(8, 6, 26, 0.9);
+  border: 1px solid var(--lila);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  z-index: 3;
+  white-space: nowrap;
+}
+#revision button {
+  padding: 6px 12px; border-radius: 999px;
+  background: var(--lila); color: #05030f; border: 0;
+  font-size: 11px; font-weight: 800;
+}
+
+/* ---------------------------------------------------------- Panel lateral */
+#lateral {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--panel);
+  border-left: 1px solid var(--borde);
+}
+#jugadasCaja { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+#navJug { display: flex; gap: 6px; padding: 10px 12px 6px; }
+#navJug button {
+  flex: 1; height: 34px; border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--borde); font-size: 14px;
+}
+#navJug button:hover { border-color: var(--cian); }
+#jugadas {
+  flex: 1; min-height: 0;
+  overflow-y: auto;
+  padding: 4px 12px 10px;
+  font-family: var(--figuras);
+  font-size: 15px;
+  touch-action: pan-y;
+  -webkit-user-select: none; user-select: none;
+}
+#jugadas .fila-j { display: grid; grid-template-columns: 34px 1fr 1fr; gap: 2px; align-items: center; }
+#jugadas .num { color: var(--suave); font-size: 12px; font-family: Orbitron, monospace; }
+#jugadas .mov { padding: 4px 8px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+#jugadas .mov:hover { background: rgba(61, 245, 255, 0.12); }
+#jugadas .mov.actual { background: var(--cian); color: #05030f; font-weight: 700; }
+#jugadas .vacio { color: var(--suave); font-size: 12px; font-family: Orbitron, monospace; padding: 12px 4px; }
+
+#controles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 10px 12px calc(12px + var(--seguro-abajo));
+  border-top: 1px solid rgba(154, 140, 255, 0.18);
+}
+#controles button, #masCaja button {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-height: 52px;
+  padding: 6px 2px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--borde);
+  font-size: 10px; font-weight: 800; letter-spacing: 0.5px;
+}
+#controles button span, #masCaja button span { font-size: 18px; line-height: 1; font-family: var(--figuras); color: var(--cian); }
+#controles button:hover:not(:disabled), #masCaja button:hover { border-color: var(--cian); background: rgba(61, 245, 255, 0.1); }
+#controles button:disabled { opacity: 0.35; cursor: default; }
+#controles button.activo { border-color: var(--magenta); }
+#masCaja { display: contents; }
+.solo-movil { display: none !important; }
+
+/* ---------------------------------------------------------- Pantallas */
+.pantalla {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(14px + var(--seguro-arriba)) 14px calc(14px + var(--seguro-abajo));
+  background: rgba(5, 3, 15, 0.5);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  overflow-y: auto;
+  -webkit-user-select: text; user-select: text;
+}
+#pantallaInicio { background: radial-gradient(ellipse at top, rgba(26, 15, 64, 0.8), rgba(5, 3, 15, 0.82) 65%); z-index: 55; }
+.tarjeta {
+  width: min(400px, 100%);
+  margin: auto;
+  padding: 22px 22px 18px;
+  border-radius: 18px;
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  box-shadow: 0 0 40px rgba(154, 140, 255, 0.18), 0 10px 40px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+.tarjeta.ancha { width: min(460px, 100%); }
+.tarjeta .titulo { font-size: 18px; margin-bottom: 14px; }
+.tarjeta .titulo.grande { font-size: 36px; line-height: 1.05; letter-spacing: 6px; display: flex; flex-direction: column; margin-bottom: 4px; }
+.tarjeta .titulo.grande span:last-child { color: var(--magenta); text-shadow: 0 0 16px rgba(255, 79, 216, 0.6); }
+.sub { margin: 0 0 14px; font-size: 12px; color: var(--suave); letter-spacing: 1px; line-height: 1.5; }
+.info { margin: 6px 0 0; font-size: 11px; color: var(--suave); min-height: 1em; line-height: 1.4; }
+.pista { margin: 10px 0 0; font-size: 10px; color: var(--suave); letter-spacing: 0.5px; }
+.campo { margin: 12px 0; text-align: left; }
+.campo > label { display: block; margin-bottom: 6px; font-size: 11px; color: var(--suave); letter-spacing: 2px; text-transform: uppercase; }
+.campo label.check { display: flex; align-items: center; gap: 10px; font-size: 12px; text-transform: none; letter-spacing: 0.5px; color: var(--texto); cursor: pointer; margin: 0; }
+input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--cian); }
+input[type="range"] { width: 100%; accent-color: var(--cian); }
+.fichas { display: flex; flex-wrap: wrap; gap: 6px; }
+.fichas button {
+  flex: 1 1 auto;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--borde);
+  font-size: 11px; font-weight: 800; letter-spacing: 1px;
+}
+.fichas button.sel { background: var(--cian); color: #05030f; border-color: var(--cian); box-shadow: 0 0 14px rgba(61, 245, 255, 0.45); }
+.fichas button:hover:not(.sel) { border-color: var(--cian); }
+select, input[type="text"], textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--borde);
+  color: var(--texto);
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+textarea { resize: vertical; line-height: 1.4; }
+select:focus, input:focus, textarea:focus { outline: none; border-color: var(--cian); }
+.avanzado { margin: 10px 0; text-align: left; font-size: 11px; color: var(--suave); }
+.avanzado summary { cursor: pointer; letter-spacing: 1px; padding: 4px 0; }
+.avanzado input { margin-top: 8px; }
+.fila { display: flex; gap: 8px; margin-top: 14px; }
+.fila button, .principal, .tarjeta > button {
+  flex: 1;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--borde);
+  font-size: 12px; font-weight: 800; letter-spacing: 1.5px;
+}
+.principal {
+  background: var(--cian) !important;
+  color: #05030f !important;
+  border-color: var(--cian) !important;
+  box-shadow: 0 0 18px rgba(61, 245, 255, 0.4);
+  width: 100%;
+  margin-top: 4px;
+}
+.tarjeta > .principal { margin-bottom: 8px; }
+.principal:hover { filter: brightness(1.12); }
+.fila button:hover:not(.principal) { border-color: var(--cian); }
+
+.coronar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.coronar button {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 4px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--borde);
+  font-size: 10px; font-weight: 800; letter-spacing: 1px;
+}
+.coronar button span { font-family: var(--figuras); font-size: 38px; line-height: 1; color: #fff; }
+.coronar button:hover { border-color: var(--cian); background: rgba(61, 245, 255, 0.12); }
+
+#tablaStats { width: 100%; border-collapse: collapse; font-size: 12px; }
+#tablaStats th, #tablaStats td { padding: 7px 4px; border-bottom: 1px solid rgba(154, 140, 255, 0.18); }
+#tablaStats th { color: var(--suave); font-weight: 500; letter-spacing: 1px; font-size: 10px; }
+#tablaStats td:first-child { text-align: left; font-weight: 800; }
+
+#toast {
+  position: fixed;
+  left: 50%; bottom: calc(80px + var(--seguro-abajo));
+  transform: translate(-50%, 20px);
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(8, 6, 26, 0.94);
+  border: 1px solid var(--cian);
+  font-size: 12px; font-weight: 800; letter-spacing: 1px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+  z-index: 90;
+  max-width: 92vw; text-align: center;
+}
+#toast.visible { opacity: 1; transform: translate(-50%, 0); }
+
+body.enInicio #app { filter: blur(2px) brightness(0.7); }
+
+/* ---------------------------------------------------------- Celular / pantallas angostas */
+@media (max-width: 860px), (max-aspect-ratio: 1/1) {
+  #app {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+    grid-template-areas: "sup" "arr" "esc" "aba" "jug" "ctl";
+  }
+  #lateral { display: contents; }
+  #jugadasCaja { grid-area: jug; flex-direction: row; align-items: center; background: var(--panel); border-top: 1px solid var(--borde); }
+  #navJug { padding: 4px 0 4px 6px; gap: 3px; order: 2; }
+  #navJug button { flex: none; width: 30px; height: 32px; }
+  #navJug button[data-nav="ini"], #navJug button[data-nav="fin"] { display: none; }
+  #jugadas {
+    order: 1; flex: 1; min-width: 0;
+    display: flex; flex-wrap: nowrap; align-items: center; gap: 2px;
+    overflow-x: auto; overflow-y: hidden;
+    padding: 4px 8px; font-size: 14px; height: 40px;
+    touch-action: pan-x;
+  }
+  #jugadas .fila-j { display: contents; }
+  #jugadas .num { flex: none; margin-left: 6px; }
+  #jugadas .mov { flex: none; padding: 4px 6px; }
+  #jugadas .vacio { padding: 0 4px; }
+  #controles {
+    grid-area: ctl;
+    grid-template-columns: repeat(5, 1fr);
+    background: var(--panel);
+    padding: 6px 8px calc(8px + var(--seguro-abajo));
+    position: relative;
+    border-top: 0;
+  }
+  #controles button { min-height: 50px; }
+  .solo-movil { display: flex !important; }
+  #masCaja {
+    display: none;
+    position: absolute;
+    left: 8px; right: 8px; bottom: calc(100% + 6px);
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 10px;
+    border-radius: 14px;
+    background: var(--panel);
+    border: 1px solid var(--borde);
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.5);
+    z-index: 20;
+  }
+  #controles.abierto #masCaja { display: grid; }
+  #barraSup { padding: 6px 10px; }
+  .titulo { font-size: 14px; letter-spacing: 3px; }
+  .jugador { padding: 4px 10px; min-height: 42px; }
+  .jugador .nombre { font-size: 11px; }
+  .jugador .reloj { min-width: 72px; font-size: 15px; padding: 4px 8px; }
+  #ventaja { left: 6px; width: 9px; }
+  #estado { top: 6px; font-size: 11px; padding: 5px 12px; }
+}
+@media (max-width: 380px) {
+  .jugador .nombre small { display: none; }
+  .titulo { letter-spacing: 1px; }
+}
+@media (max-height: 520px) and (min-aspect-ratio: 1/1) {
+  .jugador { min-height: 36px; padding: 2px 12px; }
+  #barraSup { padding: 4px 10px; }
+  #controles button { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #estado.pensando::after { animation: none; content: '…'; }
+}
+
+/* Con ?tactil=1 */
+body.tactil .solo-compu { display: none; }
+body:not(.tactil) .solo-tactil { display: none; }
