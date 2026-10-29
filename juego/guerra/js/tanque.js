@@ -188,7 +188,7 @@ export class Tanque {
     for (let i = 0; i < 6; i++) efectos.fuego.emitir(V.x, V.y, V.z, dir.x * 14 + (Math.random() - 0.5) * 6, dir.y * 14 + (Math.random() - 0.5) * 6, dir.z * 14 + (Math.random() - 0.5) * 6, 0.25, 1.6, 0.4, [1, 0.95, 0.6], [1, 0.4, 0.1], 1);
     efectos.estela(V, true, 1.6);
     Sonido.disparo('canon', this.esJugador ? 1 : Sonido.porDistancia(efectos._distancia(V)));
-    if (this.esJugador) efectos.sacudida = Math.max(efectos.sacudida, 0.7);
+    if (this.esJugador) { efectos.sacudida = Math.max(efectos.sacudida, 0.7); this.ctx.entrada.vibrar(1, 0.6, 260, 'canon'); }
     return true;
   }
 
@@ -211,6 +211,7 @@ export class Tanque {
     if (this.esJugador) {
       this.ctx.hud.golpe();
       Sonido.impacto(1);
+      this.ctx.entrada.vibrar(Math.min(1, 0.3 + d / 40), 0.8, 180, 'dano', 90);
     }
   }
 

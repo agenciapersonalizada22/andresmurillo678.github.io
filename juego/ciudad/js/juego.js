@@ -80,6 +80,7 @@ J.mostrarDinero = J.dinero;
   window.addEventListener('orientationchange', () => setTimeout(redimensionar, 200));
   redimensionar();
   Entrada.configurar();
+  Entrada.alDesconectar = () => { if (J.modo === 'jugando' || J.modo === 'mapa') pausar(); };
   try { document.fonts.load('800 20px Orbitron'); } catch (e) { /* sin fuentes web */ }
 
   ['pointerdown', 'keydown', 'touchend', 'click'].forEach((ev) =>
@@ -389,6 +390,7 @@ J.mostrarDinero = J.dinero;
     Misiones.alSerAtrapado();
     J.aviso = null;
     Sonido.atrapado();
+    Entrada.vibrar(0.9, 0.9, 400);
     Sonido.callarContinuos();
     Radio.apagar();
     J.guardarPartida();
@@ -494,10 +496,17 @@ J.mostrarDinero = J.dinero;
     const j = J.jugador;
     const tecl = Entrada.teclado();
     const joy = Entrada.joystick();
+    const pad = Entrada.mando;
     if (j.carro) {
       const c = j.carro;
       const m = c.mando;
-      if (joy.fuerza > 0.18) {
+      if (pad.usa && (pad.fuerza > 0 || pad.gatillo > 0.02 || pad.freno > 0.02)) {
+        // Mando: stick = direccion, RT acelera y LT frena / reversa (analogico)
+        m.giro = pad.x;
+        let gas = pad.gatillo - pad.freno;
+        if (!pad.gatillo && !pad.freno && Math.abs(pad.y) > 0.5) gas = -pad.y * 0.8;
+        m.gas = Util.limitar(gas, -1, 1);
+      } else if (joy.fuerza > 0.18) {
         // Joystick: empuja hacia donde quieres ir y el carro gira solo
         const angObj = Math.atan2(joy.y, joy.x);
         const dif = Util.difAngulo(angObj, c.ang);
@@ -526,7 +535,9 @@ J.mostrarDinero = J.dinero;
       let eje = { x: tecl.x, y: tecl.y };
       if (eje.x && eje.y) { eje.x *= Math.SQRT1_2; eje.y *= Math.SQRT1_2; }
       let correr = Entrada.mantenida('ShiftLeft') || Entrada.mantenida('ShiftRight') || Entrada.mantenida('Space');
-      if (joy.fuerza > 0.12) {
+      if (pad.usa && pad.fuerza > 0) {
+        eje = { x: pad.x, y: pad.y };
+      } else if (joy.fuerza > 0.12) {
         const f = Math.max(1, Math.hypot(joy.x, joy.y));
         eje = { x: joy.x / f, y: joy.y / f };
         if (joy.fuerza > 0.92) correr = true;
@@ -609,6 +620,8 @@ J.mostrarDinero = J.dinero;
     let ax = (objetivo.vx || 0) * C.adelanto, ay = (objetivo.vy || 0) * C.adelanto;
     const la = Math.hypot(ax, ay);
     if (la > 260) { ax *= 260 / la; ay *= 260 / la; }
+    // Stick derecho del mando: mirar alrededor
+    if (J.modo === 'jugando' && Entrada.mando.usa) { ax += Entrada.mando.rx * 240; ay += Entrada.mando.ry * 240; }
     const k = 1 - Math.exp(-C.suavidad * dt);
     cam.x += (objetivo.x + ax - cam.x) * k;
     cam.y += (objetivo.y + ay - cam.y) * k;
@@ -786,7 +799,7 @@ J.mostrarDinero = J.dinero;
     Mundo.precargar(j.x, j.y, 900);
     poblarInicial();
     Sonido.mision();
-    J.avisar(CONFIG.titulo, Entrada.tactil ? 'Acércate a un carro y toca SUBIR' : 'Acércate a un carro y pulsa E para subir', '#ffb13d', 3.5);
+    J.avisar(CONFIG.titulo, Entrada.tactil ? 'Acércate a un carro y toca SUBIR' : Entrada.hayMando ? 'Acércate a un carro y pulsa A para subir' : 'Acércate a un carro y pulsa E para subir', '#ffb13d', 3.5);
   }
 
   capaPortada.addEventListener('click', (e) => {
@@ -806,6 +819,8 @@ J.mostrarDinero = J.dinero;
 
   // ----------------------------------------------------------- Actualizar
   let relojGuardar = 10;
+  let relojDerrape = 0;
+  let dtCuadro = 1 / 60;
   function procesarTeclas() {
     if (J.modo === 'titulo') {
       Entrada.tomarToques();
@@ -828,6 +843,16 @@ J.mostrarDinero = J.dinero;
       else abrirMapa();
     }
     const toques = Entrada.tomarToques();
+    if (J.modo === 'mapa' && Entrada.hayMando) {
+      const z = J.zonaMapa;
+      if (z) {
+        const c = J.cursorMapa || (J.cursorMapa = { x: z.x0 + z.tam / 2, y: z.y0 + z.tam / 2 });
+        const cur = Entrada.mando.cursor;
+        c.x = Util.limitar(c.x + cur.x * z.tam * 0.8 * dtCuadro, z.x0, z.x0 + z.tam);
+        c.y = Util.limitar(c.y + cur.y * z.tam * 0.8 * dtCuadro, z.y0, z.y0 + z.tam);
+        if (Entrada.pulso('MapaMarcar')) tocarMapa(c);
+      }
+    } else if (J.cursorMapa && J.modo !== 'mapa') J.cursorMapa = null;
     if (J.modo === 'mapa' && toques.length) {
       if (!toques.every(tocarMapa)) cerrarMapa();
       return;
@@ -867,6 +892,7 @@ J.mostrarDinero = J.dinero;
 
   function actualizar(dt) {
     J.tiempo += dt;
+    dtCuadro = dt;
     procesarTeclas();
     if (J.aviso) { J.aviso.t += dt; if (J.aviso.t >= J.aviso.dur) J.aviso = null; }
     if (J.pistaInfo) J.pistaInfo.t -= dt;
@@ -913,6 +939,11 @@ J.mostrarDinero = J.dinero;
       Sonido.actualizarMotor(!c.averiado, Math.abs(c.vf) / c.t.velMax, c.mando.gas);
       const chirr = Util.limitar((c.derrape - 90) / 260, 0, 1) + (c.mando.freno && Math.abs(c.vf) > 120 ? 0.4 : 0);
       Sonido.actualizarChirrido(chirr);
+      relojDerrape -= dt;
+      if (c.derrape > 170 && relojDerrape <= 0) {
+        relojDerrape = 0.16;
+        Entrada.vibrar(0.15, Util.limitar((c.derrape - 120) / 300, 0.2, 0.9), 150);
+      }
     } else {
       Sonido.actualizarMotor(false, 0, 0);
       Sonido.actualizarChirrido(0);
@@ -988,6 +1019,8 @@ J.mostrarDinero = J.dinero;
     ultimo = ahora;
     try {
       const t0 = performance.now();
+      Entrada.contexto = { modo: J.modo, carro: !!(J.jugador && J.jugador.carro) };
+      Entrada.leerMando();
       actualizar(dt);
       dibujar();
       J.msCuadro = (J.msCuadro || 0) * 0.95 + (performance.now() - t0) * 0.05;

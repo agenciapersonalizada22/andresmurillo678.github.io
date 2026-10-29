@@ -235,6 +235,28 @@ h2 {
 .c-tienda { color: #ff8a3d !important; }
 
 body.tactil .solo-teclado { display: none; }
+.solo-mando { display: none; }
+body.mando:not(.tactil) .solo-mando { display: block; }
+body.mando:not(.tactil) .solo-teclado, body.mando:not(.tactil) .solo-tactil { display: none; }
+p.solo-mando { display: none; }
+body.mando:not(.tactil) p.solo-mando { display: block; }
+
+/* Mando Xbox: aviso y seleccion de menus */
+#avisoMando {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: rgba(10, 8, 25, 0.88);
+  border: 1.5px solid #7dff9a;
+  color: #7dff9a;
+  font: 800 13px Orbitron, ui-monospace, monospace;
+  pointer-events: none;
+}
+body.mando .mando-sel { outline: 3px solid #ffd23d; outline-offset: 2px; filter: brightness(1.25); }
 body:not(.tactil) .solo-tactil { display: none; }
 
 .datos {

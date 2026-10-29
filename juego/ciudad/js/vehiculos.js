@@ -333,7 +333,10 @@ class Carro {
         Sonido.choque(Util.limitar(fuerza / 700, 0.15, 1));
         if (fuerza > 200) Efectos.chispas(x, y, Math.min(14, Math.round(fuerza / 60)));
       }
-      if (this.conductor === 'jugador') J.sacudir(Math.min(14, fuerza / 60));
+      if (this.conductor === 'jugador') {
+        J.sacudir(Math.min(14, fuerza / 60));
+        Entrada.vibrar(Math.min(1, fuerza / 450), Math.min(1, fuerza / 700), Math.min(400, 90 + fuerza * 0.4));
+      }
     }
     if (fuerza <= F.danoUmbral) return;
     const dano = (fuerza - F.danoUmbral) * F.danoFactor;

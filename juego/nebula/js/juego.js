@@ -63,6 +63,8 @@
     jefe: null,
     jefesDerrotados: 0,
     aviso: null,
+    foco: 0,               // mando: 0 = acción principal, 1 = botón MENÚ
+    avisoMando: null,
     balas: [],
     balasEnemigas: [],
     enemigos: [],
@@ -207,6 +209,7 @@
     J.sacudir(22);
     Sonido.explosion(true);
     Sonido.victoria();
+    vibrar(1, 0.8, 600);
     soltarPowerUp(jf.x - 30, jf.y, true);
     soltarPowerUp(jf.x + 30, jf.y, true);
     // Las balas del jefe desaparecen
@@ -250,6 +253,7 @@
       J.explosion(p.x, p.y, COL.escudo, 26, 240);
       J.sacudir(6);
       Sonido.escudoRoto();
+      vibrar(0.3, 0.5, 120);
       return;
     }
 
@@ -261,6 +265,7 @@
     J.explosion(p.x, p.y, COL.jugador, 40, 320);
     J.sacudir(14);
     Sonido.dano();
+    vibrar(0.8, 0.6, 220);
 
     // Un respiro: todas las balas enemigas desaparecen
     for (const b of J.balasEnemigas) {
@@ -320,6 +325,39 @@
     return null;
   }
 
+  // ----------------------------------------------------------- Mando
+  const M = window.Mando || null;
+  const vibrar = (f, s, ms) => { if (M) M.vibrar(f, s, ms); };
+  const pad = (n) => !!M && M.pulsado(n);
+  let conectadoAntes = false;
+
+  function avisarMando(texto) { J.avisoMando = { texto, t: 0 }; }
+
+  if (M) {
+    // Si el jugador vuelve al ratón, teclado o toque, se ocultan las pistas
+    const dejarMando = () => { M.activo = false; };
+    window.addEventListener('pointerdown', dejarMando, true);
+    window.addEventListener('keydown', dejarMando, true);
+    let px = -1, py = -1;
+    window.addEventListener('pointermove', (e) => {
+      if (px >= 0 && Math.hypot(e.clientX - px, e.clientY - py) > 6) M.activo = false;
+      px = e.clientX; py = e.clientY;
+    }, true);
+    window.addEventListener('gamepaddisconnected', () => { M.activo = false; });
+  }
+
+  // Lee el mando una vez por cuadro. Devuelve acciones ya con flanco.
+  function leerMando() {
+    if (!M) return;
+    if (document.hidden) return;
+    M.leer();
+    if (M.conectado !== conectadoAntes) {
+      conectadoAntes = M.conectado;
+      avisarMando(M.conectado ? 'MANDO CONECTADO' : 'MANDO DESCONECTADO');
+      if (!M.conectado) { M.activo = false; J.foco = 0; }
+    }
+  }
+
   function irAlMenu() {
     guardarAlSalir();
     window.location.href = '../';
@@ -337,10 +375,36 @@
       else if (J.modo === 'jugando' && tocado(t, BOTON_PAUSA)) { J.modo = 'pausa'; tocoBoton = true; }
       else if (menu && tocadoRect(t, menu)) { irAlMenu(); tocoBoton = true; }
     }
-    if (Entrada.pulso('KeyM')) Sonido.alternar();
+    if (Entrada.pulso('KeyM') || pad('Y')) Sonido.alternar();
     if (Entrada.pulso('KeyN')) Musica.alternar();
 
-    const aceptar = (!tocoBoton && toques.length > 0) || Entrada.pulso('Enter', 'Space');
+    // Mando: foco entre la acción principal y el botón ← MENÚ
+    let mandoAceptar = false;
+    let mandoVolver = false;
+    if (M && M.conectado) {
+      const hayPildora = !!botonMenu();
+      if (!hayPildora) J.foco = 0;
+      else if (J.modo !== 'jugando') {
+        if (pad('IZQ') || pad('ARRIBA')) J.foco = 1;
+        else if (pad('DER') || pad('ABAJO')) J.foco = 0;
+      }
+      if (pad('A')) {
+        if (J.foco === 1 && hayPildora) { irAlMenu(); mandoVolver = true; }
+        else mandoAceptar = true;
+      }
+      if (pad('B')) {
+        if (J.modo === 'jugando' || J.modo === 'pausa') Musica.alternar();
+        else if (hayPildora) { irAlMenu(); mandoVolver = true; }
+      }
+    }
+    if (J.modo === 'jugando' && !mandoVolver && pad('MENU')) {
+      J.modo = 'pausa';
+      J.foco = 0;
+      Entrada.finDeCuadro();
+      return;
+    }
+
+    const aceptar = ((!tocoBoton && toques.length > 0) || Entrada.pulso('Enter', 'Space') || mandoAceptar) && !mandoVolver;
 
     if (J.modo !== 'pausa') {
       J.estrellas.velocidad += ((J.jefe && J.jefe.entrando ? 5 : 1) - J.estrellas.velocidad) * Math.min(1, dt * 2);
@@ -349,15 +413,16 @@
 
     if (J.modo === 'menu') {
       J.tiempoMenu += dt;
-      if (aceptar) iniciarPartida();
+      if (aceptar) { iniciarPartida(); J.foco = 0; }
       actualizarEfectos(dt);
       Entrada.finDeCuadro();
       return;
     }
 
     if (J.modo === 'pausa') {
-      if (aceptar || Entrada.pulso('KeyP', 'Escape')) {
+      if (aceptar || Entrada.pulso('KeyP', 'Escape') || pad('MENU')) {
         J.modo = 'jugando';
+        J.foco = 0;
         Entrada.tomarArrastre();
       }
       Entrada.finDeCuadro();
@@ -367,7 +432,7 @@
     if (J.modo === 'fin') {
       J.tiempoMenu += dt;
       actualizarEfectos(dt);
-      if (J.tiempoMenu > 1 && aceptar) iniciarPartida();
+      if (J.tiempoMenu > 1 && aceptar) { iniciarPartida(); J.foco = 0; }
       Entrada.finDeCuadro();
       return;
     }
@@ -485,6 +550,7 @@
       J.aviso.t += dt;
       if (J.aviso.t > 2.2) J.aviso = null;
     }
+
     J.sacudida = Math.max(0, J.sacudida - 40 * dt);
   }
 
@@ -704,6 +770,82 @@
     }
   }
 
+  // ---- Pistas del mando (solo con el mando en uso) ----
+  const COLOR_BOTON = { A: '#3ddc84', B: '#ff4d4d', X: '#4da3ff', Y: '#ffd23d' };
+  const mandoVisible = () => !!M && M.conectado && M.activo;
+
+  // Dibuja "(A) etiqueta" empezando en x; devuelve el ancho usado
+  function pista(btn, etiqueta, x, y) {
+    g.font = `500 11px ${FUENTE}`;
+    const w = 24 + g.measureText(etiqueta).width;
+    g.save();
+    g.beginPath();
+    if (COLOR_BOTON[btn]) {
+      g.arc(x + 8, y, 8, 0, Math.PI * 2);
+      g.fillStyle = COLOR_BOTON[btn];
+      g.fill();
+      texto(btn, x + 8, y + 1, 10, '#05030f', 800);
+    } else {
+      g.roundRect(x, y - 7, 18, 14, 4);
+      g.fillStyle = 'rgba(255,255,255,0.85)';
+      g.fill();
+      texto('≡', x + 9, y + 1, 11, '#05030f', 800);
+    }
+    g.restore();
+    texto(etiqueta, x + 24, y + 1, 11, COL.texto, 500, 'left');
+    return w + 14;
+  }
+
+  function dibujarPistasMando() {
+    if (!mandoVisible()) return;
+    let lista;
+    if (J.modo === 'menu') lista = [['A', 'JUGAR'], ['B', 'VOLVER'], ['Y', 'SONIDO']];
+    else if (J.modo === 'pausa') lista = [['MENU', 'SEGUIR'], ['B', 'MÚSICA'], ['Y', 'SONIDO']];
+    else if (J.modo === 'fin') lista = J.tiempoMenu > 1 ? [['A', 'OTRA VEZ'], ['B', 'VOLVER'], ['Y', 'SONIDO']] : [];
+    else lista = [['MENU', 'PAUSA'], ['B', 'MÚSICA'], ['Y', 'SONIDO']];
+    if (!lista.length) return;
+    g.save();
+    g.font = `500 11px ${FUENTE}`;
+    let total = 0;
+    for (const [, e] of lista) total += 24 + g.measureText(e).width + 14;
+    total -= 14;
+    let x = (W - total) / 2;
+    g.globalAlpha = 0.85;
+    for (const [b, e] of lista) x += pista(b, e, x, H - 56);
+    g.restore();
+  }
+
+  function resaltarFoco(b) {
+    if (!mandoVisible() || J.foco !== 1) return;
+    g.save();
+    g.strokeStyle = COL.acento;
+    g.lineWidth = 3;
+    brillo(g, COL.acento, 12);
+    g.beginPath();
+    g.roundRect(b.x - 5, b.y - 5, b.w + 10, b.h + 10, (b.h + 10) / 2);
+    g.stroke();
+    g.restore();
+  }
+
+  function dibujarAvisoMando() {
+    const a = J.avisoMando;
+    if (!a) return;
+    const alfa = a.t < 0.25 ? a.t / 0.25 : a.t > 1.6 ? Math.max(0, (2 - a.t) / 0.4) : 1;
+    g.save();
+    g.globalAlpha = alfa;
+    g.font = `800 12px ${FUENTE}`;
+    const w = g.measureText(a.texto).width + 28;
+    g.beginPath();
+    g.roundRect(W / 2 - w / 2, 62, w, 28, 14);
+    g.fillStyle = 'rgba(5,3,15,0.85)';
+    g.fill();
+    g.strokeStyle = COL.escudo;
+    g.lineWidth = 1.5;
+    g.stroke();
+    texto(a.texto, W / 2, 77, 12, COL.escudo, 800);
+    g.restore();
+  }
+
   function velo() {
     g.fillStyle = 'rgba(5,3,15,0.65)';
     g.fillRect(0, 0, W, H);
@@ -736,7 +878,7 @@
 
     g.save();
     g.globalAlpha = 0.6 + Math.sin(t * 4) * 0.4;
-    texto('TOCA PARA JUGAR', W / 2, H * 0.68, 20, COL.texto);
+    texto(mandoVisible() ? 'PULSA A PARA JUGAR' : 'TOCA PARA JUGAR', W / 2, H * 0.68, 20, COL.texto);
     g.restore();
 
     texto('Arrastra el dedo o usa flechas / WASD', W / 2, H * 0.75, 12, COL.textoSuave, 500);
@@ -745,15 +887,17 @@
     if (J.record > 0) texto(`RÉCORD  ${J.record}`, W / 2, H * 0.89, 16, COL.acento);
 
     dibujarPildora(MENU_INICIO, 'MENÚ');
+    resaltarFoco(MENU_INICIO);
   }
 
   function dibujarPausa() {
     velo();
     textoBrillante('PAUSA', W / 2, H * 0.42, 44, COL.jugador);
-    texto('Toca para continuar', W / 2, H * 0.52, 16, COL.texto, 500);
+    texto(mandoVisible() ? 'Pulsa A para continuar' : 'Toca para continuar', W / 2, H * 0.52, 16, COL.texto, 500);
     texto(`PUNTOS  ${J.puntos}`, W / 2, H * 0.6, 16, COL.acento);
     texto('M sonido  ·  N música', W / 2, H * 0.7, 12, COL.textoSuave, 500);
     dibujarPildora(MENU_PAUSA, 'MENÚ');
+    resaltarFoco(MENU_PAUSA);
     dibujarBotonesAudio(); // encima del velo: se pueden tocar en la pausa
   }
 
@@ -769,9 +913,10 @@
     if (J.tiempoMenu > 1) {
       g.save();
       g.globalAlpha = 0.6 + Math.sin(J.tiempoMenu * 4) * 0.4;
-      texto('TOCA PARA JUGAR OTRA VEZ', W / 2, H * 0.72, 18, COL.texto);
+      texto(mandoVisible() ? 'PULSA A PARA JUGAR OTRA VEZ' : 'TOCA PARA JUGAR OTRA VEZ', W / 2, H * 0.72, 18, COL.texto);
       g.restore();
       dibujarPildora(MENU_FIN, 'MENÚ');
+      resaltarFoco(MENU_FIN);
     }
     dibujarBotonesAudio(); // encima del velo: se pueden tocar aquí también
   }
@@ -798,6 +943,8 @@
       if (J.modo === 'pausa') dibujarPausa();
       if (J.modo === 'fin') dibujarFin();
     }
+    dibujarPistasMando();
+    dibujarAvisoMando();
   }
 
   // ----------------------------------------------------------- Música
@@ -835,7 +982,9 @@
     ultimo = ahora;
     if (dt < 0) dt = 0;
     if (dt > 1 / 30) dt = 1 / 30; // si el equipo se traba, no hay saltos raros
+    leerMando();
     actualizar(dt);
+    if (J.avisoMando && (J.avisoMando.t += dt) > 2) J.avisoMando = null;
     sincronizarMusica();
     dibujar(dt);
     requestAnimationFrame(bucle);

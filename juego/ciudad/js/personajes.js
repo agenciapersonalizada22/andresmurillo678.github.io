@@ -394,6 +394,7 @@ class Jugador {
     this.angCaido = Math.atan2(vy, vx);
     Efectos.texto(this.x, this.y - 22, '¡Ay!', '#3df5ff', 16);
     Sonido.ay();
+    Entrada.vibrar(0.8, 0.6, 260);
   }
 
   dibujar(g) {

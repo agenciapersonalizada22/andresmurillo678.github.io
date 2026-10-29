@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#05030f">
   <title>Mis juegos</title>
+  <link rel="icon" href="data:,">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
@@ -92,11 +93,45 @@
       font-size: 12px;
     }
     .pie a { color: var(--suave); }
+    /* foco visible neón: teclado (Tab) y mando */
+    .juego:focus-visible, body.navMando .juego:focus {
+      transform: translateY(-4px) scale(1.02);
+      border-color: var(--color);
+      outline: 3px solid var(--color);
+      outline-offset: 3px;
+      box-shadow: 0 0 0 2px var(--fondo), 0 0 34px 6px color-mix(in srgb, var(--color) 70%, transparent);
+    }
+    .pie a:focus-visible, body.navMando .pie a:focus {
+      outline: 3px solid #3df5ff; outline-offset: 3px; border-radius: 6px; color: #fff;
+      box-shadow: 0 0 18px rgba(61, 245, 255, 0.7);
+    }
+    /* pistas de botones: solo con el mando en uso */
+    .pista-mando {
+      display: none;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin: -12px auto 24px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-size: 13px;
+      color: #d8d2ff;
+    }
+    body.conMando .pista-mando { display: flex; }
+    .pista-mando b {
+      display: inline-block; min-width: 22px; padding: 1px 7px; margin-right: 5px; border-radius: 999px; text-align: center;
+      border: 1.5px solid #3df5ff; color: #3df5ff; font-family: Orbitron, ui-monospace, monospace; font-size: 11px;
+    }
   </style>
 </head>
 <body>
   <h1>MIS JUEGOS</h1>
   <p class="sub">elige uno y a jugar</p>
+
+  <p class="pista-mando" aria-hidden="true">
+    <span><b>&#x2725;</b>cruceta / stick: elegir</span>
+    <span><b>A</b>jugar</span>
+    <span><b>B</b>volver</span>
+  </p>
 
   <main class="lista">
     <a class="juego" href="nebula/" style="--color:#3df5ff">
@@ -208,5 +243,75 @@
   </main>
 
   <p class="pie"><a href="../">← volver a mi página</a></p>
+
+  <script src="comun/mando.js"></script>
+  <script>
+  (function () {
+    // Navegación con mando: cruceta / stick izq. mueven el foco entre tarjetas, A abre, B vuelve
+    if (!window.Mando) return;
+    var tarjetas = Array.prototype.slice.call(document.querySelectorAll('.juego'));
+    var volver = document.querySelector('.pie a');
+    var todos = tarjetas.concat(volver ? [volver] : []);
+    var dirActual = '', tRepite = 0, bloqueo = true; // bloqueo: ignora A/B hasta soltarlos (p. ej. B pulsado en el juego anterior)
+
+    function marcarFuente() { document.body.classList.toggle('conMando', Mando.conectado && Mando.activo); }
+    function usarOtro() { Mando.activo = false; document.body.classList.remove('navMando'); marcarFuente(); }
+    addEventListener('mousemove', function (e) { if (Math.abs(e.movementX) + Math.abs(e.movementY) > 2) usarOtro(); });
+    addEventListener('pointerdown', usarOtro, true);
+    addEventListener('keydown', usarOtro, true);
+
+    function centro(e) { var r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
+    function foco() { return todos.indexOf(document.activeElement) >= 0 ? document.activeElement : null; }
+    function enfocar(e) { e.focus({ preventScroll: true }); e.scrollIntoView({ block: 'nearest' }); }
+
+    function mover(dir) {
+      var act = foco();
+      if (!act) { enfocar(todos[0]); return; }
+      var c0 = centro(act), vx = dir === 'D' ? 1 : dir === 'I' ? -1 : 0, vy = dir === 'B' ? 1 : dir === 'A' ? -1 : 0;
+      var mejor = null, mejorP = Infinity;
+      todos.forEach(function (e) {
+        if (e === act) return;
+        var r = e.getBoundingClientRect(), r0 = act.getBoundingClientRect();
+        var solapa = vx ? (r.top < r0.bottom - 4 && r.bottom > r0.top + 4) : (r.left < r0.right - 4 && r.right > r0.left + 4);
+        var c = centro(e), dx = c.x - c0.x, dy = c.y - c0.y, along = dx * vx + dy * vy;
+        if (along <= 2) return;
+        if (vx && !solapa) return; // izq/der solo recorre la misma fila
+        var p = along + (solapa ? 0 : (Math.abs(dx * vy) + Math.abs(dy * vx)) * 2);
+        if (p < mejorP) { mejorP = p; mejor = e; }
+      });
+      if (mejor) enfocar(mejor);
+    }
+
+    function cuadro() {
+      requestAnimationFrame(cuadro);
+      Mando.leer();
+      marcarFuente();
+      if (!Mando.conectado) { dirActual = ''; return; }
+      var usado = Mando.activo && performance.now() - Mando._ultimoUso < 100;
+      if (usado) document.body.classList.add('navMando');
+      var d = '';
+      if (Mando.sostenido('ARRIBA')) d = 'A'; else if (Mando.sostenido('ABAJO')) d = 'B';
+      else if (Mando.sostenido('IZQ')) d = 'I'; else if (Mando.sostenido('DER')) d = 'D';
+      else {
+        var x = Mando.ejes.izq.x, y = Mando.ejes.izq.y;
+        if (Math.hypot(x, y) > 0.4) d = Math.abs(x) > Math.abs(y) ? (x > 0 ? 'D' : 'I') : (y > 0 ? 'B' : 'A');
+      }
+      var t = performance.now();
+      if (!d) dirActual = '';
+      else if (d !== dirActual) { dirActual = d; tRepite = t + 380; mover(d); }
+      else if (t >= tRepite) { tRepite = t + 140; mover(d); }
+      if (bloqueo) {
+        if (!['A', 'B', 'X', 'Y', 'MENU'].some(function (n) { return Mando.sostenido(n); })) bloqueo = false;
+        return;
+      }
+      if (Mando.pulsado('A')) {
+        var f = foco();
+        if (f) f.click(); else enfocar(todos[0]);
+      }
+      if (Mando.pulsado('B')) location.href = '../';
+    }
+    requestAnimationFrame(cuadro);
+  })();
+  </script>
 </body>
 </html>

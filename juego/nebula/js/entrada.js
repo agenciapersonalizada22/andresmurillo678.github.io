@@ -86,6 +86,18 @@ const Entrada = (() => {
       if (teclas.has('ArrowUp') || teclas.has('KeyW')) y -= 1;
       if (teclas.has('ArrowDown') || teclas.has('KeyS')) y += 1;
       if (x && y) { x *= Math.SQRT1_2; y *= Math.SQRT1_2; }
+      // Mando Xbox: stick izquierdo (analógico) o cruceta, misma velocidad máxima
+      const M = window.Mando;
+      if (M && M.conectado) {
+        let mx = M.ejes.izq.x, my = M.ejes.izq.y;
+        if (M.sostenido('IZQ')) mx -= 1;
+        if (M.sostenido('DER')) mx += 1;
+        if (M.sostenido('ARRIBA')) my -= 1;
+        if (M.sostenido('ABAJO')) my += 1;
+        x += mx; y += my;
+        const m = Math.hypot(x, y);
+        if (m > 1) { x /= m; y /= m; }
+      }
       return { x, y };
     },
 

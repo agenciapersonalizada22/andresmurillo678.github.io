@@ -42,6 +42,7 @@
       <p class="sub">maneja, explora, haz misiones y escapa de la policía</p>
       <p class="toca">Toca para jugar</p>
       <p class="mini solo-teclado">(o pulsa Enter)</p>
+      <p class="mini solo-mando">(o pulsa A en el mando)</p>
       <div class="ayuda">
         <div class="col solo-teclado">
           <h3>Teclado</h3>
@@ -63,6 +64,17 @@
             <li><b>RADIO</b> cambia de estación · <b>CLAXON</b></li>
             <li>A pie con arma: <b>DISPARA</b> y <b>ARMA</b></li>
             <li>Toca el <b>minimapa</b> para ver el mapa</li>
+          </ul>
+        </div>
+        <div class="col solo-mando">
+          <h3>Mando Xbox</h3>
+          <ul>
+            <li><b>Stick izq.</b> caminar o girar · <b>L3</b> correr</li>
+            <li><b>A</b> subir / bajar · <b>B</b> freno de mano</li>
+            <li><b>RT</b> acelerar · <b>LT</b> frenar / reversa</li>
+            <li><b>X</b> claxon · a pie: disparar (o <b>RT</b>)</li>
+            <li><b>Y / LB / RB</b> radio o arma · stick der. apunta</li>
+            <li><b>VISTA</b> mapa · <b>MENU</b> pausa</li>
           </ul>
         </div>
         <div class="col">
@@ -106,6 +118,7 @@
   </div>
 
   <!-- El orden importa: config primero, juego al final -->
+  <script src="../comun/mando.js"></script>
   <script src="js/config.js"></script>
   <script src="js/util.js"></script>
   <script src="js/sonido.js"></script>

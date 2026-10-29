@@ -52,6 +52,14 @@ export class Tablero3D {
       this.marcas.add(m, p);
       this.casillas.push(m); this.puntos.push(p);
     }
+    // cursor de casilla (mando): una sola malla que se mueve
+    const gc = new THREE.PlaneGeometry(1.04, 1.04);
+    gc.rotateX(-Math.PI / 2);
+    this.cursor = new THREE.Mesh(gc, new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, depthTest: false }));
+    this.cursor.position.y = 0.03;
+    this.cursor.renderOrder = 8;
+    this.cursor.visible = false;
+    this.marcas.add(this.cursor);
     this.grupo.add(this.marcas);
   }
 
@@ -133,11 +141,21 @@ export class Tablero3D {
       pista: mk('cuadro', rs.destino, 0.9),
       destino: mk('punto', rs.destino, 0.9),
       captura: mk('anillo', rs.captura, 0.95),
+      cursor: mk('cursor', '#3df5ff', 1),
     };
+    this.cursor.material.dispose();
+    this.cursor.material = this.piezasMarcas.cursor;
+    this.cursor.material.depthTest = false;
   }
 
   // estado: { seleccion, destinos: [{sq, captura}], ultima: [a, b], jaque, hover }
   marcar(estado) {
+    const cs = estado.cursor;
+    if (cs !== undefined && cs >= 0) {
+      const { x, z } = aMundo(cs);
+      this.cursor.position.x = x; this.cursor.position.z = z;
+      this.cursor.visible = true;
+    } else this.cursor.visible = false;
     for (let i = 0; i < 64; i++) { this.casillas[i].visible = false; this.puntos[i].visible = false; }
     const pm = this.piezasMarcas;
     const poner = (sq, tipo) => {

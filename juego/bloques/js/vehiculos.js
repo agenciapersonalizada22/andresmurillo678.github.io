@@ -658,7 +658,14 @@ export class Vehiculos {
           else if (T.clase === 'aire') this.pasoAire(v, T, sdt, ent, true);
           else this.pasoRiel(v, T, sdt, ent, true);
         }
-        if (v.choque > 7) Sonido.golpeVehiculo(Math.min(1, v.choque / 25));
+        if (v.choque > 7) {
+          Sonido.golpeVehiculo(Math.min(1, v.choque / 25));
+          const M = window.Mando;   // vibración del mando (si lo estás usando)
+          if (M && M.conectado && document.body.classList.contains('conMando') && performance.now() - (this.ultimaVibracion || 0) > 350) {
+            this.ultimaVibracion = performance.now();
+            M.vibrar(Math.min(1, 0.3 + v.choque / 30), 0.5, 200);
+          }
+        }
         // luces automáticas de noche
         if (!v.lucesManual) v.luces = noche > 0.55;
       } else if (!v.asentado) {

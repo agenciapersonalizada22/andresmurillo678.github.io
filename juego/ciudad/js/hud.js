@@ -353,13 +353,31 @@ const HUD = (() => {
     g.restore();
   }
 
+  // Pistas de botones del mando (solo cuando se esta usando el mando)
+  function pistasMando(g, W, H, u) {
+    if (!Entrada.hayMando) return;
+    const txt = J.jugador.carro
+      ? 'RT acelerar · LT frenar/reversa · B freno de mano · X claxon · Y radio · A bajar'
+      : (Armas.alguna ? 'A subir · RT/X disparar · Y arma · L3 correr · stick der. apuntar · VISTA mapa'
+        : 'A subir · L3 correr · VISTA mapa · MENU pausa');
+    const tam = Math.min(11.5 * u, (W - 30) / (txt.length * 0.56));
+    const y = H - 18 - (J.seguro ? J.seguro.b : 0);
+    g.save();
+    g.font = `700 ${Math.round(tam)}px ${FUENTE_TEXTO}`;
+    const w = Math.min(W - 16, g.measureText(txt).width + 24 * u);
+    g.globalAlpha = 0.85;
+    panel(g, W / 2 - w / 2, y - 11 * u, w, 22 * u, 'rgba(61,245,255,0.45)');
+    textoNormal(g, txt, W / 2, y, tam, '#bff9ff', 'center', 700);
+    g.restore();
+  }
+
   function etiquetaSubir(g, u) {
     const j = J.jugador;
     if (j.carro || j.caido > 0) return;
     const c = J.carroCerca;
     if (!c) return;
     const p = J.aPantalla(c.x, c.y);
-    const txt = Entrada.tactil ? 'SUBIR' : 'E · SUBIR';
+    const txt = Entrada.tactil ? 'SUBIR' : Entrada.hayMando ? 'A · SUBIR' : 'E · SUBIR';
     g.font = `800 ${Math.round(12 * u)}px ${FUENTE}`;
     const w = g.measureText(txt).width + 16 * u;
     const y = p.y - 34 * u;
@@ -458,7 +476,20 @@ const HUD = (() => {
       iconoLetra(g, lx - 26 * u, ly, 8 * u, c, l);
       textoNormal(g, n, lx - 14 * u, ly, 11 * u, '#ffffff', 'left', 700);
     });
-    textoNormal(g, Entrada.tactil ? 'Toca el mapa para marcar un destino · fuera del mapa para cerrar' : 'Clic en el mapa: marcar destino · M para cerrar',
+    if (Entrada.hayMando && J.cursorMapa) {
+      const c = J.cursorMapa, r = 12 * u;
+      g.save();
+      g.strokeStyle = '#ffffff'; g.lineWidth = 2.5;
+      g.shadowColor = '#3df5ff'; g.shadowBlur = 8;
+      g.beginPath(); g.arc(c.x, c.y, r, 0, Math.PI * 2);
+      g.moveTo(c.x - r * 1.7, c.y); g.lineTo(c.x - r * 0.5, c.y);
+      g.moveTo(c.x + r * 0.5, c.y); g.lineTo(c.x + r * 1.7, c.y);
+      g.moveTo(c.x, c.y - r * 1.7); g.lineTo(c.x, c.y - r * 0.5);
+      g.moveTo(c.x, c.y + r * 0.5); g.lineTo(c.x, c.y + r * 1.7);
+      g.stroke();
+      g.restore();
+    }
+    textoNormal(g, Entrada.tactil ? 'Toca el mapa para marcar un destino · fuera del mapa para cerrar' : Entrada.hayMando ? 'Stick: mover cursor · A: marcar o quitar destino · B: cerrar' : 'Clic en el mapa: marcar destino · M para cerrar',
       W / 2, H - 14, Math.min(12 * u, (W - 20) / 52), '#b9b2ff', 'center', 700);
   }
 
@@ -544,6 +575,7 @@ const HUD = (() => {
     alertaPolicia(g, W, H, u, t);
     avisoCentral(g, W, H, u);
     pista(g, W, H, u);
+    pistasMando(g, W, H, u);
   }
 
   return { dibujar };

@@ -136,6 +136,7 @@ const Armas = (() => {
       impacto(rayo(j.x, j.y, an, a.alcance), an, fuerte, j.x, j.y);
     }
     Sonido.disparo(fuerte);
+    Entrada.vibrar(fuerte ? 0.8 : 0.35, fuerte ? 0.6 : 0.5, fuerte ? 140 : 80);
     J.sacudir(fuerte ? 3 : 1.2);
     J.stats.disparos = (J.stats.disparos || 0) + 1;
     J.delito('disparo', j.x, j.y);
@@ -168,6 +169,8 @@ const Armas = (() => {
     destello = Math.max(0, destello - dt);
     if (j.carro) return;
     if (Entrada.pulso('KeyQ')) ciclar();
+    // Stick derecho: apunta hacia donde empujas
+    if (Entrada.mando.rfuerza > 0.4) j.ang = Math.atan2(Entrada.mando.ry, Entrada.mando.rx);
     if (datos.actual && Entrada.mantenida('KeyF')) disparar();
     // Con el arma en la mano, los peatones cercanos se asustan
     relojMiedo -= dt;

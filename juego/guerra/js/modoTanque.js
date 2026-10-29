@@ -90,6 +90,7 @@ export class ModoTanque {
       const dYaw = -r.dx * sens + ((ent.k('ArrowLeft') ? 1 : 0) - (ent.k('ArrowRight') ? 1 : 0) - ent.der.x - ent.mDer.x) * 1.9 * dt;
       const dEl = -r.dy * sens + ((ent.k('ArrowUp') ? 1 : 0) - (ent.k('ArrowDown') ? 1 : 0) - ent.der.y - (this.ctx.opciones.invertido ? -ent.mDer.y : ent.mDer.y)) * 1.2 * dt;
       j.rotarTorreta(dYaw, dEl, dt);
+      if (ent.k('PadX')) j.apuntarA(j.rumbo, 0.08, dt); // X: torreta al frente del casco
       this._camara();
       if (ent.k('Space', 'Mouse0', 'PadRT') && j.cdRecarga <= 0) this._disparar();
     }
@@ -140,7 +141,7 @@ export class ModoTanque {
     const e = j.datos.escala;
     P.copy(j.pos);
     P.y += 2.9 * e;
-    camera.position.copy(P).addScaledVector(DIR, -13).add(ORG.set(0, 1.8, 0));
+    camera.position.copy(P).addScaledVector(DIR, -13 * ([1, 1.6, 0.6][this.ctx.camVar | 0] || 1)).add(ORG.set(0, 1.8, 0));
     camera.position.y = Math.max(camera.position.y, terreno.altura(camera.position.x, camera.position.z) + 1.5);
     camera.lookAt(P.addScaledVector(DIR, 60));
     efectos.camara = camera.position;
