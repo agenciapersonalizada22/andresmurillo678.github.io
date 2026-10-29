@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#070b1a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Metrópolis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="enTitulo">
+  <canvas id="lienzo" aria-label="Ciudad en 3D"></canvas>
+
+  <div id="juego" class="oculto">
+    <header id="hud">
+      <div id="fila1">
+        <button type="button" class="ib foco" id="bMenu" aria-label="Menú"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+        <div class="chip dinero" id="chipDinero"><small id="vAlcalde">FONDOS</small><b id="vDinero">$0</b><i class="mini"><span id="vNeto">+0/día</span></i><u class="progreso"><s id="barXp"></s></u></div>
+        <button type="button" class="chip pob foco" id="chipPob"><small id="vNivel">ALDEA</small><b id="vPob">0</b><i class="mini"><span id="vFecha">Día 1</span></i><u class="progreso"><s id="barNivel"></s></u></button>
+      </div>
+      <div id="fila2">
+        <div id="velocidad" role="group" aria-label="Velocidad">
+          <button type="button" class="vel foco" data-vel="0" aria-label="Pausa"><svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg></button>
+          <button type="button" class="vel foco" data-vel="1">1x</button>
+          <button type="button" class="vel foco" data-vel="2">2x</button>
+          <button type="button" class="vel foco" data-vel="4">4x</button>
+        </div>
+        <div id="recursos">
+          <span class="rec" id="rEn" title="Energía"><svg viewBox="0 0 24 24"><path d="M13 2L5 14h6l-1 8 8-12h-6z"/></svg><b id="vEn">100</b></span>
+          <span class="rec" id="rAg" title="Agua"><svg viewBox="0 0 24 24"><path d="M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z"/></svg><b id="vAg">100</b></span>
+          <span class="rec" id="rFe" title="Felicidad"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14c1 2 7 2 8 0M9 9v1M15 9v1"/></svg><b id="vFe">50</b></span>
+        </div>
+      </div>
+      <button type="button" id="objetivo" class="foco oculto"><small>OBJETIVO</small><span id="objTxt"></span><u class="progreso"><s id="objBarra"></s></u></button>
+    </header>
+
+    <div id="demanda" aria-label="Demanda">
+      <div class="dem"><i><s id="dR"></s></i><b>R</b></div>
+      <div class="dem"><i><s id="dC"></s></i><b>C</b></div>
+      <div class="dem"><i><s id="dI"></s></i><b>I</b></div>
+    </div>
+
+    <div id="notas"></div>
+    <div id="flotantes"></div>
+    <div id="eventos"></div>
+
+    <div id="lateral">
+      <button type="button" class="ib foco" id="bRotar" aria-label="Rotar cámara"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-3-6.2M20 4v5h-5"/></svg></button>
+      <button type="button" class="ib foco" id="bCapas" aria-label="Capas"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5zM3 13l9 5 9-5"/></svg><small id="capaTxt"></small></button>
+      <button type="button" class="ib foco" id="bSonido" aria-label="Sonido"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="sndOn" d="M16 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"/><path id="sndOff" class="oculto" d="M16 9l5 6M21 9l-5 6"/></svg></button>
+      <button type="button" class="ib foco" id="bCentrar" aria-label="Centrar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
+    </div>
+
+    <div id="sonda" class="oculto"></div>
+
+    <div id="barraHerr" class="oculto">
+      <div id="herrInfo"><b id="herrNombre"></b><span id="herrDetalle"></span></div>
+      <div id="herrBotones">
+        <button type="button" class="btn foco" id="hCancelar" aria-label="Cancelar"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        <button type="button" class="btn primario foco" id="hOk">Construir</button>
+      </div>
+    </div>
+
+    <nav id="barra">
+      <button type="button" class="nav foco" id="bConstruir"><svg viewBox="0 0 24 24"><path d="M4 21V8l7-4v17M11 21V10l9 3v8M3 21h18"/></svg><span>Construir</span></button>
+      <button type="button" class="nav foco" id="bDemoler"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg><span>Demoler</span></button>
+      <button type="button" class="nav foco" id="bDeshacer"><svg viewBox="0 0 24 24"><path d="M3 8h11a6 6 0 0 1 0 12H8M3 8l4-4M3 8l4 4"/></svg><span>Deshacer</span></button>
+      <button type="button" class="nav foco" id="bObjetivos"><svg viewBox="0 0 24 24"><path d="M5 21V4h12l-2 4 2 4H5"/></svg><span>Objetivos</span></button>
+      <button type="button" class="nav foco" id="bMejoras"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg><span>Mejoras</span><em id="puntosBadge"></em></button>
+    </nav>
+
+    <div id="pistasMando" class="oculto"></div>
+    <div id="info" class="oculto"></div>
+  </div>
+
+  <div id="capas"></div>
+  <div id="toastMando" class="oculto"></div>
+  <div id="cargando"><div><b>METRÓPOLIS</b><span>Cargando ciudad…</span></div></div>
+
+  <script src="../comun/mando.js"></script>
+  <script type="module" src="js/principal.js"></script>
+</body>
+</html>
