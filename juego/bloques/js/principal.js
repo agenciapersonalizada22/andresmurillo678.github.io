@@ -108,6 +108,8 @@ let barra = CONFIG.barraInicial.map((c) => POR_CLAVE[c] || B.PIEDRA);
 let seleccion = 0;
 let objetivo = null;
 let verDepuracion = !!opciones.depuracion;
+let mandoSens = Number.isFinite(opciones.mandoSens) ? Math.max(1, Math.min(10, opciones.mandoSens | 0)) : 5;
+let mandoInvertirY = !!opciones.mandoInvertirY;
 let radio = Number.isFinite(opciones.distancia) ? opciones.distancia : (tactil ? V.distanciaMovil : V.distancia);
 radio = Math.max(V.distanciaMinima, Math.min(V.distanciaMaxima, radio | 0));
 let lejos = 300;
@@ -220,6 +222,24 @@ const controles = new Controles({
     if (jugador.pitch > lim) jugador.pitch = lim;
     if (jugador.pitch < -lim) jugador.pitch = -lim;
   },
+  // avioneta con el stick del mando: se pone la palanca directamente (el ratón la mueve de a poquito)
+  alPalanca: (x, y, activa) => {
+    const v = vehiculos.actual;
+    if (!v || v.T.clase !== 'aire') return;
+    if (activa) { v.stick.x = x; v.stick.y = y; } else { v.stick.x = 0; v.stick.y = 0; }
+  },
+  alEstadoMando: (tipo, dato) => {
+    if (tipo === 'fuente') interfaz.modoMando(!!dato, controles.mandoConectado);
+    else if (tipo === 'conectado') {
+      interfaz.modoMando(controles.usandoMando, true);
+      interfaz.avisoMando('Mando conectado');
+    } else if (tipo === 'desconectado') {
+      interfaz.modoMando(false, false);
+      interfaz.avisoMando('Mando desconectado');
+      // sin mando y sin ratón atrapado: se pausa para no dejarte a medias
+      if (estado === 'jugando' && controles.usandoMando) pausar();
+    }
+  },
   alCambioBloqueo: (bloqueado) => {
     // se soltó el ratón (Esc, cambiar de ventana…): pausa. En modo táctil puro
     // nunca se atrapa el ratón, así que esto solo pasa si lo estabas usando.
@@ -229,6 +249,16 @@ const controles = new Controles({
     switch (accion) {
       case 'ranura': if (estado === 'jugando' || estado === 'inventario') elegirRanura(dato); break;
       case 'rueda': if (estado === 'jugando') elegirRanura(seleccion + dato); break;
+      case 'ranuraRel': if (estado === 'inventario') elegirRanura(seleccion + dato); break;
+      case 'pestana':
+        if (estado === 'inventario') interfaz.pestana(dato > 0 ? 'vehiculos' : 'bloques');
+        break;
+      case 'usar':
+        if (estado !== 'jugando') break;
+        if (vehiculos.actual) vehiculos.repostar(mochila);
+        else if (objetivo && USABLE[objetivo.id] && usarBloque(objetivo)) { /* cofre, puerta o cama */ }
+        else tecleoVehiculo();
+        break;
       case 'volar': if (estado === 'jugando' && !vehiculos.actual) alternarVuelo(); break;
       case 'teclaE':
         if (estado === 'jugando') { if (!tecleoVehiculo()) abrirInventario(); }
@@ -269,6 +299,11 @@ function despertarAudio() {
   window.addEventListener(ev, despertarAudio, { capture: true, passive: true }));
 
 // ----------------------------------------------------------- Acciones del juego
+// Vibración suave del mando (solo si lo estás usando)
+function vibrar(fuerte, suave, ms) {
+  if (controles.usandoMando && window.Mando) window.Mando.vibrar(fuerte, suave, ms);
+}
+
 function alternarVuelo() {
   jugador.volando = !jugador.volando;
   if (jugador.volando) jugador.vy = 0;
@@ -326,6 +361,7 @@ function romper() {
   if (DIBUJO[mundo.obtener(x, y + 1, z)] === DIBUJO_PLANTA) mundo.poner(x, y + 1, z, B.AIRE);
   particulas.explotar(x, y, z, colorDe(id), DIBUJO[id] === DIBUJO_PLANTA ? 8 : 18);
   Sonido.romper(sonidoBloque(id));
+  vibrar(0.05, 0.35, 70);
   return true;
 }
 
@@ -444,7 +480,9 @@ function tecleoVehiculo() {
   vehiculos.subir(v, jugador);
   interfaz.volando(false);
   interfaz.ocultarAyuda();
-  interfaz.aviso(v.T.nombre + (v.T.clase === 'aire' ? ' · W/S motor · mueve el ratón para subir y girar' : v.T.clase === 'agua' ? ' · WASD navegar' : v.T.clase === 'riel' ? ' · W/S mover' : ' · WASD manejar'), 3);
+  if (controles.usandoMando) {
+    interfaz.aviso(v.T.nombre + (v.T.clase === 'aire' ? ' · RT/LT motor · stick izq. cabecear y girar' : v.T.clase === 'riel' ? ' · RT/LT mover' : ' · RT acelerar · LT frenar · stick izq. girar') + ' · A bajar', 3.4);
+  } else interfaz.aviso(v.T.nombre + (v.T.clase === 'aire' ? ' · W/S motor · mueve el ratón para subir y girar' : v.T.clase === 'agua' ? ' · WASD navegar' : v.T.clase === 'riel' ? ' · W/S mover' : ' · WASD manejar'), 3);
   mundo.hayCambiosSinGuardar = true;
   return true;
 }
@@ -673,11 +711,19 @@ function moverCamaraTitulo(dt) {
   camara.lookAt(centroTitulo.x, centroTitulo.y - giro * 0.2, centroTitulo.z);
 }
 
+function aplicarAjustesMando() {
+  controles.ajustesMando.sens = mandoSens;
+  controles.ajustesMando.invertirY = mandoInvertirY;
+  $('valorSens').textContent = String(mandoSens);
+  $('btnInvertirY').textContent = 'INVERTIR Y: ' + (mandoInvertirY ? 'SÍ' : 'NO');
+}
+
 function actualizarBotonesPausa() {
   $('btnMusica').textContent = 'MÚSICA: ' + (Musica.activa ? 'SÍ' : 'NO');
   $('btnEfectos').textContent = 'SONIDOS: ' + (Sonido.efectosActivos ? 'SÍ' : 'NO');
   $('btnDepuracion').textContent = 'DATOS: ' + (verDepuracion ? 'SÍ' : 'NO');
   $('textoSemilla').textContent = String(mundo.semilla);
+  aplicarAjustesMando();
 }
 
 function pausar() {
@@ -749,7 +795,10 @@ function comenzar(nuevo, textoSemilla) {
   interfaz.carga(true, 0);
   controles.pedirBloqueo();
   if (nuevo) guardar();
-  const textoAyuda = controles.tactil
+  const textoAyuda = controles.usandoMando
+    ? '<b>Stick izq.</b> caminar · <b>stick der.</b> mirar · <b>A</b> saltar (2 veces = volar) · <b>L3</b> correr<br>' +
+      '<b>RT</b> romper · <b>LT</b> poner · <b>Y</b> usar / subir a vehículo · <b>X</b> inventario · <b>LB/RB</b> elegir · <b>MENU</b> pausa'
+    : controles.tactil
     ? '<b>Joystick</b> caminar · <b>arrastra</b> para mirar<br><b>toca</b> = poner o usar · <b>mantén el dedo</b> = romper · <b>SUBIR</b> cerca de un vehículo'
     : '<b>WASD</b> caminar · <b>Espacio</b> saltar · <b>Shift</b> o <b>W W</b> correr · <b>F</b> volar<br>' +
       '<b>Clic izq.</b> romper · <b>Clic der.</b> poner / abrir cofres y puertas · <b>1-9 / rueda</b> elegir · <b>E</b> vehículo o bloques · <b>I</b> inventario · <b>Esc</b> pausa';
@@ -850,7 +899,7 @@ boton('btnContinuar', () => comenzar(false));
 boton('btnNuevo', () => {
   const panel = $('panelNuevo');
   panel.classList.toggle('oculto');
-  if (!panel.classList.contains('oculto') && !controles.tactil) $('campoSemilla').focus();
+  if (!panel.classList.contains('oculto') && !controles.tactil && !controles.usandoMando) $('campoSemilla').focus();
 });
 boton('btnCrear', () => comenzar(true, $('campoSemilla').value));
 boton('btnCancelarNuevo', () => $('panelNuevo').classList.add('oculto'));
@@ -878,6 +927,21 @@ boton('btnMochila', () => {
 boton('btnMenosDistancia', () => cambiarDistancia(-1));
 boton('btnMasDistancia', () => cambiarDistancia(1));
 boton('btnCerrarInventario', () => cerrarInventario());
+boton('btnMenosSens', () => cambiarSensMando(-1));
+boton('btnMasSens', () => cambiarSensMando(1));
+boton('btnInvertirY', () => {
+  mandoInvertirY = !mandoInvertirY;
+  opciones.mandoInvertirY = mandoInvertirY;
+  guardarOpciones(opciones);
+  aplicarAjustesMando();
+});
+
+function cambiarSensMando(d) {
+  mandoSens = Math.max(1, Math.min(10, mandoSens + d));
+  opciones.mandoSens = mandoSens;
+  guardarOpciones(opciones);
+  aplicarAjustesMando();
+}
 
 function cambiarDistancia(d) {
   radio = Math.max(V.distanciaMinima, Math.min(V.distanciaMaxima, radio + d));
@@ -935,7 +999,7 @@ function sonidosDelJugador() {
   for (const ev of jugador.eventos) {
     if (ev === 'paso') Sonido.paso(sonidoBloque(jugador.bloqueBajoPies(mundo)));
     else if (ev === 'salto') Sonido.salto();
-    else if (ev === 'aterrizaje') Sonido.aterrizaje(sonidoBloque(jugador.bloqueBajoPies(mundo)));
+    else if (ev === 'aterrizaje') { Sonido.aterrizaje(sonidoBloque(jugador.bloqueBajoPies(mundo))); vibrar(0.55, 0.3, 150); }
     else if (ev === 'chapuzon') Sonido.chapuzon();
   }
 }
@@ -960,7 +1024,7 @@ function actualizarTableroVehiculo(dt) {
   interfaz.tablero(vehiculos.info());
   if (!vehiculos.actual) {
     const v = estado === 'jugando' && !esperandoMundo ? vehiculos.cercano(jugador.x, jugador.y + 0.9, jugador.z) : null;
-    interfaz.cercaVehiculo(!!v, v ? 'E · subir al ' + v.T.nombre : '');
+    interfaz.cercaVehiculo(!!v, v ? (controles.usandoMando ? 'Y' : 'E') + ' · subir al ' + v.T.nombre : '');
   } else interfaz.cercaVehiculo(true);
 }
 
@@ -993,6 +1057,7 @@ function cuadro(ahora) {
   if (tiempoFps >= 0.5) { fps = Math.round(cuadrosFps / tiempoFps); cuadrosFps = 0; tiempoFps = 0; }
 
   const enVeh = !!vehiculos.actual;
+  controles.leerMando(dt, { estado, esperando: esperandoMundo, vehiculo: enVeh ? { clase: vehiculos.actual.T.clase } : null });
   controles.actualizar(jugador.volando, enVeh);
 
   // ¿ya está el terreno bajo tus pies?
@@ -1066,7 +1131,7 @@ function cuadro(ahora) {
   renderer.setClearColor(escena.fog.color);
   actualizarUniformes(bajoAgua);
   interfaz.bajoAgua(bajoAgua);
-  interfaz.clicContinuar(estado === 'jugando' && !esperandoMundo && !controles.tactil && !controles.bloqueado && !controles.modoArrastre);
+  interfaz.clicContinuar(estado === 'jugando' && !esperandoMundo && !controles.tactil && !controles.usandoMando && !controles.bloqueado && !controles.modoArrastre);
   cielo.bajoAgua(bajoAgua); // bajo el agua no se ve el cielo, solo azul
   Musica.ponerAnimo(dia > 0.4 ? 'dia' : 'noche');
 
@@ -1131,6 +1196,7 @@ function cuadro(ahora) {
 
 // ----------------------------------------------------------- Arranque
 aplicarRadio();
+aplicarAjustesMando();
 mundo.reiniciar(semillaVistaPrevia, partida ? partida.cambios : null, opcionesDePartida(partida));
 if (partida) { restaurarJugador(partida); aplicarExtrasDePartida(partida); }
 else {
@@ -1158,6 +1224,7 @@ window.BLOQUES = {
   set hora(h) { hora = ((h % 1) + 1) % 1; },
   get musica() { return { activa: Musica.activa, notas: Musica.notasTocadas }; },
   get entrada() { return { ...controles.entrada }; },
+  controles,
   nuevoMundo: (texto) => comenzar(true, texto || ''),
   continuar: () => comenzar(false),
   mirar(yaw, pitch) { jugador.yaw = yaw; jugador.pitch = pitch; camara.rotation.set(pitch, yaw, 0, 'YXZ'); camara.position.set(jugador.x, jugador.y + J.ojos, jugador.z); actualizarObjetivo(); return objetivo; },

@@ -8,6 +8,8 @@ import { ObjetivoTierra } from './objetivos.js';
 import { Sonido } from './sonido.js';
 import { Musica } from './musica.js';
 
+// Distancia de la cámara (botón Y del mando): normal, lejos, cerca
+const CAMARAS = [1, 1.7, 0.55];
 const V = new THREE.Vector3();
 const QL = new THREE.Quaternion(), QA = new THREE.Quaternion(), EXV = new THREE.Vector3(1, 0, 0), EYV = new THREE.Vector3(0, 1, 0);
 
@@ -152,7 +154,7 @@ export class ModoAvion {
     const c = this.ctx, j = this.jugador;
     if (!j.vivo) return;
     const m = c.proyectiles.misilContra(j);
-    if (m >= 0) { c.hud.aviso('¡MISIL! ROMPE A UN LADO', 0.4, true); Sonido.alarma(); }
+    if (m >= 0) { c.hud.aviso('¡MISIL! ROMPE A UN LADO', 0.4, true); Sonido.alarma(); c.entrada.vibrar(0.1, 0.9, 140, 'alerta', 420); }
     else if (j.perdida > 0.3) { c.hud.aviso('PÉRDIDA: BAJA EL MORRO', 0.4, true); Sonido.alarma(); }
     else if (j.cercaSuelo && j.pos.y < c.terreno.altura(j.pos.x, j.pos.z) + 40 && j.fwd.y < -0.1) { c.hud.aviso('¡ALTITUD!', 0.4, true); Sonido.alarma(); }
     else if (j.fuera) c.hud.aviso('REGRESA A LA ZONA DE COMBATE', 0.4, true);
@@ -166,7 +168,8 @@ export class ModoAvion {
       return;
     }
     const cam = this.def.cam;
-    if (reiniciar) { this.camQ.copy(j.q); this.camPos.copy(j.pos).add(V.set(0, cam.h - 0.2, cam.d).applyQuaternion(j.q)); }
+    const cv = CAMARAS[this.ctx.camVar | 0] || 1;
+    if (reiniciar) { this.camQ.copy(j.q); this.camPos.copy(j.pos).add(V.set(0, (cam.h - 0.2) * cv, cam.d * cv).applyQuaternion(j.q)); }
     this.camQ.slerp(j.q, 1 - Math.exp(-5.5 * dt));
     // stick derecho: mirar alrededor del avión; al soltarlo la cámara se recentra suave
     const sd = this.ctx.entrada.mDer, libre = Math.abs(sd.x) + Math.abs(sd.y) > 0.01;
@@ -174,7 +177,7 @@ export class ModoAvion {
     this.mirar.y += (-sd.x * 2.4 - this.mirar.y) * kk;
     this.mirar.p += (-sd.y * 1.0 - this.mirar.p) * kk;
     QL.copy(this.camQ).multiply(QA.setFromAxisAngle(EYV, this.mirar.y)).multiply(QA.setFromAxisAngle(EXV, this.mirar.p));
-    const objetivo = V.set(0, cam.h, cam.d + (j.velocidad - this.camRef) * 0.04).applyQuaternion(QL).add(j.pos);
+    const objetivo = V.set(0, cam.h * cv, cam.d * cv + (j.velocidad - this.camRef) * 0.04).applyQuaternion(QL).add(j.pos);
     this.camPos.lerp(objetivo, 1 - Math.exp(-14 * dt));
     camera.position.copy(this.camPos);
     camera.position.y = Math.max(camera.position.y, terreno.altura(camera.position.x, camera.position.z) + 2.5);

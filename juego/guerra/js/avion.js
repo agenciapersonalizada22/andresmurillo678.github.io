@@ -151,6 +151,7 @@ export class AvionJugador extends Avion {
       ala = clamp(ala + this.palo.x, -1, 1);
     }
     const gui = (ent.k('KeyE', 'PadRB') ? 1 : 0) - (ent.k('KeyQ', 'PadLB') ? 1 : 0);
+    if (ent.pulso('PadX')) this.empuje = 0.6; // X: empuje de crucero
     if (ent.k('ShiftLeft', 'ShiftRight', 'PadUp')) this.empuje = Math.min(1, this.empuje + 0.5 * dt);
     if (ent.k('ControlLeft', 'ControlRight', 'KeyC', 'PadDown')) this.empuje = Math.max(0, this.empuje - 0.5 * dt);
 
@@ -329,6 +330,7 @@ export class AvionJugador extends Avion {
     V2.normalize();
     proyectiles.disparar('bala', 'jugador', V1, V2, this.vel, { dano: A.dano });
     Sonido.disparo('ametralladora', 0.9);
+    this.ctx.entrada.vibrar(0, 0.3, 50, 'ametra', 55);
   }
 
   _misil() {
@@ -343,10 +345,12 @@ export class AvionJugador extends Avion {
       V2.normalize();
       this.ctx.proyectiles.disparar('cohete', 'jugador', V1, V2, this.vel);
       Sonido.disparo('misil', 0.7);
+      this.ctx.entrada.vibrar(0.3, 0.5, 90, 'cohete', 80);
       return;
     }
     this.ctx.proyectiles.disparar('misil', 'jugador', V1, this.fwd, this.vel, { vel: 60, objetivo: this.bloqueado, giro: 2.8 });
     Sonido.disparo('misil', 1);
+    this.ctx.entrada.vibrar(0.6, 0.7, 180, 'misil');
   }
 
   _bomba() {
@@ -354,12 +358,14 @@ export class AvionJugador extends Avion {
     V1.set(0, -1.1, 0.5).applyQuaternion(this.q).add(this.pos);
     this.ctx.proyectiles.disparar('bomba', 'jugador', V1, this.fwd, this.vel, { vel: 0.01 });
     Sonido.disparo('flak', 0.6);
+    this.ctx.entrada.vibrar(0.8, 0.3, 200, 'bomba');
   }
 
   recibirDanio(d) {
     if (!this.vivo) return;
     this.ctx.hud.golpe();
     Sonido.impacto(0.9);
+    this.ctx.entrada.vibrar(Math.min(1, 0.3 + d / 40), 0.8, 160, 'dano', 90);
     super.recibirDanio(d);
   }
 }

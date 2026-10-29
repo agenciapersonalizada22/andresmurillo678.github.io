@@ -192,6 +192,17 @@ export function texturaMarca(tipo, color) {
     const rg = g.createRadialGradient(cx, cx, 0, cx, cx, cx);
     rg.addColorStop(0, color + 'ff'); rg.addColorStop(0.45, color + 'cc'); rg.addColorStop(0.75, color + '55'); rg.addColorStop(1, color + '00');
     g.fillStyle = rg; g.fillRect(0, 0, n, n);
+  } else if (tipo === 'cursor') { // esquinas gruesas + velo suave: cursor del mando
+    g.fillStyle = color + '33'; g.fillRect(4, 4, n - 8, n - 8);
+    g.strokeStyle = color; g.lineWidth = 11; g.lineCap = 'square';
+    g.shadowColor = color; g.shadowBlur = 8;
+    const a = 6, l = 40, b = n - 6;
+    g.beginPath();
+    g.moveTo(a, a + l); g.lineTo(a, a); g.lineTo(a + l, a);
+    g.moveTo(b - l, a); g.lineTo(b, a); g.lineTo(b, a + l);
+    g.moveTo(b, b - l); g.lineTo(b, b); g.lineTo(b - l, b);
+    g.moveTo(a + l, b); g.lineTo(a, b); g.lineTo(a, b - l);
+    g.stroke();
   } else if (tipo === 'cuadro') {
     g.fillStyle = color + 'cc'; g.fillRect(4, 4, n - 8, n - 8);
     g.strokeStyle = color; g.lineWidth = 6; g.strokeRect(5, 5, n - 10, n - 10);

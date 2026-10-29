@@ -463,3 +463,39 @@ body.enInicio #app { filter: blur(2px) brightness(0.7); }
 /* Con ?tactil=1 */
 body.tactil .solo-compu { display: none; }
 body:not(.tactil) .solo-tactil { display: none; }
+
+/* ---------------------------------------------------------- Mando (Xbox) */
+#pistasMando {
+  position: fixed;
+  left: 50%; bottom: calc(10px + var(--seguro-abajo));
+  transform: translateX(-50%);
+  display: none;
+  gap: 6px 10px; flex-wrap: wrap; justify-content: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(8, 6, 26, 0.88);
+  border: 1px solid var(--borde);
+  font-size: 9px; letter-spacing: 0.3px;
+  pointer-events: none;
+  z-index: 95;
+  max-width: 98vw;
+}
+body.mando #pistasMando { display: flex; }
+#pistasMando span { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+#pistasMando b {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 16px; height: 16px; padding: 0 3px; border-radius: 8px;
+  background: #fff; color: #05030f; font-size: 9px;
+}
+#pistasMando b.A { background: #3ddc84; }
+#pistasMando b.B { background: #ff4d4d; }
+#pistasMando b.X { background: #4da3ff; }
+#pistasMando b.Y { background: #ffd23d; }
+body.mando .pantalla button:focus,
+body.mando .pantalla select:focus,
+body.mando .pantalla input:focus,
+body.mando .pantalla summary:focus {
+  outline: 3px solid #ffd23d;
+  outline-offset: 2px;
+  box-shadow: 0 0 16px rgba(255, 210, 61, 0.55);
+}

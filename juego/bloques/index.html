@@ -72,6 +72,7 @@
         <p id="avisoNuevo" class="info oculto">Ojo: tu mundo guardado se reemplaza.</p>
       </div>
       <p class="pista solo-compu">WASD caminar · ratón mirar · clic izq. romper · clic der. poner</p>
+      <p class="pista solo-mando">Mando: ↕ ↔ elegir · A aceptar · B volver<br>En el juego: stick izq. caminar · stick der. mirar · RT romper · LT poner</p>
       <p class="pista solo-tactil">joystick para caminar · arrastra para mirar · botones para romper y poner</p>
     </div>
   </div>
@@ -91,6 +92,13 @@
         <b id="valorDistancia">5</b>
         <button type="button" id="btnMasDistancia" aria-label="Ver más lejos">+</button>
       </div>
+      <div class="fila distancia solo-hay-mando">
+        <span>MIRAR (MANDO)</span>
+        <button type="button" id="btnMenosSens" aria-label="Mirar más lento">−</button>
+        <b id="valorSens">5</b>
+        <button type="button" id="btnMasSens" aria-label="Mirar más rápido">+</button>
+      </div>
+      <button type="button" id="btnInvertirY" class="solo-hay-mando">INVERTIR Y: NO</button>
       <div class="fila">
         <button type="button" id="btnCalidad">GRÁFICOS: ALTA</button>
         <button type="button" id="btnGuardar">GUARDAR</button>
@@ -109,6 +117,11 @@
         en vehículo: WASD, Espacio freno, Shift turbo, C vista, L luces, T bidón · M música · F3 datos · Esc pausa</p>
       <p class="pista solo-tactil">joystick caminar (hasta el fondo = correr) · arrastra mirar ·
         toca poner · mantén romper · ▦ bloques</p>
+      <p class="pista solo-mando"><b>Mando Xbox</b> · stick izq. caminar · stick der. mirar · L3 correr · A saltar (2 veces = volar; B baja) ·
+        RT romper (mantén) · LT poner · Y usar cofres, puertas y camas / subir a un vehículo · X inventario ·
+        LB/RB o ↑/↓ elegir ranura · ← copiar bloque · → volar · VISTA datos (F3) · MENU pausa.<br>
+        <b>En vehículo:</b> stick izq. dirigir · RT acelerar · LT frenar / reversa · B freno de mano · L3 turbo · A bajar · X luces · Y bidón · R3 o VISTA cámara.
+        <b>Avioneta:</b> stick izq. atrás = subir, izq./der. = girar · RT/LT motor.</p>
     </div>
   </div>
 
@@ -124,6 +137,7 @@
       <div id="rejillaInventario"></div>
       <div id="rejillaVehiculos" class="oculto"></div>
       <button type="button" id="btnCerrarInventario">CERRAR</button>
+      <p class="pista solo-mando">↕ ↔ moverte · A elegir · LB/RB pestañas · LT/RT ranura · B o X cerrar</p>
     </div>
   </div>
 
@@ -139,6 +153,9 @@
     </div>
   </div>
 
+  <div id="avisoMando" role="status" aria-live="polite"></div>
+
+  <script src="../comun/mando.js"></script>
   <script type="module" src="js/principal.js"></script>
 </body>
 </html>

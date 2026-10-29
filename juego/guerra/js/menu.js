@@ -73,6 +73,30 @@ export class Menu {
     }
   }
 
+  // Mando: LB/RB recorren los aviones (la ficha muestra el que ves; si está libre, queda elegido)
+  ciclarAvion(dir) {
+    const n = ORDEN_AVIONES.length;
+    const i = ORDEN_AVIONES.indexOf(this.vista);
+    const id = ORDEN_AVIONES[(i + dir + n) % n];
+    this.vista = id;
+    if (this.cb.disponible(id)) {
+      this.avion = id;
+      this.cb.avion(id);
+    }
+    this.refrescar();
+    return this.botonesAvion[id];
+  }
+
+  // Mando: LT/RT recorren los mapas
+  ciclarMapa(dir) {
+    const n = ORDEN_MAPAS.length;
+    const id = ORDEN_MAPAS[(ORDEN_MAPAS.indexOf(this.mapa) + dir + n) % n];
+    this.mapa = id;
+    this.cb.mapa(id);
+    this.refrescar();
+    return this.botonesMapa[id];
+  }
+
   refrescar() {
     const mejor = this.cb.mejor();
     for (const id of ORDEN_MAPAS) this.botonesMapa[id].classList.toggle('sel', id === this.mapa);

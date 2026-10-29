@@ -371,3 +371,30 @@ body.conMando .solo-compu { display: none; }
   color: #3df58a; font-size: 12px; font-weight: 800; letter-spacing: 2px; white-space: nowrap; pointer-events: none;
 }
 body:not(.modoAvion) .sens { display: none; }
+
+/* ---------------------------------------------------------- Mando: foco visible, ayudas y HUD limpio */
+.tarjeta button:focus-visible, .tarjeta .enlace:focus-visible, .volver:focus-visible, .sens input:focus-visible,
+body.navMando .tarjeta button:focus, body.navMando .tarjeta .enlace:focus, body.navMando .volver:focus, body.navMando .sens input:focus {
+  outline: 3px solid #fff; /* blanco: se distingue del cian de lo elegido */
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px rgba(5, 3, 15, 0.9), 0 0 22px 5px rgba(61, 245, 255, 0.85);
+  background: rgba(61, 245, 255, 0.28);
+}
+.tarjeta button.carta:focus-visible, body.navMando .tarjeta button.carta:focus { transform: scale(1.04); }
+.tarjeta .enlace:focus-visible, body.navMando .tarjeta .enlace:focus { border-radius: 6px; padding: 2px 6px; }
+.pista b { color: var(--cian); font-weight: 800; }
+.solo-mando-btn { display: none !important; }
+body.conMando .solo-mando-btn { display: block !important; }
+#ayudaMando {
+  position: absolute; left: 50%; top: calc(64px + var(--seguro-arriba)); transform: translateX(-50%);
+  max-width: 92vw; padding: 7px 14px; border-radius: 10px; background: rgba(5, 3, 15, 0.7); border: 1px solid rgba(61, 245, 255, 0.5);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; font-size: 12px; line-height: 1.5; color: #d6d0ff; text-align: center;
+  opacity: 0; display: none; transition: opacity 0.6s;
+}
+#ayudaMando b { color: var(--cian); }
+body.conMando #ayudaMando { display: block; }
+body.conMando #ayudaMando.visible { opacity: 1; }
+#ayudaMando .h-tanque, body.modoTanque #ayudaMando .h-avion { display: none; }
+body.modoTanque #ayudaMando .h-tanque { display: inline; }
+/* Vista (mando): oculta los datos y deja solo mira, avisos y daño */
+#hud.limpio #datos, #hud.limpio #radar, #hud.limpio #estado, #hud.limpio #marcadores, #hud.limpio #recarga, #hud.limpio #ayudaMando { visibility: hidden; }

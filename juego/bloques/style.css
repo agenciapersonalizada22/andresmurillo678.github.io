@@ -721,3 +721,43 @@ body.tactil #tablero {
 }
 body.tactil #tablero .velocidad b { font-size: 24px; }
 body.tactil #tablero p { display: none; }
+
+/* ---------------------------------------------------------- Mando (Xbox) */
+.solo-mando { display: none; }
+body.conMando .solo-mando { display: block; }
+body.conMando .solo-compu, body.conMando .solo-tactil { display: none; }
+.solo-hay-mando { display: none !important; }
+body.hayMando .fila.solo-hay-mando { display: flex !important; }
+body.hayMando button.solo-hay-mando { display: block !important; }
+body.conMando #tactil, body.conMando.tactil #tactil { display: none; }
+body.conMando #clicContinuar { display: none; }
+
+/* foco visible al navegar los menús con el mando */
+body.conMando .foco-mando {
+  outline: 3px solid #fff !important;
+  outline-offset: 2px;
+  background: rgba(125, 217, 87, 0.32) !important;
+  box-shadow: 0 0 20px rgba(125, 217, 87, 0.95) !important;
+}
+body.conMando .tarjeta button.principal.foco-mando { background: #b7ff8f !important; color: #0b1a10; }
+
+#avisoMando {
+  position: fixed;
+  top: calc(14px + var(--seguro-arriba));
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  z-index: 90;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.72);
+  border: 2px solid rgba(125, 217, 87, 0.8);
+  color: #f0fff0;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s, transform 0.25s;
+}
+#avisoMando.visible { opacity: 1; transform: translateX(-50%); }

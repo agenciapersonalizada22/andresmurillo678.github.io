@@ -10,6 +10,7 @@ import { NIVELES, RELOJES, CONFIG } from './config.js';
 import { Vista } from './vista.js';
 import { Entrada } from './entrada.js';
 import { Interfaz } from './interfaz.js';
+import { iniciarControl } from './control.js';
 import { IA } from './ia.js';
 import { Reloj } from './reloj.js';
 import * as Sonido from './sonido.js';
@@ -31,7 +32,7 @@ const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const juego = {
   modo: 'ia', humano: BLANCAS, nivel: 'medio', relojId: 'sin', girarAuto: false,
-  tiempos: [[0, 0]], sel: -1, selAntes: false, legales: [], idIA: 0, idPista: 0, pensando: false, ocupado: false,
+  tiempos: [[0, 0]], cursor: -1, sel: -1, selAntes: false, legales: [], idIA: 0, idPista: 0, pensando: false, ocupado: false,
   pista: null, vista: 'blancas', cerrada: false, hover: -1, est: { fin: null }, inicioTurno: BLANCAS,
 };
 
@@ -90,6 +91,7 @@ function marcas() {
     ultima: u ? [movDesde(u.m), movHasta(u.m)] : null,
     jaque: juego.est.jaque ? partida.pos.rey[partida.turno] : -1,
     pista: juego.pista,
+    cursor: juego.cursor,
     hover: juego.hover >= 0 && puedeMover() && partida.pos.b[juego.hover] && (partida.pos.b[juego.hover] >> 3) === partida.turno ? juego.hover : -1,
   });
 }
@@ -186,6 +188,7 @@ async function ejecutar(m) {
   juego.est = est;
   refrescar();
   setTimeout(() => Sonido.reproducir(sonidoDe(m, est)), 150);
+  vibrarJugada(m, est);
   const anim = vista.jugar(m, bAntes);
   await Promise.race([anim, dormir(1800)]);
   juego.ocupado = false;
@@ -194,6 +197,16 @@ async function ejecutar(m) {
   if (juego.modo === 'dos' && juego.girarAuto && juego.vista !== 'cenital') cambiarVista(partida.turno === BLANCAS ? 'blancas' : 'negras');
   refrescar();
   if (esIA(partida.turno)) pedirIA();
+}
+
+// Vibración del mando (suave al mover; más fuerte con captura, jaque o mate)
+function vibrarJugada(m, est) {
+  const M = window.Mando;
+  if (!M || !M.conectado) return;
+  if (est.fin === 'mate') M.vibrar(1, 0.7, 450);
+  else if (est.jaque) M.vibrar(0.6, 0.5, 260);
+  else if (movBanderas(m) & CAP) M.vibrar(0.5, 0.4, 160);
+  else M.vibrar(0.1, 0.25, 70);
 }
 
 // ---------------------------------------------------------- IA
@@ -520,6 +533,7 @@ function iniciarPartida(c) {
   actualizarLegales();
   juego.est = partida.estado();
   ui.ocultar('Inicio'); ui.ocultar('Fin');
+  if (control) control.reiniciarCursor();
   cambiarVista(c.modo === 'ia' && c.humano === NEGRAS ? 'negras' : 'blancas', true);
   vista.sincronizar(partida.pos.b, true);
   refrescar();
@@ -589,6 +603,7 @@ function reanudar() {
     actualizarLegales();
     juego.est = partida.estado();
     ui.ocultar('Inicio');
+    if (control) control.reiniciarCursor();
     cambiarVista(d.vista || 'blancas', true);
     vista.sincronizar(partida.pos.b, true);
     if (reloj.habilitado && partida.alFinal && partida.cursor >= 1 && !juego.est.fin) reloj.iniciar(partida.turno);
@@ -666,6 +681,14 @@ reloj.alAgotar = (color) => {
   juego.est = partida.estado();
   finalizar(juego.est);
 };
+
+// ---------------------------------------------------------- mando Xbox
+const control = iniciarControl({
+  juego, vista, ui,
+  accion, navegar, cambiarVista, ladoInferior, marcas, limpiarSeleccion,
+  deshacer: () => { if (puedeDeshacerA() >= 0 && !juego.ocupado) deshacer(); },
+  alPulsar: (sq, bajo) => alPulsar(sq, bajo),
+});
 
 // ---------------------------------------------------------- arranque
 ui.aplicarOpciones(opts, true);

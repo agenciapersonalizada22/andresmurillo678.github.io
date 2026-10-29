@@ -301,7 +301,13 @@ export class Interfaz {
     this.el.tabGasCaja.classList.toggle('oculto', info.clase !== 'aire');
     this.el.tabGas.style.width = Math.round(info.gas * 100) + '%';
     let texto = '';
-    if (info.sinCombustible) texto = 'Sin combustible: T usa un bidón';
+    const mando = document.body.classList.contains('conMando');
+    if (mando) {
+      if (info.sinCombustible) texto = 'Sin combustible: Y usa un bidón';
+      else if (info.clase === 'aire') texto = 'Alt ' + info.altura + ' · RT/LT motor · stick izq. nariz y giro · R3 vista';
+      else if (info.clase === 'riel') texto = 'RT/LT mover · stick izq. girar en cruces · A bajar';
+      else texto = 'A bajar · R3 vista · X luces · B freno';
+    } else if (info.sinCombustible) texto = 'Sin combustible: T usa un bidón';
     else if (info.clase === 'aire') texto = 'Alt ' + info.altura + ' · W/S motor · ratón nariz y giro · C vista';
     else if (info.clase === 'riel') texto = 'W/S mover · A/D girar en cruces · E bajar';
     else texto = 'E bajar · C vista · L luces · Espacio freno';
@@ -400,6 +406,22 @@ export class Interfaz {
     this.el.inventario.classList.toggle('oculto', nombre !== 'inventario');
     this.el.hud.classList.toggle('oculto', nombre === 'titulo');
     document.body.classList.toggle('enTitulo', nombre === 'titulo');
+  }
+
+  // usando: el último control que usaste es el mando · conectado: hay un mando enchufado
+  modoMando(usando, conectado) {
+    document.body.classList.toggle('conMando', !!usando);
+    document.body.classList.toggle('hayMando', !!conectado);
+  }
+
+  // Aviso suelto (se ve también en el título, donde el HUD está oculto)
+  avisoMando(texto) {
+    const e = $('avisoMando');
+    if (!e) return;
+    e.textContent = texto;
+    e.classList.add('visible');
+    clearTimeout(this.tiempoAvisoMando);
+    this.tiempoAvisoMando = setTimeout(() => e.classList.remove('visible'), 2400);
   }
 
   modoTactil(si) {

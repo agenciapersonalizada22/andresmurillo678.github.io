@@ -19,6 +19,7 @@ export class Efectos {
     this.fuego = new Particulas(escena, 450, true);
     this.humo = new Particulas(escena, 700, false);
     this.sacudida = 0;
+    this.alExplosion = null; // (fuerza) para vibrar el mando
     this.camara = null;
     this.restos = [];
   }
@@ -34,7 +35,9 @@ export class Efectos {
 
   explosion(p, tam = 1) {
     const d = this._distancia(p);
-    this.sacudida = Math.max(this.sacudida, tam * Math.max(0, 1 - d / 450) * 1.3);
+    const fuerza = tam * Math.max(0, 1 - d / 450) * 1.3;
+    this.sacudida = Math.max(this.sacudida, fuerza);
+    if (this.alExplosion) this.alExplosion(fuerza);
     Sonido.explosion(tam, Sonido.porDistancia(d));
     const n = Math.min(14, 6 + Math.round(tam * 4));
     for (let i = 0; i < n; i++) {
