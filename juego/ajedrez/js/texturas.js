@@ -54,7 +54,9 @@ export function hoja(tipo, tam, base, veta, semilla) {
   for (let y = 0; y < tam; y++) {
     for (let x = 0; x < tam; x++) {
       let t;
-      if (tipo === 'madera') {
+      if (tipo === 'liso') {
+        t = R.fbm(x / tam * 8, y / tam * 8, 2) * 0.12;
+      } else if (tipo === 'madera') {
         const aro = Math.sin(((y / tam) * 22 + R.fbm(x / tam * 2.5, y / tam * 1.5, 3) * 2.2) * Math.PI * 2);
         const fibra = R.fbm(x / tam * 2, y / tam * 150, 3);
         t = 0.28 * (aro * 0.5 + 0.5) + 0.72 * fibra;
@@ -90,14 +92,17 @@ export function texturaTablero(tema, tam) {
   const g = c.getContext('2d');
   const q = tam / 8;
   const t = tema.tablero;
-  const hojaC = t.tipo !== 'neon' ? hoja(t.tipo, 512, t.claro, t.veta[0], 11) : null;
-  const hojaO = t.tipo !== 'neon' ? hoja(t.tipo, 512, t.oscuro, t.veta[1], 29) : null;
+  const hojaC = (t.tipo !== 'neon' && t.tipo !== 'liso') ? hoja(t.tipo, 512, t.claro, t.veta[0], 11) : null;
+  const hojaO = (t.tipo !== 'neon' && t.tipo !== 'liso') ? hoja(t.tipo, 512, t.oscuro, t.veta[1], 29) : null;
   const R = crearRuido(5);
   for (let r = 0; r < 8; r++) {
     for (let f = 0; f < 8; f++) {
       const clara = (r + f) % 2 === 1; // a1 es oscura
       const x = f * q, y = (7 - r) * q;
-      if (t.tipo === 'neon') {
+      if (t.tipo === 'liso') {
+        g.fillStyle = '#' + (clara ? t.claro : t.oscuro).toString(16).padStart(6, '0');
+        g.fillRect(x, y, q, q);
+      } else if (t.tipo === 'neon') {
         const gr = g.createLinearGradient(x, y, x + q, y + q);
         gr.addColorStop(0, '#' + (clara ? t.claro : t.oscuro).toString(16).padStart(6, '0'));
         gr.addColorStop(1, '#' + (clara ? t.oscuro : t.claro).toString(16).padStart(6, '0'));

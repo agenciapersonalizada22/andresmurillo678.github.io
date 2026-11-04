@@ -6,7 +6,7 @@
 //  de quietud. Sirve como Web Worker (self.onmessage) y también se
 //  puede importar y usar en el hilo principal (plan B).
 // =============================================================
-import { Posicion, PEON, movAUci } from './reglas.js';
+import { Posicion, PEON, REY, movAUci } from './reglas.js';
 import { evaluar } from './evaluacion.js';
 
 export const MATE = 30000;
@@ -207,18 +207,56 @@ export class Motor {
     return mejor;
   }
 
-  _pv(pos, prof) {
+  // Variante principal (como textos UCI) siguiendo la tabla de transposición; "primera" fuerza la jugada inicial
+  _pv(pos, prof, primera = 0) {
     const res = [];
     let n = 0;
     for (; n < prof; n++) {
-      const idx = pos.hLo & this.mascara;
-      if (this.tLo[idx] !== pos.hLo || this.tHi[idx] !== pos.hHi || !this.tMov[idx]) break;
-      const m = this.tMov[idx];
+      let m;
+      if (n === 0 && primera) m = primera;
+      else {
+        const idx = pos.hLo & this.mascara;
+        if (this.tLo[idx] !== pos.hLo || this.tHi[idx] !== pos.hHi || !this.tMov[idx]) break;
+        m = this.tMov[idx];
+      }
       if (!pos.movimientosLegales().includes(m)) break;
-      pos.hacer(m); res.push(m);
+      res.push(movAUci(m, pos));
+      pos.hacer(m);
     }
     for (let i = 0; i < n; i++) pos.deshacer();
     return res;
+  }
+
+  // Bonificación de estilo (centipeones) para una jugada ya hecha en el tablero; p = pieza movida
+  _sesgo(pos, m, p, sg, rEn) {
+    const fl = m >> 15, t = p & 7, des = m & 63, has = (m >> 6) & 63;
+    let v = 0;
+    if (fl & 1) v += sg.cap || 0;
+    if (pos.enJaque()) v += sg.jaque || 0;
+    if (t === PEON) v += (sg.peon || 0) + (sg.avance || 0) * (((p >> 3) ? 7 - (has >> 3) : (has >> 3)) - 1);
+    else if (t === REY) v += (fl & 12) ? (sg.enr || 0) : (sg.rey || 0);
+    else v += sg.pieza || 0;
+    if (sg.acerca && rEn >= 0) {
+      const d0 = Math.max(Math.abs((des & 7) - (rEn & 7)), Math.abs((des >> 3) - (rEn >> 3)));
+      const d1 = Math.max(Math.abs((has & 7) - (rEn & 7)), Math.abs((has >> 3) - (rEn >> 3)));
+      v += sg.acerca * (d0 - d1);
+    }
+    return v;
+  }
+
+  // Varias mejores líneas (MultiPV): { prof, tiempo, multi } -> [{ uci, puntuacion, prof, pv }] (puntuación para quien mueve)
+  analizar(pos, opc = {}) {
+    const multi = Math.max(1, Math.min(opc.multi || 1, 6));
+    const excluir = [];
+    const lineas = [];
+    const n = pos.movimientosLegales().length;
+    for (let k = 0; k < multi && k < n; k++) {
+      const r = this.buscar(pos, { prof: opc.prof || 12, tiempo: Math.max(80, (opc.tiempo || 800) / multi), excluir, exacto: true });
+      if (!r.mov) break;
+      excluir.push(r.mov);
+      lineas.push({ uci: r.uci, puntuacion: r.puntuacion, prof: r.prof, pv: r.pv });
+    }
+    return lineas;
   }
 
   /**
@@ -238,63 +276,73 @@ export class Motor {
     this.killers.fill(0);
     for (let i = 0; i < this.hist.length; i++) this.hist[i] >>= 2;
     const legales = pos.movimientosLegales();
-    const fin = (mov, puntuacion, prof, pv = []) => ({
-      mov, uci: mov ? movAUci(mov) : '', puntuacion, prof, nodos: this.nodos, ms: Math.round(performance.now() - t0), pv: pv.map(movAUci),
+    const fin = (mov, puntuacion, prof, pv = null) => ({
+      mov, uci: mov ? movAUci(mov, pos) : '', puntuacion, prof, nodos: this.nodos, ms: Math.round(performance.now() - t0),
+      pv: pv || (mov ? [movAUci(mov, pos)] : []),
     });
     if (!legales.length) return fin(0, pos.enJaque() ? -MATE : 0, 0);
-    if (legales.length === 1) return fin(legales[0], 0, 0, [legales[0]]);
+    if (legales.length === 1 && !opc.exacto) return fin(legales[0], 0, 0);
     if (opc.azar && Math.random() < opc.azar) {
       return fin(legales[Math.floor(Math.random() * legales.length)], 0, 0);
     }
+    const sesgo = opc.sesgo || null;
     const ruido = (opc.ply !== undefined && opc.ply < 10 && opc.apertura) ? Math.max(opc.ruido || 0, opc.apertura) : (opc.ruido || 0);
     const raiz = legales.slice();
+    if (opc.excluir && opc.excluir.length) {
+      for (let i = raiz.length - 1; i >= 0; i--) if (opc.excluir.includes(raiz[i])) raiz.splice(i, 1);
+      if (!raiz.length) return fin(0, 0, 0);
+    }
     const P = new Int32Array(raiz.length);
     this._puntuar(raiz, P, 0, 0);
     for (let i = 0; i < raiz.length; i++) this._siguiente(raiz, P, i);
 
+    const noisy = !!(ruido || sesgo);
     let mejor = raiz[0], mejorPun = 0, profHecha = 0;
     let exactas = null;
 
-    const tope = opc.ruido ? 4 : (ruido ? 5 : maxProf); // con ruido solo se puntúan las jugadas con poca profundidad
+    const tope = (opc.ruido || sesgo) ? 4 : (ruido ? 5 : maxProf); // con ruido solo se puntúan las jugadas con poca profundidad
     for (let d = 1; d <= Math.min(maxProf, tope); d++) {
       let alfa = -INF, mejorIt = 0, mejorS = -INF;
       const puntos = new Array(raiz.length).fill(-INF);
+      const bonos = new Array(raiz.length).fill(0);
       for (let i = 0; i < raiz.length; i++) {
         const m = raiz[i];
+        const pieza = pos.b[m & 63], reEn = pos.rey[pos.turno ^ 1];
         pos.hacer(m);
         let s;
-        if (ruido) s = -this._nodo(d - 1, -INF, INF, 1, true);
+        if (noisy) s = -this._nodo(d - 1, -INF, INF, 1, true);
         else if (i === 0) s = -this._nodo(d - 1, -INF, -alfa, 1, true);
         else {
           s = -this._nodo(d - 1, -alfa - 1, -alfa, 1, true);
           if (s > alfa && !this.parar) s = -this._nodo(d - 1, -INF, -alfa, 1, true);
         }
+        if (sesgo && !this.parar) bonos[i] = this._sesgo(pos, m, pieza, sesgo, reEn);
         pos.deshacer();
         if (this.parar) break;
         puntos[i] = s;
         if (s > mejorS) { mejorS = s; mejorIt = m; if (s > alfa) alfa = s; }
       }
       if (this.parar && !mejorIt) break;
-      if (mejorIt && (!this.parar || !ruido)) { mejor = mejorIt; mejorPun = mejorS; if (!this.parar) profHecha = d; }
-      if (ruido && !this.parar) exactas = raiz.map((m, i) => [m, puntos[i]]);
+      if (mejorIt && (!this.parar || !noisy)) { mejor = mejorIt; mejorPun = mejorS; if (!this.parar) profHecha = d; }
+      if (noisy && !this.parar) exactas = raiz.map((m, i) => [m, puntos[i], bonos[i]]);
       if (this.parar) break;
       // los mejores primero para la siguiente iteración
       const orden = raiz.map((m, i) => [m, puntos[i]]).sort((a, b) => b[1] - a[1]);
       for (let i = 0; i < raiz.length; i++) raiz[i] = orden[i][0];
       if (opc.alProgreso) opc.alProgreso({ prof: d, puntuacion: mejorPun, mov: mejor });
-      if (mejorPun > MATE - 100 && !ruido) break;
+      if (mejorPun > MATE - 100 && !noisy) break;
       if (performance.now() - t0 > tiempo * 0.5) break;
     }
 
-    if (ruido && exactas) {
+    if (noisy && exactas) {
       let mx = -INF;
-      for (const [m, s] of exactas) {
+      for (const [m, s, bono] of exactas) {
         const g = (Math.random() + Math.random() + Math.random() - 1.5) * 2 * ruido;
-        const v = s + g;
+        const v = s + g + bono;
         if (v > mx) { mx = v; mejor = m; mejorPun = s; }
       }
     }
-    return fin(mejor, mejorPun, profHecha, this._pv(pos, Math.min(profHecha || 1, 10)));
+    return fin(mejor, mejorPun, profHecha, this._pv(pos, Math.min(profHecha || 1, 10), mejor));
   }
 }
 
@@ -304,6 +352,12 @@ let motorGlobal = null;
 export function pensar(msg, motor) {
   motor = motor || (motorGlobal || (motorGlobal = new Motor(19)));
   if (msg.tipo === 'nueva') { motor.nuevoJuego(); return null; }
+  if (msg.tipo === 'analizar') {
+    const pos = Posicion.desdeFen(msg.fen);
+    for (const u of msg.movs || []) { const m = pos.uciAMov(u); if (!m) throw new Error('Jugada ilegal en el historial: ' + u); pos.hacer(m); }
+    if (!pos.tieneLegales()) return { tipo: 'analisis', id: msg.id, lineas: [], final: pos.enJaque() ? 'mate' : 'ahogado' };
+    return { tipo: 'analisis', id: msg.id, lineas: motor.analizar(pos, msg), turno: pos.turno };
+  }
   const pos = Posicion.desdeFen(msg.fen);
   for (const u of msg.movs || []) {
     const m = pos.uciAMov(u);

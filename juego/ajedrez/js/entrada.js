@@ -50,9 +50,11 @@ export class Entrada {
       return;
     }
     if (this.ptrs.size > 2) return;
-    const orbita = e.button === 2;
+    const flecha = e.button === 2 && !!this.cb.alFlecha && e.pointerType === 'mouse';
+    const orbita = e.button === 1 || (e.button === 2 && !flecha);
     let hit = { sq: -1, pieza: false };
     if (!orbita) hit = this.vista.recoger(e.clientX, e.clientY);
+    if (flecha) { this.estado = { id: e.pointerId, modo: 'flecha', sq: hit.sq }; return; }
     const st = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, sq: hit.sq, pieza: hit.pieza, modo: 'esperar', desde: -1, bajoPieza: false, tactil: e.pointerType !== 'mouse' };
     if (hit.pieza && hit.sq >= 0 && this.cb.alBajar(hit.sq)) { st.modo = 'pieza'; st.desde = hit.sq; st.bajoPieza = true; }
     else if (orbita) st.modo = 'orbita';
@@ -81,7 +83,7 @@ export class Entrada {
       }
       return;
     }
-    if (e.pointerId !== st.id) return;
+    if (e.pointerId !== st.id || st.modo === 'flecha') return;
     st.x = e.clientX; st.y = e.clientY;
     const mov = Math.hypot(e.clientX - st.x0, e.clientY - st.y0);
     if (st.modo === 'pieza') {
@@ -112,6 +114,7 @@ export class Entrada {
     if (st.modo === 'pellizco') { if (this.ptrs.size === 0) this.estado = null; return; }
     if (e.pointerId !== st.id) return;
     this.estado = null;
+    if (st.modo === 'flecha') { this.cb.alFlecha(st.sq, this.vista.recoger(e.clientX, e.clientY).sq); return; }
     if (st.modo === 'arrastre') {
       const pt = this.vista.puntoEnPlano(e.clientX, e.clientY, 0);
       const hasta = pt ? deMundo(pt.x, pt.z) : -1;

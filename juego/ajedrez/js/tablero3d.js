@@ -114,6 +114,8 @@ export class Tablero3D {
       guardar(new THREE.MeshBasicMaterial({ map: texL, transparent: true, depthWrite: false, toneMapped: false })),
     );
     et.rotation.x = -Math.PI / 2; et.position.y = 0.075; et.renderOrder = 1;
+    et.visible = this.coordenadas !== false;
+    this.etiquetas = et;
     cuerpo.add(et);
 
     if (neon) {

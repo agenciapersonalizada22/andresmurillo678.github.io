@@ -18,6 +18,7 @@ export class Chispas {
     this.dur = new Float32Array(MAX).fill(1);
     this.base = new Float32Array(MAX * 3);
     this.sig = 0;
+    this.activo = true;
     this.activas = 0;
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(this.pos, 3));
@@ -33,6 +34,7 @@ export class Chispas {
   }
 
   emitir(x, y, z, color, n = 40, fuerza = 2.4) {
+    if (!this.activo) return;
     const c = new THREE.Color(color);
     for (let k = 0; k < n; k++) {
       const i = this.sig;
