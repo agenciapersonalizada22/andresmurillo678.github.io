@@ -11,9 +11,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../comun/lobby.css">
+  <link rel="stylesheet" href="../comun/cuenta.css">
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="enTitulo">
+<body class="enTitulo esperaCuenta">
   <canvas id="lienzo" aria-label="Mundo de bloques en 3D"></canvas>
 
   <!-- Lo que se ve mientras juegas -->
@@ -63,6 +64,8 @@
     <button type="button" class="btnTactil" id="btnSaltar" data-accion="saltar">SALTAR</button>
   </div>
 
+  <p id="textoEspera" role="status">Iniciando sesión…</p>
+
   <a id="volverMenu" class="volver" href="../">← Menú</a>
 
   <!-- Pantalla de inicio -->
@@ -70,11 +73,12 @@
     <div class="tarjeta">
       <h1 class="titulo"><span>MUNDO</span><span>DE BLOQUES</span></h1>
       <p class="sub">explora · sobrevive · construye</p>
+      <button type="button" id="btnCuentaTitulo" class="chipCuenta" aria-label="Cuenta"><i id="puntoCuenta"></i><span id="nombreCuenta">Cuenta</span><em>CUENTA</em></button>
       <button type="button" id="btnContinuar" class="principal oculto">CONTINUAR</button>
       <p id="infoGuardado" class="info oculto"></p>
       <button type="button" id="btnJugar">MIS MUNDOS</button>
       <button type="button" id="btnMulti">MULTIJUGADOR</button>
-      <div class="fila"><button type="button" id="btnAjustesTitulo">AJUSTES</button><button type="button" id="btnLogrosTitulo">LOGROS</button></div>
+      <div class="fila"><button type="button" id="btnAjustesTitulo">AJUSTES</button><button type="button" id="btnLogrosTitulo">LOGROS</button><button type="button" id="btnRecordsTitulo">RECORDS</button></div>
       <p class="pista solo-compu">WASD caminar · ratón mirar · clic izq. romper · clic der. poner o usar</p>
       <p class="pista solo-mando">Mando: ↕ ↔ elegir · A aceptar · B volver<br>En el juego: stick izq. caminar · stick der. mirar · RT romper · LT poner</p>
       <p class="pista solo-tactil">joystick para caminar · arrastra para mirar · botones para romper y poner</p>
@@ -127,6 +131,32 @@
     </div>
   </div>
 
+  <!-- Cuenta de la plataforma -->
+  <div id="pantallaCuenta" class="pantalla oculto">
+    <div class="tarjeta">
+      <h2>CUENTA</h2>
+      <div id="cuentaPerfil" class="cuentaPerfil"></div>
+      <p id="cuentaNube" class="info" aria-live="polite"></p>
+      <button type="button" id="btnCuentaSync" class="principal">SINCRONIZAR AHORA</button>
+      <p class="pista" id="notaConflicto"></p>
+      <button type="button" id="btnCuentaPortal">VOLVER AL PORTAL</button>
+      <button type="button" id="btnCuentaSalir" class="peligro">CERRAR SESIÓN</button>
+      <button type="button" id="btnVolverCuenta">VOLVER</button>
+    </div>
+  </div>
+
+  <!-- Records (ranking de la plataforma) -->
+  <div id="pantallaRanking" class="pantalla oculto">
+    <div class="tarjeta ancha">
+      <h2>RECORDS</h2>
+      <p class="info">Días sobrevividos en supervivencia</p>
+      <div class="fila pestanas"><button type="button" id="pestRankGlobal" class="activa">GLOBAL</button><button type="button" id="pestRankAmigos">AMIGOS</button></div>
+      <div id="cuerpoRanking" aria-live="polite"></div>
+      <p id="miPosRanking" class="info"></p>
+      <div class="fila"><button type="button" id="btnRankActualizar">ACTUALIZAR</button><button type="button" id="btnVolverRanking" class="principal">VOLVER</button></div>
+    </div>
+  </div>
+
   <!-- Cofre, horno, comercio -->
   <div id="pantallaContenedor" class="pantalla oculto">
     <div class="tarjeta ancha">
@@ -142,7 +172,9 @@
     <div class="tarjeta">
       <h2 class="rojo">HAS MUERTO</h2>
       <p class="info" id="causaMuerte"></p>
+      <p class="info" id="rankMuerte"></p>
       <button type="button" id="btnReaparecer" class="principal">REAPARECER</button>
+      <button type="button" id="btnMuerteRecords">RECORDS</button>
       <button type="button" id="btnMuerteTitulo">SALIR AL TÍTULO</button>
     </div>
   </div>
@@ -209,9 +241,13 @@
 
   <div id="avisoMando" role="status" aria-live="polite"></div>
 
+  <script src="../comun/firebase-config.js"></script>
   <script src="../comun/mando.js"></script>
   <script src="../comun/red.js"></script>
   <script src="../comun/lobby.js"></script>
-  <script type="module" src="js/principal.js"></script>
+  <script src="../plataforma/juegos.js"></script>
+  <script src="../comun/cuenta.js"></script>
+  <script src="../comun/amigos.js"></script>
+  <script type="module" src="js/arranque.js"></script>
 </body>
 </html>

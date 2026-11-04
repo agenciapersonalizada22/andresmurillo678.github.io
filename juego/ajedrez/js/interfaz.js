@@ -20,7 +20,7 @@ export { esc };
 export class Interfaz {
   constructor(al) {
     this.al = al;
-    this.pantallas = ['Inicio', 'Ajustes', 'Coronar', 'Fin', 'Stats', 'Texto', 'Confirmar', 'Pausa', 'Ayuda', 'Revision', 'Online'];
+    this.pantallas = ['Inicio', 'Ajustes', 'Coronar', 'Fin', 'Stats', 'Texto', 'Confirmar', 'Pausa', 'Ayuda', 'Revision', 'Online', 'Ranking'];
     this._toastT = 0;
     this.modoEval = false;
     this.ajustes = new Ajustes($('pantallaAjustes'), al);
@@ -74,7 +74,7 @@ export class Interfaz {
     $('btnTextoCerrar').addEventListener('click', () => this.ocultar('Texto'));
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
-      for (const p of ['Coronar', 'Confirmar', 'Texto', 'Stats', 'Revision', 'Ayuda', 'Ajustes', 'Pausa', 'Fin']) {
+      for (const p of ['Coronar', 'Confirmar', 'Texto', 'Ranking', 'Stats', 'Revision', 'Ayuda', 'Ajustes', 'Pausa', 'Fin']) {
         if (!$('pantalla' + p).classList.contains('oculto')) {
           if (p === 'Coronar') this._resolverCoronar(0);
           else if (p === 'Confirmar') this._resolverConfirmar(false);

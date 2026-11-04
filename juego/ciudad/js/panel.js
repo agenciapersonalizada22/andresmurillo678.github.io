@@ -245,7 +245,7 @@ const Panel = (() => {
 
   function abrir(d) {
     if (!raiz) crear();
-    if (def) { def = d; tab = 0; sel = 0; render(); return; }
+    if (def) { def = d; tab = d.tab || 0; sel = 0; render(); return; }
     previo = J.modo;
     def = d;
     tab = d.tab || 0;

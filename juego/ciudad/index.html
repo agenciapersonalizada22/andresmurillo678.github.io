@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="../comun/lobby.css">
+  <link rel="stylesheet" href="../comun/cuenta.css">
   <link rel="stylesheet" href="extra.css">
 </head>
 <body>
@@ -99,8 +100,11 @@
         <button id="bMulti" type="button" class="principal">MULTIJUGADOR</button>
         <button id="bAjustesTitulo" type="button">AJUSTES</button>
         <button id="bRanuraTitulo" type="button">RANURA 1</button>
+        <button id="bCuentaTitulo" type="button" hidden>CUENTA</button>
       </div>
-      <p class="mini solo-teclado">O = ajustes</p>
+      <div id="cuentaPortada" class="cuenta-portada" hidden></div>
+      <p class="mini solo-teclado">O = ajustes · U = cuenta</p>
+      <p class="mini solo-mando">Y = ajustes · X = cuenta</p>
       <div id="datosPortada" class="datos"></div>
     </div>
   </div>
@@ -115,6 +119,7 @@
         <button id="bTelPausa" type="button">TELÉFONO</button>
         <button id="bMultiPausa" type="button">MULTIJUGADOR</button>
         <button id="bAjustes" type="button">AJUSTES</button>
+        <button id="bCuentaPausa" type="button">CUENTA Y RANKING</button>
         <button id="bGuardar" type="button">GUARDAR PARTIDA</button>
         <button id="bSonido" type="button">SONIDO: SÍ</button>
       </div>
@@ -133,35 +138,48 @@
     </div>
   </div>
 
-  <!-- El orden importa: config primero, juego al final -->
+  <div id="cargaCuenta" class="capa"><div class="caja"><h1>CIUDAD LIBRE</h1><p class="sub">Entrando a tu cuenta...</p></div></div>
+
+  <!-- Plataforma: cuenta, nube, amigos (el orden importa) -->
+  <script src="../comun/firebase-config.js"></script>
   <script src="../comun/mando.js"></script>
   <script src="../comun/red.js"></script>
   <script src="../comun/lobby.js"></script>
-  <script src="js/config.js"></script>
-  <script src="js/util.js"></script>
-  <script src="js/panel.js"></script>
-  <script src="js/ajustes.js"></script>
-  <script src="js/sonido.js"></script>
-  <script src="js/radio.js"></script>
-  <script src="js/entrada.js"></script>
-  <script src="js/mundo.js"></script>
-  <script src="js/efectos.js"></script>
-  <script src="js/vehiculos.js"></script>
-  <script src="js/vehiculos2.js"></script>
-  <script src="js/personajes.js"></script>
-  <script src="js/misiones.js"></script>
-  <script src="js/armas.js"></script>
-  <script src="js/hud.js"></script>
-  <script src="js/juego.js"></script>
-  <script src="js/lugares.js"></script>
-  <script src="js/clima.js"></script>
-  <script src="js/policia2.js"></script>
-  <script src="js/economia.js"></script>
-  <script src="js/historia.js"></script>
-  <script src="js/logros.js"></script>
-  <script src="js/telefono.js"></script>
-  <script src="js/foto.js"></script>
-  <script src="js/multi.js"></script>
-  <script src="js/arranque.js"></script>
+  <script src="../plataforma/juegos.js"></script>
+  <script src="../comun/cuenta.js"></script>
+  <script src="../comun/amigos.js"></script>
+  <script src="js/cuenta-juego.js"></script>
+  <!-- Los scripts del juego se cargan en orden DESPUÉS de exigir sesión y sincronizar los guardados.
+       El orden importa: config primero, juego al final. -->
+  <script>
+    CuentaJuego.arrancar([
+      'js/config.js',
+      'js/util.js',
+      'js/panel.js',
+      'js/ajustes.js',
+      'js/sonido.js',
+      'js/radio.js',
+      'js/entrada.js',
+      'js/mundo.js',
+      'js/efectos.js',
+      'js/vehiculos.js',
+      'js/vehiculos2.js',
+      'js/personajes.js',
+      'js/misiones.js',
+      'js/armas.js',
+      'js/hud.js',
+      'js/juego.js',
+      'js/lugares.js',
+      'js/clima.js',
+      'js/policia2.js',
+      'js/economia.js',
+      'js/historia.js',
+      'js/logros.js',
+      'js/telefono.js',
+      'js/foto.js',
+      'js/multi.js',
+      'js/arranque.js'
+    ]);
+  </script>
 </body>
 </html>

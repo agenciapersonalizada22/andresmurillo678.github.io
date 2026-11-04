@@ -13,6 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="../comun/lobby.css">
+  <link rel="stylesheet" href="../comun/cuenta.css">
 </head>
 <body class="enInicio">
   <div id="app">
@@ -81,6 +82,7 @@
   <!-- Inicio / nueva partida -->
   <div id="pantallaInicio" class="pantalla">
     <div class="tarjeta ancha grande">
+      <div id="barraCuenta" class="barraCuenta oculto"></div>
       <h2 class="titulo grande"><span>AJEDREZ</span><span>3D</span></h2>
       <p class="sub">reglas completas · motor propio · análisis · rompecabezas · online</p>
       <button type="button" id="btnReanudar" class="principal oculto">CONTINUAR PARTIDA</button>
@@ -171,6 +173,18 @@
     </div>
   </div>
 
+  <!-- Ranking de la cuenta -->
+  <div id="pantallaRanking" class="pantalla oculto">
+    <div class="tarjeta">
+      <h2 class="titulo">RANKING</h2>
+      <div class="pestanas" id="rkModo"></div>
+      <div class="pestanas" id="rkAmbito"></div>
+      <p class="sub" id="rkMia"></p>
+      <div id="rkLista" class="rkLista" aria-live="polite"></div>
+      <div class="fila"><button type="button" id="btnRkAct">ACTUALIZAR</button><button type="button" id="btnRkCerrar" class="principal">CERRAR</button></div>
+    </div>
+  </div>
+
   <!-- Estadísticas -->
   <div id="pantallaStats" class="pantalla oculto">
     <div class="tarjeta">
@@ -208,9 +222,13 @@
 
   <div id="pistasMando" aria-hidden="true"></div>
   <div id="toast" aria-live="polite"></div>
+  <script src="../comun/firebase-config.js"></script>
   <script src="../comun/mando.js"></script>
   <script src="../comun/red.js"></script>
   <script src="../comun/lobby.js"></script>
+  <script src="../plataforma/juegos.js"></script>
+  <script src="../comun/cuenta.js"></script>
+  <script src="../comun/amigos.js"></script>
   <script type="module" src="js/principal.js"></script>
 </body>
 </html>

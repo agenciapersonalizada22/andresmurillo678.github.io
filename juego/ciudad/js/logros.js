@@ -52,6 +52,7 @@ const Logros = (() => {
           J.avisar('LOGRO DESBLOQUEADO', n, '#ffd23d', 3.2);
           Sonido.exito();
           J.ganar(100);
+          if (window.CuentaJuego) CuentaJuego.logro(id);
         }
       }
     },

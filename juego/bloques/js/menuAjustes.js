@@ -5,6 +5,8 @@
 //  quiera enterarse de un cambio escucha Aj.bus ('cambio').
 // =============================================================
 import { Aj, ACCIONES_TECLA, nombreTecla, perfil, guardarPerfil } from './ajustes.js';
+import { Cta } from './cuentaJuego.js';
+import { textoEstado, mundosSoloLocal, NOTA_CONFLICTO } from './nube.js';
 
 const SI_NO = [[true, 'SÍ'], [false, 'NO']];
 const el = (tag, cls, texto) => { const e = document.createElement(tag); if (cls) e.className = cls; if (texto !== undefined) e.textContent = texto; return e; };
@@ -58,9 +60,16 @@ const SECCIONES = [
     { t: 'bool', k: 'conservarInv', n: 'Conservar inventario al morir' },
     { t: 'num', k: 'autoguardado', n: 'Autoguardado', min: 5, max: 60, paso: 5, fmt: (v) => 'cada ' + v + ' s' },
     { t: 'bool', k: 'ayudaControles', n: 'Mostrar ayuda de controles' },
-    { t: 'perfil', n: 'Tu nombre (se comparte con los otros juegos)' },
+    { t: 'perfil', n: 'Tu nombre (el de tu cuenta, lo ven tus amigos)' },
   ] },
   { id: 'datos', nombre: 'DATOS', filas: [
+    { t: 'titulo', n: 'Cuenta y nube' },
+    { t: 'cuenta', n: 'Cuenta' },
+    { t: 'nube', n: 'Sincronización' },
+    { t: 'boton', id: 'sincronizar', n: 'Subir y bajar tu progreso ahora', b: 'SINCRONIZAR AHORA' },
+    { t: 'titulo', n: NOTA_CONFLICTO },
+    { t: 'locales' },
+    { t: 'titulo', n: 'Datos de este dispositivo' },
     { t: 'boton', id: 'mundos', n: 'Mundos guardados (crear, borrar, importar)', b: 'ABRIR' },
     { t: 'boton', id: 'exportarMundo', n: 'Exportar el mundo actual', b: 'EXPORTAR' },
     { t: 'boton', id: 'exportarAjustes', n: 'Copiar los ajustes como texto', b: 'COPIAR' },
@@ -112,6 +121,15 @@ export class MenuAjustes {
 
   fila(f) {
     if (f.t === 'titulo') return el('p', 'info', f.n);
+    if (f.t === 'locales') {
+      const p = el('p', 'info', '');
+      this.refrescos.push(() => {
+        const l = mundosSoloLocal();
+        p.style.display = l.length ? '' : 'none';
+        p.textContent = l.length ? 'Solo en este dispositivo (demasiado grandes para la nube): ' + l.map((m) => m.nombre).join(', ') + '. Usa «Exportar» para tener una copia.' : '';
+      });
+      return p;
+    }
     const fila = el('div', 'filaAj');
     fila.appendChild(el('span', '', f.n));
     const ctl = el('div', 'ctl');
@@ -146,9 +164,24 @@ export class MenuAjustes {
         if (f.id === 'teclasReset') { Aj.v.teclas = {}; Aj.guardar(); Aj.bus.emitir('cambio', { clave: 'teclas', valor: {} }); } else this.acciones(f.id);
       }, f.peligro ? 'peligro' : '');
       ctl.appendChild(b);
+    } else if (f.t === 'cuenta') {
+      const u = Cta.usuario;
+      const b = el('b', '', u ? (u.nombre || u.usuario) : 'Sin sesión');
+      const sw = el('i', 'muestraColor'); sw.style.background = u ? u.color : '#666';
+      ctl.append(b, sw);
+    } else if (f.t === 'nube') {
+      ctl.className = 'ctl estadoNube';
+      this.refrescos.push(() => { ctl.textContent = textoEstado(); });
     } else if (f.t === 'perfil') {
       const inp = el('input'); inp.type = 'text'; inp.maxLength = 20; inp.value = perfil().nombre; inp.setAttribute('autocomplete', 'off');
-      inp.addEventListener('change', () => { guardarPerfil(inp.value); });
+      inp.addEventListener('change', () => {
+        if (!Cta.activa) { guardarPerfil(inp.value); return; }
+        // con cuenta, el nombre es el de la cuenta (también lo ven tus amigos y los jugadores de la sala)
+        const nuevo = inp.value.trim().slice(0, 20);
+        const C = window.Cuenta;
+        if (!nuevo || nuevo === Cta.usuario.nombre) { inp.value = Cta.usuario.nombre; return; }
+        C.actualizarPerfil({ nombre: nuevo }).catch((e) => { inp.value = Cta.usuario.nombre; if (C.ui && C.ui.aviso) C.ui.aviso(C.mensajeError ? C.mensajeError(e) : 'No se pudo cambiar el nombre', { color: '#ff6b6b' }); });
+      });
       inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') inp.blur(); });
       const sw = el('i', 'muestraColor'); sw.style.background = perfil().color;
       ctl.append(inp, sw);

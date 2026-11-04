@@ -5,6 +5,7 @@
 //  toque y mando (cruceta + A/B, LB/RB cambian de pestaña).
 // =============================================================
 import { CALIDADES } from './config.js';
+import * as Cu from './cuenta.js';
 import { TEMAS, ORDEN_TEMAS, SETS_3D } from './temas.js';
 
 const F = (arr) => arr.map(([v, n]) => ({ v, n }));
@@ -70,6 +71,7 @@ export class Ajustes {
     raiz.querySelector('.pestanas').innerHTML = PESTANAS.map(([id, n]) => `<button type="button" data-t="${id}">${n}</button>`).join('');
     raiz.querySelector('.pestanas').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { this.tab = b.dataset.t; this.pintar(); this.al.alClic(); } });
     window.addEventListener('keydown', (e) => this._tecla(e), true);
+    Cu.alEstado(() => Cu.refrescarBloque(this.raiz));
   }
 
   cambiarPestana(d) {
@@ -106,6 +108,7 @@ export class Ajustes {
       h += `<div class="campo"><label>Guardado (perfil, partidas, rompecabezas, ajustes)</label><div class="fichas">
         <button type="button" data-d="exportar">EXPORTAR COMO TEXTO</button><button type="button" data-d="importar">IMPORTAR</button><button type="button" data-d="borrar">BORRAR TODO</button></div>
         <p class="info">Copia el texto para llevar tu progreso a otro dispositivo. La biblioteca de partidas hace de ranuras de guardado.</p></div>`;
+      h += Cu.bloqueAjustes();
     }
     cuerpo.innerHTML = h;
     cuerpo.onchange = (e) => {
@@ -128,6 +131,7 @@ export class Ajustes {
       if (b.dataset.tecla) { this.esperando = b.dataset.tecla; this.pintar(); return; }
       if (b.dataset.acc === 'teclasBase') { this.al.alAjuste('teclas', null); return; }
       if (b.dataset.d) this.al.alDatos(b.dataset.d);
+      else if (b.dataset.cu) this.al.alCuenta(b.dataset.cu);
     };
   }
 

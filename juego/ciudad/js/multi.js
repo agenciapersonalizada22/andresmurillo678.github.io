@@ -831,5 +831,6 @@ const Multi = (() => {
   if (b) b.addEventListener('click', () => Multi.abrirLobby());
   const bp = document.getElementById('bMultiPausa');
   if (bp) bp.addEventListener('click', () => (Multi.activo ? Multi.abrirPanel() : Multi.abrirLobby()));
+  if (window.Lobby) Lobby.registrar(Multi.OPTS); // invitaciones directas de amigos
   if (window.Lobby && Lobby.hayEnlace()) Lobby.abrir(Multi.OPTS);
 })();

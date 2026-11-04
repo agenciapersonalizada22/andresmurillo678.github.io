@@ -98,6 +98,8 @@ const Datos = (() => {
 
   // ------------------------------------------------ Perfil compartido
   function perfil() {
+    const u = window.Cuenta && Cuenta.usuario; // la cuenta manda: nombre y color de la plataforma
+    if (u && typeof u.nombre === 'string' && u.nombre) return { nombre: u.nombre.slice(0, 14), color: /^#[0-9a-f]{6}$/i.test(u.color) ? u.color : '#3df5ff' };
     const p = leer('juego_perfil');
     return { nombre: (p && typeof p.nombre === 'string' && p.nombre.trim().slice(0, 14)) || 'Jugador',
       color: (p && /^#[0-9a-f]{6}$/i.test(p.color)) ? p.color : '#3df5ff' };
@@ -137,7 +139,17 @@ const Datos = (() => {
     try { localStorage.removeItem('nebula_record'); } catch (e) { /* nada */ }
   }
 
-  const D = { aj, save, PRESETS, ORDEN_CAL, TECLAS_DEF, tactil, guardarAj, aplicarPreset, personalizar, guardarSave, cambiarSlot,
+  // Vuelve a leer ajustes y partida desde localStorage (tras bajar el progreso de la nube) sin recargar la página.
+  function recargar() {
+    const g = leer(K_AJ);
+    if (g && typeof g === 'object') {
+      for (const k in g) if (k in aj) aj[k] = g[k];
+      for (const a in TECLAS_DEF) if (!aj.teclas[a] || !aj.teclas[a].length) aj.teclas[a] = TECLAS_DEF[a].slice();
+    }
+    save = cargarSlot(slot); D.save = save;
+  }
+
+  const D = { recargar, aj, save, PRESETS, ORDEN_CAL, TECLAS_DEF, tactil, guardarAj, aplicarPreset, personalizar, guardarSave, cambiarSlot,
     get slot() { return slot; }, perfil, hoy, entraEnTabla, anotarRecord, tabla, exportar, importar, borrar, defecto,
     restaurarAjustes() { const d = defecto(); for (const k in d) aj[k] = d[k]; guardarAj(); } };
   return D;

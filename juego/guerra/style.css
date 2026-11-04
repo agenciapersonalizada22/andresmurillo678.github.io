@@ -589,3 +589,22 @@ body.zurdo #btnChat { right: auto !important; left: calc(322px + var(--seguro-iz
 @media (max-width: 520px) {
   body.zurdo #btnPausa, body.zurdo #btnVista, body.zurdo #btnTabla, body.zurdo #btnChat { left: calc(10px + var(--seguro-izq)) !important; }
 }
+
+/* ---- Cuenta, nube y ranking ---- */
+.perfilBarra .chipCuenta { flex: 0 0 auto; width: auto; margin: 0; padding: 4px 10px; font-size: 10px; letter-spacing: 1px; opacity: 0.75; }
+.tarjeta .perfilBarra button.chipCuenta { width: auto; margin: 0; padding: 4px 10px; font-size: 10px; }
+.perfilBarra .chipCuenta:hover, .perfilBarra .chipCuenta:focus-visible { opacity: 1; }
+.cuentaBloque { margin: 4px 0 10px; padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(154,140,255,0.4); }
+.cuentaBloque .estadoNube[data-tono="ok"] { color: #3df58a; }
+.cuentaBloque .estadoNube[data-tono="aviso"] { color: #ffe066; }
+.ranking { margin: 6px 0 10px; }
+.rankLista { margin: 4px 0; min-height: 60px; }
+.rankFila { display: flex; align-items: center; gap: 10px; padding: 6px 10px; margin: 3px 0; border-radius: 8px; border: 1px solid rgba(154,140,255,0.3); font-size: 13px; text-align: left; }
+.rankFila.yo { border-color: var(--cian); background: rgba(61,245,255,0.12); }
+.rankFila .pos { flex: 0 0 38px; color: #ffe066; }
+.rankFila .nom { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rankFila .val { font-weight: 800; }
+.rankFila .pDot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; }
+.rankPie { text-align: center; font-size: 11px; }
+.cuentaFila { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.cuentaFila small { display: block; color: #c9c2f0; font-size: 11px; margin-top: 3px; }

@@ -4,6 +4,7 @@ import { TANQUES, CAMPANAS, LOGROS, NIVELES_BOT } from './catalogo.js';
 import { Progreso } from './progreso.js';
 import { cargarRecords, claveRecord, cargarOpciones, guardarOpciones } from './guardado.js';
 import { el, pintarPerfil } from './hangar.js';
+import { abrirCuenta, usuario } from './cuentaJuego.js';
 
 const $ = (id) => document.getElementById(id);
 const hex = (n) => '#' + n.toString(16).padStart(6, '0');
@@ -173,5 +174,15 @@ export class Menus {
     }
   }
 
-  pintarTitulo() { pintarPerfil($('perfilBarra')); }
+  pintarTitulo() {
+    const b = $('perfilBarra');
+    pintarPerfil(b);
+    if (usuario()) {
+      const c = el('button', 'chipCuenta', 'CUENTA');
+      c.type = 'button';
+      c.setAttribute('aria-label', 'Cuenta: volver al portal o cerrar sesión');
+      c.addEventListener('click', abrirCuenta);
+      b.appendChild(c);
+    }
+  }
 }
