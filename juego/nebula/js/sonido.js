@@ -14,6 +14,9 @@ const Sonido = (() => {
   let inicioPendiente = false;
   const ultimaVez = {};
 
+  const aj = () => (typeof Datos !== 'undefined' ? Datos.aj : { volMaestro: 1, volEfectos: 1, volMusica: 1 });
+  const nivelEfectos = () => CONFIG.audio.volumen * aj().volEfectos * aj().volMaestro;
+
   try { silenciado = localStorage.getItem('nebula_silencio') === '1'; } catch (e) { /* sin almacenamiento */ }
 
   // El navegador solo deja sonar audio después de que el jugador toca algo.
@@ -30,7 +33,7 @@ const Sonido = (() => {
     if (!AC) return;
     ctx = new AC();
     maestro = ctx.createGain();
-    maestro.gain.value = CONFIG.audio.volumen;
+    maestro.gain.value = nivelEfectos();
     maestro.connect(ctx.destination);
     busMusica = ctx.createGain();
     busMusica.gain.value = silenciado ? 0 : 1;
@@ -104,6 +107,16 @@ const Sonido = (() => {
 
   return {
     iniciar,
+    // Aplica volúmenes de ajustes (maestro, efectos) y avisa a la música
+    aplicarVolumenes() {
+      if (ctx && maestro) maestro.gain.setTargetAtTime(nivelEfectos(), ctx.currentTime, 0.03);
+      if (typeof Musica !== 'undefined' && Musica.aplicarVolumen) Musica.aplicarVolumen();
+    },
+    volMusica: () => aj().volMusica * aj().volMaestro,
+    suspender(si) {
+      if (!ctx) return;
+      try { if (si) ctx.suspend(); else if (ctx.state !== 'running') ctx.resume(); } catch (e) { /* nada */ }
+    },
     get silenciado() { return silenciado; },
 
     // Lo que necesita musica.js para sonar con el mismo audio
@@ -123,6 +136,32 @@ const Sonido = (() => {
       }
       return silenciado;
     },
+
+
+    clic() { if (permitido('clic', 0.04)) tono(660, 0.05, 'square', 0.04, 880); },
+    atras() { if (permitido('atras', 0.04)) tono(440, 0.07, 'square', 0.04, 300); },
+    compra() {
+      if (!permitido('compra', 0.1)) return;
+      [660, 880, 1320].forEach((f, i) => tono(f, 0.1, 'triangle', 0.08, null, i * 0.06));
+    },
+    logro() {
+      if (!permitido('logro', 0.5)) return;
+      [784, 988, 1175, 1568].forEach((f, i) => tono(f, 0.2, 'triangle', 0.08, null, i * 0.09));
+    },
+    moneda() { if (permitido('moneda', 0.03)) tono(1320, 0.07, 'square', 0.04, 1760); },
+    dash() { if (permitido('dash', 0.1)) tono(300, 0.2, 'sawtooth', 0.06, 1200); },
+    escudoOn() { if (permitido('escudoOn', 0.2)) { tono(300, 0.5, 'sine', 0.12, 700); tono(600, 0.5, 'triangle', 0.05, 900); } },
+    bomba() {
+      if (!permitido('bomba', 0.3)) return;
+      ruido(1.1, 0.7, 2600); tono(70, 0.9, 'sine', 0.4, 28);
+    },
+    rayo() { if (permitido('rayo', 0.3)) { tono(180, 1.4, 'sawtooth', 0.09, 420); tono(360, 1.4, 'square', 0.04, 840); } },
+    drones() { if (permitido('drones', 0.3)) [500, 700, 900].forEach((f, i) => tono(f, 0.12, 'triangle', 0.07, null, i * 0.05)); },
+    jefe() { if (permitido('jefe', 1)) { tono(110, 1.2, 'sawtooth', 0.14, 55); tono(165, 1.2, 'square', 0.06, 80); } },
+    fase() { if (permitido('fase', 0.5)) { ruido(0.6, 0.4, 1800); tono(220, 0.6, 'sawtooth', 0.12, 80); } },
+    aviso() { if (permitido('aviso', 0.3)) tono(520, 0.08, 'square', 0.05, 780); },
+    graze() { if (permitido('graze', 0.06)) tono(1800, 0.03, 'square', 0.02); },
+    carga() { if (permitido('carga', 0.2)) tono(400, 0.5, 'sine', 0.04, 1500); },
 
     disparo() {
       if (permitido('disparo', 0.05)) tono(880, 0.06, 'square', 0.035, 440);
