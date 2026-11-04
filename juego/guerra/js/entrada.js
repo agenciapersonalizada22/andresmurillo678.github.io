@@ -43,6 +43,10 @@ export class Entrada {
     this.alFuente = null; // (true = mando, false = teclado/ratón/táctil) para mostrar las pistas correctas
     this.usoMando = false;
     this.vibracion = true;
+    this.mapaT = {}; // remapeo de teclas (físico -> lógico)
+    this.zona = 0.15;
+    this.vibInt = 1;
+    this.bloqueada = false; // true mientras hay un panel externo (lobby) abierto
     this._navDir = '';
     this._navT = 0;
     this._primera = true; // primer cuadro con mando: lo que ya estaba pulsado no cuenta como pulsación nueva
@@ -94,7 +98,7 @@ export class Entrada {
 
   // Zona muerta circular y curva suave (precisión al centro, fuerza al borde)
   _stick(x, y, salida) {
-    const m = Math.hypot(x, y), ZM = 0.15;
+    const m = Math.hypot(x, y), ZM = this.zona;
     if (m < ZM) { salida.x = salida.y = 0; return; }
     const f = Math.pow(Math.min(1, (m - ZM) / (1 - ZM)), 1.5) / m;
     salida.x = x * f;
@@ -176,7 +180,7 @@ export class Entrada {
     const t = performance.now();
     if (t - (this._vibT[clave] || 0) < espera) return;
     this._vibT[clave] = t;
-    const p = this.pad, f = Math.min(1, fuerte), s = Math.min(1, suave);
+    const p = this.pad, f = Math.min(1, fuerte * this.vibInt), s = Math.min(1, suave * this.vibInt);
     try {
       const v = p.vibrationActuator;
       if (v && v.playEffect) {
@@ -250,11 +254,15 @@ export class Entrada {
 
   _unirTeclado() {
     addEventListener('keydown', (e) => {
+      if (this.bloqueada) return;
       this._fuente(false);
       if (BLOQUEAR.has(e.code) && this.activa) e.preventDefault();
-      if (!e.repeat) this._poner(e.code);
+      const cod = this.mapaT[e.code] || e.code;
+      if (cod === '_') return;
+      if (cod === 'Tab' && this.activa) e.preventDefault();
+      if (!e.repeat) this._poner(cod);
     });
-    addEventListener('keyup', (e) => this.teclas.delete(e.code));
+    addEventListener('keyup', (e) => { this.teclas.delete(this.mapaT[e.code] || e.code); this.teclas.delete(e.code); });
     addEventListener('blur', () => this.soltarTodo());
   }
 

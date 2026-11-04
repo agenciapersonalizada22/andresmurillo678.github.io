@@ -3,15 +3,12 @@
 // =============================================================
 import * as THREE from '../lib/three.module.min.js';
 import { CONFIG, AVIONES, ENEMIGOS_AIRE } from './config.js';
+import { NOMBRES_CAM } from './camaras.js';
 import { AvionJugador, AvionEnemigo } from './avion.js';
 import { ObjetivoTierra } from './objetivos.js';
 import { Sonido } from './sonido.js';
 import { Musica } from './musica.js';
 
-// Distancia de la cámara (botón Y del mando): normal, lejos, cerca
-const CAMARAS = [1, 1.7, 0.55];
-const V = new THREE.Vector3();
-const QL = new THREE.Quaternion(), QA = new THREE.Quaternion(), EXV = new THREE.Vector3(1, 0, 0), EYV = new THREE.Vector3(0, 1, 0);
 
 export class ModoAvion {
   constructor(ctx) {
@@ -21,10 +18,10 @@ export class ModoAvion {
 
   iniciar() {
     const c = this.ctx;
-    this.def = AVIONES[c.avionId] || AVIONES[CONFIG.predeterminado.avion];
+    this.def = c.defAvion ? c.defAvion(c.avionId) : (AVIONES[c.avionId] || AVIONES[CONFIG.predeterminado.avion]);
     this.jugador = new AvionJugador(c, this.def);
     this.jugador.invertido = c.opciones.invertido === true;
-    this.jugador.alMorir = () => { this.tFin = 2.4; c.hud.aviso('AVIÓN DESTRUIDO', 2.4, true); };
+    this.jugador.alMorir = () => { this.tFin = 2.4; c.hud.aviso('AVIÓN DESTRUIDO', 2.4, true); c.camaras.kill(this.jugador.ultimo, this.jugador.pos); if (c.alMuerteJugador) c.alMuerteJugador(); };
     this.aire = [];
     this.tierra = [];
     this.blancos = [this.jugador];
@@ -37,10 +34,7 @@ export class ModoAvion {
     this.tSig = 0;
     this.esperando = false;
     this.victoria = false;
-    this.camPos = new THREE.Vector3(0, 175, 275);
-    this.camRef = this.def.vel.min + this.def.vel.rango * 0.4;
-    this.camQ = new THREE.Quaternion();
-    this.mirar = { y: 0, p: 0 };
+    c.camaras.reiniciar();
     c.proyectiles.blancos = () => this.blancos;
     c.hud.modo('avion', this.def);
     Sonido.motor.iniciar('avion');
@@ -100,6 +94,7 @@ export class ModoAvion {
   }
 
   _muerte(e) {
+    if (this.ctx.alBaja && e.ultimo === this.jugador) this.ctx.alBaja(e);
     this.puntaje += e.puntos;
     this.ctx.hud.aviso('+' + e.puntos, 1.2);
   }
@@ -154,45 +149,22 @@ export class ModoAvion {
     const c = this.ctx, j = this.jugador;
     if (!j.vivo) return;
     const m = c.proyectiles.misilContra(j);
-    if (m >= 0) { c.hud.aviso('¡MISIL! ROMPE A UN LADO', 0.4, true); Sonido.alarma(); c.entrada.vibrar(0.1, 0.9, 140, 'alerta', 420); }
+    if (m >= 0) { c.hud.aviso('¡MISIL! BENGALAS (G) Y ROMPE A UN LADO', 0.4, true); Sonido.alarma(); c.entrada.vibrar(0.1, 0.9, 140, 'alerta', 420); }
     else if (j.perdida > 0.3) { c.hud.aviso('PÉRDIDA: BAJA EL MORRO', 0.4, true); Sonido.alarma(); }
     else if (j.cercaSuelo && j.pos.y < c.terreno.altura(j.pos.x, j.pos.z) + 40 && j.fwd.y < -0.1) { c.hud.aviso('¡ALTITUD!', 0.4, true); Sonido.alarma(); }
     else if (j.fuera) c.hud.aviso('REGRESA A LA ZONA DE COMBATE', 0.4, true);
   }
 
   _camara(dt, reiniciar) {
-    const { camera, terreno, efectos } = this.ctx;
-    const j = this.jugador;
-    if (!j.vivo && !reiniciar) {
-      camera.lookAt(j.pos);
-      return;
-    }
-    const cam = this.def.cam;
-    const cv = CAMARAS[this.ctx.camVar | 0] || 1;
-    if (reiniciar) { this.camQ.copy(j.q); this.camPos.copy(j.pos).add(V.set(0, (cam.h - 0.2) * cv, cam.d * cv).applyQuaternion(j.q)); }
-    this.camQ.slerp(j.q, 1 - Math.exp(-5.5 * dt));
-    // stick derecho: mirar alrededor del avión; al soltarlo la cámara se recentra suave
-    const sd = this.ctx.entrada.mDer, libre = Math.abs(sd.x) + Math.abs(sd.y) > 0.01;
-    const kk = 1 - Math.exp(-(libre ? 9 : 4) * dt);
-    this.mirar.y += (-sd.x * 2.4 - this.mirar.y) * kk;
-    this.mirar.p += (-sd.y * 1.0 - this.mirar.p) * kk;
-    QL.copy(this.camQ).multiply(QA.setFromAxisAngle(EYV, this.mirar.y)).multiply(QA.setFromAxisAngle(EXV, this.mirar.p));
-    const objetivo = V.set(0, cam.h * cv, cam.d * cv + (j.velocidad - this.camRef) * 0.04).applyQuaternion(QL).add(j.pos);
-    this.camPos.lerp(objetivo, 1 - Math.exp(-14 * dt));
-    camera.position.copy(this.camPos);
-    camera.position.y = Math.max(camera.position.y, terreno.altura(camera.position.x, camera.position.z) + 2.5);
-    camera.quaternion.copy(QL);
-    camera.rotateX(-0.05);
-    const fov = CONFIG.vista.fov + Math.max(0, j.velocidad - this.camRef) * (18 / this.def.vel.rango);
-    if (Math.abs(camera.fov - fov) > 0.05) { camera.fov += (fov - camera.fov) * Math.min(1, 4 * dt); camera.updateProjectionMatrix(); }
-    efectos.camara = camera.position;
+    this.ctx.camaras.avion(this.jugador, this.def, dt, reiniciar);
   }
 
   _hud(dt, cand) {
     const c = this.ctx, j = this.jugador, hud = c.hud;
     hud.datos({
       puntaje: this.puntaje, oleada: this.oleada, enemigos: cand.length, vida: j.vida, vidaMax: j.vidaMax,
-      estado: `VEL ${Math.round(j.velocidad * 3.6)} km/h · ALT ${Math.round(j.pos.y)} m · EMPUJE ${Math.round(j.empuje * 100)}%${this.def.sec.n ? ' · ' + this.def.sec.nombre + ' ' + j.misiles : ''}${this.def.bombas ? ' · BOMBAS ' + j.bombas : ''}`,
+      estado: `VEL ${Math.round(j.velocidad * 3.6)} km/h · ALT ${Math.round(j.pos.y)} m · ${j.esHeli ? 'VERT ' + Math.round(j.vy) + ' m/s' : 'EMPUJE ' + Math.round(j.empuje * 100) + '%'} · ${j.g.toFixed(1)} G${this.def.sec.n ? ' · ' + this.def.sec.nombre + ' ' + j.misiles : ''}${this.def.bombas ? ' · BOMBAS ' + j.bombas : ''} · BENGALAS ${j.bengalas}`,
+      modulos: [Math.max(j.mod.alaI, j.mod.alaD), j.mod.motor + (j.fuego ? 1 : 0), j.mod.piloto],
     });
     // marcadores y radar
     const lista = this.marcas, radar = this.radarLista;
@@ -210,7 +182,7 @@ export class ModoAvion {
     j.fwd.set(0, 0, -1).applyQuaternion(j.q);
     hud.radar(dt, { alcance: 900, rumbo: Math.atan2(-j.fwd.x, -j.fwd.z), x: j.pos.x, z: j.pos.z, mapa: c.terreno.minimapa, entidades: radar });
     Musica.intensidad(j.vivo ? (cerca ? 0.85 : 0.35) : 0.1);
-    Sonido.motor.ajustar(j.vivo ? j.empuje : 0);
+    Sonido.motor.ajustar(j.vivo ? (j.esHeli ? 0.3 + Math.min(0.7, j.velocidad / 60) : j.empuje) : 0);
   }
 
   destruir() {
@@ -225,5 +197,7 @@ export class ModoAvion {
     Sonido.motor.parar();
     c.camera.fov = CONFIG.vista.fov;
     c.camera.updateProjectionMatrix();
+    c.camaras.reiniciar();
+    document.body.classList.remove('cabina');
   }
 }

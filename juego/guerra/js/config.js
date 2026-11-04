@@ -1,3 +1,5 @@
+import { AVIONES_EXTRA, EXTRAS_ORIGINALES } from './catalogo.js';
+
 // =============================================================
 //  AJUSTES GENERALES (cámbialos aquí)
 // =============================================================
@@ -6,7 +8,7 @@ export const CONFIG = {
   vista: { fov: 70, lejos: 4200, niebla: 0.0005, pixelRatioMax: 1.75 },
   oleadas: 5,
   audio: { volumen: 0.8, volumenMusica: 0.3 },
-  guardado: { clave: 'guerra_partida', opciones: 'guerra_opciones' },
+  guardado: { clave: 'guerra_partida', opciones: 'guerra_opciones', ajustes: 'guerra_ajustes', progreso: 'guerra_progreso', ranura: 'guerra_ranura' },
   predeterminado: { avion: 'halcon', mapa: 'costa' },
 };
 
@@ -87,7 +89,16 @@ export const AVIONES = {
     ficha: { vel: 0.7, agil: 0.65, vida: 0.38, fuego: 0.55 },
   },
 };
-export const ORDEN_AVIONES = ['halcon', 'biplano', 'tormenta', 'saeta', 'mastodonte', 'espectro'];
+for (const k in EXTRAS_ORIGINALES) Object.assign(AVIONES[k], EXTRAS_ORIGINALES[k]);
+Object.assign(AVIONES, AVIONES_EXTRA);
+for (const k in AVIONES) {
+  const d = AVIONES[k];
+  d.id = k;
+  if (d.bengalas === undefined) d.bengalas = d.tipo === 'heli' ? 10 : 8;
+  if (!d.bombaTipo) d.bombaTipo = 'M';
+}
+// Orden del hangar: por nivel de piloto necesario
+export const ORDEN_AVIONES = Object.keys(AVIONES).sort((a, b) => AVIONES[a].rango - AVIONES[b].rango || AVIONES[a].costo - AVIONES[b].costo);
 
 // =============================================================
 //  ENEMIGOS AÉREOS (variantes). Factores sobre el caza base de la oleada.

@@ -27,6 +27,7 @@ export function rgb(hex) {
 export class Particulas {
   constructor(escena, max, aditivo) {
     this.max = max;
+    this.dens = 1;
     this.sig = 0;
     this.pos = new Float32Array(max * 3);
     this.col = new Float32Array(max * 4);
@@ -63,6 +64,7 @@ export class Particulas {
   fijarEscala(v) { this.material.uniforms.escala.value = v; }
 
   emitir(x, y, z, vx, vy, vz, dur, t0, t1, c0, c1, a0 = 1, grav = 0) {
+    if (this.dens < 1 && Math.random() > this.dens) return;
     const i = this.sig;
     this.sig = (i + 1) % this.max;
     const i3 = i * 3;
