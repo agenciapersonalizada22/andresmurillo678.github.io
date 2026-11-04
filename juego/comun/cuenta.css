@@ -1,0 +1,32 @@
+/* Cuenta / amigos: avisos, modales e invitaciones (prefijo cu-). Neon oscuro como el resto de la plataforma. */
+.cu-avisos, .cu-avisos * , .cu-fondo, .cu-fondo *, .cu-inv, .cu-inv * { box-sizing: border-box; }
+.cu-avisos { position: fixed; z-index: 2147483002; top: max(10px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); display: grid; gap: 8px; width: min(420px, calc(100% - 20px)); pointer-events: none; font-family: Orbitron, ui-monospace, monospace; }
+.cu-aviso { display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; border-radius: 12px; font-size: 13px; background: rgba(11, 7, 32, 0.96); border: 2px solid var(--c, #3df5ff); color: #fff; box-shadow: 0 0 18px color-mix(in srgb, var(--c, #3df5ff) 55%, transparent); animation: cuEntra 0.22s ease-out; transition: opacity 0.3s, transform 0.3s; }
+.cu-aviso b { color: var(--c, #3df5ff); font-size: 12px; letter-spacing: 1px; }
+.cu-aviso span { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; font-size: 14px; }
+.cu-aviso.cu-sale { opacity: 0; transform: translateY(-8px); }
+@keyframes cuEntra { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+.cu-fondo { position: fixed; inset: 0; z-index: 2147483001; display: flex; align-items: center; justify-content: center; padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); background: rgba(5, 3, 15, 0.86); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); font-family: Orbitron, ui-monospace, monospace; color: #fff; }
+.cu-tarjeta { width: min(480px, 100%); max-height: 100%; overflow-y: auto; overscroll-behavior: contain; background: radial-gradient(ellipse at top, #1a0f40 0%, #0b0720 70%); border: 2px solid rgba(61, 245, 255, 0.6); border-radius: 16px; box-shadow: 0 0 40px rgba(61, 245, 255, 0.25); padding: 16px 18px 18px; animation: cuEntra 0.2s ease-out; }
+.cu-titulo { margin: 0 0 8px; font-size: clamp(16px, 4.6vw, 20px); font-weight: 800; color: #3df5ff; letter-spacing: 1px; text-shadow: 0 0 14px rgba(61, 245, 255, 0.6); }
+.cu-cuerpo p, .cu-cuerpo li, .cu-cuerpo label { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; font-size: 14px; line-height: 1.45; color: #d8d2ff; margin: 6px 0; }
+.cu-peq { font-size: 12px !important; color: #bdb4ff !important; }
+.cu-pie { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.cu-pie .cu-btn { flex: 1 1 130px; }
+.cu-btn { font-family: Orbitron, ui-monospace, monospace; font-weight: 800; font-size: 12px; letter-spacing: 0.5px; min-height: 44px; padding: 8px 14px; border-radius: 999px; border: 2px solid #3df5ff; background: rgba(61, 245, 255, 0.08); color: #3df5ff; cursor: pointer; touch-action: manipulation; transition: transform 0.12s, box-shadow 0.12s, background 0.12s; }
+.cu-btn:hover { background: rgba(61, 245, 255, 0.2); }
+.cu-btn.cu-prim { background: #3df5ff; color: #05030f; }
+.cu-btn.cu-sec { border-color: #9a8cff; color: #9a8cff; background: rgba(154, 140, 255, 0.08); }
+.cu-btn.cu-mal { border-color: #ff6b6b; color: #ff6b6b; background: rgba(255, 107, 107, 0.08); }
+.cu-btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+.cu-btn:focus-visible, body.navMando .cu-btn:focus { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 0 2px #05030f, 0 0 22px 5px rgba(61, 245, 255, 0.85); }
+.cu-avatar { display: inline-block; border-radius: 22%; overflow: hidden; line-height: 0; flex: none; }
+.cu-avatar svg { width: 100%; height: 100%; display: block; }
+/* invitaciones */
+.cu-inv { position: fixed; z-index: 2147483002; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(440px, calc(100% - 20px)); display: grid; gap: 8px; font-family: Orbitron, ui-monospace, monospace; }
+.cu-inv-t { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 14px; border-radius: 14px; background: rgba(11, 7, 32, 0.97); border: 2px solid var(--c, #ff4fd8); box-shadow: 0 0 22px color-mix(in srgb, var(--c, #ff4fd8) 55%, transparent); animation: cuSube 0.25s ease-out; color: #fff; }
+.cu-inv-t > div { flex: 1 1 160px; font-family: system-ui, sans-serif; font-size: 14px; line-height: 1.35; }
+.cu-inv-t b { color: var(--c, #ff4fd8); font-family: Orbitron, monospace; }
+.cu-inv-t .cu-btn { min-height: 40px; padding: 6px 14px; }
+@keyframes cuSube { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .cu-aviso, .cu-tarjeta, .cu-inv-t { animation: none; transition: none; } .cu-btn { transition: none; } }

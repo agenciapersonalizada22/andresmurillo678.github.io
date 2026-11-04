@@ -1,0 +1,223 @@
+rules_version = '2';
+
+// Reglas de seguridad de la plataforma de juegos. Pegalas en Firebase Console > Firestore Database > Reglas > Publicar.
+// Limite honesto: los puntajes los envia el navegador del jugador; estas reglas solo acotan (tope por modo, solo mejoras,
+// un documento por jugador, tipos y tamanos) pero NO pueden comprobar que la partida fue real. Ver CONFIGURAR.md.
+// La lista de juegos y los topes de puntaje deben coincidir con plataforma/juegos.js (lo verifica pruebas/tablas.test.mjs).
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- funciones ----------
+    function conSesion() { return request.auth != null; }
+    function yo(uid) { return request.auth != null && request.auth.uid == uid; }
+    function esAmigo(uid) {
+      return conSesion()
+        && exists(/databases/$(database)/documents/amigos/$(request.auth.uid)/lista/$(uid))
+        && get(/databases/$(database)/documents/amigos/$(request.auth.uid)/lista/$(uid)).data.estado == 'amigos';
+    }
+    function texto(v, min, max) { return v is string && v.size() >= min && v.size() <= max; }
+    function colorValido(v) { return v is string && v.matches('^#[0-9a-fA-F]{6}$'); }
+    function avatarValido(v) { return v is string && v.matches('^a[0-9]{1,2}$'); }
+
+    // Juegos y topes de puntaje por modo (clave = juego__modo). Debe coincidir con juegos.js
+    function topes() {
+      return {
+        'nebula__puntos': 100000000, 'nebula__oleada': 10000,
+        'ciudad__dinero': 1000000000,
+        'bloques__dias': 100000,
+        'guerra__aire': 100000000, 'guerra__tanque': 100000000,
+        'ajedrez__rompecabezas': 100000, 'ajedrez__racha': 10000,
+        'metropolis__poblacion': 100000000
+      };
+    }
+    // Modos donde MENOR es mejor (ninguno por ahora; si agregas uno, anadelo aqui y en juegos.js con mayorEsMejor:false)
+    function menorEsMejor() { return []; }
+
+    // ---------- nombres: nombres/{nombreLower} -> {uid}. Lectura publica (para comprobar disponibilidad al registrarse) ----------
+    match /nombres/{nombre} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if conSesion()
+        && nombre.matches('^[a-z0-9_]{3,16}$')
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.nombreLower == nombre;
+      allow update: if false;
+      allow delete: if conSesion() && resource.data.uid == request.auth.uid;
+    }
+
+    // ---------- perfiles: solo campos publicos (el correo real vive solo en Authentication) ----------
+    match /usuarios/{uid} {
+      allow get: if conSesion();
+      allow list: if false;
+      allow create: if yo(uid)
+        && request.resource.data.keys().hasOnly(['nombre', 'nombreLower', 'color', 'avatar', 'xp', 'nivel', 'creado', 'ultimaConexion'])
+        && request.resource.data.keys().hasAll(['nombre', 'nombreLower', 'color', 'avatar', 'xp', 'nivel', 'creado', 'ultimaConexion'])
+        && texto(request.resource.data.nombre, 3, 16)
+        && request.resource.data.nombreLower.matches('^[a-z0-9_]{3,16}$')
+        && getAfter(/databases/$(database)/documents/nombres/$(request.resource.data.nombreLower)).data.uid == uid
+        && colorValido(request.resource.data.color)
+        && avatarValido(request.resource.data.avatar)
+        && request.resource.data.xp == 0 && request.resource.data.nivel == 1
+        && request.resource.data.creado == request.time
+        && request.resource.data.ultimaConexion == request.time;
+      allow update: if yo(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'color', 'avatar', 'xp', 'nivel', 'ultimaConexion'])
+        && texto(request.resource.data.nombre, 3, 16)
+        && colorValido(request.resource.data.color)
+        && avatarValido(request.resource.data.avatar)
+        && request.resource.data.xp is int && request.resource.data.xp >= resource.data.xp && request.resource.data.xp - resource.data.xp <= 2000 && request.resource.data.xp <= 100000000
+        && request.resource.data.nivel is int && request.resource.data.nivel >= 1 && request.resource.data.nivel <= 100;
+      allow delete: if yo(uid);
+    }
+
+    // ---------- guardados en la nube: solo el dueno. Documento principal "<juego>[~<ranura>]" y trozos "<id>_pN" ----------
+    match /guardados/{uid}/juegos/{docId} {
+      allow read: if yo(uid);
+      allow create, update: if yo(uid)
+        && docId.matches('^(nebula|ciudad|bloques|guerra|ajedrez|metropolis)(~[a-z0-9]{1,12})?(_p[1-7])?$')
+        && (
+          (docId.matches('.*_p[1-7]$')
+            && request.resource.data.keys().hasOnly(['datos', 'actualizado'])
+            && request.resource.data.keys().hasAll(['datos', 'actualizado'])
+            && texto(request.resource.data.datos, 0, 800000)
+            && request.resource.data.actualizado == request.time)
+          ||
+          (!docId.matches('.*_p[1-7]$')
+            && request.resource.data.keys().hasOnly(['version', 'hash', 'partes', 'datos', 'actualizado', 'ranura'])
+            && request.resource.data.keys().hasAll(['version', 'hash', 'partes', 'datos', 'actualizado', 'ranura'])
+            && request.resource.data.version is int && request.resource.data.version >= 1 && request.resource.data.version <= 1000
+            && texto(request.resource.data.hash, 1, 32)
+            && request.resource.data.partes is int && request.resource.data.partes >= 1 && request.resource.data.partes <= 8
+            && texto(request.resource.data.datos, 0, 800000)
+            && texto(request.resource.data.ranura, 1, 12)
+            && request.resource.data.actualizado == request.time)
+        );
+      allow delete: if yo(uid);
+    }
+
+    // ---------- logros / XP por juego / ultimo juego: lo ve el dueno y sus amigos ----------
+    match /logros/{uid} {
+      allow get: if yo(uid) || esAmigo(uid);
+      allow list: if false;
+      allow create, update: if yo(uid)
+        && request.resource.data.keys().hasOnly(['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis', 'xpJuego', 'ultimo'])
+        && (!('nebula' in request.resource.data) || (request.resource.data.nebula is list && request.resource.data.nebula.size() <= 100))
+        && (!('ciudad' in request.resource.data) || (request.resource.data.ciudad is list && request.resource.data.ciudad.size() <= 100))
+        && (!('bloques' in request.resource.data) || (request.resource.data.bloques is list && request.resource.data.bloques.size() <= 100))
+        && (!('guerra' in request.resource.data) || (request.resource.data.guerra is list && request.resource.data.guerra.size() <= 100))
+        && (!('ajedrez' in request.resource.data) || (request.resource.data.ajedrez is list && request.resource.data.ajedrez.size() <= 100))
+        && (!('metropolis' in request.resource.data) || (request.resource.data.metropolis is list && request.resource.data.metropolis.size() <= 100))
+        && (!('xpJuego' in request.resource.data) || (request.resource.data.xpJuego is map && request.resource.data.xpJuego.size() <= 6))
+        && (!('ultimo' in request.resource.data) || (request.resource.data.ultimo is map && request.resource.data.ultimo.size() <= 2));
+      allow delete: if yo(uid);
+    }
+
+    // ---------- rankings: un documento por jugador y modo; cualquiera con sesion los lee ----------
+    match /puntajes/{clave}/entradas/{uid} {
+      function valido() {
+        return clave in topes()
+          && request.resource.data.keys().hasOnly(['nombre', 'color', 'valor', 'fecha'])
+          && request.resource.data.keys().hasAll(['nombre', 'color', 'valor', 'fecha'])
+          && texto(request.resource.data.nombre, 3, 16)
+          && colorValido(request.resource.data.color)
+          && request.resource.data.valor is number
+          && request.resource.data.valor >= 0
+          && request.resource.data.valor <= topes()[clave]
+          && request.resource.data.fecha == request.time;
+      }
+      allow read: if conSesion();
+      allow create: if yo(uid) && valido();
+      // solo se puede actualizar si mejora el resultado anterior
+      allow update: if yo(uid) && valido()
+        && (clave in menorEsMejor()
+              ? request.resource.data.valor < resource.data.valor
+              : request.resource.data.valor > resource.data.valor);
+      allow delete: if yo(uid);
+    }
+
+    // ---------- amistad con doble confirmacion: amigos/{uid}/lista/{otro} ----------
+    match /amigos/{uid}/lista/{otro} {
+      allow read: if yo(uid);
+      // yo envio (mi lado "enviada" + el lado del otro "recibida", en el mismo lote)
+      allow create: if (
+          yo(uid) && uid != otro
+          && request.resource.data.keys().hasOnly(['estado', 'desde'])
+          && request.resource.data.estado == 'enviada' && request.resource.data.desde == uid
+          && getAfter(/databases/$(database)/documents/amigos/$(otro)/lista/$(uid)).data.estado == 'recibida'
+        ) || (
+          request.auth != null && request.auth.uid == otro && uid != otro
+          && request.resource.data.keys().hasOnly(['estado', 'desde'])
+          && request.resource.data.estado == 'recibida' && request.resource.data.desde == otro
+          && getAfter(/databases/$(database)/documents/amigos/$(otro)/lista/$(uid)).data.estado == 'enviada'
+        );
+      // aceptar: solo quien recibio puede pasar a "amigos"; ambos lados deben quedar "amigos" en el mismo lote
+      allow update: if request.resource.data.keys().hasOnly(['estado', 'desde'])
+        && request.resource.data.desde == resource.data.desde
+        && request.resource.data.estado == 'amigos'
+        && getAfter(/databases/$(database)/documents/amigos/$(otro)/lista/$(uid)).data.estado == 'amigos'
+        && (
+          (yo(uid) && resource.data.estado == 'recibida'
+            && get(/databases/$(database)/documents/amigos/$(otro)/lista/$(uid)).data.estado == 'enviada')
+          ||
+          (request.auth != null && request.auth.uid == otro && resource.data.estado == 'enviada'
+            && get(/databases/$(database)/documents/amigos/$(otro)/lista/$(uid)).data.estado == 'recibida')
+        );
+      // quitar / rechazar / cancelar: cada quien borra lo suyo; el otro lado solo se borra junto con el propio
+      allow delete: if yo(uid)
+        || (request.auth != null && request.auth.uid == otro
+            && !existsAfter(/databases/$(database)/documents/amigos/$(otro)/lista/$(uid)));
+    }
+
+    // ---------- presencia: la escribe el dueno, la leen sus amigos ----------
+    match /presencia/{uid} {
+      allow get: if yo(uid) || esAmigo(uid);
+      allow list: if false;
+      allow create, update: if yo(uid)
+        && request.resource.data.keys().hasOnly(['estado', 'juego', 't'])
+        && request.resource.data.estado in ['en_linea', 'jugando', 'ausente']
+        && request.resource.data.juego is string && request.resource.data.juego.size() <= 24
+        && request.resource.data.t == request.time;
+      allow delete: if yo(uid);
+    }
+
+    // ---------- invitaciones a partidas: invitaciones/{destino}/lista/{id} ----------
+    match /invitaciones/{destino}/lista/{id} {
+      allow get: if yo(destino) || (conSesion() && resource.data.de == request.auth.uid);
+      allow list: if yo(destino);
+      // solo a amigos, de uno en uno, con tamano acotado
+      allow create: if conSesion() && esAmigo(destino)
+        && request.resource.data.keys().hasOnly(['de', 'nombre', 'color', 'avatar', 'juego', 'oferta', 'estado', 'respuesta', 'creado', 'expira'])
+        && request.resource.data.keys().hasAll(['de', 'nombre', 'juego', 'oferta', 'estado', 'respuesta', 'creado', 'expira'])
+        && request.resource.data.de == request.auth.uid
+        && texto(request.resource.data.nombre, 3, 16)
+        && request.resource.data.juego in ['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis']
+        && texto(request.resource.data.oferta, 1, 4000)
+        && request.resource.data.estado == 'pendiente'
+        && request.resource.data.respuesta == ''
+        && request.resource.data.creado == request.time
+        && request.resource.data.expira is number;
+      // el destinatario responde una sola vez y antes de 5 minutos; el remitente solo puede cancelar
+      allow update: if conSesion()
+        && resource.data.estado == 'pendiente'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'respuesta'])
+        && (
+          (yo(destino)
+            && request.time < resource.data.creado + duration.value(5, 'm')
+            && request.resource.data.estado in ['aceptada', 'rechazada']
+            && texto(request.resource.data.respuesta, 0, 4000))
+          ||
+          (resource.data.de == request.auth.uid
+            && request.resource.data.estado == 'cancelada'
+            && request.resource.data.respuesta == resource.data.respuesta)
+        );
+      allow delete: if yo(destino) || (conSesion() && resource.data.de == request.auth.uid);
+    }
+
+    // todo lo demas, denegado
+    match /{otro=**} {
+      allow read, write: if false;
+    }
+  }
+}

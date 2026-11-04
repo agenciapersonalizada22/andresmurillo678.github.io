@@ -12,139 +12,74 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Mis juegos">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="comun/lobby.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --fondo: #05030f;
-      --texto: #ffffff;
-      --suave: #9a8cff;
-    }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; min-height: 100%; }
-    body {
-      background: radial-gradient(ellipse at top, #1a0f40 0%, var(--fondo) 60%) fixed, var(--fondo);
-      color: var(--texto);
-      font-family: Orbitron, ui-monospace, Menlo, Consolas, monospace;
-      padding: 32px 16px 48px;
-    }
-    h1 {
-      text-align: center;
-      font-size: clamp(32px, 8vw, 56px);
-      font-weight: 800;
-      margin: 8px 0 4px;
-      color: #3df5ff;
-      text-shadow: 0 0 18px rgba(61, 245, 255, 0.7);
-      letter-spacing: 2px;
-    }
-    .sub {
-      text-align: center;
-      color: var(--suave);
-      font-size: 14px;
-      margin: 0 0 32px;
-    }
-    .lista {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 20px;
-      max-width: 960px;
-      margin: 0 auto;
-    }
-    .juego {
-      --color: #3df5ff;
-      display: flex;
-      flex-direction: column;
-      text-decoration: none;
-      color: inherit;
-      background: rgba(255, 255, 255, 0.04);
-      border: 2px solid color-mix(in srgb, var(--color) 55%, transparent);
-      border-radius: 16px;
-      overflow: hidden;
-      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-    }
-    .juego:hover, .juego:focus-visible {
-      transform: translateY(-4px);
-      border-color: var(--color);
-      box-shadow: 0 0 28px color-mix(in srgb, var(--color) 45%, transparent);
-      outline: none;
-    }
-    .juego svg { display: block; width: 100%; height: auto; }
-    .info { padding: 16px 18px 20px; }
-    .info h2 {
-      margin: 0 0 6px;
-      font-size: 22px;
-      color: var(--color);
-      text-shadow: 0 0 12px color-mix(in srgb, var(--color) 60%, transparent);
-    }
-    .info p {
-      margin: 0 0 14px;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      font-size: 14px;
-      line-height: 1.45;
-      color: #d8d2ff;
-    }
-    .jugar {
-      display: inline-block;
-      padding: 8px 18px;
-      border-radius: 999px;
-      background: var(--color);
-      color: #05030f;
-      font-weight: 800;
-      font-size: 14px;
-    }
-    .perfil-juego { max-width: 960px; margin: 0 auto 24px; }
-    .pie {
-      text-align: center;
-      margin-top: 36px;
-      font-size: 12px;
-    }
-    .pie a { color: var(--suave); }
-    /* foco visible neón: teclado (Tab) y mando */
-    .juego:focus-visible, body.navMando .juego:focus {
-      transform: translateY(-4px) scale(1.02);
-      border-color: var(--color);
-      outline: 3px solid var(--color);
-      outline-offset: 3px;
-      box-shadow: 0 0 0 2px var(--fondo), 0 0 34px 6px color-mix(in srgb, var(--color) 70%, transparent);
-    }
-    .pie a:focus-visible, body.navMando .pie a:focus {
-      outline: 3px solid #3df5ff; outline-offset: 3px; border-radius: 6px; color: #fff;
-      box-shadow: 0 0 18px rgba(61, 245, 255, 0.7);
-    }
-    /* pistas de botones: solo con el mando en uso */
-    .pista-mando {
-      display: none;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 8px 18px;
-      margin: -12px auto 24px;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      font-size: 13px;
-      color: #d8d2ff;
-    }
-    body.conMando .pista-mando { display: flex; }
-    .pista-mando b {
-      display: inline-block; min-width: 22px; padding: 1px 7px; margin-right: 5px; border-radius: 999px; text-align: center;
-      border: 1.5px solid #3df5ff; color: #3df5ff; font-family: Orbitron, ui-monospace, monospace; font-size: 11px;
-    }
-  </style>
+  <link rel="stylesheet" href="comun/cuenta.css">
+  <link rel="stylesheet" href="plataforma/portal.css">
 </head>
 <body>
-  <h1>MIS JUEGOS</h1>
-  <p class="sub">elige uno y a jugar</p>
+  <div class="p-demo" id="avisoDemo" role="status" hidden>Modo demo: las cuentas solo existen en este dispositivo. <a href="plataforma/CONFIGURAR.md">Guía para activar las cuentas en línea</a></div>
+  <noscript><p class="p-info" style="margin:16px">Esta página necesita JavaScript.</p></noscript>
 
-  <p class="pista-mando" aria-hidden="true">
-    <span><b>&#x2725;</b>cruceta / stick: elegir</span>
-    <span><b>A</b>jugar</span>
-    <span><b>B</b>volver</span>
-  </p>
+  <div class="p-cont">
+    <!-- carga -->
+    <section id="vistaCarga" aria-busy="true" aria-label="Cargando">
+      <h1 class="p-titulo">MIS JUEGOS</h1>
+      <div class="p-acceso"><div class="p-esq" style="height:56px;margin:12px 0"></div><div class="p-esq" style="height:240px"></div></div>
+    </section>
 
-  <section class="perfil-juego" id="perfil" aria-label="Perfil de jugador"></section>
+    <!-- acceso -->
+    <section id="vistaAcceso" hidden aria-label="Acceso">
+      <h1 class="p-titulo">MIS JUEGOS</h1>
+      <p class="p-sub" id="subAcceso">entra para jugar, guardar tu progreso y retar a tus amigos</p>
+      <div class="p-acceso p-tarjeta p-fade">
+        <div class="p-tabs2" role="tablist" aria-label="Acceso">
+          <button type="button" role="tab" id="tabEntrar" data-f="1" aria-selected="true" aria-controls="formAcceso">ENTRAR</button>
+          <button type="button" role="tab" id="tabCrear" data-f="1" aria-selected="false" aria-controls="formAcceso">CREAR CUENTA</button>
+        </div>
+        <form id="formAcceso" novalidate autocomplete="on" role="tabpanel" aria-labelledby="tabEntrar">
+          <div class="p-campo">
+            <label for="inUsuario" id="etqUsuario">Usuario</label>
+            <input class="p-in" id="inUsuario" name="username" data-f="1" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="text" maxlength="64" aria-describedby="ayUsuario" required>
+            <div class="p-ayuda" id="ayUsuario" aria-live="polite"></div>
+          </div>
+          <div class="p-campo">
+            <label for="inClave">Contraseña</label>
+            <div class="p-entrada">
+              <input class="p-in" id="inClave" name="password" data-f="1" type="password" autocomplete="current-password" autocapitalize="none" spellcheck="false" maxlength="128" aria-describedby="ayClave" required>
+              <button type="button" class="p-btn p-sec p-peq" id="btnVer" data-f="1" aria-pressed="false" aria-label="Mostrar contraseña">VER</button>
+            </div>
+            <div class="p-ayuda" id="ayClave" aria-live="polite"></div>
+          </div>
+          <div class="p-campo" id="campoClave2" hidden>
+            <label for="inClave2">Repite la contraseña</label>
+            <input class="p-in" id="inClave2" name="password2" data-f="1" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false" maxlength="128" aria-describedby="ayClave2">
+            <div class="p-ayuda" id="ayClave2" aria-live="polite"></div>
+          </div>
+          <label class="p-check"><input type="checkbox" id="inRecordar" data-f="1" checked> Recordarme en este dispositivo</label>
+          <div class="p-error" id="errAcceso" role="alert" hidden></div>
+          <button type="submit" class="p-btn p-prim" id="btnAcceso" data-f="1" style="width:100%;margin-top:14px">ENTRAR</button>
+          <div class="p-enlaces"><button type="button" class="p-enlace" id="btnOlvide" data-f="1">¿Olvidaste tu contraseña?</button></div>
+        </form>
+        <details class="p-nota"><summary>¿Cómo funcionan las cuentas?</summary>
+          <p>Eliges un nombre de usuario y una contraseña. No hace falta correo. Tu progreso, logros, amigos y puntajes quedan en tu cuenta y los ves desde cualquier dispositivo.</p>
+          <p><b>Sin correo no hay recuperación de contraseña.</b> Si quieres poder restablecerla, vincula un correo real en Cuenta (opcional) una vez dentro.</p>
+        </details>
+      </div>
+      <p class="p-pista-mando" aria-hidden="true"><span><b>+</b>mover</span><span><b>A</b>elegir / escribir</span><span><b>B</b>atrás</span></p>
+    </section>
 
-  <main class="lista">
-    <a class="juego" href="nebula/" style="--color:#3df5ff">
+    <!-- panel -->
+    <section id="vistaPanel" hidden aria-label="Panel">
+      <div class="p-cab" id="cabecera" aria-label="Tu perfil"></div>
+      <nav class="p-nav" id="navPanel" aria-label="Secciones"><button type="button" data-f="1" data-tab="juegos" aria-label="Juegos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h4M8 10v4M15 11h.01M18 13h.01"/><path d="M7 7h10a4 4 0 0 1 4 4v3a3 3 0 0 1-5.2 2L14 14h-4l-1.800 2A3 3 0 0 1 3 14v-3a4 4 0 0 1 4-4Z"/></svg><span>JUEGOS</span></button><button type="button" data-f="1" data-tab="amigos" aria-label="Amigos"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.500"/><path d="M2.500 20c0-3.500 3-6 6.500-6s6.500 2.500 6.500 6"/><path d="M16 5a3.500 3.500 0 0 1 0 7M18 14.500c2 .8 3.500 2.700 3.500 5.500"/></svg><span>AMIGOS</span><span class="p-ins" data-ins="amigos" hidden></span></button><button type="button" data-f="1" data-tab="ranking" aria-label="Ranking"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0Z"/><path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3"/></svg><span>RANKING</span></button><button type="button" data-f="1" data-tab="logros" aria-label="Logros"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="6"/><path d="m8.500 14-1.500 7 5-3 5 3-1.500-7"/></svg><span>LOGROS</span></button><button type="button" data-f="1" data-tab="cuenta" aria-label="Cuenta"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.500 3.500-7 8-7s8 2.500 8 7"/></svg><span>CUENTA</span></button></nav>
+
+      <div id="tab-juegos" role="region" aria-label="Juegos">
+        <div id="continuar"></div>
+        <h2 class="p-sec-t">Elige un juego</h2>
+        <main class="lista" id="listaJuegos">
+    <a class="juego" data-f="1" data-juego="nebula" href="nebula/" style="--color:#3df5ff">
       <svg viewBox="0 0 320 160" aria-hidden="true">
         <rect width="320" height="160" fill="#05030f"/>
         <circle cx="70" cy="50" r="70" fill="#3a1c8c" opacity="0.45"/>
@@ -165,11 +100,11 @@
       <div class="info">
         <h2>NEBULA</h2>
         <p>Naves espaciales neón. Oleadas de enemigos, jefes, power-ups y música synthwave.</p>
+        <div class="p-stats" data-stats></div>
         <span class="jugar">JUGAR</span>
       </div>
     </a>
-
-    <a class="juego" href="ciudad/" style="--color:#ffb13d">
+    <a class="juego" data-f="1" data-juego="ciudad" href="ciudad/" style="--color:#ffb13d">
       <svg viewBox="0 0 320 160" aria-hidden="true">
         <rect width="320" height="160" fill="#2b2f36"/>
         <rect x="0" y="60" width="320" height="40" fill="#3b3f47"/>
@@ -187,11 +122,11 @@
       <div class="info">
         <h2>CIUDAD LIBRE</h2>
         <p>Recorre la ciudad a pie o en carro, haz misiones, gana dinero y escapa de la policía.</p>
+        <div class="p-stats" data-stats></div>
         <span class="jugar">JUGAR</span>
       </div>
     </a>
-
-    <a class="juego" href="bloques/" style="--color:#7dd957">
+    <a class="juego" data-f="1" data-juego="bloques" href="bloques/" style="--color:#7dd957">
       <svg viewBox="0 0 320 160" aria-hidden="true">
         <rect width="320" height="160" fill="#7ec8ff"/>
         <rect x="236" y="18" width="30" height="30" fill="#fff6a8"/>
@@ -210,11 +145,11 @@
       <div class="info">
         <h2>MUNDO DE BLOQUES</h2>
         <p>Un mundo 3D hecho de bloques: explora, rompe, construye lo que quieras y guarda tu mundo.</p>
+        <div class="p-stats" data-stats></div>
         <span class="jugar">JUGAR</span>
       </div>
     </a>
-
-    <a class="juego" href="guerra/" style="--color:#ff7a3d">
+    <a class="juego" data-f="1" data-juego="guerra" href="guerra/" style="--color:#ff7a3d">
       <svg viewBox="0 0 320 160" aria-hidden="true">
         <defs><linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a0f40"/><stop offset="1" stop-color="#ff7a3d"/></linearGradient></defs>
         <rect width="320" height="160" fill="url(#gg)"/>
@@ -228,11 +163,11 @@
       <div class="info">
         <h2>ALAS Y ACERO</h2>
         <p>Combate aéreo y de tanques: pilota un caza o comanda un tanque contra oleadas de enemigos.</p>
+        <div class="p-stats" data-stats></div>
         <span class="jugar">JUGAR</span>
       </div>
     </a>
-
-    <a class="juego" href="ajedrez/" style="--color:#c9a8ff">
+    <a class="juego" data-f="1" data-juego="ajedrez" href="ajedrez/" style="--color:#c9a8ff">
       <svg viewBox="0 0 320 160" aria-hidden="true">
         <defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1a4a"/><stop offset="1" stop-color="#0b0618"/></linearGradient></defs>
         <rect width="320" height="160" fill="url(#ga)"/>
@@ -247,11 +182,11 @@
       <div class="info">
         <h2>AJEDREZ</h2>
         <p>Ajedrez 3D con reglas completas: juega contra la computadora en 5 niveles o con un amigo.</p>
+        <div class="p-stats" data-stats></div>
         <span class="jugar">JUGAR</span>
       </div>
     </a>
-
-    <a class="juego" href="metropolis/" style="--color:#3df5a8">
+    <a class="juego" data-f="1" data-juego="metropolis" href="metropolis/" style="--color:#3df5a8">
       <svg viewBox="0 0 320 160" aria-hidden="true">
         <defs><linearGradient id="gm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14305a"/><stop offset="1" stop-color="#ff9f6b"/></linearGradient></defs>
         <rect width="320" height="160" fill="url(#gm)"/>
@@ -264,85 +199,49 @@
       <div class="info">
         <h2>METRÓPOLIS</h2>
         <p>Construye y haz crecer tu ciudad: zonas, servicios, mejoras y objetivos. Pensado para el celular.</p>
+        <div class="p-stats" data-stats></div>
         <span class="jugar">JUGAR</span>
       </div>
     </a>
-  </main>
+        </main>
+      </div>
 
-  <p class="pie"><a href="../">← volver a mi página</a></p>
+      <div id="tab-amigos" role="region" aria-label="Amigos" hidden>
+        <div id="boxInvitaciones"></div>
+        <h2 class="p-sec-t">Agregar amigo</h2>
+        <form class="p-form-fila" id="formAmigo" autocomplete="off">
+          <input class="p-in" id="inAmigo" data-f="1" type="text" placeholder="Nombre de usuario exacto" aria-label="Nombre de usuario de tu amigo" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="16">
+          <button class="p-btn p-prim" type="submit" id="btnAmigo" data-f="1">AGREGAR</button>
+        </form>
+        <div class="p-ayuda" id="ayAmigo" aria-live="polite"></div>
+        <div id="boxSolicitudes"></div>
+        <h2 class="p-sec-t">Mis amigos</h2>
+        <ul class="p-lista" id="listaAmigos"></ul>
+      </div>
 
+      <div id="tab-ranking" role="region" aria-label="Rankings" hidden>
+        <h2 class="p-sec-t">Juego</h2>
+        <div class="p-chips" id="chipsJuego" role="group" aria-label="Juego"></div>
+        <div class="p-chips" id="chipsModo" role="group" aria-label="Modo"></div>
+        <div class="p-chips" id="chipsAlcance" role="group" aria-label="Alcance"></div>
+        <ul class="p-lista" id="listaRanking" aria-live="polite"></ul>
+      </div>
+
+      <div id="tab-logros" role="region" aria-label="Logros" hidden></div>
+
+      <div id="tab-cuenta" role="region" aria-label="Ajustes de cuenta" hidden></div>
+
+      <p class="p-pista-mando" aria-hidden="true"><span><b>+</b>mover</span><span><b>A</b>elegir</span><span><b>LB/RB</b>cambiar sección</span><span><b>B</b>volver</span></p>
+      <p class="p-pie"><a href="../" data-f="1">← volver a mi página</a></p>
+    </section>
+  </div>
+
+  <script src="comun/firebase-config.js"></script>
   <script src="comun/mando.js"></script>
   <script src="comun/red.js"></script>
-  <script src="comun/lobby.js"></script>
-  <script>Lobby.editorPerfil(document.getElementById('perfil'));</script>
-  <script>
-  (function () {
-    // Navegación con mando: cruceta / stick izq. mueven el foco entre tarjetas, A abre, B vuelve
-    if (!window.Mando) return;
-    var tarjetas = Array.prototype.slice.call(document.querySelectorAll('.juego'));
-    var volver = document.querySelector('.pie a');
-    var perfil = Array.prototype.slice.call(document.querySelectorAll('#perfil [data-f]'));
-    var todos = perfil.concat(tarjetas, volver ? [volver] : []);
-    var dirActual = '', tRepite = 0, bloqueo = true; // bloqueo: ignora A/B hasta soltarlos (p. ej. B pulsado en el juego anterior)
-
-    function marcarFuente() { document.body.classList.toggle('conMando', Mando.conectado && Mando.activo); }
-    function usarOtro() { Mando.activo = false; document.body.classList.remove('navMando'); marcarFuente(); }
-    addEventListener('mousemove', function (e) { if (Math.abs(e.movementX) + Math.abs(e.movementY) > 2) usarOtro(); });
-    addEventListener('pointerdown', usarOtro, true);
-    addEventListener('keydown', usarOtro, true);
-
-    function centro(e) { var r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
-    function foco() { return todos.indexOf(document.activeElement) >= 0 ? document.activeElement : null; }
-    function enfocar(e) { e.focus({ preventScroll: true }); e.scrollIntoView({ block: 'nearest' }); }
-
-    function mover(dir) {
-      var act = foco();
-      if (!act) { enfocar(todos[0]); return; }
-      var c0 = centro(act), vx = dir === 'D' ? 1 : dir === 'I' ? -1 : 0, vy = dir === 'B' ? 1 : dir === 'A' ? -1 : 0;
-      var mejor = null, mejorP = Infinity;
-      todos.forEach(function (e) {
-        if (e === act) return;
-        var r = e.getBoundingClientRect(), r0 = act.getBoundingClientRect();
-        var solapa = vx ? (r.top < r0.bottom - 4 && r.bottom > r0.top + 4) : (r.left < r0.right - 4 && r.right > r0.left + 4);
-        var c = centro(e), dx = c.x - c0.x, dy = c.y - c0.y, along = dx * vx + dy * vy;
-        if (along <= 2) return;
-        if (vx && !solapa) return; // izq/der solo recorre la misma fila
-        var p = along + (solapa ? 0 : (Math.abs(dx * vy) + Math.abs(dy * vx)) * 2);
-        if (p < mejorP) { mejorP = p; mejor = e; }
-      });
-      if (mejor) enfocar(mejor);
-    }
-
-    function cuadro() {
-      requestAnimationFrame(cuadro);
-      Mando.leer();
-      marcarFuente();
-      if (!Mando.conectado) { dirActual = ''; return; }
-      var usado = Mando.activo && performance.now() - Mando._ultimoUso < 100;
-      if (usado) document.body.classList.add('navMando');
-      var d = '';
-      if (Mando.sostenido('ARRIBA')) d = 'A'; else if (Mando.sostenido('ABAJO')) d = 'B';
-      else if (Mando.sostenido('IZQ')) d = 'I'; else if (Mando.sostenido('DER')) d = 'D';
-      else {
-        var x = Mando.ejes.izq.x, y = Mando.ejes.izq.y;
-        if (Math.hypot(x, y) > 0.4) d = Math.abs(x) > Math.abs(y) ? (x > 0 ? 'D' : 'I') : (y > 0 ? 'B' : 'A');
-      }
-      var t = performance.now();
-      if (!d) dirActual = '';
-      else if (d !== dirActual) { dirActual = d; tRepite = t + 380; mover(d); }
-      else if (t >= tRepite) { tRepite = t + 140; mover(d); }
-      if (bloqueo) {
-        if (!['A', 'B', 'X', 'Y', 'MENU'].some(function (n) { return Mando.sostenido(n); })) bloqueo = false;
-        return;
-      }
-      if (Mando.pulsado('A')) {
-        var f = foco();
-        if (f) f.click(); else enfocar(todos[0]);
-      }
-      if (Mando.pulsado('B')) location.href = '../';
-    }
-    requestAnimationFrame(cuadro);
-  })();
-  </script>
+  <script src="plataforma/juegos.js"></script>
+  <script src="comun/cuenta.js"></script>
+  <script src="comun/amigos.js"></script>
+  <script src="plataforma/portal.js"></script>
 </body>
 </html>
