@@ -26,6 +26,20 @@ const ANIMOS = {
     acordes: [[45, [57, 60, 64, 69]], [41, [53, 57, 60, 64]], [48, [55, 60, 64, 67]], [40, [55, 59, 62, 64]]],
     densidad: 0.26,
   },
+  // bajo tierra: casi sin melodía, grave y con mucho eco
+  cueva: {
+    tempo: () => 44,
+    escala: [45, 48, 50, 52, 55, 57],
+    acordes: [[33, [45, 48, 52]], [36, [48, 52, 55]], [31, [43, 47, 50]], [33, [45, 50, 52]]],
+    densidad: 0.1,
+  },
+  // cuando hay monstruos cerca: más rápida y tensa (menor con segunda menor)
+  peligro: {
+    tempo: () => 96,
+    escala: [57, 58, 60, 63, 64, 69, 70],
+    acordes: [[45, [57, 60, 64, 69]], [46, [58, 61, 65, 70]], [45, [57, 60, 63, 69]], [44, [56, 59, 63, 68]]],
+    densidad: 0.34,
+  },
 };
 
 const PASOS = 16;      // medios pulsos por compás
@@ -37,6 +51,7 @@ try {
   if (g !== null) activa = g === '1';
 } catch (e) { /* sin almacenamiento */ }
 
+let volumen = CONFIG.audio.volumenMusica;
 let ctx = null;
 let salida = null;    // volumen de la música
 let eco = null;       // entrada del eco
@@ -56,7 +71,7 @@ function preparar() {
   if (!ctx) return false;
   if (salida) return true;
   salida = ctx.createGain();
-  salida.gain.value = activa ? CONFIG.audio.volumenMusica : 0;
+  salida.gain.value = activa ? volumen : 0;
   salida.connect(Sonido.salidaMusica());
   // eco suave (como en una cueva grande)
   eco = ctx.createGain();
@@ -201,6 +216,14 @@ export const Musica = {
     if (activa) arrancar();
   },
 
+  // Volumen de 0 a 1; con 0 la música se detiene sola
+  ponerVolumen(v) {
+    volumen = Math.max(0, Math.min(1, v));
+    if (salida && ctx && activa) salida.gain.setTargetAtTime(volumen, ctx.currentTime, 0.1);
+  },
+
+  get animo() { return animo; },
+
   ponerAnimo(nombre) {
     if (ANIMOS[nombre]) siguienteAnimo = nombre;
     if (!reloj) animo = siguienteAnimo;
@@ -215,7 +238,7 @@ export const Musica = {
         const t = ctx.currentTime;
         salida.gain.cancelScheduledValues(t);
         salida.gain.setValueAtTime(0.0001, t);
-        salida.gain.linearRampToValueAtTime(CONFIG.audio.volumenMusica, t + 1);
+        salida.gain.linearRampToValueAtTime(volumen, t + 1);
       }
     } else {
       if (salida && ctx) {

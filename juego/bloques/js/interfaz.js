@@ -5,8 +5,9 @@
 //  3D falso) usando las mismas texturas del atlas.
 // =============================================================
 import { BLOQUES, EN_MENU, nombreBloque } from './bloques.js';
+import { nombreDe } from './objetos.js';
 import { indiceTextura, origenTextura, TAM } from './texturas.js';
-import { OBJETOS, LISTA_OBJETOS } from './botin.js';
+import { iconoObjeto, POR_CLAVE_OBJ, esObjeto, objetoPorId } from './objetos.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -42,35 +43,6 @@ function dibujarIcono(atlas, bloque) {
   }
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalCompositeOperation = 'source-over';
-  return c.toDataURL();
-}
-
-// Iconos dibujados con el canvas para los objetos de la mochila
-function iconoObjeto(obj) {
-  const o = OBJETOS[obj];
-  const c = document.createElement('canvas');
-  c.width = c.height = 32;
-  const x = c.getContext('2d');
-  x.lineWidth = 2;
-  x.strokeStyle = 'rgba(0,0,0,0.6)';
-  x.fillStyle = o.color;
-  if (o.forma === 'gema') {
-    x.beginPath(); x.moveTo(16, 3); x.lineTo(28, 12); x.lineTo(16, 29); x.lineTo(4, 12); x.closePath(); x.fill(); x.stroke();
-    x.fillStyle = 'rgba(255,255,255,0.45)'; x.beginPath(); x.moveTo(16, 3); x.lineTo(10, 12); x.lineTo(16, 14); x.closePath(); x.fill();
-  } else if (o.forma === 'lingote') {
-    x.beginPath(); x.moveTo(8, 10); x.lineTo(26, 10); x.lineTo(30, 24); x.lineTo(4, 24); x.closePath(); x.fill(); x.stroke();
-    x.fillStyle = 'rgba(255,255,255,0.45)'; x.fillRect(10, 12, 12, 3);
-  } else if (o.forma === 'bidon') {
-    x.fillRect(7, 7, 18, 22); x.strokeRect(7, 7, 18, 22);
-    x.fillStyle = '#222'; x.fillRect(19, 3, 6, 5); x.fillStyle = 'rgba(255,255,255,0.5)'; x.fillRect(10, 13, 12, 8);
-    x.fillStyle = o.color; x.fillRect(12, 15, 8, 4);
-  } else if (o.forma === 'pan') {
-    x.beginPath(); x.ellipse(16, 18, 13, 8, 0, 0, Math.PI * 2); x.fill(); x.stroke();
-    x.strokeStyle = 'rgba(120,70,20,0.8)'; x.beginPath(); x.moveTo(9, 15); x.lineTo(13, 21); x.moveTo(15, 14); x.lineTo(19, 22); x.moveTo(21, 15); x.lineTo(25, 21); x.stroke();
-  } else {
-    x.beginPath(); x.arc(16, 19, 9, 0, Math.PI * 2); x.fill(); x.stroke();
-    x.fillStyle = '#3a8a2a'; x.fillRect(16, 6, 3, 6); x.fillStyle = 'rgba(255,255,255,0.4)'; x.fillRect(11, 15, 3, 4);
-  }
   return c.toDataURL();
 }
 
@@ -116,8 +88,7 @@ function iconoVehiculo(tipo) {
 export class Interfaz {
   constructor(atlas, { alElegirRanura, alElegirBloque, alElegirVehiculo, alElegirObjeto }) {
     this.iconos = {};
-    this.iconosObjeto = {};
-    for (const o of LISTA_OBJETOS) this.iconosObjeto[o] = iconoObjeto(o);
+    this.iconosObjeto = { bidon: iconoObjeto(POR_CLAVE_OBJ.bidon) };
     this.alElegirVehiculo = alElegirVehiculo;
     this.alElegirObjeto = alElegirObjeto;
     for (const b of BLOQUES) if (b.caras) this.iconos[b.id] = dibujarIcono(atlas, b);
@@ -155,7 +126,9 @@ export class Interfaz {
       pestBloques: $('pestBloques'),
       pestVehiculos: $('pestVehiculos'),
     };
-    this.pestanaActual = 'bloques';
+    this.pestanaActual = 'mochila';
+    $('pestMochila').addEventListener('click', () => this.pestana('mochila'));
+    $('pestRecetas').addEventListener('click', () => this.pestana('recetas'));
     $('pestBloques').addEventListener('click', () => this.pestana('bloques'));
     $('pestVehiculos').addEventListener('click', () => this.pestana('vehiculos'));
 
@@ -172,7 +145,12 @@ export class Interfaz {
       const num = document.createElement('span');
       num.className = 'num';
       num.textContent = String(i + 1);
-      r.append(img, num);
+      const cant = document.createElement('span');
+      cant.className = 'cant';
+      const dur = document.createElement('i');
+      dur.className = 'dur';
+      dur.appendChild(document.createElement('u'));
+      r.append(img, num, cant, dur);
       const elegir = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -181,7 +159,7 @@ export class Interfaz {
       r.addEventListener('touchstart', elegir, { passive: false });
       r.addEventListener('mousedown', elegir);
       this.el.barra.appendChild(r);
-      this.ranuras.push({ boton: r, img });
+      this.ranuras.push({ boton: r, img, cant, dur });
     }
 
     // Inventario con todos los bloques
@@ -257,12 +235,24 @@ export class Interfaz {
 
   pestana(nombre) {
     this.pestanaActual = nombre;
-    const v = nombre === 'vehiculos';
-    this.el.rejilla.classList.toggle('oculto', v);
-    this.el.rejillaVeh.classList.toggle('oculto', !v);
-    this.el.pestBloques.classList.toggle('activa', !v);
-    this.el.pestVehiculos.classList.toggle('activa', v);
-    this.el.info.textContent = v ? 'Elige un vehículo: aparece frente a ti. Sube con E' : 'Elige un bloque para la ranura marcada de tu barra';
+    const paneles = { mochila: $('panMochila'), recetas: $('panRecetas'), bloques: this.el.rejilla, vehiculos: this.el.rejillaVeh };
+    const botones = { mochila: $('pestMochila'), recetas: $('pestRecetas'), bloques: this.el.pestBloques, vehiculos: this.el.pestVehiculos };
+    for (const k of Object.keys(paneles)) {
+      paneles[k].classList.toggle('oculto', k !== nombre);
+      botones[k].classList.toggle('activa', k === nombre);
+    }
+    this.el.info.textContent = {
+      mochila: 'Toca una pieza de armadura para ponértela, comida para comer, o cualquier cosa para cambiarla con la ranura marcada',
+      recetas: 'Toca una receta para fabricarla (las de 3x3 piden una mesa de trabajo cerca)',
+      bloques: 'Elige un bloque para la ranura marcada de tu barra',
+      vehiculos: 'Elige un vehículo: aparece frente a ti. Sube con E',
+    }[nombre];
+    if (this.alCambiarPestana) this.alCambiarPestana(nombre);
+  }
+
+  // Muestra u oculta las pestañas del inventario según el modo de juego
+  pestanasDisponibles(creativo) {
+    for (const id of ['pestBloques', 'pestVehiculos']) $(id).classList.toggle('oculto', !creativo);
   }
 
   // Lista de lo que llevas (esquina de abajo a la izquierda)
@@ -272,17 +262,17 @@ export class Interfaz {
     this.ultimaMochila = clave;
     const e = this.el.mochila;
     e.textContent = '';
-    for (const k of LISTA_OBJETOS) {
+    for (const k of Object.keys(items)) {
       if (!items[k]) continue;
       const f = document.createElement('div');
       f.className = 'obj';
       const img = document.createElement('img');
-      img.src = this.iconosObjeto[k];
+      img.src = iconoObjeto(POR_CLAVE_OBJ[k]);
       img.alt = '';
       const n = document.createElement('b');
       n.textContent = String(items[k]);
       const t = document.createElement('span');
-      t.textContent = OBJETOS[k].nombre;
+      t.textContent = POR_CLAVE_OBJ[k].nombre;
       f.append(img, n, t);
       e.appendChild(f);
     }
@@ -323,12 +313,27 @@ export class Interfaz {
     if (texto && e.textContent !== texto) e.textContent = texto;
   }
 
-  actualizarBarra(barra, seleccion) {
+  // Imagen de un bloque u objeto (por su número)
+  icono(id) {
+    if (esObjeto(id)) { const o = objetoPorId(id); return o ? iconoObjeto(o) : ''; }
+    return this.iconos[id] || '';
+  }
+
+  // items: 9 ranuras { id, n, d } (o null). n = 0 no muestra cantidad
+  actualizarBarra(items, seleccion) {
     this.ranuras.forEach((r, i) => {
-      const src = this.iconos[barra[i]] || '';
+      const it = items[i];
+      const src = it ? this.icono(it.id) : '';
       if (r.img.getAttribute('src') !== src) r.img.src = src;
+      r.img.style.visibility = it ? 'visible' : 'hidden';
       r.boton.classList.toggle('elegida', i === seleccion);
-      r.boton.title = nombreBloque(barra[i]);
+      r.boton.title = it ? nombreDe(it.id) : '';
+      const c = it && it.n > 1 ? String(it.n) : '';
+      if (r.cant.textContent !== c) r.cant.textContent = c;
+      const o = it && esObjeto(it.id) ? objetoPorId(it.id) : null;
+      const gastado = o && o.dur && it.d > 0 ? Math.max(0, 1 - it.d / o.dur) : -1;
+      r.dur.style.display = gastado >= 0 ? 'block' : 'none';
+      if (gastado >= 0) { r.dur.firstChild.style.width = Math.round(gastado * 100) + '%'; r.dur.firstChild.style.background = gastado > 0.5 ? '#7dd957' : gastado > 0.2 ? '#ffd23d' : '#ff5a3d'; }
     });
   }
 
@@ -399,13 +404,15 @@ export class Interfaz {
     if (visible) this.el.cargaBarra.style.width = Math.round(progreso * 100) + '%';
   }
 
-  // Muestra una pantalla: 'titulo', 'pausa', 'inventario' o null (jugando)
+  // Muestra una pantalla por su nombre ('titulo', 'pausa', 'inventario', 'mundos', 'ajustes', 'logros', 'contenedor', 'muerte') o ninguna (null)
   pantalla(nombre) {
-    this.el.titulo.classList.toggle('oculto', nombre !== 'titulo');
-    this.el.pausa.classList.toggle('oculto', nombre !== 'pausa');
-    this.el.inventario.classList.toggle('oculto', nombre !== 'inventario');
-    this.el.hud.classList.toggle('oculto', nombre === 'titulo');
-    document.body.classList.toggle('enTitulo', nombre === 'titulo');
+    for (const el of document.querySelectorAll('.pantalla')) {
+      if (el.id === 'sinWebgl') continue;
+      const mia = 'pantalla' + (nombre ? nombre[0].toUpperCase() + nombre.slice(1) : '#');
+      el.classList.toggle('oculto', el.id !== mia);
+    }
+    this.el.hud.classList.toggle('oculto', nombre === 'titulo' || nombre === 'mundos');
+    document.body.classList.toggle('enTitulo', nombre === 'titulo' || nombre === 'mundos');
   }
 
   // usando: el último control que usaste es el mando · conectado: hay un mando enchufado
