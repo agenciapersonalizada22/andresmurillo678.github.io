@@ -52,8 +52,10 @@ const Musica = (() => {
   let pasosProgramados = 0;  // contador para las pruebas
   let variacion = 0;         // cambia el arpegio en cada vuelta de la canción
 
-  const frec = (midi) => 440 * Math.pow(2, (midi - 69) / 12);
-  const tempoBase = () => CONFIG.musica.tempo || 112;
+  let transp = 0;       // semitonos que se sube/baja la canción según el mundo
+  let tempoMul = 1;
+  const frec = (midi) => 440 * Math.pow(2, (midi + transp - 69) / 12);
+  const tempoBase = () => (CONFIG.musica.tempo || 112) * tempoMul;
 
   // ----------------------------------------------------------- Acordes
   // "bajo" es la nota grave y "notas" las del colchón (todo en La menor)
@@ -471,6 +473,8 @@ const Musica = (() => {
     nodos = { mezcla, volumen, eco, retardo };
   }
 
+  const nivelMusica = () => CONFIG.musica.volumen * NIVEL * Sonido.volMusica();
+
   function duracionPaso() {
     return 60 / ANIMOS[actual].tempo() / 4;
   }
@@ -511,7 +515,7 @@ const Musica = (() => {
       else nodos.retardo.delayTime.setValueAtTime(Math.min(1.4, duracionPaso() * 3), ctx.currentTime);
       paso = 0; // al volver de una pausa se repite el compás desde el principio
       proximaNota = ctx.currentTime + 0.06;
-      fundir(CONFIG.musica.volumen * NIVEL, 0.3);
+      fundir(nivelMusica(), 0.3);
     }
     // Si la compu se trabó mucho, no intentamos tocar todo lo atrasado de golpe
     if (proximaNota < ctx.currentTime) proximaNota = ctx.currentTime + 0.02;
@@ -575,6 +579,11 @@ const Musica = (() => {
   // ----------------------------------------------------------- Lo que usa el juego
   return {
     get activa() { return activa; },
+
+    // Cada mundo suena con otra tonalidad y velocidad
+    mundo(transposicion, tempo) { transp = transposicion || 0; tempoMul = tempo || 1; },
+    aplicarVolumen() { if (nodos && enMarcha) fundir(nivelMusica(), 0.1); },
+
 
     // Pide un ánimo: 'menu', 'juego', 'jefe' o 'fin'.
     // Se puede llamar en cada cuadro: solo hace algo cuando cambia.
