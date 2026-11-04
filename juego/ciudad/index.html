@@ -9,6 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../comun/lobby.css">
+  <link rel="stylesheet" href="extra.css">
 </head>
 <body>
   <canvas id="lienzo" aria-label="Juego Ciudad Libre"></canvas>
@@ -18,6 +20,8 @@
     <a id="aMenu" href="../">← Menú</a>
     <button id="bPausa" type="button" aria-label="Pausa">II</button>
     <button id="bMapa" type="button">MAPA</button>
+    <button id="bTel" type="button" class="extra" aria-label="Teléfono">TEL</button>
+    <button id="bPantalla" type="button" class="extra" aria-label="Pantalla completa">⛶</button>
   </div>
 
   <!-- Controles táctiles (solo se ven en celular) -->
@@ -32,6 +36,8 @@
       <button type="button" class="boton" id="bArma" data-tecla="KeyQ">ARMA</button>
       <button type="button" class="boton" id="bFreno" data-tecla="Space">FRENO</button>
       <button type="button" class="boton" id="bSubir" data-tecla="KeyE">SUBIR</button>
+      <button type="button" class="boton boton-tel" id="bTelT" data-tecla="KeyT">TEL</button>
+      <button type="button" class="boton" id="bRecarga" data-tecla="KeyR">RECARGA</button>
     </div>
   </div>
 
@@ -89,6 +95,12 @@
           </ul>
         </div>
       </div>
+      <div class="acciones fila-portada">
+        <button id="bMulti" type="button" class="principal">MULTIJUGADOR</button>
+        <button id="bAjustesTitulo" type="button">AJUSTES</button>
+        <button id="bRanuraTitulo" type="button">RANURA 1</button>
+      </div>
+      <p class="mini solo-teclado">O = ajustes</p>
       <div id="datosPortada" class="datos"></div>
     </div>
   </div>
@@ -100,6 +112,10 @@
       <div class="acciones">
         <button id="bSeguir" type="button" class="principal">SEGUIR</button>
         <button id="bAbandonar" type="button">ABANDONAR MISIÓN</button>
+        <button id="bTelPausa" type="button">TELÉFONO</button>
+        <button id="bMultiPausa" type="button">MULTIJUGADOR</button>
+        <button id="bAjustes" type="button">AJUSTES</button>
+        <button id="bGuardar" type="button">GUARDAR PARTIDA</button>
         <button id="bSonido" type="button">SONIDO: SÍ</button>
       </div>
       <div id="datosPausa" class="datos"></div>
@@ -119,18 +135,33 @@
 
   <!-- El orden importa: config primero, juego al final -->
   <script src="../comun/mando.js"></script>
+  <script src="../comun/red.js"></script>
+  <script src="../comun/lobby.js"></script>
   <script src="js/config.js"></script>
   <script src="js/util.js"></script>
+  <script src="js/panel.js"></script>
+  <script src="js/ajustes.js"></script>
   <script src="js/sonido.js"></script>
   <script src="js/radio.js"></script>
   <script src="js/entrada.js"></script>
   <script src="js/mundo.js"></script>
   <script src="js/efectos.js"></script>
   <script src="js/vehiculos.js"></script>
+  <script src="js/vehiculos2.js"></script>
   <script src="js/personajes.js"></script>
   <script src="js/misiones.js"></script>
   <script src="js/armas.js"></script>
   <script src="js/hud.js"></script>
   <script src="js/juego.js"></script>
+  <script src="js/lugares.js"></script>
+  <script src="js/clima.js"></script>
+  <script src="js/policia2.js"></script>
+  <script src="js/economia.js"></script>
+  <script src="js/historia.js"></script>
+  <script src="js/logros.js"></script>
+  <script src="js/telefono.js"></script>
+  <script src="js/foto.js"></script>
+  <script src="js/multi.js"></script>
+  <script src="js/arranque.js"></script>
 </body>
 </html>

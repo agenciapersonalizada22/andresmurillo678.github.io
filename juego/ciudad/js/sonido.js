@@ -11,6 +11,7 @@ const Sonido = (() => {
   let bufferRuido = null;
   let silenciado = Util.cargar('silencio', false);
   const ultimaVez = {};
+  const vol = { m: CONFIG.audio.volumen, mu: CONFIG.audio.radio, ef: 1 };
 
   // Sonidos que suenan todo el tiempo (se suben y bajan de volumen)
   let motor = null;
@@ -37,13 +38,13 @@ const Sonido = (() => {
       return;
     }
     maestro = ctx.createGain();
-    maestro.gain.value = silenciado ? 0 : CONFIG.audio.volumen;
+    maestro.gain.value = silenciado ? 0 : vol.m;
     maestro.connect(ctx.destination);
     efectos = ctx.createGain();
-    efectos.gain.value = 1;
+    efectos.gain.value = vol.ef;
     efectos.connect(maestro);
     musica = ctx.createGain();
-    musica.gain.value = CONFIG.audio.radio;
+    musica.gain.value = vol.mu;
     musica.connect(maestro);
     crearContinuos();
   }
@@ -159,6 +160,14 @@ const Sonido = (() => {
     get listo() { return listo(); },
     get silenciado() { return silenciado; },
 
+    // Volúmenes desde los ajustes (maestro, música, efectos)
+    volumenes(m, mu, ef) {
+      vol.m = m; vol.mu = mu; vol.ef = ef;
+      if (maestro) suave(maestro.gain, silenciado ? 0 : m, 0.05);
+      if (musica) suave(musica.gain, mu, 0.05);
+      if (efectos) suave(efectos.gain, ef, 0.05);
+    },
+
     // Cuando la pestaña se esconde (otra pestaña u otra app en el celular)
     // el audio se congela por completo; al volver se reanuda (o con el
     // siguiente toque, si el navegador no deja).
@@ -175,7 +184,7 @@ const Sonido = (() => {
     alternarSilencio() {
       silenciado = !silenciado;
       Util.guardar('silencio', silenciado);
-      if (maestro) suave(maestro.gain, silenciado ? 0 : CONFIG.audio.volumen, 0.05);
+      if (maestro) suave(maestro.gain, silenciado ? 0 : vol.m, 0.05);
       return silenciado;
     },
 
@@ -291,6 +300,11 @@ const Sonido = (() => {
       if (!permitido('estrella', 0.4)) return;
       tono(660, 0.12, 'square', 0.06);
       tono(880, 0.18, 'square', 0.06, null, 0.12);
+    },
+    trueno() {
+      if (!permitido('trueno', 1)) return;
+      ruido(1.8, 0.55, 260, 'lowpass');
+      ruido(0.9, 0.35, 700, 'lowpass', 0.25);
     },
     averia() {
       if (!permitido('averia', 1)) return;

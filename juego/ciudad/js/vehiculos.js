@@ -7,6 +7,7 @@
 // Cada combinación tipo+color se dibuja una sola vez y se reutiliza.
 const SpritesCarro = (() => {
   const cache = new Map();
+  const personalizados = {};   // dibujos extra: tipo -> (g, L, A, color)
   const ESC = 2;   // se dibujan al doble para que se vean nítidos
   const M = 4;     // margen alrededor
 
@@ -68,6 +69,10 @@ const SpritesCarro = (() => {
     const g = lienzo.getContext('2d');
     g.scale(ESC, ESC);
     g.translate(M + L / 2, M + A / 2);
+    if (personalizados[tipo]) {
+      personalizados[tipo](g, L, A, color, { cuerpo, vidrio });
+      return { lienzo, w: L + M * 2, h: A + M * 2 };
+    }
     if (tipo === 'moto') {
       moto(g, L, A, color);
       return { lienzo, w: L + M * 2, h: A + M * 2 };
@@ -175,6 +180,7 @@ const SpritesCarro = (() => {
   }
 
   return {
+    personalizados,
     obtener(tipo, color) {
       const clave = tipo + color;
       let s = cache.get(clave);
@@ -227,8 +233,8 @@ class Carro {
   }
 
   get velocidad() { return Math.hypot(this.vx, this.vy); }
-  get esPolicia() { return this.tipo === 'policia'; }
-  get emergencia() { return this.tipo === 'policia' || this.tipo === 'ambulancia'; }
+  get esPolicia() { return this.tipo === 'policia' || this.tipo === 'swat'; }
+  get emergencia() { return this.tipo === 'policia' || this.tipo === 'swat' || this.tipo === 'ambulancia'; }
   get vidaMax() { return this.t.vida; }
 
   reparar() {
@@ -485,6 +491,7 @@ class Carro {
 
 // Choque entre dos carros (cada carro son 3 círculos en fila)
 function chocarCarros(a, b) {
+  if (a.aereo || b.aereo || a.acuatico !== b.acuatico) return;
   const dx = b.x - a.x, dy = b.y - a.y;
   const rmax = (a.largo + b.largo) / 2 + 2;
   if (dx * dx + dy * dy > rmax * rmax) return;
@@ -807,7 +814,7 @@ class IAPolicia {
       this.directo = false;
     } else {
       const jug = J.jugador;
-      const obj = jug.carro || jug;
+      const obj = this.blanco ? this.blanco() : (window.Multi && Multi.activo ? Multi.objetivoPolicia(c) : (jug.carro || jug));
       const ovx = obj.vx || 0, ovy = obj.vy || 0;
       objVel = Math.hypot(ovx, ovy);
       dist = Math.hypot(obj.x - c.x, obj.y - c.y);
@@ -818,7 +825,7 @@ class IAPolicia {
       if (this.relojVista <= 0) {
         this.relojVista = 0.25;
         this.directo = dist < 900 && Mundo.lineaLibre(c.x, c.y, tx, ty, 12);
-        this.ve = dist < P.vision && Mundo.lineaLibre(c.x, c.y, obj.x, obj.y, 0);
+        this.ve = dist < P.vision * (jug.cubierto ? 0.5 : 1) * (1 - (J.niebla || 0) * 0.4) && Mundo.lineaLibre(c.x, c.y, obj.x, obj.y, 0);
       }
     }
 
@@ -840,7 +847,7 @@ class IAPolicia {
     if (this.modo !== 'retirada') c.multVel = P.velocidad * (0.94 + 0.04 * J.buscado.estrellas);
     if (this.modo !== 'retirada' && this.directo && dist < 260 && objVel < 90) gas = Util.limitar((dist - 80) / 120, -1, 1);
     // Cerrar el paso: si va delante de ti, se atraviesa en la calle
-    if (this.modo !== 'retirada' && this.estilo === 'cerrar' && objVel > 150 && P.agresividad > 0) {
+    if (this.modo !== 'retirada' && this.estilo === 'cerrar' && !this.blanco && objVel > 150 && P.agresividad > 0) {
       const obj = J.jugador.carro || J.jugador;
       const ux = obj.vx / objVel, uy = obj.vy / objVel;
       const rx = c.x - obj.x, ry = c.y - obj.y;

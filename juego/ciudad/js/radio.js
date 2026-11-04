@@ -11,6 +11,9 @@ const Radio = (() => {
     { nombre: 'RADIO NEÓN', frecuencia: '88.5 FM', color: '#ff3d81', estilo: 'neon', bpm: 100 },
     { nombre: 'RITMO LATINO', frecuencia: '101.3 FM', color: '#ffb13d', estilo: 'latino', bpm: 96 },
     { nombre: 'CHIP FM', frecuencia: '106.9 FM', color: '#3df5ff', estilo: 'chip', bpm: 132 },
+    { nombre: 'LO-FI NOCHE', frecuencia: '90.1 FM', color: '#9a8cff', estilo: 'neon', bpm: 78, prog: [{ r: 50, m: true }, { r: 46 }, { r: 48 }, { r: 45, m: true }] },
+    { nombre: 'ROCK CITY', frecuencia: '97.7 FM', color: '#ff4b4b', estilo: 'chip', bpm: 124, prog: [{ r: 45, m: true }, { r: 43 }, { r: 41 }, { r: 43 }] },
+    { nombre: 'SALSA 24', frecuencia: '103.1 FM', color: '#7dff6b', estilo: 'latino', bpm: 108, prog: [{ r: 50, m: true }, { r: 43 }, { r: 48 }, { r: 45 }] },
   ];
   // Acordes de cada estación: r = nota raíz (MIDI), m = menor
   const PROGRESIONES = {
@@ -28,6 +31,8 @@ const Radio = (() => {
   let ctx = null;
   let salida = null, filtro = null, envioEco = null, ruidoBuf = null, pulso = null;
   const motivos = {};
+  const PROG_BASE = {};
+  for (const k in PROGRESIONES) PROG_BASE[k] = PROGRESIONES[k];
 
   const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
 
@@ -246,6 +251,7 @@ const Radio = (() => {
     const e = estaciones[actual];
     const dp = 60 / e.bpm / 4;
     if (tSiguiente < ctx.currentTime - 0.2) tSiguiente = ctx.currentTime + 0.05;
+    PROGRESIONES[e.estilo] = e.prog || PROG_BASE[e.estilo];
     while (tSiguiente < ctx.currentTime + 0.12) {
       TOCAR[e.estilo](paso, tSiguiente, dp);
       paso++;
@@ -291,6 +297,15 @@ const Radio = (() => {
       detener();
     },
     // Cambia de estación: NEÓN → LATINO → CHIP → apagado → NEÓN...
+    // Elige una estación por número (-1 = apagado)
+    elegir(i) {
+      actual = i < 0 || i >= estaciones.length ? -1 : i;
+      Util.guardar('radio', actual);
+      if (temporizador) { clearInterval(temporizador); temporizador = null; }
+      if (encendido && actual >= 0) arrancar(); else detener();
+      return this.estacion;
+    },
+    get indice() { return actual; },
     siguiente() {
       actual = actual + 1 >= estaciones.length ? -1 : actual + 1;
       Util.guardar('radio', actual);

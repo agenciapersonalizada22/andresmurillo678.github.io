@@ -30,7 +30,7 @@ const Entrada = (() => {
   let stickMenuPrev = 0;
   let toastEl = null, toastT = 0;
   let alDesconectar = null;
-  const MENUS = { pausa: '#pausa .acciones button', tienda: '#tienda .acciones button' };
+  const MENUS = { pausa: '#pausa .acciones button', tienda: '#tienda .acciones button', atrapado: null };
 
   const SIN_DESPLAZAR = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'];
 
@@ -49,15 +49,18 @@ const Entrada = (() => {
 
   function configurar() {
     window.addEventListener('keydown', (e) => {
+      if (e.target && /^(TEXTAREA|INPUT|SELECT)$/.test(e.target.tagName)) return;
       if (SIN_DESPLAZAR.includes(e.code)) e.preventDefault();
-      if (!e.repeat) pulsadas.add(e.code);
-      teclas.add(e.code);
+      if (e.code === 'Tab' && window.Multi && Multi.activo && !(window.Lobby && Lobby.abierto) && !Panel.abierto) e.preventDefault();
+      const cod = window.Ajustes ? Ajustes.traducir(e.code) : e.code;
+      if (!e.repeat) pulsadas.add(cod);
+      teclas.add(cod);
       ultimoTeclado = performance.now();
       mandoDejaDeUsarse();
       // Una tecla física (no un botón de pantalla): volvemos a los controles de teclado
       ocultarTactil();
     });
-    window.addEventListener('keyup', (e) => teclas.delete(e.code));
+    window.addEventListener('keyup', (e) => { teclas.delete(e.code); if (window.Ajustes) teclas.delete(Ajustes.traducir(e.code)); });
     window.addEventListener('blur', soltarTodo);
     window.addEventListener('contextmenu', (e) => e.preventDefault());
 
@@ -242,7 +245,15 @@ const Entrada = (() => {
 
     const modo = contexto.modo, carro = contexto.carro;
     const P = Mando.pulsado, S = Mando.sostenido;
-    const izq = Mando.ejes.izq, der = Mando.ejes.der;
+    const zm = window.Ajustes ? Ajustes.v.zonaMuerta : 0;
+    const ajus = (e) => {
+      const m = Math.hypot(e.x, e.y);
+      if (m <= zm) return { x: 0, y: 0 };
+      const k = (m - zm) / (1 - zm) / m;
+      return { x: e.x * k, y: e.y * k };
+    };
+    const izq = ajus(Mando.ejes.izq), der = ajus(Mando.ejes.der);
+    if (window.Ajustes && Ajustes.v.invertirY) der.y = -der.y;
     mdo.usa = true;
 
     if (MENUS[modo]) {
@@ -267,6 +278,8 @@ const Entrada = (() => {
         if (P('A')) pulsadas.add('KeyE');
         if (P('VISTA')) pulsadas.add('KeyM');
         if (P('MENU')) pulsadas.add('KeyP');
+        if (P('ARRIBA')) pulsadas.add('KeyT');
+        if (P('ABAJO') && window.Multi && Multi.activo) pulsadas.add('Tab');
         const cambio = P('Y') || P('LB') || P('RB') || P('IZQ') || P('DER');
         mdo.x = izq.x; mdo.y = izq.y;
         mdo.fuerza = Math.min(1, Math.hypot(izq.x, izq.y));
@@ -280,6 +293,7 @@ const Entrada = (() => {
           if (S('B')) virtMant.add('Space');
         } else {
           if (cambio) pulsadas.add('KeyQ');
+          if (P('B')) pulsadas.add('KeyR');
           if (S('X') || Mando.gatillo.der > 0.5) virtMant.add('KeyF');
           if (S('L3')) virtMant.add('ShiftLeft');
         }
@@ -291,7 +305,12 @@ const Entrada = (() => {
   return {
     configurar,
     leerMando,
-    vibrar(fuerte, suave, ms) { if (hayMando()) Mando.vibrar(fuerte, suave, ms); },
+    vibrar(fuerte, suave, ms) {
+      const a = window.Ajustes ? Ajustes.v : null;
+      if (a && !a.vibracion) return;
+      const k = a ? a.vibIntensidad : 1;
+      if (hayMando()) Mando.vibrar(fuerte * k, suave * k, ms);
+    },
     // Lo llena juego.js cada cuadro: { modo, carro }
     set contexto(c) { contexto = c; },
     set alDesconectar(f) { alDesconectar = f; },

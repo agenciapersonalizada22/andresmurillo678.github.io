@@ -67,13 +67,30 @@ const Util = {
     return `rgb(${r | 0},${g | 0},${b | 0})`;
   },
 
-  // Guardar y cargar datos en el navegador (si no se puede, no pasa nada)
+  // Guardar y cargar datos en el navegador (si no se puede, no pasa nada).
+  // Ranura 1 usa las claves de siempre (ciudad_*); las ranuras 2 y 3 usan ciudad_s2_* / ciudad_s3_*.
+  // Lo global (ajustes, ranura activa) va con ciudad_g_*.
+  ranura: (() => {
+    try { const n = parseInt(localStorage.getItem('ciudad_g_slot'), 10); return n >= 1 && n <= 3 ? n : 1; } catch (e) { return 1; }
+  })(),
+  prefijo(n) { return (n || Util.ranura) === 1 ? 'ciudad_' : 'ciudad_s' + (n || Util.ranura) + '_'; },
   guardar(clave, valor) {
-    try { localStorage.setItem('ciudad_' + clave, JSON.stringify(valor)); } catch (e) { /* sin almacenamiento */ }
+    try { localStorage.setItem(Util.prefijo() + clave, JSON.stringify(valor)); } catch (e) { /* sin almacenamiento */ }
   },
   cargar(clave, defecto) {
     try {
-      const v = localStorage.getItem('ciudad_' + clave);
+      const v = localStorage.getItem(Util.prefijo() + clave);
+      return v === null ? defecto : JSON.parse(v);
+    } catch (e) {
+      return defecto;
+    }
+  },
+  guardarG(clave, valor) {
+    try { localStorage.setItem('ciudad_g_' + clave, JSON.stringify(valor)); } catch (e) { /* sin almacenamiento */ }
+  },
+  cargarG(clave, defecto) {
+    try {
+      const v = localStorage.getItem('ciudad_g_' + clave);
       return v === null ? defecto : JSON.parse(v);
     } catch (e) {
       return defecto;

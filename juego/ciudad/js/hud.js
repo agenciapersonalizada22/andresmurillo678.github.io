@@ -59,7 +59,7 @@ const HUD = (() => {
 
   // A dónde apunta la flecha: la misión, o si no hay, el destino marcado en el mapa
   function destino() {
-    const o = Misiones.objetivo();
+    const o = Misiones.objetivo() || (window.Historia && Historia.objetivo());
     if (o) return o;
     return J.waypoint ? { x: J.waypoint.x, y: J.waypoint.y, color: '#3df5ff' } : null;
   }
@@ -100,6 +100,7 @@ const HUD = (() => {
       const info = Misiones.INFO[m.tipo];
       iconoLetra(g, p.x, p.y, 7 * escalaIcono, info.color, info.letra);
     }
+    if (window.Lugares) for (const l of Lugares.lista()) { const q = aPant(l.x, l.y); if (dentro(q)) iconoLetra(g, q.x, q.y, 6 * escalaIcono, l.color, l.letra); }
     const pc = aPant(Mundo.lugares.comisaria.x, Mundo.lugares.comisaria.y);
     if (dentro(pc)) iconoLetra(g, pc.x, pc.y, 6 * escalaIcono, '#5c8dff', 'P');
     const fase = Math.floor(t * 6) % 2;
@@ -111,6 +112,8 @@ const HUD = (() => {
       g.fillStyle = persigue ? (fase ? '#ff2a3d' : '#3d7bff') : '#7aa2ff';
       g.beginPath(); g.arc(p.x, p.y, (persigue ? 4 : 3) * escalaIcono, 0, Math.PI * 2); g.fill();
     }
+    if (window.Policia2) { const hp = Policia2.posHeli(); if (hp) { const q = aPant(hp.x, hp.y); if (dentro(q)) { g.fillStyle = Math.floor(t * 6) % 2 ? '#ff2a3d' : '#3d7bff'; g.beginPath(); g.arc(q.x, q.y, 5 * escalaIcono, 0, Math.PI * 2); g.fill(); } } }
+    J.llamar('iconosMapa', g, aPant, escalaIcono, dentro);
     const a = Misiones.activa;
     if (a && a.tipo === 'carrera') {
       for (let k = a.k + 1; k < a.puntos.length; k++) {
@@ -175,7 +178,8 @@ const HUD = (() => {
     const txt = `${String(hh).padStart(2, '0')}:${String(Math.floor(mm / 5) * 5).padStart(2, '0')}`;
     const noche = J.noche > 0.5;
     texto(g, txt, x + 7 * u, y, 13 * u, '#ffffff', 800, 'center');
-    if (J.lluvia > 0.25) textoNormal(g, 'LLUVIA', x, y + 17 * u, 10 * u, '#9fc4ff', 'center', 800);
+    const cl = window.Clima ? Clima.nombre : (J.lluvia > 0.25 ? 'LLUVIA' : '');
+    if (cl) textoNormal(g, cl, x, y + 17 * u, 10 * u, '#9fc4ff', 'center', 800);
     const ix = x - 26 * u;
     if (noche) {
       g.fillStyle = '#e8ecff';
@@ -219,13 +223,14 @@ const HUD = (() => {
 
   function panelCarro(g, x, y, w, u) {
     const c = J.jugador.carro;
-    const kmh = Math.round(Math.abs(c.vf) * 0.225);
+    const mph = Ajustes.v.unidades === 'mph';
+    const kmh = Math.round(Math.abs(c.vf) * 0.225 * (mph ? 0.621 : 1));
     const h = 74 * u;
     panel(g, x, y, w, h, 'rgba(61,245,255,0.35)');
     texto(g, String(kmh), x + 12 * u, y + 22 * u, 26 * u, '#ffffff', 800, 'left');
     g.font = `800 ${Math.round(26 * u)}px ${FUENTE}`;
     const ancho = g.measureText(String(kmh)).width;
-    textoNormal(g, 'km/h', x + 16 * u + ancho, y + 26 * u, 11 * u, '#b9b2ff', 'left');
+    textoNormal(g, mph ? 'mph' : 'km/h', x + 16 * u + ancho, y + 26 * u, 11 * u, '#b9b2ff', 'left');
     textoNormal(g, c.t.nombre.toUpperCase(), x + w - 10 * u, y + 16 * u, 10 * u, '#b9b2ff', 'right', 700);
     // Barra de vida
     const f = c.vida / c.vidaMax;
@@ -245,11 +250,12 @@ const HUD = (() => {
     const a = Armas.info();
     const h = 40 * u;
     panel(g, x, y, w, h, 'rgba(255,138,61,0.6)');
-    textoNormal(g, a.nombre.toUpperCase(), x + 12 * u, y + 14 * u, 11 * u, '#ff8a3d', 'left', 800);
+    textoNormal(g, a.nombre.toUpperCase() + (J.jugador.cubierto ? ' · COBERTURA' : ''), x + 12 * u, y + 14 * u, 10.5 * u, J.jugador.cubierto ? '#7dff9a' : '#ff8a3d', 'left', 800);
     const sin = a.balas <= 0;
-    textoNormal(g, sin ? 'SIN MUNICIÓN' : `${a.balas} / ${a.max}`, x + 12 * u, y + 29 * u, 12 * u, sin ? '#ff6b6b' : '#ffffff', 'left', 800);
+    const txt = sin ? 'SIN MUNICIÓN' : a.recargando > 0 ? 'RECARGANDO...' : `${a.carga} / ${a.balas - a.carga}`;
+    textoNormal(g, txt, x + 12 * u, y + 29 * u, 12 * u, sin ? '#ff6b6b' : a.recargando > 0 ? '#ffd23d' : '#ffffff', 'left', 800);
     const bw = 8 * u;
-    for (let k = 0; k < Math.min(a.balas, 12); k++) {
+    for (let k = 0; k < Math.min(a.carga, 12); k++) {
       g.fillStyle = '#ffd23d';
       g.fillRect(x + w - 12 * u - (k + 1) * (bw / 2 + 2 * u), y + h - 16 * u, bw / 2, 11 * u);
     }
@@ -268,7 +274,7 @@ const HUD = (() => {
     const anchoLinea = g.measureText(info.linea).width, cabe = w - 24 * u;
     if (anchoLinea > cabe) tamLinea = Math.max(8, tamLinea * cabe / anchoLinea);
     textoNormal(g, info.linea, x + 14 * u, y + 34 * u, tamLinea, '#ffffff', 'left');
-    const obj = Misiones.objetivo();
+    const obj = destino();
     const p = J.jugador.carro || J.jugador;
     if (obj) {
       const m = Math.round(Math.hypot(obj.x - p.x, obj.y - p.y) / 16);
@@ -441,6 +447,7 @@ const HUD = (() => {
     const aPant = (x, y) => ({ x: x0 + x * k, y: y0 + y * k });
     const ei = Util.limitar(tam / 400, 0.9, 1.6);
     dibujarIconos(g, aPant, ei, t, () => true);
+    if (window.Lugares) Lugares.dibujarBarrios(g, aPant, tam);
     J.zonaMapa = { x0, y0, tam };
     if (J.waypoint) {
       const q = aPant(J.waypoint.x, J.waypoint.y);
@@ -450,7 +457,7 @@ const HUD = (() => {
       g.beginPath(); g.moveTo(q.x, q.y); g.lineTo(q.x + 6 * ei, q.y - 12 * ei); g.lineTo(q.x, q.y - 22 * ei); g.lineTo(q.x - 6 * ei, q.y - 12 * ei);
       g.closePath(); g.fill(); g.stroke();
     }
-    const obj = Misiones.objetivo();
+    const obj = destino();
     if (obj) {
       const q = aPant(obj.x, obj.y);
       const pul = 1 + Math.sin(t * 6) * 0.25;
@@ -465,8 +472,8 @@ const HUD = (() => {
     if (!angosto) texto(g, 'MAPA', W / 2, 30, 20 * u, '#3df5ff', 800, 'center');
     // Leyenda
     const items = [['T', 'Taxi', Misiones.INFO.taxi.color], ['E', 'Entregas', Misiones.INFO.entrega.color],
-      ['C', 'Carrera', Misiones.INFO.carrera.color], ['R', 'Taller', Misiones.INFO.taller.color], ['A', 'Armería', Misiones.INFO.tienda.color], ['P', 'Policía', '#5c8dff']];
-    const porFila = angosto ? 3 : 6;
+      ['C', 'Carrera', Misiones.INFO.carrera.color], ['R', 'Taller', Misiones.INFO.taller.color], ['A', 'Armería', Misiones.INFO.tienda.color], ['P', 'Policía', '#5c8dff'], ['!', 'Historia', '#ff7a3d'], ['H', 'Casas', '#ffb13d'], ['N', 'Tuning', '#ff3dd8'], ['B', 'Boutique', '#ffd0e8'], ['$', 'Cajero', '#7dff9a']];
+    const porFila = angosto ? 4 : 6;
     const paso = Math.min(110 * u, (W - 20) / porFila);
     items.forEach(([l, n, c], i) => {
       const fila = Math.floor(i / porFila), col = i % porFila;
@@ -508,7 +515,7 @@ const HUD = (() => {
   }
 
   function dibujar(g, W, H, t) {
-    const u = Util.limitar(Math.min(W, H) / 520, 0.72, 1.2);
+    const u = Util.limitar(Math.min(W, H) / 520, 0.72, 1.2) * (Ajustes.v.textoGrande ? 1.22 : 1);
     J.hudEscala = u;
     // Márgenes que respetan la muesca / esquinas redondas del celular
     const s = J.seguro || { t: 0, r: 0, b: 0, l: 0 };
@@ -527,7 +534,7 @@ const HUD = (() => {
 
     const finIzq = dineroYEstrellas(g, mIzq, 64 + bajarArriba, u, t);
 
-    const info = Misiones.info();
+    const info = Misiones.info() || (window.Historia && Historia.info());
     if (info) {
       // Si cabe, el panel de misión va arriba al centro, entre la barra y el
       // minimapa (pantallas anchas y celulares acostados). Si no cabe
@@ -571,6 +578,7 @@ const HUD = (() => {
     // La flecha va al final para que ningún panel la tape
     flechaObjetivo(g, W, H, u, t);
 
+    J.llamar('dibujarHUD', g, W, H, u, t);
     if (J.modo === 'pausa') return;
     alertaPolicia(g, W, H, u, t);
     avisoCentral(g, W, H, u);

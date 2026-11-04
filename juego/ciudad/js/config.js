@@ -17,7 +17,7 @@ const CONFIG = {
   semilla: 2025,
 
   mundo: {
-    tamano: 72,            // casillas por lado (más = ciudad más grande, pero más lenta; mínimo 56)
+    tamano: 96,            // casillas por lado (más = ciudad más grande, pero más lenta; mínimo 56)
     casilla: 64,           // tamaño de una casilla (no lo cambies si no sabes qué hace)
     manzanaMin: 7,         // tamaño mínimo de una manzana, en casillas
     manzanaMax: 10,        // tamaño máximo de una manzana
@@ -90,6 +90,31 @@ const CONFIG = {
       velMax: 380, acel: 190, freno: 700, giroMax: 1.9, radioGiro: 56, agarre: 6.5, masa: 3.4, vida: 280,
       colores: ['#d8d8d8', '#2f6d8a', '#c98a2e', '#8a3a2f', '#5b6b3a'],
     },
+    suv: {
+      nombre: 'SUV', largo: 60, ancho: 30,
+      velMax: 580, acel: 350, freno: 920, giroMax: 2.7, radioGiro: 36, agarre: 8.8, masa: 1.5, vida: 150,
+      colores: ['#2e2e36', '#d8d8d8', '#6b2f3c', '#2f6d8a', '#4f5d3a', '#8d8d99'],
+    },
+    superdeportivo: {
+      nombre: 'Superdeportivo', largo: 56, ancho: 28,
+      velMax: 930, acel: 720, freno: 1300, giroMax: 3.4, radioGiro: 33, agarre: 11, masa: 0.9, vida: 80,
+      colores: ['#ff2a55', '#3df5ff', '#ffd23d', '#b06bff', '#f2f2f2', '#14141a'],
+    },
+    swat: {
+      nombre: 'SWAT', largo: 70, ancho: 33,
+      velMax: 650, acel: 430, freno: 1000, giroMax: 2.6, radioGiro: 40, agarre: 9, masa: 2.4, vida: 280,
+      colores: ['#1d2230'],
+    },
+    lancha: {
+      nombre: 'Lancha', largo: 66, ancho: 26, acuatico: true,
+      velMax: 680, acel: 340, freno: 380, giroMax: 2.3, radioGiro: 30, agarre: 2.4, masa: 1.2, vida: 120,
+      colores: ['#f2f2f2', '#ff2a55', '#3df5ff', '#ffd23d'],
+    },
+    helicoptero: {
+      nombre: 'Helicóptero', largo: 76, ancho: 28, aereo: true,
+      velMax: 720, acel: 360, freno: 300, giroMax: 2.4, radioGiro: 10, agarre: 1.6, masa: 1.5, vida: 170,
+      colores: ['#d8d8d8', '#ff8a00', '#3df5ff', '#2e2e36'],
+    },
     ambulancia: {
       nombre: 'Ambulancia', largo: 66, ancho: 31,
       velMax: 620, acel: 380, freno: 950, giroMax: 2.7, radioGiro: 38, agarre: 8.5, masa: 1.9, vida: 190,
@@ -117,7 +142,7 @@ const CONFIG = {
     velocidad: 230,        // velocidad normal del tráfico
     probPolicia: 0.07,     // probabilidad de que un carro del tráfico sea patrulla
     // Qué tan común es cada tipo de carro (más número = más común)
-    mezcla: { compacto: 6, camioneta: 2, taxi: 2, deportivo: 1, moto: 2, camion: 1, ambulancia: 0.6 },
+    mezcla: { compacto: 6, camioneta: 2, suv: 2, taxi: 2, deportivo: 1, superdeportivo: 0.25, moto: 2, camion: 1, ambulancia: 0.6 },
     pitar: true,           // los carros pitan si les estorbas
   },
 
@@ -166,8 +191,11 @@ const CONFIG = {
   // ----------------------------------------------------------- Armas (a pie)
   // alcance en pixeles · cadencia en segundos entre disparos · balas por compra
   armas: {
-    pistola: { nombre: 'Pistola', precio: 150, alcance: 560, cadencia: 0.28, perdigones: 1, dispersion: 0.03, municionMax: 60, paquete: 24, precioPaquete: 60 },
-    escopeta: { nombre: 'Escopeta', precio: 450, alcance: 300, cadencia: 0.85, perdigones: 6, dispersion: 0.2, municionMax: 24, paquete: 8, precioPaquete: 80 },
+    pistola: { nombre: 'Pistola', precio: 150, alcance: 560, cadencia: 0.28, perdigones: 1, dispersion: 0.03, municionMax: 60, paquete: 24, precioPaquete: 60, cargador: 12, recarga: 1.1, dano: 3.5 },
+    escopeta: { nombre: 'Escopeta', precio: 450, alcance: 300, cadencia: 0.85, perdigones: 6, dispersion: 0.2, municionMax: 24, paquete: 8, precioPaquete: 80, cargador: 6, recarga: 1.8, dano: 3.5 },
+    // cargador: balas por recarga · recarga: segundos para recargar
+    subfusil: { nombre: 'Subfusil', precio: 900, alcance: 470, cadencia: 0.085, perdigones: 1, dispersion: 0.1, municionMax: 240, paquete: 60, precioPaquete: 120, cargador: 30, recarga: 1.5, dano: 2 },
+    fusil: { nombre: 'Fusil', precio: 2400, alcance: 720, cadencia: 0.13, perdigones: 1, dispersion: 0.045, municionMax: 180, paquete: 45, precioPaquete: 160, cargador: 30, recarga: 1.9, dano: 3.2 },
     ropa: { precio: 40 },   // cambiar de ropa en la tienda
   },
 
