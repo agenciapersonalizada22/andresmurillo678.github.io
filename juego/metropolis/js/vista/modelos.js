@@ -1,4 +1,5 @@
 // Modelos low-poly de todos los edificios (cada nivel con su propia forma).
+import * as THREE from '../../lib/three.module.min.js';
 import { Malla } from './malla.js';
 
 const PI = Math.PI;
@@ -324,6 +325,65 @@ M.ayuntamiento = (m, n) => {
   m.ventanas(0, 0, 1.7, 1.4, 0.1, 0.55, 1, 6, [0, 1, 3], 0.4, 0.55);
 };
 
+
+M.granja = (m) => {
+  m.suelo(0, 0.012, 0, 2.9, 2.9, 0x8a6b3f);
+  for (let i = 0; i < 5; i++) m.suelo(0.35, 0.02, -1.1 + i * 0.5, 1.9, 0.26, i % 2 ? 0x7fbf4a : 0x5fa83a);
+  m.caja(-0.95, 0, -0.95, 0.95, 0.5, 0.75, 0xb5473a); m.aguas(-0.95, 0.5, -0.95, 1.0, 0.8, 0.28, 0x7a3a30, 0xb5473a);
+  m.caja(-0.95, 0, -0.56, 0.3, 0.32, 0.04, 0xf2e8d0);
+  m.cil(1.0, 0, -1.0, 0.24, 0.95, 0xd0d4da, 8); m.cono(1.0, 0.95, -1.0, 0.26, 0.22, 0x9aa1ad, 8);
+  m.cil(0.55, 0, -1.15, 0.14, 0.6, 0xc8ccd2, 8); m.cono(0.55, 0.6, -1.15, 0.16, 0.14, 0x9aa1ad, 8);
+  arbolito(m, -1.2, 0.9, 1.6); arbolito(m, -0.7, 1.2, 1.4, 0x3fa24a);
+};
+M.mina = (m) => {
+  m.suelo(0, 0.012, 0, 2.9, 2.9, 0x7d7468);
+  m.cono(-0.7, 0, 0.7, 0.9, 0.7, 0x6b5f55, 7); m.cono(-0.2, 0, 1.0, 0.5, 0.4, 0x7a6e62, 6, 1);
+  for (const [x, z] of [[-0.2, -0.2], [0.4, -0.2], [-0.2, -0.8], [0.4, -0.8]]) m.caja(x + 0.1, 0, z - 0.4, 0.07, 1.3, 0.07, 0x555b66);
+  m.caja(0.2, 1.3, -0.7, 0.8, 0.07, 0.7, 0x555b66); m.cil(0.2, 1.1, -0.7, 0.2, 0.05, 0xd9a441, 8);
+  m.caja(1.0, 0, -0.9, 0.9, 0.55, 0.8, 0x8a8f99); m.caja(1.0, 0.55, -0.9, 1.0, 0.05, 0.9, 0x5b606b);
+  m.caja(0.9, 0.04, 0.8, 0.4, 0.2, 0.28, 0xd9a441); m.cil(0.75, 0, 0.8, 0.08, 0.06, 0x20242b, 6); m.cil(1.05, 0, 0.8, 0.08, 0.06, 0x20242b, 6);
+};
+M.centrotec = (m) => {
+  m.caja(0, 0, 0.1, 2.3, 0.7, 1.4, 0xdfe8f2); m.caja(0, 0.7, 0.1, 2.35, 0.04, 1.45, 0x3a4a63);
+  m.caja(-0.6, 0.74, 0.1, 0.9, 0.6, 1.0, 0x8fb8e8); m.cil(0.6, 0.74, 0.1, 0.35, 0.5, 0xeaf2fb, 12, 0.3);
+  m.caja(0.95, 0, -1.0, 0.7, 1.4, 0.6, 0x6f94c4); m.ventanas(0.95, -1.0, 0.7, 0.6, 0.1, 1.3, 5, 3, [0, 1, 2, 3], 0.6, 0.55);
+  m.ventanas(0, 0.1, 2.3, 1.4, 0.08, 0.64, 2, 8, [0, 2], 0.6, 0.6);
+  for (let i = 0; i < 4; i++) m.caja(-0.9 + i * 0.4, 0.02, -1.0, 0.3, 0.05, 0.5, 0x2a3f6a);
+  m.cil(-1.1, 0.74, 0.5, 0.025, 0.7, 0xe8e8e8, 4); m.caja(-1.1, 1.44, 0.5, 0.18, 0.05, 0.18, 0x3df5ff);
+};
+M.hotel = (m) => {
+  m.caja(0, 0, 0, 1.3, 1.5, 0.95, 0xf1d9b5); m.caja(0, 1.5, 0, 1.38, 0.05, 1.02, 0x8a6b5a);
+  m.ventanas(0, 0, 1.3, 0.95, 0.35, 1.45, 4, 5, [0, 1, 2, 3], 0.55, 0.55);
+  m.quad([-0.6, 0.34, 0.48], [0.6, 0.34, 0.48], [0.6, 0.18, 0.7], [-0.6, 0.18, 0.7], 0xff4d6d, [0, 0.6, 0.8]);
+  m.caja(0, 1.55, 0, 0.7, 0.22, 0.08, 0xff4dc8);
+  m.caja(0, 0, 0.62, 0.3, 0.3, 0.04, 0x3a4a63);
+  arbolito(m, -0.8, 0.8, 1.2); arbolito(m, 0.8, 0.8, 1.2);
+};
+M.puerto = (m) => {
+  m.suelo(0, 0.012, 0, 2.9, 2.9, 0x7b8591);
+  const col = [0xd9534f, 0x3b82f6, 0xf2c14e, 0x34d399, 0xffffff];
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 2; j++) { m.caja(-0.95 + i * 0.5, 0.01, -1.0 + j * 0.3, 0.44, 0.22, 0.24, col[(i + j * 2) % 5]); if ((i + j) % 2) m.caja(-0.95 + i * 0.5, 0.23, -1.0 + j * 0.3, 0.44, 0.22, 0.24, col[(i * 3 + j) % 5]); }
+  for (const x of [-0.2, 1.1]) for (const z of [0.2, 0.8]) m.cil(x, 0, z, 0.04, 1.3, 0xf2c14e, 5);
+  m.caja(0.45, 1.3, 0.5, 1.6, 0.08, 0.7, 0xf2c14e); m.caja(1.0, 0.8, 0.5, 0.06, 0.5, 0.06, 0x555b66);
+  m.caja(-0.9, 0, 1.0, 0.9, 0.5, 0.6, 0xe8e8e8); m.caja(-0.9, 0.5, 1.0, 0.95, 0.05, 0.65, 0x3a4a63);
+};
+M.reciclaje = (m) => {
+  m.caja(0, 0, -0.1, 1.5, 0.55, 1.1, 0x3fae6a); m.aguas(0, 0.55, -0.1, 1.55, 1.15, 0.24, 0x2a8a52, 0x3fae6a);
+  m.cil(0.6, 0, 0.55, 0.18, 0.7, 0xd0d4da, 8); m.cono(0.6, 0.7, 0.55, 0.2, 0.14, 0x9aa1ad, 8);
+  m.caja(-0.5, 0.01, 0.62, 0.3, 0.25, 0.3, 0x3b82f6); m.caja(-0.1, 0.01, 0.62, 0.3, 0.25, 0.3, 0xf2c14e);
+  m.quad([-0.2, 0.3, 0.46], [0.2, 0.3, 0.46], [0.2, 0.05, 0.46], [-0.2, 0.05, 0.46], 0xeaffef, [0, 0, 1]);
+};
+M.refugio = (m, n) => {
+  m.caja(0, 0, 0, 1.4, 0.6 + 0.1 * n, 1.1, 0xe8e8e8); m.caja(0, 0.6 + 0.1 * n, 0, 1.46, 0.05, 1.16, 0xd9534f);
+  m.caja(0, 0.1, 0.56, 0.5, 0.06, 0.02, 0x3fae6a); m.caja(0, 0.07, 0.56, 0.06, 0.52, 0.02, 0x3fae6a);
+  m.cil(-0.5, 0.65 + 0.1 * n, -0.2, 0.15, 0.04, 0xd9534f, 10); m.ventanas(0, 0, 1.4, 1.1, 0.15, 0.55, 1, 5, [0, 2], 0.55, 0.6);
+  anexos(m, 1.4, 1.1, 0.65 + 0.1 * n, n);
+};
+M.dique = (m) => {
+  m.caja(0, 0, 0, 1, 0.28, 0.34, 0x9aa1ad); m.caja(0, 0.28, 0, 1.02, 0.04, 0.38, 0x6b717d);
+  m.quad([-0.5, 0, 0.17], [0.5, 0, 0.17], [0.5, 0.1, 0.4], [-0.5, 0.1, 0.4], 0x8a9099, [0, 0.5, 0.8]);
+};
+
 export const ARBOLES = {
   pino: (m) => { pino(m, 0, 0, 1.5, 0x2f8f4e); },
   redondo: (m) => { arbolito(m, 0, 0, 1.6, 0x56b45a); },
@@ -332,13 +392,35 @@ export const ARBOLES = {
   },
 };
 
+// Variantes de color y azotea para que los barrios no se vean repetidos (v = 0 es el modelo base).
+const HUE = [0, 0.06, -0.07, 0.14, -0.15, 0.24, -0.26, 0.4];
+const LUZ = [1, 1.04, 0.96, 1.06, 0.94, 1.02, 0.98, 1.08];
+function variar(m, v, id) {
+  const C = m.C, hue = HUE[v % 8], luz = LUZ[v % 8], col = new THREE.Color(), hsl = {};
+  for (let i = 0; i < C.length; i += 3) {
+    col.setRGB(C[i], C[i + 1], C[i + 2]).getHSL(hsl);
+    if (hsl.s > 0.12 && hsl.l > 0.3 && hsl.l < 0.92) hsl.h = (hsl.h + hue + 1) % 1;
+    hsl.l = Math.min(1, hsl.l * luz);
+    col.setHSL(hsl.h, hsl.s, hsl.l); C[i] = col.r; C[i + 1] = col.g; C[i + 2] = col.b;
+  }
+  let top = 0, ex = 0.3;
+  for (let i = 1; i < m.P.length; i += 3) if (m.P[i] > top) top = m.P[i];
+  for (let i = 0; i < m.P.length; i += 3) ex = Math.max(ex, Math.min(0.42, Math.abs(m.P[i])));
+  const k = (v >> 1) % 4, o = ex * 0.45;
+  if (k === 1) { m.cil(-o, top, o, 0.07, 0.12, 0x8a8f99, 8); m.cono(-o, top + 0.12, o, 0.08, 0.06, 0x6b717d, 8); }
+  else if (k === 2) { m.cil(o, top, -o, 0.012, 0.22, 0xdddddd, 4); m.caja(o, top + 0.18, -o, 0.1, 0.01, 0.01, 0xdddddd); }
+  else if (k === 3) { m.caja(0, top, 0, ex * 0.7, 0.02, ex * 0.7, 0x2a3f6a); m.caja(o, top + 0.02, -o, 0.08, 0.06, 0.08, 0xa3aab4); }
+  if (v % 2 === 1 && /^zona[RC]$/.test(id)) m.caja(0, top, -ex * 0.35, ex * 0.5, 0.05, 0.03, [0xff7a59, 0x3df5ff, 0xffd54a, 0x5dff9a][(v >> 1) % 4]);
+}
+
 const memo = new Map();
-export function modelo(id, n = 0) {
-  const k = id + ':' + n;
+export function modelo(id, n = 0, v = 0) {
+  const k = id + ':' + n + ':' + v;
   if (memo.has(k)) return memo.get(k);
   const m = new Malla();
   const f = M[id];
   if (f) f(m, n || 1);
+  if (v > 0 && f) variar(m, v, id);
   memo.set(k, m);
   return m;
 }

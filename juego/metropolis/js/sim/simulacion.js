@@ -1,6 +1,8 @@
 // Paso de simulación por hora, cierre de día, eventos y progreso.
 import { N, azar, notar, fx, darXp, quitarEdif, edifEn, idx } from './ciudad.js';
-import { ITEM, ZONAS, NIVELES, MISIONES, LOGROS, TECH, DIARIA } from './datos.js';
+import { ITEM, ZONAS, NIVELES, MISIONES, LOGROS, TECH, DIARIA, ESC } from './datos.js';
+import { pasoClima } from './clima.js';
+import { desastresDia, pasoTornado, autoReparar, repararTodo, costoReparacion } from './desastres.js';
 import { recalcular, tierPorPop } from './recalculo.js';
 import { limitar } from './util.js';
 
@@ -117,7 +119,7 @@ function fuegos(c) {
     const vec = [];
     for (let y = Math.floor(b.cy) - 3; y <= Math.floor(b.cy) + 3; y++) for (let x = Math.floor(b.cx) - 3; x <= Math.floor(b.cx) + 3; x++) {
       const o = edifEn(c, x, y);
-      if (!o || o === b || o.fuego > 0 || vec.includes(o)) continue;
+      if (!o || o === b || o.fuego > 0 || o.t === 'ayuntamiento' || vec.includes(o)) continue;
       if (ITEM[o.t].tipo === 'zona' && o.n === 0) continue;
       vec.push(o);
     }
@@ -145,25 +147,31 @@ function encender(c) {
 }
 
 function cierreDia(c) {
-  const s = c.s, rate = c.impuesto / 10, t = c.tech;
-  const resTax = s.pop * 0.45 * rate * (0.55 + 0.45 * s.empleoRatio);
+  const s = c.s, imp = c.imp, t = c.tech, ord = c.ord;
+  const eduK = 1 + 0.3 * s.cob.edu * (ord.educObl ? 1.25 : 1);
+  const resTax = s.pop * 0.45 * (imp.R / 10) * (0.55 + 0.45 * s.empleoRatio);
   const fC = limitar((0.3 * s.pop) / (s.empC * 0.8 + 1), 0.4, 1.3);
-  const comTax = s.empC * 1.7 * rate * fC * (t.comercio ? 1.1 : 1);
-  const indTax = s.empI * 1.3 * rate * (t.industria ? 1.1 : 1);
+  const comTax = s.empC * 1.7 * (imp.C / 10) * fC * (t.comercio ? 1.1 : 1) * eduK * (1 - s.crimen * 0.003);
+  const indTax = s.empI * 1.3 * (imp.I / 10) * (t.industria ? 1.1 : 1) * eduK * (ord.aire ? 0.92 : 1) * (c.espec === 'tecnologia' ? 1.2 : 1);
   let mult = 1 + (c.evt.festival > 0 ? 0.25 : 0) + (c.evt.boom > 0 && c.evt.boomTipo === 1 ? 0.35 : 0) + (s.felicidad - 50) / 250;
   mult = Math.max(0.5, mult);
-  const ingreso = (resTax + comTax + indTax) * mult + s.bonoIng + s.bonoMon * (t.turismo ? 1.5 : 1);
-  const gasto = c.mantEdif * (t.redes ? 0.9 : 1) + s.mantVias;
+  let ingreso = (resTax + comTax + indTax) * mult + s.bonoIng + s.bonoMon * (t.turismo ? 1.5 : 1) * (c.espec === 'turismo' ? 2 : 1) + s.ingExport + s.ingTurismo + s.ingVenta;
+  if (c.esc && c.esc.id === 'crisis') ingreso *= 0.7;
+  const gasto = c.mantEdif * (t.redes ? 0.9 : 1) + s.mantVias + c.costoOrd + s.costoImp;
   c.ingresoDia = Math.round(ingreso); c.gastoDia = Math.round(gasto);
   c.neto = Math.round(ingreso - gasto);
   c.dinero += c.neto;
   c.hist.push(c.neto); if (c.hist.length > 14) c.hist.shift();
+  const sr = c.serie;
+  for (const [k, v] of [['pop', s.pop], ['din', c.dinero], ['fel', s.felicidad], ['ing', c.ingresoDia], ['gas', c.gastoDia]]) { sr[k].push(Math.round(v)); if (sr[k].length > 120) sr[k].shift(); }
+  if (c.modo === 'sandbox') c.dinero = 99999999;
   const ay = c.edif.size ? [...c.edif.values()].find((b) => b.t === 'ayuntamiento') : null;
   if (ay) fx(c, { k: 'dinero', x: ay.cx, y: ay.cy, v: c.neto, dia: true });
   fx(c, { k: 'sonido', n: 'moneda' });
   if (s.bonoPuntos) { c.puntos += Math.floor(s.bonoPuntos); notar(c, '+' + Math.floor(s.bonoPuntos) + ' punto de mejora', 'ok'); }
   if (c.dinero < 0) notar(c, 'Estás en números rojos: baja gastos o sube impuestos', 'mal');
 
+  desastresDia(c);
   // eventos aleatorios
   const pend = c.evt.pend;
   c.evt.pend = pend.filter((p) => p.vence > c.t.dia);
@@ -195,6 +203,16 @@ export function resolverEvento(c, i, op) {
   if (!p) return { ok: false, razon: 'Ya pasó' };
   const quitar = () => { const k = c.evt.pend.indexOf(p); if (k >= 0) c.evt.pend.splice(k, 1); };
   if (op === 'ignorar') { quitar(); return { ok: true }; }
+  if (p.tipo === 'terremoto' || p.tipo === 'tornado' || p.tipo === 'inundacion') {
+    if (op === 'reparar') { const r = repararTodo(c); if (r.ok) { darXp(c, 30); quitar(); } return r; }
+    quitar(); return { ok: true };
+  }
+  if (p.tipo === 'epidemia') {
+    if (c.dinero < p.costo) return { ok: false, razon: 'Dinero insuficiente' };
+    c.dinero -= p.costo; c.evt.epidemia = 0; c.sucio = true; quitar(); darXp(c, 30);
+    notar(c, 'Campaña sanitaria: la epidemia termina', 'ok'); fx(c, { k: 'sonido', n: 'ok' });
+    return { ok: true, costo: p.costo };
+  }
   if (p.tipo === 'incendio') {
     const b = c.edif.get(p.id), cs = 150;
     if (!b || b.fuego <= 0) { quitar(); return { ok: true }; }
@@ -235,8 +253,25 @@ export function resolverEvento(c, i, op) {
 // ---------------------------------------------------------------- progreso
 export function misionActual(c) { return c.misDone < MISIONES.length ? MISIONES[c.misDone] : null; }
 
+export function chequearEscenario(c) {
+  const e = c.esc && ESC[c.esc.id];
+  if (!e || c.esc.estado !== 'activo') return;
+  const p = e.prog(c);
+  c.esc.texto = p.texto;
+  if (p.ok) {
+    c.esc.estado = 'ganado'; c.cont.escGanados++; c.dinero += 20000; c.puntos += 5;
+    fx(c, { k: 'escenario', ok: true, nombre: e.nombre }); fx(c, { k: 'sonido', n: 'logro' });
+    notar(c, '¡Escenario completado: ' + e.nombre + '! +$20.000', 'ok');
+  } else if ((e.dias && c.t.dia > e.dias) || (e.fallo && e.fallo(c))) {
+    c.esc.estado = 'perdido';
+    fx(c, { k: 'escenario', ok: false, nombre: e.nombre }); fx(c, { k: 'sonido', n: 'error' });
+    notar(c, 'Escenario fallido: ' + e.nombre + '. Puedes seguir jugando', 'mal');
+  }
+}
+
 export function chequearProgreso(c) {
   if (c.sucio || !c.s) recalcular(c);
+  chequearEscenario(c);
   const t = tierPorPop(c.s.pop);
   while (c.tier < t) {
     c.tier++;
@@ -319,6 +354,10 @@ export function calcOffline(c, ahora) {
 export function paso(c) {
   if (c.sucio || !c.s) recalcular(c);
   c.t.hora++;
+  if (pasoClima(c, azar)) fx(c, { k: 'clima', v: c.clima.tipo });
+  pasoTornado(c);
+  if (c.r && c.r.def) autoReparar(c);
+  if (c.evt.epidemia > 0) { c.evt.epidemia--; c.sucio = true; }
   crecer(c);
   poblar(c);
   fuegos(c);
@@ -332,7 +371,9 @@ export function paso(c) {
   recalcular(c);
   chequearProgreso(c);
   if (c.sucio) recalcular(c);
+  if (c.modo === 'sandbox') c.dinero = 99999999;
 }
 
+export { repararTodo, costoReparacion };
 export function avanzar(c, horas) { for (let i = 0; i < horas; i++) paso(c); }
 export { edifEn, idx };

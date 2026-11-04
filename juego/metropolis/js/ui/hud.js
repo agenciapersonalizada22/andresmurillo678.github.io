@@ -1,6 +1,7 @@
 // HUD: cifras, barras, notificaciones, números flotantes, eventos y ficha de edificio.
 import * as THREE from '../../lib/three.module.min.js';
-import { NIVELES, ITEM, MISIONES, ZONAS, NOMBRES_ZONA } from '../sim/datos.js';
+import { NIVELES, ITEM, MISIONES, ZONAS, NOMBRES_ZONA, ESTACIONES, CLIMAS, ESC } from '../sim/datos.js';
+import { estacion } from '../sim/clima.js';
 import { xpNecesaria, puedeMejorar, costoMejora, esMia } from '../sim/ciudad.js';
 import { misionActual, razonSubida, costoImpulso } from '../sim/simulacion.js';
 import { dinero, numero } from '../sim/util.js';
@@ -12,8 +13,12 @@ export const ICONO_EVT = {
   apagon: '<svg viewBox="0 0 24 24"><path d="M13 2L5 14h6l-1 8 8-12h-6z"/></svg>',
   festival: '<svg viewBox="0 0 24 24"><path d="M12 3l2 5 5 .5-4 3.5 1.5 5L12 14.5 7.5 17l1.5-5L5 8.5 10 8z"/></svg>',
   boom: '<svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>',
+  terremoto: '<svg viewBox="0 0 24 24"><path d="M2 12h4l2-5 3 10 3-8 2 3h6"/></svg>',
+  tornado: '<svg viewBox="0 0 24 24"><path d="M4 5h16M6 9h12M8 13h8M10 17h4M12 21h0"/></svg>',
+  inundacion: '<svg viewBox="0 0 24 24"><path d="M2 14c3-3 5 3 8 0s5 3 8 0 3 0 4 0M2 19c3-3 5 3 8 0s5 3 8 0 3 0 4 0M12 3v6"/></svg>',
+  epidemia: '<svg viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/><circle cx="12" cy="12" r="8"/></svg>',
 };
-const NOMBRE_EVT = { incendio: 'Incendio', apagon: 'Apagón', festival: 'Festival', boom: 'Boom económico' };
+const NOMBRE_EVT = { incendio: 'Incendio', apagon: 'Apagón', festival: 'Festival', boom: 'Boom económico', terremoto: 'Terremoto', tornado: 'Tornado', inundacion: 'Inundación', epidemia: 'Epidemia' };
 export { esc, NOMBRE_EVT };
 
 export function crearHud(J) {
@@ -51,7 +56,7 @@ export function crearHud(J) {
     set('vPob', numero(s.pop));
     set('vNivel', nv.nombre.toUpperCase());
     ancho('barNivel', sig ? (s.pop - nv.pop) / (sig.pop - nv.pop) : 1);
-    set('vFecha', 'Día ' + c.t.dia + ' · ' + String(c.t.hora).padStart(2, '0') + 'h');
+    set('vFecha', 'Día ' + c.t.dia + ' · ' + String(c.t.hora).padStart(2, '0') + 'h · ' + ESTACIONES[estacion(c)].slice(0, 3) + ' ' + (CLIMAS[c.clima.tipo] || ''));
     for (const b of document.querySelectorAll('#velocidad .vel')) b.classList.toggle('act', +b.dataset.vel === J.vel);
     const pE = Math.round(s.ratioE * 100), pA = Math.round(s.ratioA * 100);
     set('vEn', String(pE)); set('vAg', String(pA)); set('vFe', String(s.felicidad));
@@ -60,7 +65,13 @@ export function crearHud(J) {
     barraDem('dR', c.dem.R); barraDem('dC', c.dem.C); barraDem('dI', c.dem.I);
     const em = $('puntosBadge'); const pt = c.puntos > 0 ? String(c.puntos) : ''; if (cache.pt !== pt) { cache.pt = pt; em.textContent = pt; em.classList.toggle('v', !!pt); }
     const r = resumenMision(c), ob = $('objetivo');
-    if (!r) { ob.classList.add('oculto'); } else {
+    if (c.esc && c.esc.id && ESC[c.esc.id]) {
+      ob.classList.remove('oculto');
+      const e = ESC[c.esc.id];
+      set('objTxt', c.esc.estado === 'ganado' ? '¡Completado! ' + e.nombre : c.esc.estado === 'perdido' ? 'Fallido: ' + e.nombre : (c.esc.texto || e.desc));
+      ancho('objBarra', e.dias ? c.t.dia / e.dias : 0);
+      ob.firstElementChild.textContent = 'ESCENARIO · ' + e.nombre.toUpperCase();
+    } else if (!r) { ob.classList.add('oculto'); } else {
       ob.classList.remove('oculto');
       const txt = (c.misDone < 8 ? r.m.titulo + ' — ' + r.m.desc : r.m.titulo) + ' (' + numero(r.v) + '/' + numero(r.m.meta) + ')';
       set('objTxt', txt); ancho('objBarra', r.v / r.m.meta);
@@ -165,14 +176,15 @@ export function crearHud(J) {
         else ac += `<button type="button" class="btn dorado foco ${p.ok ? '' : 'off'}" data-acc="mejorar">Mejorar ${dinero(costoMejora(c, b))}</button>`;
       }
     }
+    if (b.dan) { cuerpo += '<div class="aviso" style="color:var(--rojo)">Dañado: no funciona hasta repararlo (Ciudad > Resumen)</div>'; }
     if (b.fuego > 0) { cuerpo += '<div class="aviso" style="color:var(--rojo)">¡En llamas!</div>'; ac += `<button type="button" class="btn peligro foco" data-acc="apagar">Apagar $150</button>`; }
     if (b.t !== 'ayuntamiento') ac += `<button type="button" class="btn peligro foco" data-acc="demoler">Demoler</button>`;
     ac += `<button type="button" class="btn foco" data-acc="cerrar">Cerrar</button>`;
     return `<h3><span>${esc(t)}</span>${tag ? `<em>${tag}</em>` : ''}</h3>${cuerpo}<div class="acciones">${ac}</div>`;
   }
   function htmlVia(x, y, c) {
-    const v = c.via[y * 72 + x], con = c.r && c.r.con[y * 72 + x];
-    return `<h3><span>${v === 2 ? 'Avenida' : 'Calle'}</span></h3><div class="filas">${fila('Conexión', con ? 'Al Ayuntamiento' : 'Aislada', con ? 'bien' : 'mal')}${fila('Tráfico', Math.round(c.s.cong * 100) + '%', c.s.cong > 0.8 ? 'mal' : 'bien')}</div><div class="acciones"><button type="button" class="btn peligro foco" data-acc="demolerVia">Demoler</button><button type="button" class="btn foco" data-acc="cerrar">Cerrar</button></div>`;
+    const v = c.via[y * 72 + x], con = c.r && c.r.con[y * 72 + x], q = c.r.flujo[y * 72 + x] / (v === 2 ? 18 : 6), pte = c.terr[y * 72 + x] === 1;
+    return `<h3><span>${pte ? 'Puente' : v === 2 ? 'Avenida' : 'Calle'}</span></h3><div class="filas">${fila('Conexión', con ? 'Al Ayuntamiento' : 'Aislada', con ? 'bien' : 'mal')}${fila('Tráfico aquí', Math.round(q * 100) + '%', q > 1 ? 'mal' : 'bien')}</div><div class="acciones"><button type="button" class="btn peligro foco" data-acc="demolerVia">Demoler</button><button type="button" class="btn foco" data-acc="cerrar">Cerrar</button></div>`;
   }
 
   let infoClave = '';

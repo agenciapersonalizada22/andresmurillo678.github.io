@@ -56,3 +56,25 @@ export function geoLoseta(color) {
   m.caja(0, 0.0, 0, 0.96, 0.025, 0.96, 0x6b7380, true);
   return m.geos().cuerpo;
 }
+
+// Puente: cubierta bajo la calzada, pilares y barandillas en los lados sin continuación.
+const memoPuente = new Map();
+export function geoPuente(mask) {
+  if (memoPuente.has(mask)) return memoPuente.get(mask);
+  const m = new Malla();
+  m.caja(0, -0.17, 0, 1, 0.17, 1, 0x8d8a85);
+  for (const [x, z] of [[-0.36, -0.36], [0.36, 0.36]]) m.cil(x, -0.5, z, 0.07, 0.36, 0x6b6966, 6);
+  const R = 0xd3d3d0, y = 0.035;
+  if (!(mask & 1)) m.caja(0, y, -0.46, 1, 0.09, 0.05, R);
+  if (!(mask & 4)) m.caja(0, y, 0.46, 1, 0.09, 0.05, R);
+  if (!(mask & 2)) m.caja(0.46, y, 0, 0.05, 0.09, 1, R);
+  if (!(mask & 8)) m.caja(-0.46, y, 0, 0.05, 0.09, 1, R);
+  const g = m.geos().cuerpo;
+  memoPuente.set(mask, { cuerpo: g, vent: null });
+  return memoPuente.get(mask);
+}
+export function geoSemaforo() {
+  const m = new Malla();
+  m.caja(0, 0, 0, 0.035, 0.2, 0.035, 0x2a2e36); m.caja(0, 0.2, 0, 0.07, 0.07, 0.07, 0x1a1d23);
+  return m.geos().cuerpo;
+}

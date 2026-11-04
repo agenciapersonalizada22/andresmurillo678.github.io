@@ -3,6 +3,7 @@ import * as THREE from '../../lib/three.module.min.js';
 import * as C from '../sim/ciudad.js';
 import * as Audio from './audio.js';
 import * as Foco from './foco.js';
+import { tecla } from './almacen.js';
 
 const ray = new THREE.Raycaster();
 const ndc = new THREE.Vector2();
@@ -96,10 +97,10 @@ export function crearControles(J) {
       const [a, b] = [...ptrs.values()], d = Math.hypot(a.x - b.x, a.y - b.y), cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2;
       J.camara.escalaObj = Math.max(J.camara.minE, Math.min(J.camara.maxE, pinch.e * pinch.d / Math.max(20, d)));
       J.camara.escala = J.camara.escalaObj;
-      J.camara.arrastrar(cx - pinch.cx, cy - pinch.cy, cv.clientHeight);
+      J.camara.arrastrar((cx - pinch.cx) * J.ajustes.sensibilidad, (cy - pinch.cy) * J.ajustes.sensibilidad * (J.ajustes.invertirY ? -1 : 1), cv.clientHeight);
       pinch.cx = cx; pinch.cy = cy;
     } else if (gesto.tipo === 'pan') {
-      if (p.mov) J.camara.arrastrar(dx, dy, cv.clientHeight);
+      if (p.mov) { const k = J.ajustes.sensibilidad; J.camara.arrastrar(dx * k, dy * k * (J.ajustes.invertirY ? -1 : 1), cv.clientHeight); }
     } else if (gesto.tipo === 'pintar') {
       const c = celdaDe(plano(e.clientX, e.clientY));
       if (c) { H.sobre = c; H.actualizarPintura(c.x, c.y); }
@@ -134,7 +135,7 @@ export function crearControles(J) {
   cv.addEventListener('wheel', (e) => {
     if (J.bloqueado()) return;
     e.preventDefault();
-    J.camara.zoom(e.deltaY > 0 ? 1.12 : 0.89);
+    J.camara.zoom(Math.pow(e.deltaY > 0 ? 1.12 : 0.89, J.ajustes.sensibilidad));
   }, { passive: false });
   for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, (e) => e.preventDefault());
   cv.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
@@ -155,18 +156,21 @@ export function crearControles(J) {
       return;
     }
     if (J.bloqueado()) return;
-    if (k === 'Escape') { if (!H.cancelar()) J.paneles.pausa(); e.preventDefault(); return; }
+    const T = (a) => tecla(J.ajustes, a);
+    if (k === 'Escape') { if (J.enFoto) { J.modoFoto(false); return; } if (!H.cancelar()) J.paneles.pausa(); e.preventDefault(); return; }
     if ((e.ctrlKey || e.metaKey) && kl === 'z') { J.deshacer(); e.preventDefault(); return; }
-    if (kl === 'b') { J.paneles.construir(); return; }
-    if (kl === 'x') { H.modo === 'demoler' ? H.poner(null) : H.poner('demoler'); return; }
-    if (kl === 'o') { J.paneles.objetivos(); return; }
-    if (kl === 'm') { J.paneles.mejoras(); return; }
-    if (kl === 'c') { J.paneles.ciudad(); return; }
-    if (kl === 'l') { J.ciclarCapa(); return; }
-    if (kl === 'q') { J.camara.girar(-1); return; }
-    if (kl === 'e') { J.camara.girar(1); return; }
-    if (k === ' ') { J.fijarVel(J.vel === 0 ? (J.velPrev || 1) : 0); e.preventDefault(); return; }
-    if (k >= '1' && k <= '4') { J.fijarVel([1, 2, 4, 8][+k - 1] === 8 ? 4 : [1, 2, 4][+k - 1]); return; }
+    if (J.enFoto) { teclas.add(kl); return; }
+    if (kl === T('construir')) { J.paneles.construir(); return; }
+    if (kl === T('demoler')) { H.modo === 'demoler' ? H.poner(null) : H.poner('demoler'); return; }
+    if (kl === T('objetivos')) { J.paneles.objetivos(); return; }
+    if (kl === T('mejoras')) { J.paneles.mejoras(); return; }
+    if (kl === T('ciudad')) { J.paneles.ciudad(); return; }
+    if (kl === T('capas')) { J.ciclarCapa(); return; }
+    if (kl === T('foto')) { J.modoFoto(true); return; }
+    if (kl === T('girarIzq')) { J.camara.girar(-1); return; }
+    if (kl === T('girarDer')) { J.camara.girar(1); return; }
+    if (kl === T('pausa')) { if (!(J.multi && J.multi.activo && !J.multi.esAnfitrion)) J.fijarVel(J.vel === 0 ? (J.velPrev || 1) : 0); e.preventDefault(); return; }
+    if (k >= '1' && k <= '3') { J.fijarVel([1, 2, 4][+k - 1]); return; }
     if (k === '+' || k === '=') J.camara.zoom(0.85);
     if (k === '-' || k === '_') J.camara.zoom(1.18);
     if (k === 'Enter' && H.tipoPint === 'edificio') H.confirmarEdificio();
@@ -179,11 +183,12 @@ export function crearControles(J) {
   function teclado(dt) {
     if (Foco.hay() || J.bloqueado()) return;
     let dr = 0, ad = 0;
-    if (teclas.has('a') || teclas.has('ArrowLeft')) dr -= 1;
-    if (teclas.has('d') || teclas.has('ArrowRight')) dr += 1;
-    if (teclas.has('w') || teclas.has('ArrowUp')) ad += 1;
-    if (teclas.has('s') || teclas.has('ArrowDown')) ad -= 1;
-    if (dr || ad) { const v = (10 + J.camara.escala * 1.3) * dt; J.camara.moverPantalla(dr * v, ad * v); }
+    const T = (a) => tecla(J.ajustes, a);
+    if (teclas.has(T('izq')) || teclas.has('ArrowLeft')) dr -= 1;
+    if (teclas.has(T('der')) || teclas.has('ArrowRight')) dr += 1;
+    if (teclas.has(T('arriba')) || teclas.has('ArrowUp')) ad += 1;
+    if (teclas.has(T('abajo')) || teclas.has('ArrowDown')) ad -= 1;
+    if (dr || ad) { const v = (10 + J.camara.escala * 1.3) * dt * J.ajustes.sensibilidad; J.camara.moverPantalla(dr * v, ad * v); }
   }
 
   // ------------------------------------------------ mando
@@ -196,8 +201,21 @@ export function crearControles(J) {
     if (r.t <= 0) { r.t = 0.11; fn(); }
   }
   let cooldownGiro = 0;
+  // ejes con la zona muerta del jugador (lee el gamepad crudo)
+  function ejesMando(M) {
+    const zm = J.ajustes.zonaMuerta;
+    try {
+      const l = navigator.getGamepads ? navigator.getGamepads() : [];
+      for (const p of l) if (p && p.connected && p.axes.length >= 4) {
+        const f = (x, y) => { const m = Math.hypot(x, y); if (m < zm) return { x: 0, y: 0 }; const k = Math.min(1, (m - zm) / (1 - zm)) / m; return { x: x * k, y: y * k }; };
+        return { izq: f(p.axes[0], p.axes[1]), der: f(p.axes[2], p.axes[3]) };
+      }
+    } catch (e) { /* nada */ }
+    return M.ejes;
+  }
   function mando(dt) {
     const M = window.Mando; if (!M) return;
+    if (window.Lobby && window.Lobby.abierto) return;
     M.leer();
     if (!M.conectado) { J.mandoActivo = false; return; }
     J.mandoActivo = M.activo;
@@ -218,19 +236,20 @@ export function crearControles(J) {
     }
     if (J.bloqueado()) return;
     Audio.iniciar();
-    const cam = J.camara;
+    const cam = J.camara, ej = ejesMando(M);
     // movimiento y zoom
-    const v = (4 + cam.escala * 1.0) * dt;
-    if (M.ejes.izq.x || M.ejes.izq.y) cam.moverPantalla(M.ejes.izq.x * v, -M.ejes.izq.y * v);
-    if (M.ejes.der.y) cam.zoom(Math.exp(M.ejes.der.y * dt * 1.2));
+    const v = (4 + cam.escala * 1.0) * dt * J.ajustes.sensibilidad;
+    if (ej.izq.x || ej.izq.y) cam.moverPantalla(ej.izq.x * v, -ej.izq.y * v * (J.ajustes.invertirY ? -1 : 1));
+    if (ej.der.y) cam.zoom(Math.exp(ej.der.y * dt * 1.2));
     if (M.gatillo.izq > 0.05 || M.gatillo.der > 0.05) cam.zoom(Math.exp((M.gatillo.izq - M.gatillo.der) * dt * 1.2));
     cooldownGiro -= dt;
-    if (Math.abs(M.ejes.der.x) > 0.7 && cooldownGiro <= 0) { cam.girar(M.ejes.der.x > 0 ? 1 : -1); cooldownGiro = 0.45; }
+    if (Math.abs(ej.der.x) > 0.7 && cooldownGiro <= 0) { cam.girar(ej.der.x > 0 ? 1 : -1); cooldownGiro = 0.45; }
     // cursor = centro de pantalla
     const rc = cv.getBoundingClientRect();
     const pc = plano(rc.left + rc.width / 2, rc.top + rc.height / 2);
     if (pc) { H.mundo = pc; H.sobre = celdaDe(pc); if (H.tipoPint === 'edificio') H.moverFant(pc.x, pc.z); }
     const s = H.sobre;
+    if (J.enFoto) { if (A) J.pedirFoto = true; if (B) J.modoFoto(false); if (M.pulsado('X')) document.getElementById('fotoFiltro').click(); return; }
     // botones
     const tp = H.tipoPint;
     if (A && s) {
@@ -249,11 +268,12 @@ export function crearControles(J) {
     if (M.pulsado('LB')) J.paneles.construir(J.catRel(-1));
     if (M.pulsado('RB')) J.paneles.construir(J.catRel(1));
     if (M.pulsado('MENU')) J.paneles.pausa();
-    if (M.pulsado('VISTA')) { if (J.c.evt.pend.length) J.paneles.evento(0); else J.paneles.objetivos(); }
+    if (M.pulsado('VISTA')) { if (J.c.evt.pend.length) J.paneles.evento(0); else J.paneles.ciudad(); }
     if (M.pulsado('L3')) { const ay = C.ayuntamiento(J.c); if (ay) cam.centrar(ay.cx, ay.cy); }
     if (M.pulsado('R3')) J.ciclarCapa();
     if (M.pulsado('ARRIBA')) J.cambiarVel(1);
     if (M.pulsado('ABAJO')) J.cambiarVel(-1);
+    if (M.pulsado('R3') && J.enFoto) J.modoFoto(false);
     if (M.pulsado('IZQ')) { if (H.item) H.ciclar(-1); else cam.girar(-1); }
     if (M.pulsado('DER')) { if (H.item) H.ciclar(1); else cam.girar(1); }
   }

@@ -3,7 +3,12 @@ import * as THREE from '../lib/three.module.min.js';
 import * as C from './sim/ciudad.js';
 import { HORA_SEG, CATEGORIAS, ITEM } from './sim/datos.js';
 import { recalcular } from './sim/recalculo.js';
-import { paso, chequearProgreso, resolverEvento, impulsar, calcOffline, diariaDisponible, premioDiaria } from './sim/simulacion.js';
+import { paso, chequearProgreso, calcOffline, diariaDisponible, premioDiaria } from './sim/simulacion.js';
+import { ejecutar } from './sim/comandos.js';
+import { estacion } from './sim/clima.js';
+import { ORDEN_CALIDAD } from './vista/escena.js';
+import { ClimaVista } from './vista/clima.js';
+import { crearMulti } from './ui/multi.js';
 import { serializar, deserializar } from './sim/guardado.js';
 import { ciudadDemo } from './sim/demo.js';
 import { dinero } from './sim/util.js';
@@ -23,14 +28,15 @@ import { crearHerramientas } from './ui/herramientas.js';
 import { crearControles } from './ui/controles.js';
 
 const $ = (id) => document.getElementById(id);
-const CAPAS = [null, 'energia', 'agua', 'seguridad', 'salud', 'educacion', 'contaminacion', 'valor'];
-const NOM_CAPA = { energia: 'LUZ', agua: 'AGUA', seguridad: 'SEG', salud: 'SAL', educacion: 'EDU', contaminacion: 'CO2', valor: 'SUELO' };
+const CAPAS = [null, 'trafico', 'energia', 'agua', 'seguridad', 'salud', 'educacion', 'contaminacion', 'ruido', 'crimen', 'valor', 'defensa'];
+const NOM_CAPA = { trafico: 'TRÁF', energia: 'LUZ', agua: 'AGUA', seguridad: 'SEG', salud: 'SAL', educacion: 'EDU', contaminacion: 'CO2', ruido: 'RUIDO', crimen: 'CRIM', valor: 'SUELO', defensa: 'DEF' };
+const PALETAS = { ninguno: { bien: 0x2fd27a, mal: 0xd9453d }, protanopia: { bien: 0x3a86ff, mal: 0xffa21c }, deuteranopia: { bien: 0x3a86ff, mal: 0xffa21c }, tritanopia: { bien: 0x2fd27a, mal: 0xff3b8a } };
 const VELS = [0, 1, 2, 4];
 
 const J = {
   canvas: $('lienzo'), c: null, slot: 0, vel: 1, velPrev: 1, pausaUI: false, enTitulo: true, ajustes: null,
   sel: null, selVia: null, infoCapa: false, capa: null, mandoActivo: false, ratonHover: false, foco: Foco,
-  acum: 0, vistaSucia: true, arbolesSucios: false, shake: 0, guardarEn: 0,
+  acum: 0, vistaSucia: true, arbolesSucios: false, shake: 0, guardarEn: 0, fps: 60, enFoto: false,
 };
 window.__metro = J;
 
@@ -49,14 +55,23 @@ function iniciar() {
   if (forzada || !J.ajustes.calidad) J.ajustes.calidad = autoCalidad();
   Audio.configurar(J.ajustes.sfx, J.ajustes.musica);
 
-  J.escena = new Escena(J.canvas, J.ajustes.calidad);
+  J.escena = new Escena(J.canvas, J.ajustes.calidad, J.ajustes);
   J.camara = new Camara();
   J.camara.tam(J.escena.w, J.escena.h);
   J.terreno = new Terreno(J.escena.scene, J.escena.q);
   J.edificios = new Edificios(J.escena.scene, J.escena);
   J.particulas = new Particulas(J.escena.scene, 600);
+  J.climaVista = new ClimaVista(J.escena.scene);
   J.agentes = new Agentes(J.escena.scene, J.escena.q);
 
+  J.cmd = (cmd) => J.multi && J.multi.activo && !J.multi.esAnfitrion ? J.multi.enviarComando(cmd) : J.ejecutarLocal(cmd);
+  J.ejecutarLocal = (cmd, de) => {
+    J.c.actor = de == null ? (J.multi && J.multi.activo ? J.multi.miId : 0) : de;
+    const r = ejecutar(J.c, cmd);
+    J.c.actor = 0;
+    if (r.ok && J.alComando) J.alComando(cmd, r, de);
+    return r;
+  };
   J.hud = crearHud(J);
   J.paneles = crearPaneles(J);
   crearHerramientas(J);
@@ -65,7 +80,7 @@ function iniciar() {
 
   J.serializar = serializar;
   J.deserializarTexto = (t) => deserializar(JSON.parse(t));
-  J.bloqueado = () => J.enTitulo || Foco.hay();
+  J.bloqueado = () => J.enTitulo || Foco.hay() || !!(window.Lobby && window.Lobby.abierto);
   J.aviso = (m, t) => J.hud.nota(m, t);
   J.vibrar = vibrar;
   J.sacudir = () => { J.shake = 0.25; };
@@ -95,16 +110,25 @@ function iniciar() {
   J.aPantalla = (x, y, z) => { _v.set(x, y, z).project(J.camara.cam); const r = J.canvas.getBoundingClientRect(); return [r.left + (_v.x * 0.5 + 0.5) * r.width, r.top + (-_v.y * 0.5 + 0.5) * r.height]; };
   J.guardar = guardar;
   J.aplicarCalidad = aplicarCalidad;
+  J.aplicarAjustes = aplicarAjustes;
+  J.fijarCapa = fijarCapa;
+  J.modoFoto = modoFoto;
+  J.paleta = PALETAS.ninguno;
+  J.multi = crearMulti(J);
   J.comprarParcela = (px, py) => {
-    const r = C.comprarParcela(J.c, px, py);
+    const r = J.cmd({ k: 'parcela', px, py });
     if (r.ok) { J.vibrar('nivel'); cambioFuerte(); J.herr.poner(J.herr.item && J.herr.tipoPint === 'comprar' ? J.herr.item : null); }
     else { J.aviso(r.razon, 'mal'); Audio.tocar('error'); J.vibrar('error'); }
   };
+  J.cargarCiudad = cargarCiudad; J.empezar = empezar; J.empezarMulti = empezarMulti; J.pasosRed = pasosRed;
   J.jugarRanura = jugarRanura;
   J.crearPartida = crearPartida;
   J.volverATitulo = volverATitulo;
 
   for (const ev of ['pointerup', 'touchend', 'click', 'keydown']) window.addEventListener(ev, () => Audio.iniciar(), { capture: true });
+  aplicarAjustes('todo');
+  document.addEventListener('visibilitychange', () => { Audio.pausar(document.hidden); if (!document.hidden) pedirWake(); });
+  if (J.multi.hayEnlace()) setTimeout(() => J.multi.abrirLobby(), 400);
   iconoSonido();
   mostrarTitulo();
   if (window.Mando) window.Mando.alConectar(() => { mensajeMando('Mando conectado'); });
@@ -127,10 +151,15 @@ function enlazarUI() {
   on('bConstruir', () => J.paneles.construir());
   on('bDemoler', () => (J.herr.modo === 'demoler' ? J.herr.poner(null) : J.herr.poner('demoler')));
   on('bDeshacer', () => J.deshacer());
-  on('bObjetivos', () => J.paneles.objetivos());
+  on('bCiudad', () => J.paneles.ciudad());
+  on('bFoto', () => modoFoto(true));
+  on('bPantalla', () => pantallaCompleta());
+  on('fotoSalir', () => modoFoto(false));
+  on('fotoDisparo', () => disparoFoto());
+  on('fotoFiltro', () => cambiarFiltro());
   on('bMejoras', () => J.paneles.mejoras());
   on('bRotar', () => J.camara.girar(1));
-  on('bCapas', () => J.ciclarCapa());
+  on('bCapas', () => J.paneles.capasPanel());
   on('bSonido', () => { const on = !(J.ajustes.sfx || J.ajustes.musica); J.ajustes.sfx = J.ajustes.musica = on; Audio.configurar(on, on); Almacen.guardarAjustes(J.ajustes); iconoSonido(); if (on) Audio.tocar('ok'); });
   on('bCentrar', () => { const ay = C.ayuntamiento(J.c); if (ay) J.camara.centrar(ay.cx, ay.cy); });
   on('hOk', () => J.herr.confirmarEdificio());
@@ -152,25 +181,27 @@ function vibrar(tipo) {
   if (!J.ajustes.vibracion) return;
   const M = window.Mando;
   const P = { construir: [0.15, 0.35, 70], ok: [0, 0.5, 60], error: [0.8, 0.3, 150], nivel: [0.6, 0.6, 320], derribo: [0.7, 0.2, 130] }[tipo];
-  if (M && M.conectado && P) M.vibrar(P[0], P[1], P[2]);
+  if (M && M.conectado && P) { const k = J.ajustes.vibracionInt; M.vibrar(P[0] * k, P[1] * k, P[2]); }
   else if (navigator.vibrate && !(M && M.conectado)) { try { navigator.vibrate(tipo === 'error' ? [25, 30, 25] : tipo === 'nivel' ? [40, 40, 90] : 12); } catch (e) { /* nada */ } }
 }
 
 function fijarVel(v) {
+  if (J.multi && J.multi.activo) { J.multi.pedirVel(v); return; }
   if (v === J.vel) return;
   if (J.vel > 0) J.velPrev = J.vel;
   J.vel = v;
 }
 
-function ciclarCapa() {
-  const i = (CAPAS.indexOf(J.capa) + 1) % CAPAS.length;
-  J.capa = CAPAS[i];
+function ciclarCapa() { fijarCapa(CAPAS[(CAPAS.indexOf(J.capa) + 1) % CAPAS.length]); }
+function fijarCapa(capa) {
+  J.capa = capa;
   J.terreno.colorear(J.c, J.capa);
+  J.edificios.trafico(J.c, J.capa === 'trafico', J.paleta);
   $('capaTxt').textContent = J.capa ? NOM_CAPA[J.capa] : '';
   $('bCapas').classList.toggle('on', !!J.capa);
   J.capaVer = J.c.rVer;
   Audio.tocar('tecla');
-  if (J.capa) J.aviso('Capa: ' + { energia: 'electricidad', agua: 'agua', seguridad: 'bomberos y policía', salud: 'salud', educacion: 'educación', contaminacion: 'contaminación', valor: 'valor del suelo' }[J.capa] + ' (verde = bien)', 'info');
+  if (J.capa) J.aviso('Capa: ' + NOM_CAPA[J.capa].toLowerCase() + ' (verde = bien, rojo = mal)', 'info');
 }
 
 function abrirInfoCapa() {
@@ -183,24 +214,17 @@ function seleccionar(id) {
 function accionInfo(acc) {
   const c = J.c;
   if (acc === 'cerrar') { J.deseleccionar(); return; }
-  if (acc === 'demolerVia' && J.selVia) { const r = C.demoler(c, [[J.selVia.x, J.selVia.y]]); J.deseleccionar(); if (r.ok) cambioFuerte(); return; }
+  if (acc === 'demolerVia' && J.selVia) { const r = J.cmd({ k: 'demoler', celdas: [[J.selVia.x, J.selVia.y]] }); J.deseleccionar(); if (r.ok) cambioFuerte(); return; }
   const b = c.edif.get(J.sel);
   if (!b) return;
-  if (acc === 'demoler') { const r = C.demoler(c, [[b.x, b.y]]); J.deseleccionar(); if (r.ok) { J.vibrar('derribo'); cambioFuerte(); } return; }
-  let r = null;
-  if (acc === 'mejorar') r = C.mejorar(c, b.id);
-  else if (acc === 'impulsar') r = impulsar(c, b.id);
-  else if (acc === 'apagar') {
-    const i = c.evt.pend.findIndex((p) => p.tipo === 'incendio' && p.id === b.id);
-    if (i >= 0) r = resolverEvento(c, i, 'apagar');
-    else if (c.dinero >= 150) { c.dinero -= 150; b.fuego = 0; c.cont.incendios++; c.sucio = true; r = { ok: true }; }
-    else r = { ok: false, razon: 'Dinero insuficiente' };
-  }
+  if (acc === 'demoler') { const r = J.cmd({ k: 'demoler', celdas: [[b.x, b.y]] }); J.deseleccionar(); if (r.ok) { J.vibrar('derribo'); cambioFuerte(); } return; }
+  const k = { mejorar: 'mejorar', impulsar: 'impulsar', apagar: 'apagar' }[acc];
+  const r = k ? J.cmd({ k, id: b.id }) : null;
   if (r && r.ok) { J.vibrar('construir'); cambioFuerte(); } else if (r) { J.aviso(r.razon, 'mal'); Audio.tocar('error'); J.vibrar('error'); }
 }
 
 function deshacer() {
-  const r = C.deshacer(J.c);
+  const r = J.cmd({ k: 'deshacer' });
   if (r.ok) { J.aviso('Deshecho: ' + r.nombre, 'info'); J.terreno.colorear(J.c, J.capa); J.terreno.bordesDe(J.c); J.arbolesSucios = true; cambioFuerte(); J.vibrar('ok'); }
   else { J.aviso(r.razon, 'info'); Audio.tocar('error'); }
 }
@@ -230,7 +254,7 @@ function procesarFx() {
         E.anim(f.id, 'crece'); P.polvo(f.x, f.y, f.w, f.h, 14); P.rafaga(f.x + f.w / 2, 0.3, f.y + f.h / 2, 0xffd54a, 10); J.arbolesSucios = true; break;
       case 'via': case 'zona':
         f.celdas.slice(0, 10).forEach((e) => P.rafaga(e.x + 0.5, 0.1, e.y + 0.5, f.k === 'via' ? 0xb8bcc6 : 0x7fd18a, 2, 1.2, 0.06)); J.arbolesSucios = true; break;
-      case 'derribo': P.polvo(f.x, f.y, f.w, f.h, 20); break;
+      case 'derribo': P.polvo(f.x, f.y, f.w, f.h, J.ajustes.reducirMov ? 6 : 20); break;
       case 'dinero':
         if (Math.abs(f.v) >= 1) J.hud.flotante(f.x, f.y, (f.v > 0 ? '+' : '-') + dinero(Math.abs(f.v)), f.dia ? (f.v < 0 ? 'neg' : 'xl') : f.v < 0 ? 'neg' : '');
         break;
@@ -246,8 +270,11 @@ function procesarFx() {
         J.camara.centrar(f.px * 8 + 4, f.py * 8 + 4);
         break;
       case 'abandono': P.humo(f.x + 0.5, 0.5, f.y + 0.5, 0x6a6a72); break;
-      case 'festival': J.fuegosHasta = performance.now() + 9000; break;
+      case 'festival': if (J.ajustes.reducirMov) break; J.fuegosHasta = performance.now() + 9000; break;
       case 'sonido': Audio.tocar(f.n); break;
+      case 'terremoto': J.shake = 1.2 * (J.ajustes.reducirMov ? 0 : 1); P.polvo(f.x - 3, f.y - 3, 6, 6, 30); J.camara.centrar(f.x, f.y); J.vibrar('derribo'); break;
+      case 'danio': if (!J.ajustes.reducirMov) P.humo(f.x, 0.6, f.y, 0x6a6a72); break;
+      case 'escenario': J.paneles.confeti(); J.paneles.modal({ titulo: f.ok ? '¡Escenario completado!' : 'Escenario fallido', pausa: true, html: `<div class="grande">${f.nombre}</div><p style="text-align:center">${f.ok ? 'Objetivo logrado. Recibes $20.000 y 5 puntos. Puedes seguir construyendo.' : 'No lograste el objetivo a tiempo, pero puedes seguir jugando en modo libre.'}</p>`, pie: '<button type="button" class="btn dorado foco" data-acc="ok">Continuar</button>', acc: { ok: (b, a) => a.cerrar() } }); break;
       default: break;
     }
   }
@@ -265,6 +292,8 @@ function cargarCiudad(c) {
   J.vistaSucia = true;
   J.capa = null; $('capaTxt').textContent = ''; $('bCapas').classList.remove('on');
   J.edificios.sincronizar(c, 0);
+  J.estVista = -1; J.trafVer = -1;
+  J.paleta = PALETAS[J.ajustes.daltonismo] || PALETAS.ninguno; J.terreno.pal = J.paleta;
 }
 
 function mostrarTitulo() {
@@ -278,6 +307,7 @@ function mostrarTitulo() {
 }
 
 function volverATitulo() {
+  J.multi.salir();
   J.paneles.cerrarTodos();
   J.fijarVelSilencio = true;
   mostrarTitulo();
@@ -290,8 +320,8 @@ function jugarRanura(n) {
   try { c = deserializar(JSON.parse(t)); } catch (e) { J.aviso('La ranura está dañada', 'mal'); J.paneles.titulo(); return; }
   empezar(c, n, false);
 }
-function crearPartida(n, nombre, semilla) {
-  const c = C.nuevaCiudad(semilla, nombre);
+function crearPartida(n, nombre, semilla, opc) {
+  const c = C.nuevaCiudad(semilla, nombre, opc);
   c.ult = Date.now();
   empezar(c, n, true);
 }
@@ -314,6 +344,24 @@ function empezar(c, n, nueva) {
   guardar();
 }
 
+function trasPaso() {
+  const c = J.c;
+  J.vistaSucia = true; procesarFx(); J.hud.refrescarInfo(); actualizarHumos();
+  if (J.capa && c.rVer !== J.capaVer) { J.capaVer = c.rVer; J.terreno.colorear(c, J.capa); }
+}
+// pasos recibidos del anfitrión (clientes)
+function pasosRed(n) { for (let i = 0; i < n; i++) paso(J.c); J.acum = 0; trasPaso(); }
+function empezarMulti(c, slot) {
+  J.slot = slot; J.enTitulo = false;
+  document.body.classList.remove('enTitulo'); $('juego').classList.remove('oculto');
+  cargarCiudad(c);
+  const ay = C.ayuntamiento(c);
+  J.camara.fijarZoom(8.5); J.camara.centrar(ay.cx + 1, ay.cy + 2); J.camara.x = J.camara.xObj; J.camara.z = J.camara.zObj;
+  J.vel = 1; J.velPrev = 1; J.acum = 0;
+  chequearProgreso(c); procesarFx();
+  if (slot) guardar();
+}
+
 function guardar() {
   const c = J.c;
   if (!c || J.enTitulo || !J.slot) return;
@@ -325,13 +373,61 @@ function guardar() {
 }
 
 function aplicarCalidad() {
-  const calidad = J.ajustes.calidad;
-  J.escena.aplicarCalidad(calidad);
+  J.escena.aplicarCalidad(J.ajustes.calidad, J.ajustes);
   J.camara.tam(J.escena.w, J.escena.h);
   J.agentes.q = J.escena.q;
   J.terreno.q = J.escena.q;
-  J.arbolesSucios = true;
-  J.edificios.sombras && (J.edificios.sombras.visible = !J.escena.q.sombras);
+  J.arbolesSucios = true; J.vistaSucia = true;
+  J.edificios.entradas.forEach((e) => { if (e.cuerpo) { e.cuerpo.castShadow = e.cuerpo.receiveShadow = J.escena.q.sombras; } });
+  if (J.edificios.sombras) J.edificios.sombras.visible = !J.escena.q.sombras;
+}
+
+function aplicarAjustes(k) {
+  const a = J.ajustes, b = document.body.classList;
+  if (k === 'todo' || ['calidad', 'sombras', 'resolucion', 'detalle'].includes(k)) aplicarCalidad();
+  Audio.configurar(a.sfx, a.musica);
+  Audio.volumenes({ maestro: a.volMaestro, musica: a.volMusica, sfx: a.volSfx, ambiente: a.volAmbiente, silencio: a.silencio });
+  b.toggle('txtGrande', !!a.textoGrande); b.toggle('reducir', !!a.reducirMov); b.toggle('zurdo', !!a.zurdo);
+  for (const d of ['protanopia', 'deuteranopia', 'tritanopia']) b.toggle('dalt-' + d, a.daltonismo === d);
+  document.documentElement.style.setProperty('--tam', a.tamTactil);
+  document.documentElement.style.setProperty('--opac', a.opacTactil);
+  $('fps').classList.toggle('oculto', !a.verFps);
+  const pal = PALETAS[a.daltonismo] || PALETAS.ninguno;
+  if (pal !== J.paleta) { J.paleta = pal; J.terreno.pal = pal; if (J.c && J.capa) J.terreno.colorear(J.c, J.capa); J.trafVer = -1; }
+  iconoSonido();
+  Almacen.guardarAjustes(a);
+}
+
+// ---------------------------------------------------------------- pantalla completa, wake lock y modo foto
+let wake = null;
+async function pedirWake() { try { if (navigator.wakeLock && !document.hidden && !J.enTitulo) wake = await navigator.wakeLock.request('screen'); } catch (e) { /* nada */ } }
+function pantallaCompleta() {
+  try {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen().then(pedirWake, () => {});
+  } catch (e) { /* nada */ }
+}
+const FILTROS = ['', 'saturate(1.35) contrast(1.05)', 'sepia(0.7) contrast(1.05)', 'grayscale(1) contrast(1.15)', 'hue-rotate(-18deg) saturate(1.2)'];
+let filtroFoto = 0;
+function cambiarFiltro() { filtroFoto = (filtroFoto + 1) % FILTROS.length; J.canvas.style.filter = FILTROS[filtroFoto]; $('fotoFiltro').textContent = ['Sin filtro', 'Vivo', 'Sepia', 'Blanco y negro', 'Cálido'][filtroFoto]; }
+function modoFoto(on) {
+  J.enFoto = on;
+  document.body.classList.toggle('foto', on);
+  if (!on) { J.canvas.style.filter = ''; filtroFoto = 0; $('fotoFiltro').textContent = 'Sin filtro'; }
+  else { J.herr.poner(null); J.aviso('Modo foto: mueve la cámara, cambia el filtro y dispara', 'info'); }
+}
+function disparoFoto() { J.pedirFoto = true; }
+function guardarFoto() {
+  J.pedirFoto = false;
+  J.canvas.toBlob((bl) => {
+    if (!bl) return;
+    const url = URL.createObjectURL(bl), a = document.createElement('a');
+    a.href = url; a.download = 'metropolis-' + J.c.nombre.replace(/\W+/g, '_') + '-dia' + J.c.t.dia + '.png';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+    if (!(J.multi && J.multi.activo)) J.c.cont.fotos++;
+    J.aviso('Foto guardada', 'ok'); Audio.tocar('ok'); chequearProgreso(J.c);
+    $('flash').classList.add('on'); setTimeout(() => $('flash').classList.remove('on'), 160);
+  }, 'image/png');
 }
 
 // ---------------------------------------------------------------- humo y vida
@@ -347,6 +443,7 @@ function actualizarHumos() {
 }
 
 // ---------------------------------------------------------------- bucle
+let ultimoRender = 0, accFps = 0, nFps = 0, bajos = 0, enfriar = 0, ultAmb = 0, ultTraf = 0;
 let ultimo = 0, frame = 0, tReloj = 0, ultHud = 0, ultSync = 0, ultPistas = 0, ultSonda = 0, ultFuegos = 0;
 function bucle(ahora) {
   requestAnimationFrame(bucle);
@@ -365,15 +462,17 @@ function bucle(ahora) {
     J.horaTitulo = (J.horaTitulo + dt * 0.6) % 24; horaF = J.horaTitulo;
     J.camara.yawObj += dt * 0.05; J.camara.yaw = J.camara.yawObj;
   } else {
-    if (J.vel > 0 && !J.pausaUI) {
+    const pausado = J.pausaUI && !(J.multi && J.multi.activo) || (J.multi && J.multi.activo && !J.multi.esAnfitrion);
+    if (J.vel > 0 && !pausado) {
       J.acum += dt * J.vel;
       let n = 0;
       while (J.acum >= HORA_SEG && n < 6) { paso(c); J.acum -= HORA_SEG; n++; }
       if (n >= 6) J.acum = 0;
-      if (n) { J.vistaSucia = true; procesarFx(); J.hud.refrescarInfo(); actualizarHumos(); if (J.capa && c.rVer !== J.capaVer) { J.capaVer = c.rVer; J.terreno.colorear(c, J.capa); } }
+      if (n) { trasPaso(); J.multi.pasosHechos(n); }
     }
     if (c.sucio) { recalcular(c); J.vistaSucia = true; }
-    horaF = c.t.hora + (J.vel > 0 && !J.pausaUI ? J.acum / HORA_SEG : 0);
+    if (J.multi.activo && !J.multi.esAnfitrion && J.vel > 0) J.acum = Math.min(HORA_SEG * 0.98, J.acum + dt * J.vel);
+    horaF = c.t.hora + (J.vel > 0 && (!pausado || J.multi.activo) ? J.acum / HORA_SEG : 0);
     if (J.guardarEn && ahora > J.guardarEn) guardar();
     if (c.notas.length || c.fx.length) procesarFx();
   }
@@ -386,12 +485,22 @@ function bucle(ahora) {
   J.camara.actualizar(dt);
   if (J.shake > 0) { J.shake = Math.max(0, J.shake - dt); const k = J.shake * 0.5; J.camara.cam.position.x += (Math.random() - 0.5) * k; J.camara.cam.position.z += (Math.random() - 0.5) * k; J.camara.cam.updateMatrixWorld(); }
   E.hora(horaF, { x: J.camara.x, z: J.camara.z });
+  const A = J.ajustes;
+  if (!J.enTitulo) {
+    const nub = J.climaVista.actualizar(dt, c.clima.tipo, J.camara, E.q, A.reducirMov, c);
+    E.nubes(Math.min(1, nub * 0.9));
+    const est = estacion(c);
+    if (est !== J.estVista) { J.estVista = est; J.terreno.fijarEstacion(est, c, J.capa); }
+    if (c.rVer !== J.trafVer && ahora - ultTraf > 400) { J.trafVer = c.rVer; ultTraf = ahora; J.edificios.trafico(c, J.capa === 'trafico', J.paleta); }
+    if (ahora - ultAmb > 500) { ultAmb = ahora; ambiente(c, E.noche, nub); }
+  }
   Audio.fijarNoche(E.noche);
   J.terreno.animar(dt, E.q.agua);
   J.edificios.animarMarcas(tReloj);
   J.herr.vista(tReloj);
   J.edificios.marcoSeleccion(J.sel != null ? c.edif.get(J.sel) : J.selVia ? { t: 'calle', x: J.selVia.x, y: J.selVia.y } : null, tReloj);
-  J.agentes.actualizar(c, dt, E.noche);
+  J.agentes.actualizar(c, dt, E.noche, { reducirMov: A.reducirMov });
+  if (J.multi) J.multi.actualizar(dt, ahora);
 
   // partículas de humo
   if (humos.length) {
@@ -415,7 +524,44 @@ function bucle(ahora) {
     if (ahora - ultPistas > 300) { ultPistas = ahora; pistasMando(); sonda(); }
   } else if (ahora - ultPistas > 400) { ultPistas = ahora; pistasMando(); }
 
-  if (!(E.q.fps30 && (frame & 1))) E.dibujar(J.camara.cam);
+  // límite de FPS, contador y bajada automática de calidad
+  const lim = A.limiteFps > 0 ? A.limiteFps : A.limiteFps < 0 ? 0 : (E.q.fps30 ? 30 : 0);
+  if (!lim || ahora - ultimoRender >= 1000 / lim - 2) {
+    ultimoRender = ahora; E.dibujar(J.camara.cam);
+    if (J.pedirFoto) guardarFoto();
+    accFps += dt; nFps++;
+    if (accFps >= 1) {
+      J.fps = Math.round(nFps / accFps); accFps = 0; nFps = 0;
+      if (A.verFps) $('fps').textContent = J.fps + ' FPS · ' + E.q.nombre;
+      enfriar -= 1;
+      if (A.autoCalidad && !J.enTitulo && !document.hidden && enfriar <= 0) {
+        bajos = J.fps < Math.min(22, (lim || 60) * 0.6) ? bajos + 1 : 0;
+        if (bajos >= 4) {
+          const i = ORDEN_CALIDAD.indexOf(A.calidad);
+          if (i > 0) { A.calidad = ORDEN_CALIDAD[i - 1]; A.sombras = A.resolucion = A.detalle = null; aplicarAjustes('calidad'); J.aviso('Rendimiento bajo: calidad ' + A.calidad, 'info'); }
+          bajos = 0; enfriar = 20;
+        }
+      }
+    }
+  }
+}
+
+// sonido ambiente según lo que hay bajo la cámara
+function ambiente(c, noche, nub) {
+  const r = c.r; if (!r || !c.s) return;
+  const cx = Math.floor(J.camara.x), cz = Math.floor(J.camara.z);
+  let tr = 0, ind = 0, par = 0, agua = 0, gente = 0;
+  const R = Math.max(5, Math.round(J.camara.escala * 0.9));
+  for (let y = Math.max(0, cz - R); y <= Math.min(71, cz + R); y += 2) for (let x = Math.max(0, cx - R); x <= Math.min(71, cx + R); x += 2) {
+    const i = y * 72 + x;
+    if (c.terr[i] === 1) agua++;
+    if (r.flujo[i] > 0) tr += Math.min(1, r.flujo[i] / 6);
+    if (r.contam[i] > 15) ind += r.contam[i] / 100;
+    if (r.parq[i] > 25) par += 1;
+    const b = C.edifEn(c, x, y); if (b && b.t === 'zonaC' && b.n) gente += b.n * 0.25;
+  }
+  const n = ((R * 2) / 2 + 1) ** 2, z = 8 / Math.max(8, J.camara.escala);
+  Audio.ambiente({ trafico: Math.min(1, tr / n * 2.5) * z, industria: Math.min(1, ind / n * 3) * z, parque: Math.min(1, par / n * 1.5), agua: Math.min(1, agua / n * 1.5), gente: Math.min(1, gente / n * 1.5) * z, lluvia: ['lluvia', 'tormenta'].includes(c.clima.tipo) ? 0.8 : 0, viento: c.clima.tipo === 'tormenta' ? 0.8 : 0.15, dia: noche < 0.5 });
 }
 
 // ---------------------------------------------------------------- pistas de mando y sonda
@@ -446,7 +592,7 @@ function sonda() {
   const { x, y } = H.sobre; let t = '';
   if (!C.dentro(x, y)) t = '';
   else {
-    const px = Math.floor(x / 8), py = Math.floor(y / 8), mia = c.parc[py * C.NP + px] === 1;
+    const px = Math.floor(x / 8), py = Math.floor(y / 8), mia = c.parc[py * C.NP + px] > 0;
     const b = C.edifEn(c, x, y), tt = c.terr[y * C.N + x];
     if (b) { const it = ITEM[b.t]; t = it.nombre + (it.tipo === 'zona' && b.n ? ' · Nv ' + b.n : ''); }
     else if (c.via[y * C.N + x]) t = c.via[y * C.N + x] === 2 ? 'Avenida' : 'Calle';
