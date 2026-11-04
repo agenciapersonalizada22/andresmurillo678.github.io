@@ -15,15 +15,15 @@ export function mat(color, extra = {}) {
 }
 
 const geos = {};
-const G = (n, f) => geos[n] || (geos[n] = f());
-const malla = (g, m, x = 0, y = 0, z = 0) => {
+export const G = (n, f) => geos[n] || (geos[n] = f());
+export const malla = (g, m, x = 0, y = 0, z = 0) => {
   const o = new THREE.Mesh(g, m);
   o.position.set(x, y, z);
   return o;
 };
 
 // ---- Avión (nariz hacia -Z)
-function geoAla() {
+export function geoAla() {
   const s = new THREE.Shape();
   s.moveTo(0, -1.4); s.lineTo(4.6, 0.7); s.lineTo(4.6, 1.8); s.lineTo(0, 1.8); s.closePath();
   const g = new THREE.ExtrudeGeometry(s, { depth: 0.16, bevelEnabled: false });
@@ -32,7 +32,7 @@ function geoAla() {
 }
 
 // Ala recta o en flecha: z de borde de ataque y de fuga en la raíz y en la punta
-function geoAlaGen(span, zr0, zp0, zp1, zr1, grosor = 0.16) {
+export function geoAlaGen(span, zr0, zp0, zp1, zr1, grosor = 0.16) {
   return G(`ala${span}_${zr0}_${zp0}_${zp1}_${zr1}_${grosor}`, () => {
     const s = new THREE.Shape();
     s.moveTo(0, zr0); s.lineTo(span, zp0); s.lineTo(span, zp1); s.lineTo(0, zr1); s.closePath();
@@ -41,14 +41,14 @@ function geoAlaGen(span, zr0, zp0, zp1, zr1, grosor = 0.16) {
     return g;
   });
 }
-const caja = (x, y, z) => G(`caja${x}_${y}_${z}`, () => new THREE.BoxGeometry(x, y, z));
-const cilZ = (r0, r1, l, n = 10) => G(`cil${r0}_${r1}_${l}_${n}`, () => new THREE.CylinderGeometry(r0, r1, l, n).rotateX(Math.PI / 2));
-const conoN = (r, l, n = 10) => G(`con${r}_${l}_${n}`, () => new THREE.ConeGeometry(r, l, n).rotateX(-Math.PI / 2));
-const CRISTAL = () => mat(0x8fe3ff, { emissive: 0x113344 });
-const OSCURO = () => mat(0x26282a);
+export const caja = (x, y, z) => G(`caja${x}_${y}_${z}`, () => new THREE.BoxGeometry(x, y, z));
+export const cilZ = (r0, r1, l, n = 10) => G(`cil${r0}_${r1}_${l}_${n}`, () => new THREE.CylinderGeometry(r0, r1, l, n).rotateX(Math.PI / 2));
+export const conoN = (r, l, n = 10) => G(`con${r}_${l}_${n}`, () => new THREE.ConeGeometry(r, l, n).rotateX(-Math.PI / 2));
+export const CRISTAL = () => mat(0x8fe3ff, { emissive: 0x113344 });
+export const OSCURO = () => mat(0x26282a);
 
 // Pareja de piezas simétricas (derecha e izquierda)
-function par(g, geo, m, x, y, z, rotZ = 0) {
+export function par(g, geo, m, x, y, z, rotZ = 0) {
   const d = malla(geo, m, x, y, z), i = malla(geo, m, -x, y, z);
   i.scale.x = -1;
   d.rotation.z = rotZ;
@@ -56,19 +56,19 @@ function par(g, geo, m, x, y, z, rotZ = 0) {
   g.add(d, i);
 }
 
-function cabina(g, y, z, ex = 1, ey = 0.8, ez = 2.2, r = 0.5) {
+export function cabina(g, y, z, ex = 1, ey = 0.8, ez = 2.2, r = 0.5) {
   const c = malla(G(`cab${r}`, () => new THREE.SphereGeometry(r, 10, 8)), CRISTAL(), 0, y, z);
   c.scale.set(ex, ey, ez);
   g.add(c);
 }
 
-function llamaEn(g, z, r = 0.4, l = 3) {
+export function llamaEn(g, z, r = 0.4, l = 3) {
   const f = malla(G(`llama${r}_${l}`, () => new THREE.ConeGeometry(r, l, 8).rotateX(Math.PI / 2)), mat(0xff9a30, { basico: true, aditivo: true }), 0, 0, z);
   g.add(f);
   g.userData.llama = f;
 }
 
-const MODELOS_AVION = {
+export const MODELOS_AVION = {
   halcon(g, mc, ma) {
     g.add(malla(cilZ(0.34, 0.68, 6.2), mc, 0, 0, 0.4));
     g.add(malla(conoN(0.68, 2.4), mc, 0, 0, -3.9));
@@ -152,14 +152,22 @@ const MODELOS_AVION = {
   },
 };
 
-export function crearAvion(modelo, colores) {
-  const g = new THREE.Group();
-  (MODELOS_AVION[modelo] || MODELOS_AVION.halcon)(g, mat(colores[0]), mat(colores[1]));
+export function sombrear(g) {
+  g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
   return g;
 }
 
-// ---- Tanque (cañón hacia -Z)
-export function crearTanque(color, escala = 1) {
+export function crearAvion(modelo, colores, escala = 1, mp = {}) {
+  const g = new THREE.Group();
+  (MODELOS_AVION[modelo] || MODELOS_AVION.halcon)(g, mat(colores[0]), mat(colores[1]), mp);
+  if (escala !== 1) g.scale.setScalar(escala);
+  return sombrear(g);
+}
+
+// ---- Tanque (cañón hacia -Z). variante: medio, ligero, pesado, cazacarros, antiaereo
+const DIM_TORRE = { medio: [2.2, 0.85, 2.6], ligero: [1.8, 0.7, 2.0], pesado: [2.6, 1.0, 2.9], cazacarros: [2.1, 0.75, 3.4], antiaereo: [2.4, 1.1, 2.4] };
+const TUBO = { medio: [0.13, 4.4], ligero: [0.11, 3.4], pesado: [0.2, 5.0], cazacarros: [0.16, 6.2], antiaereo: [0.09, 3.0] };
+export function crearTanque(color, escala = 1, variante = 'medio') {
   const grupo = new THREE.Group();
   const casco = new THREE.Group();
   grupo.add(casco);
@@ -172,20 +180,32 @@ export function crearTanque(color, escala = 1) {
   casco.add(malla(oruga, md, 1.75, 0.6, 0), malla(oruga, md, -1.75, 0.6, 0));
   const rueda = G('tqRueda', () => new THREE.CylinderGeometry(0.5, 0.5, 0.95, 10).rotateZ(Math.PI / 2));
   for (const x of [1.75, -1.75]) for (let z = -2.6; z <= 2.7; z += 1.3) casco.add(malla(rueda, mat(0x3a3d40), x, 0.55, z));
+  if (variante === 'pesado') for (const x of [2.25, -2.25]) casco.add(malla(G('tqFaldon', () => new THREE.BoxGeometry(0.2, 0.9, 6.2)), mo, x, 1.0, 0));
+  if (variante === 'cazacarros') casco.add(malla(G('tqRampa', () => new THREE.BoxGeometry(3, 1.1, 3.6)), mc, 0, 1.35, -1.2));
   const torreta = new THREE.Group();
   torreta.position.set(0, 1.45, 0.2);
-  torreta.add(malla(G('tqTorre', () => new THREE.BoxGeometry(2.2, 0.85, 2.6)), mc, 0, 0.42, 0));
-  torreta.add(malla(G('tqTapa', () => new THREE.CylinderGeometry(0.5, 0.55, 0.3, 10)), mo, 0.3, 1.0, 0.4));
+  const dt = DIM_TORRE[variante] || DIM_TORRE.medio;
+  torreta.add(malla(G(`tqTorre${dt}`, () => new THREE.BoxGeometry(dt[0], dt[1], dt[2])), mc, 0, dt[1] / 2, variante === 'cazacarros' ? 0.5 : 0));
+  if (variante !== 'antiaereo') torreta.add(malla(G('tqTapa', () => new THREE.CylinderGeometry(0.5, 0.55, 0.3, 10)), mo, 0.3, dt[1] + 0.15, 0.4));
   const canon = new THREE.Group();
-  canon.position.set(0, 0.5, -1.25);
-  canon.add(malla(G('tqTubo', () => new THREE.CylinderGeometry(0.13, 0.16, 4.4, 8).rotateX(Math.PI / 2)), md, 0, 0, -2.0));
+  canon.position.set(0, dt[1] * 0.6, -dt[2] / 2 + 0.05);
+  const [rt, lt] = TUBO[variante] || TUBO.medio;
+  if (variante === 'antiaereo') {
+    const t = G(`tqTuboAA${lt}`, () => new THREE.CylinderGeometry(rt, rt * 1.2, lt, 6).rotateX(Math.PI / 2));
+    canon.add(malla(t, md, 0.6, 0, -lt / 2), malla(t, md, -0.6, 0, -lt / 2));
+    canon.add(malla(G('tqCajaAA', () => new THREE.BoxGeometry(1.9, 0.5, 1)), mo, 0, 0, 0));
+    torreta.add(malla(G('tqRadarAA', () => new THREE.CylinderGeometry(0.6, 0.6, 0.12, 10)), mat(0xdfe6e8), -0.7, dt[1] + 0.3, 0.8));
+  } else {
+    canon.add(malla(G(`tqTubo${rt}_${lt}`, () => new THREE.CylinderGeometry(rt, rt * 1.2, lt, 8).rotateX(Math.PI / 2)), md, 0, 0, -lt / 2));
+    if (variante === 'cazacarros') canon.add(malla(G('tqFreno', () => new THREE.BoxGeometry(0.5, 0.4, 0.8)), md, 0, 0, -lt));
+  }
   const boca = new THREE.Object3D();
-  boca.position.set(0, 0, -4.3);
+  boca.position.set(0, 0, -lt - 0.1);
   canon.add(boca);
   torreta.add(canon);
   grupo.add(torreta);
   grupo.scale.setScalar(escala);
-  return { grupo, casco, torreta, canon, boca };
+  return { grupo: sombrear(grupo), casco, torreta, canon, boca, largo: lt, retroBase: canon.position.z };
 }
 
 // ---- Objetivos terrestres
@@ -233,7 +253,7 @@ export function crearObjetivo(tipo) {
     cabeza.add(plato);
     g.add(cabeza);
   }
-  return { grupo: g, cabeza };
+  return { grupo: sombrear(g), cabeza };
 }
 
 // ---- Proyectiles
@@ -248,3 +268,36 @@ export function geoCohete() { return G('cohete', () => new THREE.CylinderGeometr
 export function geoBomba() { return G('bomba', () => new THREE.CylinderGeometry(0.36, 0.3, 1.8, 8).rotateX(Math.PI / 2)); }
 export function geoObus() { return G('obus', () => new THREE.BoxGeometry(0.28, 0.28, 2.4)); }
 export function geoFlak() { return G('flak', () => new THREE.SphereGeometry(0.5, 8, 6)); }
+
+// ---- Insignias: pegatinas planas sobre alas y cola (avión) o torreta y casco (tanque)
+export function aplicarMarca(grupo, marca, color = '#ffffff', esTanque = false) {
+  if (!marca || marca === 'ninguna') return;
+  const m = new THREE.MeshBasicMaterial({ color: new THREE.Color(color), side: THREE.DoubleSide });
+  const gro = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+  grupo.updateMatrixWorld(true);
+  const caja = new THREE.Box3().setFromObject(grupo);
+  const inv = 1 / (grupo.scale.x || 1);
+  const sp = (caja.max.x - caja.min.x) / 2 * inv, y = (caja.max.y - caja.min.y) * inv;
+  const poner = (geo, mat, x, yy, z, rx = -Math.PI / 2) => {
+    const o = new THREE.Mesh(geo, mat);
+    o.position.set(x, yy, z);
+    o.rotation.x = rx;
+    o.scale.setScalar(inv * (grupo.scale.x || 1) / (grupo.scale.x || 1));
+    grupo.add(o);
+    return o;
+  };
+  if (esTanque) {
+    const g = marca === 'estrella' ? new THREE.CircleGeometry(0.55, 5) : marca === 'franjas' ? new THREE.PlaneGeometry(0.4, 1.8) : new THREE.CircleGeometry(0.55, 14);
+    poner(g, m, 0, 2.55, 0.5);
+    return;
+  }
+  const x = sp * 0.55;
+  for (const l of [-1, 1]) {
+    if (marca === 'circulo') { poner(new THREE.CircleGeometry(0.9, 14), m, l * x, 0.3, 0.9); poner(new THREE.CircleGeometry(0.45, 14), gro, l * x, 0.32, 0.9); }
+    else if (marca === 'estrella') poner(new THREE.CircleGeometry(0.95, 5), m, l * x, 0.3, 0.9);
+    else if (marca === 'franjas') { poner(new THREE.PlaneGeometry(0.5, 2.2), m, l * (x - 0.5), 0.3, 1), poner(new THREE.PlaneGeometry(0.5, 2.2), m, l * (x + 0.5), 0.3, 1); }
+    else if (marca === 'as') poner(new THREE.CircleGeometry(0.8, 3), m, l * x, 0.3, 0.9);
+  }
+  if (marca === 'as') { const t = poner(new THREE.PlaneGeometry(0.1, 0.1), m, 0, 0, 0); t.visible = false; }
+  void y;
+}

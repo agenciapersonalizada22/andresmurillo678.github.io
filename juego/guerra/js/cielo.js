@@ -56,7 +56,10 @@ export class Cielo {
     );
     this.domo.renderOrder = -10;
     escena.add(this.domo);
-    this.matNube = new THREE.SpriteMaterial({ map: texturaNube(), transparent: true, depthWrite: false, opacity: 0.85 });
+    this.tex = texturaNube();
+    this.matNube = new THREE.SpriteMaterial({ map: this.tex, transparent: true, depthWrite: false, opacity: 0.85 });
+    this.vol = false;
+    this.def = null;
     this.nubes = new THREE.Group();
     escena.add(this.nubes);
     this.estrellas = null;
@@ -67,17 +70,8 @@ export class Cielo {
     this.uni.cenit.value.set(d.cenit);
     this.uni.colorSol.value.set(d.colorSol);
     this.dirSol.set(d.sol[0], d.sol[1], d.sol[2]).normalize();
-    // nubes
-    this.nubes.clear();
-    this.matNube.opacity = d.nubes.op;
-    this.matNube.color.set(d.nubes.color);
-    for (let i = 0; i < d.nubes.n; i++) {
-      const s = new THREE.Sprite(this.matNube);
-      const e = 220 + Math.random() * 260;
-      s.scale.set(e, e * 0.5, 1);
-      s.position.set((Math.random() - 0.5) * 3000, d.nubes.alt + Math.random() * d.nubes.var, (Math.random() - 0.5) * 3000);
-      this.nubes.add(s);
-    }
+    this.def = d;
+    this._nubes();
     // estrellas
     if (this.estrellas) {
       this.escena.remove(this.estrellas);
@@ -96,6 +90,56 @@ export class Cielo {
       this.estrellas = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xffffff, size: 2.2, sizeAttenuation: false, transparent: true, opacity: 0.8, depthWrite: false, fog: false }));
       this.estrellas.renderOrder = -9;
       this.escena.add(this.estrellas);
+    }
+  }
+
+  // Nubes simples (una por sprite) o volumétricas (racimos de bolas con sombra abajo y luz arriba)
+  _nubes() {
+    const d = this.def;
+    if (!d) return;
+    this.nubes.clear();
+    for (const m of this.mats || []) m.dispose();
+    const base = new THREE.Color(d.nubes.color);
+    this.mats = [1, 0.84, 0.66].map((k) => new THREE.SpriteMaterial({ map: this.tex, transparent: true, depthWrite: false, opacity: d.nubes.op, color: base.clone().multiplyScalar(k) }));
+    this.matNube.opacity = d.nubes.op;
+    this.matNube.color.set(d.nubes.color);
+    for (let i = 0; i < d.nubes.n; i++) {
+      const cx = (Math.random() - 0.5) * 3000, cy = d.nubes.alt + Math.random() * d.nubes.var, cz = (Math.random() - 0.5) * 3000;
+      if (!this.vol) {
+        const s = new THREE.Sprite(this.matNube);
+        const e = 220 + Math.random() * 260;
+        s.scale.set(e, e * 0.5, 1);
+        s.position.set(cx, cy, cz);
+        this.nubes.add(s);
+        continue;
+      }
+      const g = new THREE.Group();
+      g.position.set(cx, cy, cz);
+      const n = 9 + Math.floor(Math.random() * 6), R = 90 + Math.random() * 110;
+      for (let k = 0; k < n; k++) {
+        const a = Math.random() * Math.PI * 2, rr = Math.random() * R;
+        const y = (Math.random() - 0.35) * R * 0.5;
+        const s = new THREE.Sprite(this.mats[y > R * 0.12 ? 0 : y > -R * 0.08 ? 1 : 2]);
+        const e = R * (0.9 + Math.random() * 0.9);
+        s.scale.set(e, e * 0.75, 1);
+        s.position.set(Math.cos(a) * rr * 1.3, y, Math.sin(a) * rr);
+        g.add(s);
+      }
+      this.nubes.add(g);
+    }
+  }
+
+  usarVolumetricas(v) {
+    if (this.vol === v) return;
+    this.vol = v;
+    this._nubes();
+  }
+
+  // Las nubes avanzan con el viento
+  actualizar(dt) {
+    for (const n of this.nubes.children) {
+      n.position.x += dt * 4;
+      if (n.position.x > 1600) n.position.x -= 3200;
     }
   }
 

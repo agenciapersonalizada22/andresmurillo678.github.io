@@ -5,43 +5,50 @@
 // =============================================================
 import * as THREE from '../lib/three.module.min.js';
 import { crearTanque } from './modelos.js';
+import { TANQUES } from './catalogo.js';
 import { Sonido } from './sonido.js';
 
-export const TIPOS_TANQUE = {
-  jugador: { vida: 170, vel: 14, giro: 1.1, recarga: 2.2, dano: 46, escala: 1, color: 0x4d6b3c, rot: 3.5, puntos: 0, pref: 0 },
-  ligero: { vida: 55, vel: 16, giro: 1.5, recarga: 2.9, dano: 16, escala: 0.9, color: 0xa8905a, rot: 1.0, puntos: 100, pref: 170 },
-  medio: { vida: 100, vel: 12, giro: 1.1, recarga: 3.6, dano: 24, escala: 1, color: 0x8a5a45, rot: 0.8, puntos: 150, pref: 230 },
-  pesado: { vida: 190, vel: 8, giro: 0.8, recarga: 4.8, dano: 38, escala: 1.25, color: 0x5a4a60, rot: 0.6, puntos: 250, pref: 300 },
-};
+export const TIPOS_TANQUE = TANQUES;
 
 const V = new THREE.Vector3(), W = new THREE.Vector3(), A = new THREE.Vector3(), B = new THREE.Vector3();
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const envolver = (a) => { while (a > Math.PI) a -= Math.PI * 2; while (a < -Math.PI) a += Math.PI * 2; return a; };
-const ELEV_MIN = -0.16, ELEV_MAX = 0.4;
+const ELEV_MIN = -0.16;
 
 export class Tanque {
-  constructor(ctx, tipo, oleada = 1) {
+  // opc = { jugador, equipo, nivel, nombre, color, mult: { vida, dano, vel } }
+  constructor(ctx, tipo, oleada = 1, opc = {}) {
     this.ctx = ctx;
     this.clase = tipo;
-    const T = this.datos = TIPOS_TANQUE[tipo];
-    this.esJugador = tipo === 'jugador';
-    this.equipo = this.esJugador ? 'jugador' : 'enemigo';
+    this.esJugador = !!opc.jugador || (tipo === 'jugador' && opc.jugador !== false && !opc.equipo);
+    const T = this.datos = Object.assign({}, TANQUES[tipo] || TANQUES.medio);
+    if (this.esJugador && T.jug) Object.assign(T, T.jug);
+    const M = opc.mult || {};
+    if (M.vel) T.vel *= M.vel;
+    if (M.dano) T.dano *= M.dano;
+    this.equipo = opc.equipo || (this.esJugador ? 'jugador' : 'enemigo');
     this.tipo = 'tanque';
+    this.nombre = opc.nombre || '';
+    this.nivel = opc.nivel || 0;
     this.puntos = T.puntos + oleada * 10;
     this.oleada = oleada;
-    const m = crearTanque(T.color, T.escala);
+    this.ultimo = null;
+    this.municion = 'AP';
+    this.cdMg = 0;
+    const m = crearTanque(opc.color !== undefined ? opc.color : T.color, T.escala, T.variante);
     this.grupo = m.grupo;
     this.casco = m.casco;
     this.torreta = m.torreta;
     this.canon = m.canon;
     this.boca = m.boca;
+    this.retroBase = m.retroBase;
     this.grupo.rotation.order = 'YXZ';
     ctx.escena.add(this.grupo);
     this.pos = this.grupo.position;
     this.centro = new THREE.Vector3();
     this.vel = new THREE.Vector3();
     this.radio = 3.8 * T.escala;
-    this.vidaMax = this.vida = this.esJugador ? T.vida : T.vida + oleada * 8;
+    this.vidaMax = this.vida = Math.round((this.esJugador || opc.equipo ? T.vida : T.vida + oleada * 8) * (M.vida || 1));
     this.vivo = true;
     this.rumbo = 0;
     this.torretaYaw = 0;
@@ -115,8 +122,9 @@ export class Tanque {
     this.vel.set(fx * this.v, 0, fz * this.v);
     this._aspecto(dt);
     this.cdRecarga = Math.max(0, this.cdRecarga - dt);
+    this.cdMg -= dt;
     this.retro *= Math.exp(-5 * dt);
-    this.canon.position.z = -1.25 + this.retro;
+    this.canon.position.z = this.retroBase + this.retro;
     if (this.modulos.motor > 0.6) {
       this.recibirDanioDirecto(2 * dt);
     }
@@ -154,7 +162,7 @@ export class Tanque {
   // ------------------------------------------------------------ Torreta
   _girar(sy, se) {
     this.torretaYaw = envolver(this.torretaYaw + sy);
-    this.elev = clamp(this.elev + se, ELEV_MIN, ELEV_MAX);
+    this.elev = clamp(this.elev + se, ELEV_MIN, this.datos.elevMax || 0.4);
   }
 
   _maxGiro(dt) {
@@ -177,24 +185,59 @@ export class Tanque {
     this._girar(clamp(envolver(yaw - this.torretaYaw), -max, max), clamp(elev - this.elev, -max, max));
   }
 
+  alternarMunicion() {
+    if (this.datos.auto) return this.municion;
+    this.municion = this.municion === 'AP' ? 'HE' : 'AP';
+    return this.municion;
+  }
+
   disparar(dir) {
     if (!this.vivo || this.cdRecarga > 0) return false;
-    this.cdRecarga = this.datos.recarga;
-    this.retro = 1.1;
+    const T = this.datos;
+    this.cdRecarga = T.auto ? T.auto.cd : T.recarga;
+    this.retro = T.auto ? 0.35 : 1.1;
     this.grupo.updateMatrixWorld(true);
     this.boca.getWorldPosition(V);
     const { proyectiles, efectos } = this.ctx;
-    proyectiles.disparar('obus', this.equipo, V, dir, null, { dano: this.datos.dano });
+    if (T.auto) {
+      proyectiles.disparar('bala', this.equipo, V, dir, null, { dano: T.auto.dano, dueno: this });
+      efectos.fuego.emitir(V.x, V.y, V.z, dir.x * 10, dir.y * 10, dir.z * 10, 0.12, 1.2, 0.3, [1, 0.95, 0.6], [1, 0.4, 0.1], 1);
+      Sonido.disparo('ametralladora', this.esJugador ? 0.8 : Sonido.porDistancia(efectos._distancia(V)));
+      if (this.esJugador) this.ctx.entrada.vibrar(0, 0.35, 40, 'autoc', 45);
+      return true;
+    }
+    const he = this.municion === 'HE';
+    proyectiles.disparar(he ? 'obusHE' : 'obus', this.equipo, V, dir, null, { dano: he ? T.dano * 0.7 : T.dano, dueno: this });
     for (let i = 0; i < 6; i++) efectos.fuego.emitir(V.x, V.y, V.z, dir.x * 14 + (Math.random() - 0.5) * 6, dir.y * 14 + (Math.random() - 0.5) * 6, dir.z * 14 + (Math.random() - 0.5) * 6, 0.25, 1.6, 0.4, [1, 0.95, 0.6], [1, 0.4, 0.1], 1);
     efectos.estela(V, true, 1.6);
     Sonido.disparo('canon', this.esJugador ? 1 : Sonido.porDistancia(efectos._distancia(V)));
-    if (this.esJugador) { efectos.sacudida = Math.max(efectos.sacudida, 0.7); this.ctx.entrada.vibrar(1, 0.6, 260, 'canon'); }
+    if (this.esJugador) { efectos.sacudida = Math.max(efectos.sacudida, 0.7); this.ctx.entrada.vibrar(1, 0.6, 260, 'canon'); if (this.ctx.estadisticas) this.ctx.estadisticas.disparos++; }
+    return true;
+  }
+
+  // Ametralladora coaxial (poco daño, sin recarga larga)
+  ametrallar(dir) {
+    if (!this.vivo || this.cdMg > 0 || this.datos.auto) return false;
+    this.cdMg = 0.09;
+    this.grupo.updateMatrixWorld(true);
+    this.boca.getWorldPosition(V);
+    V.addScaledVector(dir, -0.5);
+    A.copy(dir);
+    A.x += (Math.random() - 0.5) * 0.02;
+    A.y += (Math.random() - 0.5) * 0.02;
+    A.z += (Math.random() - 0.5) * 0.02;
+    A.normalize();
+    this.ctx.proyectiles.disparar('bala', this.equipo, V, A, null, { dano: 4.5, dueno: this });
+    Sonido.disparo('ametralladora', this.esJugador ? 0.6 : 0.3);
+    if (this.esJugador) this.ctx.entrada.vibrar(0, 0.25, 40, 'mg', 50);
     return true;
   }
 
   // ------------------------------------------------------------ Daño por zonas
   recibirDanio(d, punto, proj) {
     if (!this.vivo) return;
+    if (proj && proj.dueno && proj.dueno !== this) this.ultimo = proj.dueno;
+    if (this.ilimitado) return;
     let mult = 1;
     const m = this.modulos;
     if (proj && proj.vel) {
@@ -203,7 +246,7 @@ export class Tanque {
       const frente = (proj.vel.x * fx + proj.vel.z * fz) / l; // -1 = viene de frente
       const alto = punto.y > this.pos.y + 1.5 * this.datos.escala;
       if (alto) { mult = 1.15; m.torreta = Math.min(1, m.torreta + d / this.vidaMax * 2); }
-      else if (frente < -0.55) mult = 0.55;
+      else if (frente < -0.55) mult = this.datos.blind || 0.55;
       else if (frente > 0.55) { mult = 1.8; m.motor = Math.min(1, m.motor + d / this.vidaMax * 2.2); }
       else { mult = 1.1; m.orugas = Math.min(1, m.orugas + d / this.vidaMax * 2.4); }
     }
@@ -235,18 +278,28 @@ export class Tanque {
   }
 
   // ------------------------------------------------------------ IA enemiga
-  pensar(dt, jp) {
+  // jp = enemigo al que apuntar (o null) · destino = {x, z} a donde ir si no hay enemigo cerca
+  pensar(dt, jp, destino = null) {
     if (!this.vivo) return;
     const { terreno } = this.ctx;
     const T = this.datos;
+    let hay = !!(jp && jp.vivo);
+    if (hay && destino && Math.hypot(jp.pos.x - this.pos.x, jp.pos.z - this.pos.z) > (T.aa ? 900 : 520)) hay = false;
+    if (!hay) {
+      const f = this._fant || (this._fant = { pos: new THREE.Vector3(), centro: new THREE.Vector3(), vel: new THREE.Vector3(), vivo: true });
+      if (destino) f.pos.set(destino.x, 0, destino.z); else f.pos.set(this.pos.x - Math.sin(this.rumbo) * 60, 0, this.pos.z - Math.cos(this.rumbo) * 60);
+      f.centro.copy(f.pos);
+      jp = f;
+    }
     const dx = jp.pos.x - this.pos.x, dz = jp.pos.z - this.pos.z;
     const dist = Math.hypot(dx, dz);
     this.tLos -= dt;
     if (this.tLos <= 0) {
       this.tLos = 0.35;
       A.copy(this.pos).y += 3;
-      this.ve = dist < 650 && !terreno.bloqueado(A, B.copy(jp.centro));
+      this.ve = hay && dist < (T.aa ? 900 : 650) && !terreno.bloqueado(A, B.copy(jp.centro));
     }
+    if (!hay) this.ve = false;
     this.tEstado -= dt;
     this.tOrbita -= dt;
     if (this.tOrbita <= 0) { this.orbita = -this.orbita; this.tOrbita = 3 + Math.random() * 4; }
@@ -265,6 +318,8 @@ export class Tanque {
     if (this.estado === 'cubrir' && this.cubierta) {
       tx = this.cubierta.x; tz = this.cubierta.z;
       if (Math.hypot(tx - this.pos.x, tz - this.pos.z) < 4) av = 0;
+    } else if (!hay) {
+      if (dist < 25) av = 0;
     } else if (!this.ve && dist < 230) {
       // sin línea de tiro y cerca: rodea los edificios para encontrar ángulo
       const px = -dz / dist, pz = dx / dist;
@@ -315,14 +370,14 @@ export class Tanque {
     const objYaw = this.ve ? yaw : this.rumbo;
     this.apuntarA(objYaw, this.ve ? elev : 0.04, dt);
     this.espera -= dt;
-    if (this.ve && this.cdRecarga <= 0 && this.espera <= 0 && Math.abs(envolver(yaw - this.torretaYaw)) < 0.04) {
-      const err = Math.max(0.012, 0.04 - this.oleada * 0.0035) * (0.6 + dist / 350);
+    if (this.ve && this.cdRecarga <= 0 && this.espera <= 0 && Math.abs(envolver(yaw - this.torretaYaw)) < (this.datos.auto ? 0.07 : 0.04)) {
+      const err = Math.max(0.012, 0.04 - this.oleada * 0.0035) * (0.6 + dist / 350) * (this.datos.auto ? 1.4 : 1);
       this.dirTorreta(W);
       W.x += (Math.random() - 0.5) * err * 2;
       W.y += (Math.random() - 0.5) * err;
       W.z += (Math.random() - 0.5) * err * 2;
       W.normalize();
-      if (this.disparar(W)) this.espera = 0.3 + Math.random() * 1.4;
+      if (this.disparar(W)) this.espera = this.datos.auto ? (Math.random() < 0.12 ? 1 : 0) : 0.3 + Math.random() * 1.4;
     }
   }
 

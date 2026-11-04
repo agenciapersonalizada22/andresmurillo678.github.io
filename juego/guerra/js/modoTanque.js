@@ -4,6 +4,7 @@
 import * as THREE from '../lib/three.module.min.js';
 import { CONFIG } from './config.js';
 import { Tanque } from './tanque.js';
+import { aplicarMarca } from './modelos.js';
 import { Sonido } from './sonido.js';
 import { Musica } from './musica.js';
 
@@ -17,12 +18,15 @@ export class ModoTanque {
 
   iniciar() {
     const c = this.ctx;
-    this.jugador = new Tanque(c, 'jugador');
+    const id = c.tanqueId || 'jugador';
+    this.jugador = new Tanque(c, id, 1, c.opcionesTanque ? c.opcionesTanque(id) : { jugador: true });
+    aplicarMarca(this.jugador.grupo, (c.opcionesTanque ? c.opcionesTanque(id) : {}).marca, c.perfilColor || '#ffffff', true);
     const zo = c.terreno.zonaTanque();
     const sp = zo.spawn || [128, 165];
     const p = c.terreno.puntoLibre(zo, sp[0], sp[1], 9);
     this.jugador.colocar(p.x, p.z, Math.random() * 6.28);
-    this.jugador.alMorir = () => { this.tFin = 2.6; c.hud.aviso('TANQUE DESTRUIDO', 2.6, true); };
+    this.jugador.alMorir = () => { this.tFin = 2.6; c.hud.aviso('TANQUE DESTRUIDO', 2.6, true); c.camaras.kill(this.jugador.ultimo, this.jugador.pos); if (c.alMuerteJugador) c.alMuerteJugador(); };
+    c.camaras.reiniciar();
     this.enemigos = [];
     this.blancos = [this.jugador];
     this.marcas = [];
@@ -57,7 +61,7 @@ export class ModoTanque {
       const e = new Tanque(c, tipo, this.oleada);
       const p = c.terreno.puntoLibre(j.pos, 260, 480, 9);
       e.colocar(p.x, p.z, Math.atan2(-(j.pos.x - p.x), -(j.pos.z - p.z)));
-      e.alMorir = (m) => { this.puntaje += m.puntos; c.hud.aviso('+' + m.puntos, 1.2); };
+      e.alMorir = (m) => { this.puntaje += m.puntos; c.hud.aviso('+' + m.puntos, 1.2); if (c.alBaja && m.ultimo === this.jugador) c.alBaja(m); };
       this.enemigos.push(e);
     }
     c.hud.aviso('OLEADA ' + this.oleada, 2.6);
@@ -86,13 +90,15 @@ export class ModoTanque {
       this.cmd.gi = Math.max(-1, Math.min(1, gi));
       j.actualizar(dt, this.cmd);
       const r = ent.consumirRaton();
-      const sens = 0.0024;
+      const sens = 0.0024 * (c.opciones.sens || 1) * (c.camVar === 3 ? 0.4 : 1);
       const dYaw = -r.dx * sens + ((ent.k('ArrowLeft') ? 1 : 0) - (ent.k('ArrowRight') ? 1 : 0) - ent.der.x - ent.mDer.x) * 1.9 * dt;
       const dEl = -r.dy * sens + ((ent.k('ArrowUp') ? 1 : 0) - (ent.k('ArrowDown') ? 1 : 0) - ent.der.y - (this.ctx.opciones.invertido ? -ent.mDer.y : ent.mDer.y)) * 1.2 * dt;
       j.rotarTorreta(dYaw, dEl, dt);
       if (ent.k('PadX')) j.apuntarA(j.rumbo, 0.08, dt); // X: torreta al frente del casco
       this._camara();
+      if (ent.pulso('KeyT', 'PadB')) { j.alternarMunicion(); c.hud.aviso('MUNICIÓN: ' + (j.municion === 'AP' ? 'PERFORANTE' : 'EXPLOSIVA'), 1.2); }
       if (ent.k('Space', 'Mouse0', 'PadRT') && j.cdRecarga <= 0) this._disparar();
+      if (ent.k('KeyF', 'Mouse2', 'PadLT') && j.cdMg <= 0) { j.dirTorreta(DIR); j.ametrallar(DIR); }
     }
     for (const e of this.enemigos) e.pensar(dt, j);
     this._separar();
@@ -134,17 +140,7 @@ export class ModoTanque {
   }
 
   _camara() {
-    const { camera, terreno, efectos } = this.ctx;
-    const j = this.jugador;
-    const c = Math.cos(j.elev);
-    DIR.set(-Math.sin(j.torretaYaw) * c, Math.sin(j.elev), -Math.cos(j.torretaYaw) * c);
-    const e = j.datos.escala;
-    P.copy(j.pos);
-    P.y += 2.9 * e;
-    camera.position.copy(P).addScaledVector(DIR, -13 * ([1, 1.6, 0.6][this.ctx.camVar | 0] || 1)).add(ORG.set(0, 1.8, 0));
-    camera.position.y = Math.max(camera.position.y, terreno.altura(camera.position.x, camera.position.z) + 1.5);
-    camera.lookAt(P.addScaledVector(DIR, 60));
-    efectos.camara = camera.position;
+    this.ctx.camaras.tanque(this.jugador);
   }
 
   // Dispara hacia donde apunta la mira: primer suelo, edificio o enemigo en el rayo
@@ -179,8 +175,8 @@ export class ModoTanque {
     const c = this.ctx, j = this.jugador, hud = c.hud;
     hud.datos({
       puntaje: this.puntaje, oleada: this.oleada, enemigos: vivos, vida: j.vida, vidaMax: j.vidaMax,
-      estado: `RUMBO ${Math.round((((-j.torretaYaw * 180 / Math.PI) % 360) + 360) % 360)}° · CAÑÓN ${j.cdRecarga <= 0 ? 'LISTO' : 'RECARGANDO'}`,
-      recarga: j.recargaFrac, modulos: j.modulos,
+      estado: `RUMBO ${Math.round((((-j.torretaYaw * 180 / Math.PI) % 360) + 360) % 360)}° · ${j.datos.auto ? 'CAÑÓN AUTOMÁTICO' : (j.municion === 'AP' ? 'PERFORANTE' : 'EXPLOSIVA') + ' · ' + (j.cdRecarga <= 0 ? 'LISTO' : 'RECARGANDO')}`,
+      recarga: j.recargaFrac, modulos: [j.modulos.orugas, j.modulos.torreta, j.modulos.motor],
     });
     const lista = this.marcas, radar = this.radarLista;
     lista.length = 0;
@@ -206,5 +202,9 @@ export class ModoTanque {
     c.proyectiles.blancos = () => [];
     c.efectos.limpiar();
     Sonido.motor.parar();
+    c.camera.fov = CONFIG.vista.fov;
+    c.camera.updateProjectionMatrix();
+    c.camaras.reiniciar();
+    document.body.classList.remove('mira');
   }
 }

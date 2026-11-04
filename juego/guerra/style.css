@@ -398,3 +398,194 @@ body.conMando #ayudaMando.visible { opacity: 1; }
 body.modoTanque #ayudaMando .h-tanque { display: inline; }
 /* Vista (mando): oculta los datos y deja solo mira, avisos y daño */
 #hud.limpio #datos, #hud.limpio #radar, #hud.limpio #estado, #hud.limpio #marcadores, #hud.limpio #recarga, #hud.limpio #ayudaMando { visibility: hidden; }
+
+/* =============================================================
+   FASE 2: hangar, ajustes, batallas, multijugador
+   ============================================================= */
+:root { --aliado: #3df5ff; --enemigo: #ff4d6d; --objetivo: #ff9d3d; --sx: 1; --tact-esc: 1; --tact-op: 0.75; --tact-sep: 0px; --tact-alt: 0px; }
+body.textoGrande { font-size: 118%; }
+body.textoGrande .tarjeta button, body.textoGrande .info, body.textoGrande .pista, body.textoGrande .ficha p { font-size: 1.18em; }
+body.textoGrande #datos, body.textoGrande #estado, body.textoGrande #killfeed, body.textoGrande #tickets { font-size: 1.25em; }
+.marca { border-color: var(--enemigo); color: var(--enemigo); }
+.marca.tierra { border-color: var(--objetivo); color: var(--objetivo); }
+.marca.aliado { border-width: 1px; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-color: var(--aliado); color: var(--aliado); border-radius: 50%; }
+.marca.aliado span { top: 24px; font-size: 9px; }
+.marca.aliado.fuera { border: 0; }
+.marca.tanque { border-radius: 4px; }
+.marca.apuntado { border-color: #ffe066; color: #ffe066; }
+.marca.fijado { border-color: #3df58a; color: #3df58a; }
+body.modoTanque .solo-avion, body.modoAvion .solo-tanque { display: none; }
+.solo-tanque { display: none; }
+body.modoTanque .solo-tanque { display: block; }
+
+.btnFlot { position: fixed; top: calc(10px + var(--seguro-arriba)); right: calc(10px + var(--seguro-der)); z-index: 61; width: 38px; height: 38px; border-radius: 10px; background: rgba(5,3,15,0.7); border: 2px solid rgba(61,245,255,0.6); color: var(--cian); font-size: 18px; }
+body:not(.enTitulo) .btnFlot { display: none; }
+#contFps { position: fixed; left: calc(8px + var(--seguro-izq)); bottom: calc(6px + var(--seguro-abajo)); z-index: 80; font: 700 12px monospace; color: #7dff9a; text-shadow: 0 1px 2px #000; pointer-events: none; }
+
+/* perfil, pestañas, rejillas */
+.perfilBarra { display: flex; align-items: center; gap: 10px; justify-content: space-between; margin: 8px 0 12px; padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(154,140,255,0.5); background: rgba(154,140,255,0.08); font-size: 12px; letter-spacing: 1px; text-align: left; }
+.perfilBarra b { color: #fff; }
+.perfilBarra .cr { color: #ffe066; }
+.perfilBarra .xp { flex: 1; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.15); overflow: hidden; min-width: 40px; }
+.perfilBarra .xp i { display: block; height: 100%; background: linear-gradient(90deg, #3df5ff, #3df58a); }
+.pDot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 10px; }
+.tarjeta .tabs button { flex: 1 1 auto; width: auto; margin: 0; padding: 9px 8px; font-size: 11px; letter-spacing: 1px; }
+.tarjeta .tabs button.sel { border-color: var(--cian); background: rgba(61,245,255,0.22); }
+.tabCuerpo { text-align: left; max-height: 58vh; overflow-y: auto; padding-right: 4px; touch-action: pan-y; }
+.tabCuerpo .fila.presets button { padding: 9px 4px; font-size: 12px; }
+.tabCuerpo h4.subt { margin: 14px 0 4px; font-size: 11px; letter-spacing: 3px; color: var(--naranja); }
+.tabCuerpo textarea { width: 100%; background: rgba(0,0,0,0.4); color: #fff; border: 1px solid rgba(154,140,255,0.6); border-radius: 8px; font: 11px monospace; padding: 6px; }
+.teclas { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.tarjeta button.tecla { display: flex; justify-content: space-between; margin: 0; padding: 8px 10px; font-size: 10px; letter-spacing: 0; text-align: left; font-family: system-ui, sans-serif; font-weight: 600; }
+.tecla b { color: var(--naranja); font-family: monospace; }
+@media (max-width: 520px) { .teclas { grid-template-columns: 1fr; } }
+.listaModos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tarjeta button.modoCard { margin: 0; padding: 10px 8px; text-align: left; letter-spacing: 0.5px; font-size: 12px; }
+.modoCard span { display: block; margin-top: 4px; font: 500 11px system-ui, sans-serif; letter-spacing: 0; color: #d6d0ff; line-height: 1.3; }
+.modoCard em { display: block; margin-top: 4px; font: normal 10px system-ui; color: var(--suave); }
+.opcionesJugar { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; }
+.opcionesJugar button { flex: 1 1 140px; width: auto !important; margin: 0 !important; padding: 9px 8px !important; font-size: 11px !important; }
+.resumenVeh { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.vehMini { padding: 6px; border-radius: 12px; border: 1px solid rgba(154,140,255,0.5); background: rgba(154,140,255,0.08); }
+.vehMini img { width: 100%; aspect-ratio: 8 / 5; object-fit: contain; display: block; }
+.vehMini b { display: block; font-size: 11px; letter-spacing: 1px; }
+.vehMini small { font: 500 10px system-ui; color: #c9c2f0; }
+.tarjeta .vehMini button { margin: 6px 0 0; padding: 6px; font-size: 10px; }
+.gridVeh { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-height: 38vh; overflow-y: auto; padding: 2px; touch-action: pan-y; }
+@media (max-width: 520px) { .gridVeh { grid-template-columns: repeat(2, 1fr); } .listaModos, .resumenVeh { grid-template-columns: 1fr; } }
+.tarjeta button.carta .precio { display: block; font-size: 9px; color: #ffe066; margin-top: 2px; }
+.carta.bloqueado .precio { color: #ff8aa0; }
+.carta.poseido small.estado { color: #3df58a; }
+.ficha .fila button { font-size: 11px; padding: 9px 6px; }
+.ficha .mod { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 11px; letter-spacing: 1px; }
+.ficha .mod span { flex: 1; }
+.ficha .mod .pips { letter-spacing: 3px; color: var(--cian); }
+.tarjeta .ficha .mod button { width: 120px; margin: 0; padding: 7px 6px; font-size: 10px; }
+.swatches { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
+.tarjeta .swatches button { width: auto; margin: 0; padding: 6px 8px; font-size: 10px; letter-spacing: 0; }
+.swatches i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: middle; border: 1px solid #fff6; }
+.campana { text-align: left; margin: 10px 0; }
+.campana h3 { margin: 0 0 4px; color: var(--naranja); letter-spacing: 3px; font-size: 13px; }
+.tarjeta button.mision { text-align: left; font-size: 12px; margin: 5px 0; padding: 10px 12px; }
+.mision span { display: block; font: 500 11px system-ui; letter-spacing: 0; color: #d6d0ff; margin-top: 3px; }
+.mision.hecha { border-color: #3df58a; }
+.mision.bloq { opacity: 0.45; }
+.logro { display: flex; gap: 10px; align-items: center; text-align: left; padding: 6px 8px; margin: 4px 0; border-radius: 8px; border: 1px solid rgba(154,140,255,0.35); font-size: 12px; }
+.logro.ok { border-color: #3df58a; background: rgba(61,245,138,0.08); }
+.logro i { font-style: normal; font-size: 18px; }
+.logro small { display: block; font: 500 11px system-ui; color: #c9c2f0; }
+.statsGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; text-align: left; }
+.statsGrid div { padding: 6px 10px; border-radius: 8px; background: rgba(154,140,255,0.1); }
+.statsGrid b { float: right; color: #fff; }
+.recomp { margin: 8px 0; font-size: 13px; color: #ffe066; letter-spacing: 1px; }
+.finTabla { display: flex; gap: 10px; text-align: left; margin: 8px 0; flex-wrap: wrap; }
+.finTabla .colTabla { flex: 1 1 200px; }
+.colTabla h4 { margin: 0 0 4px; font-size: 12px; letter-spacing: 2px; }
+.colTabla table { width: 100%; border-collapse: collapse; font: 600 12px monospace; }
+.colTabla th { color: var(--suave); font-weight: 600; text-align: right; padding: 2px 4px; }
+.colTabla th:first-child, .colTabla td:first-child { text-align: left; }
+.colTabla td { text-align: right; padding: 2px 4px; border-top: 1px solid rgba(255,255,255,0.08); }
+.colTabla tr.yo td { color: #ffe066; }
+.colTabla tr.muerto td { opacity: 0.5; }
+#eqLista .eqFila { display: flex; align-items: center; gap: 8px; padding: 6px 8px; margin: 4px 0; border-radius: 8px; background: rgba(154,140,255,0.1); font-size: 12px; text-align: left; }
+#eqLista .eqFila span { flex: 1; }
+#eqLista .eqFila button { width: auto; margin: 0; padding: 6px 10px; font-size: 10px; letter-spacing: 1px; }
+
+/* HUD de batalla */
+#tickets { position: absolute; top: calc(10px + var(--seguro-arriba)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 4px 12px; border-radius: 10px; background: rgba(5,3,15,0.6); font: 800 12px Orbitron, monospace; letter-spacing: 1px; flex-wrap: wrap; justify-content: center; max-width: 52vw; }
+#tickets .ta { color: var(--aliado); } #tickets .te { color: var(--enemigo); } #tickets i { font-style: normal; color: #fff; }
+.zonasHud { width: 100%; display: flex; justify-content: center; gap: 6px; }
+.zonasHud u { text-decoration: none; width: 20px; height: 20px; line-height: 20px; border-radius: 50%; font-size: 10px; text-align: center; border: 2px solid #fff; color: #fff; }
+.zonasHud u.a { border-color: var(--aliado); background: color-mix(in srgb, var(--aliado) 40%, transparent); }
+.zonasHud u.e { border-color: var(--enemigo); background: color-mix(in srgb, var(--enemigo) 40%, transparent); }
+#misionTxt { position: absolute; top: calc(48px + var(--seguro-arriba)); left: 50%; transform: translateX(-50%); padding: 4px 12px; border-radius: 8px; background: rgba(5,3,15,0.6); font: 700 11px system-ui, sans-serif; color: #ffe066; letter-spacing: 0.5px; text-align: center; max-width: 60vw; }
+#cuenta { position: absolute; top: 34%; left: 0; right: 0; text-align: center; font: 800 clamp(40px, 10vw, 90px) Orbitron, sans-serif; color: #fff; text-shadow: 0 0 24px var(--cian); }
+#killfeed { position: absolute; top: calc(158px + var(--seguro-arriba)); right: calc(10px + var(--seguro-der)); display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font: 700 11px system-ui, sans-serif; text-shadow: 0 1px 3px #000; }
+#killfeed div { padding: 2px 8px; border-radius: 6px; background: rgba(5,3,15,0.55); }
+#pistaTut { position: absolute; bottom: calc(60px + var(--seguro-abajo)); left: 50%; transform: translateX(-50%); max-width: 80vw; padding: 8px 14px; border-radius: 10px; background: rgba(5,3,15,0.75); border: 1px solid var(--cian); font: 600 13px system-ui, sans-serif; color: #fff; text-align: center; }
+#tabla { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(720px, 94vw); display: flex; gap: 12px; padding: 12px; border-radius: 14px; background: rgba(5,3,15,0.85); border: 1px solid rgba(61,245,255,0.6); }
+#tabla .colTabla { flex: 1; }
+#mapaGrande { position: absolute; left: 50%; top: 50%; width: min(80vh, 90vw); height: min(80vh, 90vw); transform: translate(-50%, -50%); border: 2px solid var(--cian); border-radius: 10px; background: rgba(5,3,15,0.6); }
+#herido { position: absolute; inset: 0; opacity: 0; background: radial-gradient(ellipse at center, transparent 25%, rgba(120,0,10,0.75)); transition: opacity 0.4s; }
+#acierto { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; transform: translate(-50%, -50%); opacity: 0; transition: opacity 0.08s; }
+#acierto.visible { opacity: 1; }
+#acierto i { position: absolute; width: 10px; height: 2px; background: #fff; }
+#acierto i:nth-child(1) { left: 0; top: 4px; transform: rotate(45deg); } #acierto i:nth-child(2) { right: 0; top: 4px; transform: rotate(-45deg); }
+#acierto i:nth-child(3) { left: 0; bottom: 4px; transform: rotate(-45deg); } #acierto i:nth-child(4) { right: 0; bottom: 4px; transform: rotate(45deg); }
+#acierto.baja i { background: #ff4d6d; width: 14px; }
+#reaparecer { position: absolute; left: 50%; top: 30%; transform: translateX(-50%); padding: 14px 18px; border-radius: 14px; background: rgba(5,3,15,0.82); border: 2px solid var(--cian); text-align: center; pointer-events: auto; min-width: 240px; }
+#reaparecer h3 { margin: 0 0 8px; color: #fff; letter-spacing: 2px; font-size: 16px; }
+#reaparecer button { display: block; width: 100%; margin: 6px 0; padding: 10px; border-radius: 10px; border: 2px solid rgba(154,140,255,0.7); background: rgba(154,140,255,0.15); color: #fff; font: 800 13px Orbitron, sans-serif; }
+#reaparecer button:focus-visible, #reaparecer button:hover { background: rgba(61,245,255,0.3); outline: 2px solid #fff; }
+#reaparecer .fila { display: none; }
+#reaparecer.combinado .fila { display: flex; gap: 8px; }
+#reaparecer.combinado #resAhora { display: none; }
+#reaparecer .fila button { margin: 0; }
+#chatRapido { position: absolute; left: 50%; bottom: 22%; transform: translateX(-50%); width: min(340px, 90vw); padding: 8px; border-radius: 12px; background: rgba(5,3,15,0.88); border: 2px solid var(--cian); pointer-events: auto; }
+#chatRapido button { display: block; width: 100%; margin: 4px 0; padding: 8px; border-radius: 8px; border: 1px solid rgba(154,140,255,0.7); background: rgba(154,140,255,0.12); color: #fff; font: 700 12px system-ui, sans-serif; text-align: left; }
+#chatRapido button:focus-visible, #chatRapido button:hover { background: rgba(61,245,255,0.3); outline: 2px solid #fff; }
+#chatLog { position: absolute; left: calc(10px + var(--seguro-izq)); bottom: calc(110px + var(--seguro-abajo)); font: 600 12px system-ui, sans-serif; text-shadow: 0 1px 3px #000; display: flex; flex-direction: column; gap: 2px; }
+#chatLog div { padding: 2px 8px; border-radius: 6px; background: rgba(5,3,15,0.55); }
+#ping { position: absolute; left: calc(10px + var(--seguro-izq)); top: calc(150px + var(--seguro-arriba)); font: 700 11px monospace; color: #7dff9a; }
+
+/* cabina y mira de francotirador */
+#instrumentos { position: absolute; left: 50%; bottom: calc(2px + var(--seguro-abajo)); transform: translateX(-50%); width: min(300px, 70vw); height: auto; display: none; border-radius: 10px 10px 0 0; border: 2px solid #455; }
+body.cabina #instrumentos { display: block; }
+#mascara { position: absolute; inset: 0; pointer-events: none; display: none; }
+body.cabina #mascara { display: block; box-shadow: inset 0 0 0 28px rgba(8,10,14,0.9), inset 0 0 160px 40px rgba(0,0,0,0.5); border-radius: 0; }
+body.cabina #mira, body.cabina #estado { }
+body.cabina #estado { bottom: calc(140px + var(--seguro-abajo)); }
+body.mira #mascara { display: block; background: radial-gradient(circle at center, transparent 24%, #000 25%); }
+body.mira #mira { width: 90px; height: 90px; }
+body.mira #mira::before { border-color: rgba(255,157,61,0.9); }
+body.mira #mira::after, body.mira #mira i::before, body.mira #mira i::after { content: ''; position: absolute; background: rgba(255,157,61,0.95); }
+body.mira #mira::after { left: 0; right: 0; top: 50%; height: 1px; }
+body.mira #mira i::before { left: 50%; top: -45px; bottom: -45px; width: 1px; height: auto; }
+#modulos span { flex: 1; }
+
+/* controles táctiles personalizados (tamaño, opacidad, posición, zurdo) */
+body.zurdo { --sx: -1; }
+#tactil { opacity: var(--tact-op); }
+#tactil .joy, #tactil .btnTactil { transform: translate(calc(var(--sx) * var(--tact-sep) * -1), calc(var(--tact-alt) * -1)) scale(var(--tact-esc)); transform-origin: bottom right; }
+#tactil #joyIzq { transform: translate(calc(var(--sx) * var(--tact-sep)), calc(var(--tact-alt) * -1)) scale(var(--tact-esc)); transform-origin: bottom left; }
+#tactil #btnPausa, #tactil #btnVista, #tactil #btnTabla, #tactil #btnChat { transform: scale(var(--tact-esc)); transform-origin: top right; }
+#btnVista { top: calc(10px + var(--seguro-arriba)); right: calc(214px + var(--seguro-der)); width: 44px; height: 44px; border-radius: 12px; font-size: 10px; }
+#btnTabla { top: calc(10px + var(--seguro-arriba)); right: calc(268px + var(--seguro-der)); width: 44px; height: 44px; border-radius: 12px; font-size: 10px; }
+#btnChat { top: calc(10px + var(--seguro-arriba)); right: calc(322px + var(--seguro-der)); width: 44px; height: 44px; border-radius: 12px; font-size: 10px; }
+#btnBengala { right: calc(190px + var(--seguro-der)); bottom: calc(30px + var(--seguro-abajo)); width: 52px; height: 52px; font-size: 9px; }
+#btnMg { right: calc(118px + var(--seguro-der)); bottom: calc(30px + var(--seguro-abajo)); }
+#btnMun { right: calc(100px + var(--seguro-der)); bottom: calc(106px + var(--seguro-abajo)); width: 52px; height: 52px; font-size: 10px; }
+body.zurdo #tactil { transform: scaleX(-1); }
+body.zurdo #tactil > * { transform: scaleX(-1); }
+body.zurdo #tactil .joy, body.zurdo #tactil .btnTactil { transform: scaleX(-1) translate(calc(var(--sx) * var(--tact-sep) * -1), calc(var(--tact-alt) * -1)) scale(var(--tact-esc)); }
+body.zurdo #tactil #joyIzq { transform: scaleX(-1) translate(calc(var(--sx) * var(--tact-sep)), calc(var(--tact-alt) * -1)) scale(var(--tact-esc)); }
+body.zurdo #tactil #btnPausa, body.zurdo #tactil #btnVista, body.zurdo #tactil #btnTabla, body.zurdo #tactil #btnChat { transform: scaleX(-1) scale(var(--tact-esc)); }
+body.zurdo .joy .palanca { }
+.tabCuerpo .sens { display: block !important; }
+#tactil .joy, #tactil .btnTactil, #tactil #joyIzq { transform-origin: center !important; }
+@media (max-width: 520px) {
+  #btnPausa, #btnVista, #btnTabla, #btnChat { right: calc(10px + var(--seguro-der)) !important; width: 40px; height: 40px; }
+  #btnPausa { top: calc(118px + var(--seguro-arriba)) !important; }
+  #btnVista { top: calc(164px + var(--seguro-arriba)) !important; }
+  #btnTabla { top: calc(210px + var(--seguro-arriba)) !important; }
+  #btnChat { top: calc(256px + var(--seguro-arriba)) !important; }
+  #tickets { top: calc(128px + var(--seguro-arriba)); left: calc(10px + var(--seguro-izq)); transform: none; max-width: 62vw; font-size: 11px; }
+  #misionTxt { top: calc(176px + var(--seguro-arriba)); left: calc(10px + var(--seguro-izq)); transform: none; max-width: 62vw; }
+  #killfeed { top: calc(306px + var(--seguro-arriba)); }
+  #datos { font-size: 10px; min-width: 120px; }
+  #aviso { top: 30%; }
+  #pistaTut { bottom: calc(190px + var(--seguro-abajo)); }
+  #estado { font-size: 10px; white-space: normal; max-width: 92vw; text-align: center; bottom: calc(6px + var(--seguro-abajo)); }
+  #chatLog { bottom: calc(190px + var(--seguro-abajo)); }
+}
+@media (max-width: 520px) {
+  body.tactil #estado { top: calc(228px + var(--seguro-arriba)); bottom: auto; left: calc(10px + var(--seguro-izq)); transform: none; max-width: 58vw; text-align: left; }
+}
+body.zurdo #btnPausa { right: auto !important; left: calc(160px + var(--seguro-izq)) !important; }
+body.zurdo #btnVista { right: auto !important; left: calc(214px + var(--seguro-izq)) !important; }
+body.zurdo #btnTabla { right: auto !important; left: calc(268px + var(--seguro-izq)) !important; }
+body.zurdo #btnChat { right: auto !important; left: calc(322px + var(--seguro-izq)) !important; }
+@media (max-width: 520px) {
+  body.zurdo #btnPausa, body.zurdo #btnVista, body.zurdo #btnTabla, body.zurdo #btnChat { left: calc(10px + var(--seguro-izq)) !important; }
+}

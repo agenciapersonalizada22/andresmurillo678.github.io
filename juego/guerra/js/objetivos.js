@@ -13,11 +13,11 @@ const DATOS = {
 const V = new THREE.Vector3(), W = new THREE.Vector3();
 
 export class ObjetivoTierra {
-  constructor(ctx, tipo, x, z, oleada) {
+  constructor(ctx, tipo, x, z, oleada, equipo = 'enemigo') {
     this.ctx = ctx;
     this.tipo = 'tierra';
     this.clase = tipo;
-    this.equipo = 'enemigo';
+    this.equipo = equipo;
     const d = DATOS[tipo];
     this.puntos = d.puntos;
     this.radio = d.radio;
@@ -33,6 +33,9 @@ export class ObjetivoTierra {
     ctx.escena.add(this.grupo);
     this.pos = this.grupo.position;
     this.centro = new THREE.Vector3(x, y + d.centroY, z);
+    this.vel = new THREE.Vector3();
+    this.ultimo = null;
+    this.nombre = tipo.toUpperCase();
     this.cd = 1 + Math.random() * 2;
     this.alMorir = null;
   }
@@ -40,7 +43,7 @@ export class ObjetivoTierra {
   actualizar(dt, jp) {
     if (!this.vivo) return;
     if (this.clase === 'radar' && this.cabeza) this.cabeza.rotation.y += dt;
-    if ((this.clase !== 'antiaerea' && this.clase !== 'barco') || !jp.vivo) return;
+    if ((this.clase !== 'antiaerea' && this.clase !== 'barco') || !jp || !jp.vivo) return;
     const dist = this.centro.distanceTo(jp.pos);
     if (dist > 1000 * (jp.sigilo || 1)) return;
     V.copy(jp.pos).addScaledVector(jp.vel, dist / 330).sub(this.centro);
@@ -56,13 +59,14 @@ export class ObjetivoTierra {
       V.z += (Math.random() - 0.5) * e * 2;
       V.normalize();
       W.copy(this.centro).addScaledVector(V, 3);
-      this.ctx.proyectiles.disparar('flak', 'enemigo', W, V, null, { dano: 10 + this.oleada });
+      this.ctx.proyectiles.disparar('flak', this.equipo, W, V, null, { dano: 10 + this.oleada, dueno: this });
       Sonido.disparo('flak', Sonido.porDistancia(dist));
     }
   }
 
-  recibirDanio(d) {
+  recibirDanio(d, punto, proj) {
     if (!this.vivo) return;
+    if (proj && proj.dueno && proj.dueno !== this) this.ultimo = proj.dueno;
     this.vida -= d;
     if (this.vida > 0) return;
     this.vivo = false;

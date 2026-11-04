@@ -11,30 +11,49 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
   <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="../comun/lobby.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="enTitulo">
   <canvas id="lienzo" aria-label="Combate aéreo y de tanques en 3D"></canvas>
+  <div id="contFpsHueco"></div>
 
   <!-- Lo que se ve mientras juegas -->
   <div id="hud" class="oculto">
     <div id="dano"></div>
+    <div id="herido"></div>
     <div id="marcadores"></div>
     <div id="mira" aria-hidden="true"><i></i></div>
     <div id="miraRaton" aria-hidden="true"></div>
     <div id="lead" aria-hidden="true"></div>
+    <div id="acierto" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div id="mascara" aria-hidden="true"></div>
     <div id="datos">
-      <div>PUNTAJE <b id="hPuntaje">0</b></div>
-      <div>OLEADA <b id="hOleada">1/5</b></div>
-      <div>ENEMIGOS <b id="hEnemigos">0</b></div>
+      <div><span id="etPuntaje">PUNTAJE</span> <b id="hPuntaje">0</b></div>
+      <div><span id="etOleada">OLEADA</span> <b id="hOleada">1/5</b></div>
+      <div><span id="etEnemigos">ENEMIGOS</span> <b id="hEnemigos">0</b></div>
       <div class="barra" aria-label="Vida"><span id="hVida"></span></div>
-      <div id="modulos" class="oculto"><span id="mOrugas">ORUGAS</span><span id="mTorreta">TORRETA</span><span id="mMotor">MOTOR</span></div>
+      <div id="modulos"><span id="mOrugas">ORUGAS</span><span id="mTorreta">TORRETA</span><span id="mMotor">MOTOR</span></div>
     </div>
+    <div id="tickets" class="oculto"></div>
+    <div id="misionTxt" class="oculto"></div>
+    <div id="cuenta" class="oculto"></div>
     <div id="aviso"></div>
+    <div id="pistaTut" class="oculto"></div>
     <div id="estado"></div>
     <div id="recarga" class="oculto"><span id="hRecarga"></span></div>
+    <div id="killfeed"></div>
     <canvas id="radar" width="300" height="300" aria-label="Radar"></canvas>
-    <div id="ayudaMando"><span class="h-avion"><b>RT</b> disparar · <b>LT</b> misil · <b>A</b> bomba · <b>LB/RB</b> guiñada · <b>X</b> crucero · <b>Y</b> cámara · <b>Vista</b> HUD · <b>Menú</b> pausa</span><span class="h-tanque"><b>RT</b> disparar · <b>Stick der.</b> torreta · <b>X</b> torreta al frente · <b>Y</b> cámara · <b>Vista</b> HUD · <b>Menú</b> pausa</span></div>
+    <canvas id="mapaGrande" class="oculto" width="640" height="640" aria-label="Mapa"></canvas>
+    <canvas id="instrumentos" width="360" height="130" aria-hidden="true"></canvas>
+    <div id="tabla" class="oculto"></div>
+    <div id="reaparecer" class="oculto"><h3>REAPARECES EN 5</h3>
+      <div class="fila"><button type="button" id="resAvion">AVIÓN</button><button type="button" id="resTanque">TANQUE</button></div>
+      <button type="button" id="resAhora">REAPARECER</button></div>
+    <div id="chatRapido" class="oculto"></div>
+    <div id="chatLog"></div>
+    <div id="ping" class="oculto"></div>
+    <div id="ayudaMando"><span class="h-avion"><b>RT</b> disparar · <b>LT</b> misil · <b>A</b> bomba · <b>B</b> bengalas · <b>LB/RB</b> guiñada · <b>X</b> crucero · <b>Y</b> cámara · <b>Vista</b> HUD · <b>R3</b> marcador</span><span class="h-tanque"><b>RT</b> cañón · <b>LT</b> ametralladora · <b>B</b> munición · <b>Stick der.</b> torreta · <b>X</b> torreta al frente · <b>Y</b> cámara</span></div>
   </div>
 
   <!-- Controles para celular -->
@@ -42,45 +61,106 @@
     <div id="joyIzq" class="joy"><div class="palanca"></div></div>
     <div id="joyDer" class="joy"><div class="palanca"></div></div>
     <button type="button" class="btnTactil" id="btnPausa" data-accion="pausa" aria-label="Pausa">II</button>
+    <button type="button" class="btnTactil" id="btnVista" data-tecla="KeyV" aria-label="Cámara">CAM</button>
+    <button type="button" class="btnTactil" id="btnTabla" data-tecla="Tab" aria-label="Marcador">TAB</button>
+    <button type="button" class="btnTactil oculto" id="btnChat" data-accion="chat" aria-label="Chat">CHAT</button>
     <button type="button" class="btnTactil" id="btnFuego" data-tecla="Space">FUEGO</button>
     <button type="button" class="btnTactil solo-avion" id="btnMisil" data-tecla="KeyF">MISIL</button>
     <button type="button" class="btnTactil solo-avion" id="btnBomba" data-tecla="KeyB">BOMBA</button>
+    <button type="button" class="btnTactil solo-avion" id="btnBengala" data-tecla="KeyG">BENG</button>
     <button type="button" class="btnTactil solo-avion" id="btnAcel" data-tecla="ShiftLeft">ACEL</button>
     <button type="button" class="btnTactil solo-avion" id="btnFreno" data-tecla="ControlLeft">FRENO</button>
+    <button type="button" class="btnTactil solo-tanque" id="btnMg" data-tecla="KeyF">AMETR</button>
+    <button type="button" class="btnTactil solo-tanque" id="btnMun" data-tecla="KeyT">MUN</button>
   </div>
 
   <div id="toastMando" class="oculto"></div>
-
+  <button type="button" id="btnPantalla" class="btnFlot" aria-label="Pantalla completa">⛶</button>
   <a id="volverMenu" class="volver" href="../">← Menú</a>
 
   <!-- Pantalla de inicio -->
   <div id="pantallaTitulo" class="pantalla">
-    <div class="tarjeta ancha">
+    <div class="tarjeta">
       <h1 class="titulo"><span>ALAS</span><span>Y ACERO</span></h1>
       <p class="sub">combate aéreo · batalla de tanques</p>
+      <div id="perfilBarra" class="perfilBarra"></div>
+      <button type="button" id="btnJugar" class="principal">JUGAR</button>
+      <button type="button" id="btnMulti">MULTIJUGADOR</button>
+      <div class="fila"><button type="button" id="btnHangar">HANGAR</button><button type="button" id="btnMisiones">MISIONES</button></div>
+      <div class="fila"><button type="button" id="btnLogros">LOGROS</button><button type="button" id="btnAjustes">AJUSTES</button></div>
+      <p class="pista solo-mando"><b>Cruceta / stick izq.</b> elegir · <b>A</b> aceptar · <b>B</b> atrás · <b>LB/RB</b> cambiar pestaña</p>
+      <p class="pista solo-compu">Ratón: apunta el avión como en War Thunder · W/S/A/D · Q/E guiñada · Shift/Ctrl empuje · Espacio dispara · V cámara · Tab marcador</p>
+      <p class="pista solo-tactil">Joystick para mover · botones para disparar · CAM cambia de cámara.</p>
+    </div>
+  </div>
+
+  <!-- Preparar combate -->
+  <div id="pantallaJugar" class="pantalla oculto">
+    <div class="tarjeta ancha">
+      <h2>COMBATE</h2>
       <h3 class="selTitulo">MAPA</h3>
       <div id="selMapas" class="selMapas"></div>
       <p id="infoMapa" class="info"></p>
-      <h3 class="selTitulo">TU AVIÓN</h3>
-      <div id="selAviones" class="selAviones"></div>
-      <div id="fichaAvion" class="ficha"></div>
-      <h3 class="selTitulo">JUGAR</h3>
-      <div class="modos">
-        <button type="button" class="modo" id="btnAvion" style="--color:#3df5ff">
-          <b>AVIÓN DE CAZA</b>
-          <span>Vuela, derriba cazas y bombardea objetivos</span>
-          <em id="recAvion">Récord: 0</em>
-        </button>
-        <button type="button" class="modo" id="btnTanque" style="--color:#ff9d3d">
-          <b>TANQUE</b>
-          <span>Torreta propia, cañón y combate en tierra</span>
-          <em id="recTanque">Récord: 0</em>
-        </button>
-      </div>
-      <p class="pista solo-mando"><b>Cruceta / stick izq.</b> elegir · <b>A</b> aceptar · <b>B</b> volver al menú de juegos · <b>LB/RB</b> cambiar avión · <b>LT/RT</b> cambiar mapa · <b>Menú</b> jugar con el avión</p>
-      <p class="pista solo-compu">AVIÓN: W/S cabeceo · A/D alabeo · Q/E guiñada · Shift/Ctrl empuje · Espacio ametralladora · F misil · B bomba<br>
-        TANQUE: W/S avanzar · A/D girar · ratón o flechas apuntan · clic / Espacio dispara · Esc pausa</p>
-      <p class="pista solo-tactil">Joystick para mover · botones para disparar. En tanque, el joystick derecho apunta la torreta.</p>
+      <h3 class="selTitulo">MODO</h3>
+      <div id="listaModos" class="listaModos"></div>
+      <div id="opcionesJugar" class="opcionesJugar"></div>
+      <h3 class="selTitulo">TUS VEHÍCULOS</h3>
+      <div id="resumenVeh" class="resumenVeh"></div>
+      <button type="button" id="btnCombatir" class="principal">¡A COMBATIR!</button>
+      <button type="button" data-atras="1">VOLVER</button>
+    </div>
+  </div>
+
+  <!-- Hangar -->
+  <div id="pantallaHangar" class="pantalla oculto">
+    <div class="tarjeta ancha">
+      <h2>HANGAR</h2>
+      <div id="hangarCab" class="perfilBarra"></div>
+      <div class="tabs" id="hangarTabs"></div>
+      <div id="hangarGrid" class="gridVeh"></div>
+      <div id="hangarFicha" class="ficha"></div>
+      <button type="button" data-atras="1">VOLVER</button>
+    </div>
+  </div>
+
+  <!-- Misiones -->
+  <div id="pantallaMisiones" class="pantalla oculto">
+    <div class="tarjeta ancha">
+      <h2>MISIONES</h2>
+      <div id="listaMisiones"></div>
+      <button type="button" data-atras="1">VOLVER</button>
+    </div>
+  </div>
+
+  <!-- Logros y estadísticas -->
+  <div id="pantallaLogros" class="pantalla oculto">
+    <div class="tarjeta ancha">
+      <h2>LOGROS Y ESTADÍSTICAS</h2>
+      <div id="contLogros"></div>
+      <button type="button" data-atras="1">VOLVER</button>
+    </div>
+  </div>
+
+  <!-- Ajustes -->
+  <div id="pantallaAjustes" class="pantalla oculto">
+    <div class="tarjeta ancha">
+      <h2>AJUSTES</h2>
+      <div id="contAjustes"></div>
+      <button type="button" id="btnRecarga" class="oculto">RECARGAR PARA APLICAR</button>
+      <button type="button" data-atras="1">VOLVER</button>
+      <p class="pista solo-mando"><b>LB/RB</b> cambia de pestaña · <b>B</b> volver</p>
+    </div>
+  </div>
+
+  <!-- Equipos antes de una partida multijugador -->
+  <div id="pantallaEquipos" class="pantalla oculto">
+    <div class="tarjeta ancha">
+      <h2>PREPARACIÓN</h2>
+      <p id="eqInfo" class="info"></p>
+      <div id="eqLista"></div>
+      <div id="eqOpc" class="fila"></div>
+      <button type="button" id="btnEqComenzar" class="principal">COMENZAR</button>
+      <button type="button" id="btnEqSalir">SALIR DE LA SALA</button>
     </div>
   </div>
 
@@ -88,37 +168,31 @@
   <div id="pantallaPausa" class="pantalla oculto">
     <div class="tarjeta">
       <h2>PAUSA</h2>
+      <p id="pausaMulti" class="info oculto">Multijugador: la partida sigue en marcha.</p>
       <button type="button" id="btnSeguir" class="principal">SEGUIR</button>
-      <div class="fila">
-        <button type="button" id="btnMusica">MÚSICA: SÍ</button>
-        <button type="button" id="btnEfectos">SONIDOS: SÍ</button>
-      </div>
-      <button type="button" id="btnInvertir">CABECEO: NORMAL</button>
-      <button type="button" id="btnVibrar" class="solo-mando-btn">VIBRACIÓN: SÍ</button>
-      <button type="button" id="btnRaton" class="solo-avion-pausa">RATÓN: APUNTAR</button>
-      <label class="sens" for="rangoSens"><span>SENSIBILIDAD <b id="valSens">1.0</b></span><input type="range" id="rangoSens" min="0.3" max="2.5" step="0.1" value="1"></label>
-      <div class="fila">
-        <button type="button" id="btnReiniciar">REINICIAR</button>
-        <button type="button" id="btnTitulo">MODOS</button>
-      </div>
-      <p class="pista solo-compu">Avión: S/↓ sube, W/↑ baja (palanca clásica) · ratón también guía · Shift/Ctrl empuje · Espacio ametralladora · F misil (fíjalo un momento) · B bomba · M música</p>
-      <p class="pista solo-compu">Tanque: W/S/A/D casco · ratón o flechas = torreta · clic o Espacio = cañón (recarga) · traseras y lados duelen más</p>
-      <p class="pista solo-mando">MANDO (cruceta/stick: elegir · A aceptar · B seguir). Avión: stick izq. cabeceo y alabeo · stick der. mirar · RT ametralladoras · LT misil/cohete · LB/RB guiñada · A bomba · cruceta arriba/abajo empuje · X empuje de crucero · Y cámara · Vista oculta/muestra el HUD · Menú pausa. Tanque: stick izq. casco, stick der. torreta, RT dispara, X torreta al frente, Y cámara.</p>
-      <p class="pista solo-compu">Ratón (avión): mueve el cursor para marcar hacia dónde volar (círculo cian); el avión gira hacia él. El cuadro naranja es la mira de adelanto: dispara ahí. Con teclas de vuelo el ratón se desactiva un momento.</p>
-      <p class="pista solo-tactil">Apunta con el centro de la pantalla. Fija un enemigo con la mira para lanzar misiles.</p>
+      <button type="button" id="btnPausaAjustes">AJUSTES</button>
+      <button type="button" id="btnPausaCamara">CÁMARA</button>
+      <div class="fila"><button type="button" id="btnReiniciar">REINICIAR</button><button type="button" id="btnTitulo">SALIR AL MENÚ</button></div>
+      <p class="pista solo-compu">Avión: S/↓ sube, W/↑ baja · ratón guía · Shift/Ctrl empuje · Espacio ametralladora · F misil · B bomba · G bengalas · X freno · R extintor · V cámara · N cámara de arma · M mapa · Tab marcador</p>
+      <p class="pista solo-compu">Tanque: W/S/A/D casco · ratón = torreta · clic cañón · F ametralladora · T munición · V cámara con mira</p>
+      <p class="pista solo-mando">Mando: stick izq. mueve · stick der. mira/torreta · RT dispara · LT secundaria · A bomba · B bengalas/munición · LB/RB guiñada · Y cámara · Vista oculta HUD · R3 marcador · cruceta ↑↓ empuje, → cámara de arma, ← extintor.</p>
+      <p class="pista solo-tactil">Apunta con el centro de la pantalla. CAM cambia de cámara.</p>
       <a class="enlace" href="../">← Volver al menú de juegos</a>
     </div>
   </div>
 
   <!-- Fin de la partida -->
   <div id="pantallaFin" class="pantalla oculto">
-    <div class="tarjeta">
+    <div class="tarjeta ancha">
       <h2 id="finTitulo">DERROTA</h2>
       <p id="finDatos" class="info"></p>
       <p id="finRecord" class="info"></p>
+      <div id="finRecomp" class="recomp"></div>
+      <div id="finTabla" class="finTabla"></div>
       <button type="button" id="btnReintentar" class="principal">REINTENTAR</button>
-      <button type="button" id="btnFinTitulo">CAMBIAR MODO</button>
-      <p class="pista solo-mando"><b>A</b> aceptar · <b>B</b> cambiar modo</p>
+      <button type="button" id="btnFinHangar">HANGAR</button>
+      <button type="button" id="btnFinTitulo">MENÚ</button>
+      <p class="pista solo-mando"><b>A</b> aceptar · <b>B</b> menú</p>
     </div>
   </div>
 
@@ -129,6 +203,8 @@
     </div>
   </div>
 
+  <script src="../comun/red.js"></script>
+  <script src="../comun/lobby.js"></script>
   <script type="module" src="js/principal.js"></script>
 </body>
 </html>

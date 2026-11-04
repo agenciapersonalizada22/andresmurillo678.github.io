@@ -12,6 +12,12 @@ let busMusica = null;
 let bufferRuido = null;
 let activos = cargarOpciones().efectos !== false;
 const ultima = {};
+const vol = { maestro: 1, efectos: 1, musica: 1, silencio: false, pausaOculto: true };
+function aplicar() {
+  if (maestro) maestro.gain.value = vol.silencio ? 0 : vol.maestro;
+  if (efectos) efectos.gain.value = activos ? CONFIG.audio.volumen * vol.efectos : 0;
+  if (busMusica) busMusica.gain.value = vol.musica;
+}
 
 function iniciar() {
   if (ctx) {
@@ -27,10 +33,10 @@ function iniciar() {
   maestro = ctx.createGain();
   maestro.connect(ctx.destination);
   efectos = ctx.createGain();
-  efectos.gain.value = activos ? CONFIG.audio.volumen : 0;
   efectos.connect(maestro);
   busMusica = ctx.createGain();
   busMusica.connect(maestro);
+  aplicar();
   // 1 segundo de ruido blanco que se reutiliza en todo
   bufferRuido = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
   const d = bufferRuido.getChannelData(0);
@@ -45,6 +51,7 @@ function iniciar() {
 
 document.addEventListener('visibilitychange', () => {
   if (!ctx) return;
+  if (document.hidden && !vol.pausaOculto) return;
   const pr = document.hidden ? ctx.suspend() : ctx.resume();
   if (pr && pr.catch) pr.catch(() => {});
 });
@@ -138,6 +145,8 @@ const motor = {
 
 export const Sonido = {
   iniciar,
+  volumenes(o) { Object.assign(vol, o); aplicar(); },
+  vol,
   contexto: () => ctx,
   salidaMusica: () => busMusica,
   porDistancia,
@@ -145,7 +154,7 @@ export const Sonido = {
   efectosActivos: () => activos,
   alternarEfectos() {
     activos = !activos;
-    if (efectos) efectos.gain.value = activos ? CONFIG.audio.volumen : 0;
+    aplicar();
     const o = cargarOpciones();
     o.efectos = activos;
     guardarOpciones(o);

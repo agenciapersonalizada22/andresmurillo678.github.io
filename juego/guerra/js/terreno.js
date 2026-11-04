@@ -7,6 +7,7 @@
 import * as THREE from '../lib/three.module.min.js';
 import { CONFIG, MAPAS } from './config.js';
 import { crearRng, crearRuido } from './ruido.js';
+import { crearAgua } from './agua.js';
 import { RELIEVES, ARBOLES, COLORES_ROCA, suave, canvasTextura } from './mapas.js';
 
 const M = CONFIG.mundo;
@@ -14,7 +15,9 @@ const MEDIO = M.tam / 2;
 const CELDA = 80;
 
 export class Terreno {
-  constructor(escena, id) {
+  // opc = { detalle, aguaShader, arboles (0.2 a 1) }
+  constructor(escena, id, opc = {}) {
+    this.opc = opc;
     this.escena = escena;
     this.id = id;
     this.def = MAPAS[id];
@@ -64,6 +67,8 @@ export class Terreno {
       });
     }
     for (const t of texturas) t.dispose();
+    if (this.aguaFx) this.aguaFx.dispose();
+    this.aguaFx = null;
     this.objetos.length = 0;
     this.colisionadores.length = 0;
     this.celdas.clear();
@@ -273,12 +278,36 @@ export class Terreno {
       col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
     }
     g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-    this.malla = this.add(new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true })));
+    const mt = new THREE.MeshLambertMaterial({ vertexColors: true });
+    if (this.opc.detalle) {
+      mt.onBeforeCompile = (sh) => {
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWp;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvWp = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+varying vec3 vWp;
+float h21(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i),h21(i+vec2(1,0)),f.x),mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),f.x),f.y);}`)
+          .replace('#include <color_fragment>', `#include <color_fragment>
+float cd = length(vWp - cameraPosition);
+float fino = 1.0 - smoothstep(150.0, 1100.0, cd);
+float dd = 0.5*vn(vWp.xz*0.8)+0.3*vn(vWp.xz*3.1)+0.2*vn(vWp.xz*11.0);
+float macro = vn(vWp.xz*0.015)*0.5+vn(vWp.xz*0.05)*0.5;
+diffuseColor.rgb *= (0.9 + 0.2*macro) * (1.0 + (dd-0.5)*0.7*fino);`);
+      };
+      mt.customProgramCacheKey = () => 'terrenoDetalle';
+    }
+    this.malla = this.add(new THREE.Mesh(g, mt));
+    this.malla.receiveShadow = true;
   }
 
   _crearAgua() {
     const A = this.def.agua;
     if (!A) return;
+    if (this.opc.aguaShader) {
+      this.aguaFx = crearAgua(this, A, this.def.cielo);
+      this.agua = this.add(this.aguaFx.mesh);
+      this.agua.position.y = this.nivelAgua;
+      return;
+    }
     const tex = canvasTextura(128, 128, (g, w, h) => {
       g.fillStyle = A.color;
       g.fillRect(0, 0, w, h);
@@ -296,6 +325,7 @@ export class Terreno {
 
   actualizar(t) {
     if (this.texAgua) this.texAgua.offset.set(t * 0.004, t * 0.0025);
+    if (this.aguaFx) this.aguaFx.actualizar(t);
   }
 
   // ---------------------------------------------------------- Pistas
@@ -414,7 +444,7 @@ export class Terreno {
   // ---------------------------------------------------------- Árboles
   _crearArboles() {
     const A = ARBOLES[this.def.estruc.arboles];
-    const max = this.def.estruc.nArb;
+    const max = Math.round(this.def.estruc.nArb * (this.opc.arboles || 1));
     if (!A || !max) return;
     const copas = new THREE.InstancedMesh(A.copa(), new THREE.MeshLambertMaterial({ flatShading: true, color: A.colorCopa || 0xffffff }), max);
     const troncos = new THREE.InstancedMesh(A.tronco(), new THREE.MeshLambertMaterial({ color: A.colorTronco }), max);
