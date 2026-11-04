@@ -834,6 +834,8 @@ J.perfil = (() => {
   document.getElementById('bAjustes').addEventListener('click', () => Ajustes.abrir());
   document.getElementById('bAjustesTitulo').addEventListener('click', () => Ajustes.abrir());
   document.getElementById('bRanuraTitulo').addEventListener('click', () => Ajustes.abrir('dat'));
+  document.getElementById('bCuentaTitulo').addEventListener('click', () => { if (window.CuentaJuego) CuentaJuego.abrirPanel(); });
+  document.getElementById('bCuentaPausa').addEventListener('click', () => { if (window.CuentaJuego) CuentaJuego.abrirPanel('global'); });
   document.getElementById('bRanuraTitulo').textContent = 'RANURA ' + Util.ranura;
   document.getElementById('bGuardar').addEventListener('click', () => { J.guardarPartida(); J.pista('Partida guardada (ranura ' + Util.ranura + ')'); });
 
@@ -913,6 +915,7 @@ J.perfil = (() => {
     if (J.modo === 'titulo') {
       Entrada.tomarToques();
       if (Entrada.pulso('KeyO') || (window.Mando && Mando.conectado && Mando.pulsado('Y'))) { Ajustes.abrir(); return; }
+      if (window.CuentaJuego && CuentaJuego.sesion && window.Mando && Mando.conectado && Mando.pulsado('X')) { CuentaJuego.abrirPanel(); return; }
       if (Entrada.pulso('Enter', 'Space', 'KeyE')) iniciarPartida();
       return;
     }

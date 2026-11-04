@@ -68,6 +68,7 @@ const Telefono = (() => {
       fila('Carros tomados', s.carrosTomados || 0), fila('Disparos', s.disparos || 0), fila('Sustos a peatones', s.sustos || 0),
       fila('Veces atrapado', s.atrapado || 0), fila('Máximo de estrellas', s.maxEstrellas || 0), fila('Fotos', s.fotos || 0),
       fila('Ranura de guardado', Util.ranura), fila('Jugador', J.perfil.nombre),
+      ...(window.CuentaJuego && CuentaJuego.sesion ? [fila('Ranking global (dinero)', CuentaJuego.posicionTexto())] : []),
     ];
   }
 
@@ -86,6 +87,7 @@ const Telefono = (() => {
       { t: 'boton', texto: '🚗 GARAJE', accion: () => Panel.abrir({ titulo: 'MIS CARROS', pestanas: [{ id: 'g', nombre: 'GARAJE', filas: appGaraje }], alCerrar: reabrir }) },
       { t: 'boton', texto: '🏦 BANCO', accion: () => Panel.abrir({ titulo: 'BANCO', pestanas: [{ id: 'b', nombre: 'CUENTA', filas: appBanco }], alCerrar: reabrir }) },
       { t: 'boton', texto: '🏆 LOGROS', accion: () => Panel.abrir({ titulo: 'LOGROS', pestanas: [{ id: 'l', nombre: 'LOGROS', filas: appLogros }], alCerrar: reabrir }) },
+      { t: 'boton', texto: '👤 CUENTA / RANKING', accion: () => { if (window.CuentaJuego) CuentaJuego.abrirPanel('global', reabrir); } },
       { t: 'boton', texto: '📊 ESTADÍSTICAS', accion: () => Panel.abrir({ titulo: 'ESTADÍSTICAS', pestanas: [{ id: 's', nombre: 'DATOS', filas: appStats }], alCerrar: reabrir }) },
       { t: 'boton', texto: '📷 FOTO', accion: () => cerrarYHacer(() => Foto.entrar()), deshabilitado: J.modo === 'pausa' || Panel.previo === 'pausa' },
       { t: 'boton', texto: Multi.activo ? '🌐 EN LÍNEA' : '🌐 MULTIJUGADOR', accion: () => { if (Multi.activo) Multi.abrirPanel(); else { Panel.cerrar(true); Multi.abrirLobby(); } } },

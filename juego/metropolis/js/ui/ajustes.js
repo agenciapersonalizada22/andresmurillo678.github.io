@@ -1,6 +1,7 @@
 // Menú de ajustes con pestañas (táctil, ratón y mando: todo son botones con la clase "foco").
 import * as Almacen from './almacen.js';
 import * as Audio from './audio.js';
+import * as CuentaJ from './cuentaJuego.js';
 import { ORDEN_CALIDAD } from '../vista/escena.js';
 
 const NOM_CAL = { baja: 'Baja', media: 'Media', alta: 'Alta', ultra: 'Ultra' };
@@ -45,7 +46,7 @@ export function crearAjustes(J, modal) {
     datos: () => `<h4>Guardado</h4><p>Tienes 3 ranuras. Se guarda solo cada pocos segundos y al salir.</p>
       <div class="acciones"><button type="button" class="btn foco" data-acc="exportar">Exportar / importar texto</button></div>
       <h4>Borrar</h4><div class="acciones"><button type="button" class="btn foco" data-acc="resetAj">Restablecer ajustes</button><button type="button" class="btn peligro foco" data-acc="borrarTodo">Borrar todos los datos</button></div>
-      <p>Borrar datos elimina ciudades, ajustes y logros de este juego en este dispositivo.</p>`,
+      <p>Borrar datos elimina ciudades y ajustes de este juego en este dispositivo y en tu nube. Los logros y el ranking de tu cuenta se conservan.</p>${CuentaJ.bloqueCuenta()}`,
   };
   const OPCS = { tri: OPC_TRI, fps: OPC_FPS, dalt: OPC_DALT };
 
@@ -88,8 +89,15 @@ export function crearAjustes(J, modal) {
         ayuda: () => J.paneles.ayuda(),
         exportar: () => J.paneles.intercambio(!J.enTitulo),
         resetAj: (b, a) => { const u = A().ultima; Object.assign(J.ajustes, Almacen.AJUSTES_DEF, { teclas: {}, ultima: u, calidad: A().calidad }); guardar('todo'); rehacer(a); },
-        borrarTodo: (b, a) => {
+        cuenta: () => CuentaJ.cuentaModal(J),
+        sincronizar: async (b, a) => {
+          b.textContent = 'Sincronizando…'; b.classList.add('off');
+          const m = await CuentaJ.sincronizarAhora();
+          if (!a.cerrado && a.o.tab === 'datos') a.rehacer(html('datos').replace(CuentaJ.bloqueCuenta(), CuentaJ.bloqueCuenta(m)));
+        },
+        borrarTodo: async (b, a) => {
           if (b.dataset.seguro !== '1') { b.dataset.seguro = '1'; b.textContent = '¿Seguro? Pulsa otra vez'; setTimeout(() => { if (b.isConnected) { b.dataset.seguro = ''; b.textContent = 'Borrar todos los datos'; } }, 3000); return; }
+          b.textContent = 'Borrando…'; await CuentaJ.borrarNube();
           Almacen.borrarTodo(); location.reload();
         },
       },

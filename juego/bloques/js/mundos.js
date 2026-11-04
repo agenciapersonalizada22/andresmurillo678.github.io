@@ -143,6 +143,43 @@ export const Mundos = {
 
   tamano(id) { const t = leer(PREF + id); return t ? t.length : 0; },
 
+  // Aplica el índice que llegó de la nube (ver nube.js): añade o pone al día los mundos que
+  // llegaron con sus datos y quita los que se borraron en otro dispositivo.
+  // `previos` = ids que ya viajaban a la nube antes de esta sincronización. Devuelve true si cambió algo.
+  fusionar(lista, ultimo, previos) {
+    const idx = indice();
+    let cambio = false;
+    const enNube = new Set();
+    const txt = (v, d, n) => (typeof v === 'string' && v ? v.slice(0, n) : d);
+    for (const m of Array.isArray(lista) ? lista : []) {
+      if (!m || typeof m.id !== 'string' || !/^[\w-]{1,40}$/.test(m.id)) continue;
+      if (leer(PREF + m.id) == null) continue;              // sus datos no llegaron: no se anota
+      enNube.add(m.id);
+      const limpio = {
+        id: m.id, nombre: txt(m.nombre, 'Mundo', 28), semilla: m.semilla | 0, tipo: m.tipo === 'plano' ? 'plano' : 'normal',
+        modo: ['supervivencia', 'creativo', 'aventura'].includes(m.modo) ? m.modo : 'supervivencia',
+        dificultad: ['pacifico', 'facil', 'normal', 'dificil'].includes(m.dificultad) ? m.dificultad : 'normal',
+        creado: Number(m.creado) || Date.now(), jugado: Number(m.jugado) || Date.now(), cambios: Number(m.cambios) || 0,
+      };
+      const i = idx.lista.findIndex((x) => x.id === m.id);
+      if (i < 0) { idx.lista.push(limpio); cambio = true; }
+      else if (JSON.stringify(idx.lista[i]) !== JSON.stringify(limpio)) { idx.lista[i] = limpio; cambio = true; }
+    }
+    const antes = idx.lista.length;
+    idx.lista = idx.lista.filter((m) => enNube.has(m.id) || !(previos || []).includes(m.id) || leer(PREF + m.id) != null);
+    if (idx.lista.length !== antes) cambio = true;
+    if (ultimo && enNube.has(ultimo)) {
+      const nuevo = idx.lista.find((m) => m.id === ultimo), actual = idx.lista.find((m) => m.id === idx.ultimo);
+      if (nuevo && (!actual || (nuevo.jugado || 0) >= (actual.jugado || 0)) && idx.ultimo !== ultimo) { idx.ultimo = ultimo; cambio = true; }
+    }
+    if (!idx.lista.some((m) => m.id === idx.ultimo)) { idx.ultimo = idx.lista.length ? idx.lista[0].id : null; cambio = true; }
+    if (cambio) guardarIndice(idx);
+    return cambio;
+  },
+
+  // Texto crudo de un mundo (para medirlo antes de mandarlo a la nube)
+  crudo(id) { return leer(PREF + id); },
+
   borrarTodo() {
     for (const m of indice().lista) quitar(PREF + m.id);
     quitar(IDX);

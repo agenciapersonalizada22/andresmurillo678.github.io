@@ -67,6 +67,12 @@ export class Multi {
   get esAnfitrion() { return this.activo && R().esAnfitrion; }
   get esInvitado() { return this.activo && !R().esAnfitrion && this.partidaEmpezada; }
 
+  // Al cargar el juego: el lobby (invitaciones directas, enlaces) necesita las opciones y los oyentes de la red
+  registrarLobby() {
+    this.registrar();
+    if (window.Lobby && window.Lobby.registrar) window.Lobby.registrar(this.opts);
+  }
+
   abrirLobby() {
     if (!window.Lobby) { this.c.aviso('El multijugador no se pudo cargar'); return; }
     this.registrar();

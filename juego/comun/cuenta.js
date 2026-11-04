@@ -803,6 +803,7 @@
   }
   UI.mando = {
     /* ambito = {enfocables:()=>[elementos], atras:fn, boton:fn(nombre)}; devuelve la funcion para retirarlo */
+    ocupado: function () { return pilaMando.length > 0; }, // hay un dialogo manejado con mando (amigos.js cede A/B)
     empujar: function (amb) {
       if (!UI.mandoPropio) return function () {};
       pilaMando.push(amb); bloqueoM = true;

@@ -297,7 +297,7 @@ export function chequearProgreso(c) {
     if (l.prog(c) >= l.meta) {
       c.logros[l.id] = c.t.dia;
       darPremio(c, l.rec);
-      fx(c, { k: 'logro', nombre: l.nombre, rec: l.rec });
+      fx(c, { k: 'logro', id: l.id, nombre: l.nombre, rec: l.rec });
       notar(c, 'Logro: ' + l.nombre, 'ok');
       fx(c, { k: 'sonido', n: 'logro' });
     }

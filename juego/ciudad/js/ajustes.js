@@ -278,6 +278,7 @@ const Ajustes = (() => {
         accion: () => { if (!act) cambiarRanura(n); },
       });
     }
+    if (window.CuentaJuego) CuentaJuego.filasNube().forEach((x) => f.push(x));
     f.push({ t: 'titulo', texto: 'COPIA DE SEGURIDAD (ranura activa)' });
     f.push({ t: 'boton', texto: 'Exportar guardado como texto', accion: () => { textoExport = exportar(); Panel.refrescar(); } });
     f.push({ t: 'area', texto: 'Aquí aparece el texto exportado, o pega uno para importar', filas: 3, valor: textoExport, soloLectura: false });

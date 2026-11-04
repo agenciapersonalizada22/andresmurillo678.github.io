@@ -21,6 +21,7 @@ import { Particulas } from './vista/particulas.js';
 import * as Audio from './ui/audio.js';
 import * as Foco from './ui/foco.js';
 import * as Almacen from './ui/almacen.js';
+import * as CuentaJ from './ui/cuentaJuego.js';
 import { generarIconos } from './ui/iconos.js';
 import { crearHud } from './ui/hud.js';
 import { crearPaneles } from './ui/paneles.js';
@@ -115,6 +116,8 @@ function iniciar() {
   J.modoFoto = modoFoto;
   J.paleta = PALETAS.ninguno;
   J.multi = crearMulti(J);
+  J.alBajarNube = alBajarNube;
+  CuentaJ.enlazar(J);
   J.comprarParcela = (px, py) => {
     const r = J.cmd({ k: 'parcela', px, py });
     if (r.ok) { J.vibrar('nivel'); cambioFuerte(); J.herr.poner(J.herr.item && J.herr.tipoPint === 'comprar' ? J.herr.item : null); }
@@ -259,9 +262,9 @@ function procesarFx() {
         if (Math.abs(f.v) >= 1) J.hud.flotante(f.x, f.y, (f.v > 0 ? '+' : '-') + dinero(Math.abs(f.v)), f.dia ? (f.v < 0 ? 'neg' : 'xl') : f.v < 0 ? 'neg' : '');
         break;
       case 'nivelA': J.hud.flotante(J.camara.x, J.camara.z, 'Alcalde nivel ' + f.v, 'xl'); Audio.tocar('nivel'); break;
-      case 'tier': setTimeout(() => { J.paneles.tier(f); Audio.tocar('nivel'); J.vibrar('nivel'); }, 400); for (let i = 0; i < 4; i++) setTimeout(() => P.fuegos(J.camara.x + (Math.random() - 0.5) * 8, J.camara.z + (Math.random() - 0.5) * 8), i * 300); break;
-      case 'mision': { const ay = C.ayuntamiento(c); if (ay) J.hud.flotante(ay.cx, ay.cy, '¡Objetivo! ' + (f.rec.dinero ? '+' + dinero(f.rec.dinero) : ''), 'xl'); J.vibrar('ok'); break; }
-      case 'logro': J.vibrar('ok'); break;
+      case 'tier': CuentaJ.xp(J, 20); setTimeout(() => { J.paneles.tier(f); Audio.tocar('nivel'); J.vibrar('nivel'); }, 400); for (let i = 0; i < 4; i++) setTimeout(() => P.fuegos(J.camara.x + (Math.random() - 0.5) * 8, J.camara.z + (Math.random() - 0.5) * 8), i * 300); break;
+      case 'mision': { CuentaJ.xp(J, 10); const ay = C.ayuntamiento(c); if (ay) J.hud.flotante(ay.cx, ay.cy, '¡Objetivo! ' + (f.rec.dinero ? '+' + dinero(f.rec.dinero) : ''), 'xl'); J.vibrar('ok'); break; }
+      case 'logro': J.vibrar('ok'); if (f.id) CuentaJ.logro(J, f.id); CuentaJ.xp(J, 5); break;
       case 'mejora': E.anim(f.id, 'pulso'); P.rafaga(f.x + f.w / 2, 0.5, f.y + f.h / 2, 0x3df5ff, 16, 2.6); break;
       case 'crece': if (crecidos++ < 12) { E.anim(f.id, 'crece'); P.rafaga(f.x + 0.5, 0.2, f.y + 0.5, 0x9fffb0, 5, 1.6, 0.06); } break;
       case 'parcela':
@@ -274,7 +277,7 @@ function procesarFx() {
       case 'sonido': Audio.tocar(f.n); break;
       case 'terremoto': J.shake = 1.2 * (J.ajustes.reducirMov ? 0 : 1); P.polvo(f.x - 3, f.y - 3, 6, 6, 30); J.camara.centrar(f.x, f.y); J.vibrar('derribo'); break;
       case 'danio': if (!J.ajustes.reducirMov) P.humo(f.x, 0.6, f.y, 0x6a6a72); break;
-      case 'escenario': J.paneles.confeti(); J.paneles.modal({ titulo: f.ok ? '¡Escenario completado!' : 'Escenario fallido', pausa: true, html: `<div class="grande">${f.nombre}</div><p style="text-align:center">${f.ok ? 'Objetivo logrado. Recibes $20.000 y 5 puntos. Puedes seguir construyendo.' : 'No lograste el objetivo a tiempo, pero puedes seguir jugando en modo libre.'}</p>`, pie: '<button type="button" class="btn dorado foco" data-acc="ok">Continuar</button>', acc: { ok: (b, a) => a.cerrar() } }); break;
+      case 'escenario': if (f.ok) { CuentaJ.xp(J, 50); CuentaJ.puntaje(J, c, true); } J.paneles.confeti(); J.paneles.modal({ titulo: f.ok ? '¡Escenario completado!' : 'Escenario fallido', pausa: true, html: `<div class="grande">${f.nombre}</div><p style="text-align:center">${f.ok ? 'Objetivo logrado. Recibes $20.000 y 5 puntos. Puedes seguir construyendo.' : 'No lograste el objetivo a tiempo, pero puedes seguir jugando en modo libre.'}</p>`, pie: '<button type="button" class="btn foco" data-acc="rank">Ranking</button><button type="button" class="btn dorado foco" data-acc="ok">Continuar</button>', acc: { ok: (b, a) => a.cerrar(), rank: () => CuentaJ.ranking(J) } }); break;
       default: break;
     }
   }
@@ -307,6 +310,7 @@ function mostrarTitulo() {
 }
 
 function volverATitulo() {
+  if (J.c && !J.enTitulo) CuentaJ.puntaje(J, J.c, true);
   J.multi.salir();
   J.paneles.cerrarTodos();
   J.fijarVelSilencio = true;
@@ -337,6 +341,7 @@ function empezar(c, n, nueva) {
   J.ajustes.ultima = n; Almacen.guardarAjustes(J.ajustes);
   chequearProgreso(c);
   procesarFx();
+  CuentaJ.barrerLogros(J, c); CuentaJ.puntaje(J, c);
   if (nueva) { guardar(); J.paneles.bienvenida(); return; }
   const o = calcOffline(c, Date.now());
   const diaria = () => { if (diariaDisponible(c, Date.now())) J.paneles.diaria(premioDiaria(c, Date.now())); };
@@ -370,6 +375,18 @@ function guardar() {
     Almacen.guardarRanura(J.slot, JSON.stringify(serializar(c)), { nombre: c.nombre, pop: Math.round(c.s ? c.s.pop : 0), tier: c.tier, dia: c.t.dia, t: c.ult });
   } catch (e) { /* sin espacio */ }
   J.guardarEn = 0;
+  CuentaJ.puntaje(J, c);
+}
+
+// Llegó una versión más nueva desde la nube (otro dispositivo).
+function alBajarNube() {
+  if (J.enTitulo) {
+    J.ajustes = Almacen.ajustes(); aplicarAjustes('todo');
+    if (J.paneles.titulo) J.paneles.titulo();
+    J.aviso('Ciudades actualizadas desde la nube', 'ok');
+    return;
+  }
+  J.paneles.modal({ titulo: 'Datos de la nube', pausa: true, cerrable: false, html: '<p>Se descargó una versión más reciente de tus ciudades desde otro dispositivo. Recarga para usarla, o sigue con esta partida (se guardará encima).</p>', pie: '<button type="button" class="btn primario foco" data-acc="rec">Recargar</button><button type="button" class="btn foco" data-acc="seguir">Seguir aquí</button>', acc: { rec: () => location.reload(), seguir: (b, a) => a.cerrar() }, atras: (a) => a.cerrar() });
 }
 
 function aplicarCalidad() {
@@ -602,7 +619,11 @@ function sonda() {
   el.textContent = t; el.classList.toggle('oculto', !t);
 }
 
-try { iniciar(); } catch (e) {
+(async () => {
+  try { await CuentaJ.preparar(); } catch (e) { console.warn('Cuenta', e); }
+  try { iniciar(); } catch (e) { falloGraficos(e); }
+})();
+function falloGraficos(e) {
   const c = $('cargando'); c.classList.remove('fuera');
   c.innerHTML = '<div><b>METRÓPOLIS</b><span>No se pudieron iniciar los gráficos 3D (WebGL).<br>Prueba con otro navegador o actualiza el sistema.</span></div>';
   console.error(e);

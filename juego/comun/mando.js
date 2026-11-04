@@ -7,7 +7,7 @@
   var ZONA = 0.18;
   var M = {
     conectado: false, nombre: '', ejes: { izq: { x: 0, y: 0 }, der: { x: 0, y: 0 } },
-    gatillo: { izq: 0, der: 0 }, activo: false, _ahora: {}, _antes: {}, _cb: [], _ultimoUso: 0
+    gatillo: { izq: 0, der: 0 }, activo: false, suprimir: null, _ahora: {}, _antes: {}, _cb: [], _ultimoUso: 0
   };
   function zona(x, y) {
     var m = Math.hypot(x, y);
@@ -27,6 +27,7 @@
     if (!M.conectado) { M.conectado = true; M.nombre = p.id; M._cb.forEach(function (f) { try { f(p); } catch (e) {} }); }
     var b = p.buttons, a = p.axes;
     for (var i = 0; i < NOMBRES.length; i++) M._ahora[NOMBRES[i]] = !!(b[i] && (b[i].pressed || b[i].value > 0.5));
+    if (M.suprimir && M.suprimir()) { M._ahora.A = false; M._ahora.B = false; } // aviso de invitacion (amigos.js) usa A/B: no llegan al juego
     M.gatillo.izq = b[6] ? b[6].value : 0; M.gatillo.der = b[7] ? b[7].value : 0;
     M.ejes.izq = zona(a[0] || 0, a[1] || 0); M.ejes.der = zona(a[2] || 0, a[3] || 0);
     var uso = Math.hypot(M.ejes.izq.x, M.ejes.izq.y, M.ejes.der.x, M.ejes.der.y) > 0.2;

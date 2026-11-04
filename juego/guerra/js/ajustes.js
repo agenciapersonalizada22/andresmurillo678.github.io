@@ -5,6 +5,7 @@
 import { CONFIG } from './config.js';
 import { cargarOpciones, guardarOpciones } from './guardado.js';
 import { Progreso } from './progreso.js';
+import { bloqueAjustes } from './cuentaJuego.js';
 
 export const PRESETS = {
   baja: { sombras: 0, distancia: 0.6, resolucion: 0.75, nubes: 'simple', agua: 'simple', detalle: false, particulas: 0.5, arboles: 0.45 },
@@ -238,6 +239,7 @@ export class PanelAjustes {
   }
 
   _datos(c) {
+    bloqueAjustes(c);
     c.appendChild(el('h4', 'subt', 'RANURAS DE GUARDADO'));
     for (let n = 1; n <= 3; n++) {
       const f = el('div', 'fila');

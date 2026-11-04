@@ -134,6 +134,7 @@ export class Entrada {
     const pres = (c) => {
       const i = BOTON_MANDO[c];
       if (!b[i]) return false;
+      if ((c === 'PadA' || c === 'PadB') && window.Amigos && Amigos.mandoBloqueado && Amigos.mandoBloqueado()) return false;
       const v = val(i);
       return b[i].pressed || v > 0.35 || (this.padEst[c] && v > 0.2);
     };

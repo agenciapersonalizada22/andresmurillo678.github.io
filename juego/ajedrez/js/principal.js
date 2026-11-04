@@ -30,6 +30,17 @@ import { parsearPGN, juegoAUci } from './pgn.js';
 import { revisionProgreso, pintarRevision, pintarAyuda } from './ui_extra.js';
 import { cfgVib, vibrar } from './vibracion.js';
 import { iniciarOnline } from './online.js';
+import * as Cu from './cuenta.js';
+
+// Cuenta de la plataforma: exige sesión (si falta, redirige al portal y vuelve) y espera a la
+// primera sincronización (máx. 3,5 s) ANTES de leer ningún guardado.
+await Cu.arrancar({
+  alBajar: () => {
+    // llegó progreso nuevo de la nube mientras jugabas: se aplica solo si no hay partida a medias
+    if (ui.visible('Inicio') && !(juego.cargada && !juego.est.fin)) location.reload();
+    else ui.toast('Progreso descargado de la nube: recarga la página para verlo todo', 4500);
+  },
+});
 
 const params = new URLSearchParams(location.search);
 const DEBUG = params.has('debug');
@@ -39,7 +50,7 @@ const opts = Guardado.cargarOpciones();
 if (params.get('tema')) opts.tema = params.get('tema');
 if (params.get('calidad')) opts.calidad = params.get('calidad');
 if (params.get('render')) opts.render = params.get('render');
-const yo = Guardado.perfilCompartido();
+const yo = Cu.perfilJugador(Guardado.perfilCompartido());
 
 const partida = new Partida();
 const reloj = new Reloj();
@@ -75,6 +86,7 @@ const ui = new Interfaz({
   alOnline: () => online.abrir(),
   alNota: (t) => { const n = partida.cursor; if (n > 0) { if (t.trim()) juego.notas[n] = t.trim(); else delete juego.notas[n]; guardar(); } },
   alDatos: (d) => datos(d),
+  alCuenta: (a) => cuentaAccion(a),
   alCerrarAjustes: () => { if (juego.pausa && !ui.hayModal()) { /* sigue en pausa */ } },
 });
 const inicio = new InicioUI({
@@ -87,6 +99,7 @@ const inicio = new InicioUI({
   alImportarPGN: (t) => importarPGN(t),
   alExportarBiblioteca: () => exportarBiblioteca(),
   alStats: () => ui.stats(Guardado.cargarStats()),
+  alRanking: () => Cu.abrirRanking(),
 });
 
 let vista, flechas, entrada;
@@ -585,6 +598,7 @@ function textoFin(est) {
 }
 
 function logro(id) {
+  Cu.logro(id);
   const d = Perfil.otorgar(id);
   if (d) { ui.toast('Logro: ' + d.nombre, 3200); Sonido.reproducir('coronar'); }
 }
@@ -606,6 +620,7 @@ function finalizar(est) {
     const puntua = !juego.sinPuntuar && !juego.deshechas && !juego.ayudas && !partida.fenInicial.includes('x') && (juego.variante === 'estandar' || juego.variante === '960') && partida.fenInicial.length > 0 && (juego.variante === '960' || partida.fenInicial === FEN_INICIAL) && partida.jugadas.length >= 4;
     const ap = juego.apertura;
     const r = Perfil.registrarPartida({ res, rival: juego.rival.nombre, eloRival: juego.rival.elo, eco: ap ? ap.eco : '', apertura: ap ? ap.nombre : '', puntua, modo: 'ia' });
+    Cu.reportarElos();
     eloTxt = puntua ? `Elo ${r.elo} (${r.delta >= 0 ? '+' : ''}${r.delta})` : 'Partida no puntuada (con ayudas, ventaja o deshacer).';
     if (res === 'v') {
       logro('primera');
@@ -616,6 +631,8 @@ function finalizar(est) {
     }
     if (est.fin === 'mate' && t.res === juego.humano) logro('mate');
     if (r.elo >= 1500) logro('elo1500');
+    if (res === 'v' && juego.nivel === 'maestro' && !juego.ayudas && !juego.deshechas && !juego.sinPuntuar) logro('nivel5');
+    Cu.xpPartida({ res, eloRival: juego.rival.elo, puntua, jugadas: partida.jugadas.length });
   } else if (juego.modo === 'online' && online.alFin) eloTxt = online.alFin(est, t, res) || '';
   if (juego.modo === 'ia' || juego.modo === 'dos' || juego.modo === 'online') autoguardarBiblioteca(est);
   Guardado.borrarPartida();
@@ -1070,7 +1087,10 @@ function resolverPuzzle(ok, salto = false) {
   t.contado = true;
   const bien = ok && t.errores === 0 && t.pistas === 0 && !t.fallido;
   rompe = Guardado.cargarRompe();
+  const nuevo = !rompe.resueltos[t.p.id];
   const d = Rompe.registrar(rompe, t.p, bien, t.modo);
+  if (bien) { Cu.reportarRompe(rompe); if (nuevo) Cu.xp(4); }
+  Cu.reportarElos();
   void salto;
   if (rompe.aciertos >= 10) logro('p10');
   if (rompe.aciertos >= 50) logro('p50');
@@ -1112,7 +1132,7 @@ function terminarTarea(ok) {
     Sonido.reproducir(bien ? 'victoria' : 'tablas');
   } else {
     t.msg = ok ? '¡Lección completada!' : 'Lo intentaremos otra vez.'; t.clase = ok ? 'bien' : 'mal';
-    if (ok) { const L = Guardado.cargarLecciones(); L[t.leccion.id] = 1; Guardado.guardarLecciones(L); if (Object.keys(L).length >= 3) logro('lecciones'); Sonido.reproducir('victoria'); }
+    if (ok) { const L = Guardado.cargarLecciones(); const yaHecha = !!L[t.leccion.id]; L[t.leccion.id] = 1; Guardado.guardarLecciones(L); if (!yaHecha) Cu.xp(8); if (Object.keys(L).length >= 3) logro('lecciones'); Sonido.reproducir('victoria'); }
   }
   juego.est = { fin: 'tarea' };
   panelTareaActualizar();
@@ -1186,6 +1206,31 @@ function datos(d) {
     ui.confirmar('BORRAR TODO', 'Se borrarán ajustes, partidas, perfil, biblioteca y progreso. ¿Seguro?', 'BORRAR', 'CANCELAR').then((si) => { if (si) { Guardado.borrarTodo(); location.reload(); } });
   }
 }
+
+function cuentaAccion(a) {
+  if (a === 'sync') {
+    ui.toast('Sincronizando…', 1200);
+    Cu.sincronizarAhora().then((r) => {
+      const e = r && r.estado;
+      ui.toast(e === 'sinRed' ? 'Sin conexión: se sincronizará al volver' : e === 'cancelado' ? 'Sincronización cancelada' : e === 'error' ? 'No se pudo sincronizar' : e === 'bajado' ? 'Progreso descargado de la nube' : 'Sincronizado', 2600);
+    });
+  } else if (a === 'portal') {
+    if (juego.cargada && !juego.est.fin && !(juego.online && juego.online.jugando)) guardar();
+    Cu.irAlPortal();
+  } else if (a === 'salir') {
+    ui.confirmar('CERRAR SESIÓN', 'Se sincroniza tu progreso y vuelves al portal. Tus datos siguen en tu cuenta.', 'CERRAR SESIÓN', 'CANCELAR').then((si) => {
+      if (!si) return;
+      if (juego.cargada && !juego.est.fin && !(juego.online && juego.online.jugando)) guardar();
+      Cu.cerrarSesion();
+    });
+  }
+}
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#btnCuenta')) { ui.ajustes.tab = 'datos'; ui.mostrar('Ajustes'); }
+});
+Cu.alEstado(Cu.pintarBarra);
+Cu.iniciarRanking(ui);
+Cu.pintarBarra();
 
 let ultimaBaja = 0, lentos = 0;
 function autoCalidad(fps) {
@@ -1287,6 +1332,7 @@ ui.mostrar('Inicio');
 window.addEventListener('pagehide', () => { if (juego.cargada && !juego.est.fin) guardar(); });
 if (!opts.tutorialVisto) { opts.tutorialVisto = true; Guardado.guardarOpciones(opts); setTimeout(() => { if (!ui.hayModal()) return; ui.toast('Consejo: toca JUGAR, elige rival y reloj; el botón ? explica los controles.', 4500); }, 1500); }
 if (window.Lobby && window.Lobby.hayEnlace && window.Lobby.hayEnlace()) online.abrir();
+Cu.reportarInicial();
 
 if (DEBUG) {
   window.__aj = {

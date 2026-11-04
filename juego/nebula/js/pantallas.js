@@ -11,6 +11,7 @@ const Pantallas = (() => {
   const sel = (txt, opts, idx, set, o) => Object.assign({ t: 'sel', txt, opts, idx, set }, o);
   const txtf = (txt, o) => Object.assign({ t: 'txt', txt }, o);
   const pct = (v) => Math.round(v * 100) + '%';
+  const NC = () => window.NebulaCuenta, usr = () => (window.Cuenta && Cuenta.usuario) || null;
   const titulo = (g, t) => {};
 
   function fondoMenu(g, t) { Dibujo.fondoMundo(0); Dibujo.fondo(g, t, 1 / 60, 1); }
@@ -33,9 +34,10 @@ const Pantallas = (() => {
       btn('HANGAR', () => UI.empujar(P.hangar()), { sub: Util.fmt(save().creditos) + ' créditos', alto: 50 }),
       btn('RÉCORDS', () => UI.empujar(P.records()), { alto: 44 }),
       btn('LOGROS', () => UI.empujar(P.logros()), { sub: Object.keys(save().logros).length + ' / ' + LOGROS.length, alto: 50 }),
-      btn('ESTADÍSTICAS', () => UI.empujar(P.stats()), { alto: 44 }),
-      btn('AJUSTES', () => UI.empujar(P.ajustes()), { alto: 44 }),
-      btn('AYUDA', () => UI.empujar(P.ayuda()), { alto: 44 }),
+      btn('ESTADÍSTICAS', () => UI.empujar(P.stats()), { alto: 40 }),
+      btn('AJUSTES', () => UI.empujar(P.ajustes()), { alto: 40 }),
+      btn('AYUDA', () => UI.empujar(P.ayuda()), { alto: 40 }),
+      ...(usr() ? [btn('CUENTA', () => UI.empujar(P.cuenta()), { alto: 40, sub: usr().nombre + ' · Nivel ' + usr().nivel, color: '#3a5a9a' })] : []),
     ],
     dibujar: (g, t) => {
       const y = 96 + Math.sin(t * 1.5) * 4;
@@ -45,7 +47,9 @@ const Pantallas = (() => {
       UI.txt(g, 'SHOOTER ESPACIAL ARCADE', W / 2, 142, 12, '#9a8cff', 'center', 500);
       for (let i = 0; i < 3; i++) { const sp = Dibujo.sprNave(NAVES[(i * 2) % 5].id); if (sp) g.drawImage(sp, W / 2 - 40 + (i - 1) * 170 + Math.sin(t + i) * 8, 168 + Math.cos(t * 1.2 + i) * 6, 80, 80); }
       const p = Datos.perfil();
-      UI.txt(g, p.nombre + ' · Ranura ' + (Datos.slot + 1), 16, H - 40, 11, p.color, 'left');
+      const av = NC() && usr() ? NC().avatar(24) : null;
+      if (av) g.drawImage(av, 16, H - 52, 24, 24);
+      UI.txt(g, p.nombre + ' · Ranura ' + (Datos.slot + 1), av ? 46 : 16, H - 40, 11, p.color, 'left');
     },
   });
 
@@ -192,9 +196,24 @@ const Pantallas = (() => {
           f.push(tog('Pistas en partida', () => A.ayudas, (v) => { A.ayudas = v; }));
           f.push(btn('Repetir tutorial', () => { save().tutorial = false; Datos.guardarSave(); Hud.toast('Tutorial reiniciado', '#3df5ff'); }));
         } else {
-          f.push(sel('Ranura de guardado', ['Ranura 1', 'Ranura 2', 'Ranura 3'], () => Datos.slot, (k) => { Datos.cambiarSlot(k); Hud.toast('Ranura ' + (k + 1), '#3df5ff'); }));
+          f.push(txtf('CUENTA Y NUBE', { peso: 800, color: '#3df5ff' }));
+          f.push({ t: 'txt', h: 26, draw: (g, x, y, w, h) => { const u = usr(); UI.txt(g, u ? 'Usuario: ' + u.nombre + ' · Nivel ' + u.nivel + (window.Cuenta && Cuenta.demo ? ' · modo demo' : '') : 'Sin sesión', x + 6, y + h / 2, 12, '#c9c2ff', 'left', 700); } });
+          f.push({ t: 'txt', h: 26, draw: (g, x, y, w, h) => { const e = NC() ? NC().estadoSync() : { txt: 'Nube no disponible', color: '#ffd23d' }; UI.txt(g, e.txt, x + 6, y + h / 2, 12, e.color, 'left', 700); } });
+          f.push(btn('Sincronizar ahora', () => {
+            if (!NC() || !usr()) { Hud.toast('Inicia sesión para sincronizar', '#ffd23d'); return; }
+            Hud.toast('Sincronizando…', '#3df5ff');
+            NC().sincronizar().then((r) => {
+              const m = { igual: ['Todo está al día', '#7dffb3'], subido: ['Progreso enviado a la nube', '#7dffb3'], bajado: ['Progreso descargado de la nube', '#7dffb3'], sinRed: ['Sin conexión: se reintentará solo', '#ffd23d'], cancelado: ['Conflicto sin resolver', '#ffd23d'], sinSesion: ['Inicia sesión para sincronizar', '#ffd23d'] }[r.estado] || ['Sincronizado', '#7dffb3'];
+              Hud.toast(m[0], m[1]); if (r.estado === 'bajado') Juego.aplicarNube();
+            });
+          }, { sub: 'Sube o baja tu progreso ahora', alto: 50 }));
+          f.push(btn('Cuenta: portal y cerrar sesión', () => UI.empujar(P.cuenta()), { alto: 44 }));
+          f.push(txtf('Si tu progreso difiere del de la nube, se resuelve con el diálogo', { h: 20, tam: 10, color: '#9a8cff' }));
+          f.push(txtf('de la plataforma (usar nube, este dispositivo o conservar ambos).', { h: 24, tam: 10, color: '#9a8cff' }));
+          f.push(txtf('PARTIDA', { peso: 800, color: '#3df5ff' }));
+          f.push(sel('Ranura de guardado', ['Ranura 1', 'Ranura 2', 'Ranura 3'], () => Datos.slot, (k) => { Datos.cambiarSlot(k); if (NC()) NC().repasarLogros(); Hud.toast('Ranura ' + (k + 1), '#3df5ff'); }));
           f.push(btn('Exportar guardado', () => UI.dialogo({ titulo: 'Copia este texto para guardar tu progreso', valor: Datos.exportar(), multi: true, ro: true, copiar: true, soloCerrar: true, cancelarTxt: 'Cerrar' })));
-          f.push(btn('Importar guardado', () => UI.dialogo({ titulo: 'Pega tu texto de guardado', valor: '', multi: true, boton: 'Importar', alAceptar: (v) => { if (Datos.importar(v)) { Juego.aplicarAjustes(); Hud.toast('Guardado importado', '#7dffb3'); } else Hud.toast('Texto no válido', '#ff6b6b'); } })));
+          f.push(btn('Importar guardado', () => UI.dialogo({ titulo: 'Pega tu texto de guardado', valor: '', multi: true, boton: 'Importar', alAceptar: (v) => { if (Datos.importar(v)) { Juego.aplicarAjustes(); if (NC()) NC().repasarLogros(); Hud.toast('Guardado importado', '#7dffb3'); } else Hud.toast('Texto no válido', '#ff6b6b'); } })));
           f.push(btn('Restaurar ajustes', () => { Datos.restaurarAjustes(); ap(); Hud.toast('Ajustes restaurados', '#3df5ff'); }));
           f.push(btn(confirmar ? '¿SEGURO? Pulsa otra vez' : 'Borrar progreso de esta ranura', () => { if (confirmar) { Datos.borrar(); confirmar = 0; Hud.toast('Progreso borrado', '#ff6b6b'); } else { confirmar = 1; setTimeout(() => { confirmar = 0; }, 4000); } }, { color: '#ff6b6b' }));
         }
@@ -203,6 +222,32 @@ const Pantallas = (() => {
     };
     const U2 = () => UI.reconstruir();
     return o;
+  };
+
+  // ------------------------------------------------ Cuenta
+  P.cuenta = () => {
+    let conf = 0;
+    return {
+      titulo: 'CUENTA', fondo: Juego.estado() === 'menu' ? fondoMenu : null,
+      filas: () => [
+        { t: 'txt', h: 96, draw: (g, x, y, w, h) => {
+          const u = usr(); if (!u) { UI.txt(g, 'Sin sesión', W / 2, y + h / 2, 16, '#ff6b6b', 'center'); return; }
+          const av = NC() ? NC().avatar(56) : null;
+          g.fillStyle = u.color; g.fillRect(x, y + 12, 5, 64);
+          if (av) g.drawImage(av, x + 16, y + 16, 56, 56);
+          UI.txt(g, u.nombre, x + 86, y + 30, 20, '#fff', 'left', 800);
+          UI.txt(g, 'Nivel ' + u.nivel + ' · ' + Util.fmt(u.xp || 0) + ' XP', x + 86, y + 54, 12, '#c9c2ff', 'left', 500);
+          if (window.Cuenta && Cuenta.demo) UI.txt(g, 'Modo demo: cuenta sólo en este dispositivo', x + 86, y + 74, 10, '#ffd23d', 'left', 500);
+          else UI.txt(g, 'Cuenta en la nube', x + 86, y + 74, 10, '#7dffb3', 'left', 500);
+        } },
+        { t: 'txt', h: 26, draw: (g, x, y, w, h) => { const e = NC() ? NC().estadoSync() : { txt: '', color: '#fff' }; UI.txt(g, e.txt, W / 2, y + h / 2, 12, e.color, 'center', 700); } },
+        btn('VOLVER AL PORTAL', () => { if (NC()) NC().sincronizar().then(() => NC().volverAlPortal(), () => NC().volverAlPortal()); }, { sub: 'Sincroniza y sale del juego', alto: 54 }),
+        btn(conf ? '¿SEGURO? Pulsa otra vez' : 'CERRAR SESIÓN', () => {
+          if (conf) { conf = 0; Hud.toast('Cerrando sesión…', '#ffd23d'); if (NC()) NC().cerrarSesion(); }
+          else { conf = 1; setTimeout(() => { conf = 0; UI.reconstruir(); }, 4000); }
+        }, { color: '#ff6b6b', sub: 'Tu progreso queda guardado en la cuenta', alto: 54 }),
+      ],
+    };
   };
 
   // ------------------------------------------------ Logros / estadísticas / récords / ayuda
@@ -223,10 +268,30 @@ const Pantallas = (() => {
       ['Mejor racha', 'maxCombo'], ['Multiplicador máximo', 'maxMult'], ['Balas rozadas', 'rozes'], ['Habilidades usadas', 'habilidades'], ['Monedas recogidas', 'monedas'], ['Créditos ganados', 'creditosTotal'], ['Derrotas', 'muertes'], ['Desafíos diarios', 'diarios']];
     return { titulo: 'ESTADÍSTICAS', fondo: fondoMenu, filas: () => L.map(([n, k]) => ({ t: 'txt', h: 36, draw: (g, x, y, w, h) => { UI.txt(g, n, x + 10, y + h / 2, 14, '#c9c2ff', 'left', 500); const v = s()[k] || 0; UI.txt(g, k === 'tiempo' ? Math.floor(v / 60) + ' min' : Util.fmt(v), x + w - 10, y + h / 2, 15, '#fff', 'right'); } })) };
   };
-  P.records = () => {
-    const modos = ['campana', 'infinito', 'jefes', 'diario'];
-    return { titulo: 'RÉCORDS', tabs: ['Campaña', 'Infinito', 'Jefes', 'Diario'], fondo: fondoMenu,
+  P.records = (tab0) => {
+    const modos = ['campana', 'infinito', 'jefes', 'diario'], MR = ['puntos', 'oleada'];
+    let modoR = 0;
+    const o = { titulo: 'RÉCORDS', tabs: ['Campaña', 'Infinito', 'Jefes', 'Diario', 'Global', 'Amigos'], fondo: fondoMenu, tab: tab0 || 0,
       filas: (tab) => {
+        if (tab >= 4) {
+          const amigos = tab === 5, f = [sel('Clasificación', ['Puntos', 'Oleada alcanzada'], () => modoR, (k) => { modoR = k; })];
+          const N = NC(), R = N && usr() ? N.ranking(MR[modoR], amigos, () => { if (UI.actual() === o) UI.reconstruir(); }) : { estado: 'sinSesion' };
+          const nota = (s, c) => f.push(txtf(s, { centro: true, h: 60, color: c || '#c9c2ff' }));
+          if (R.estado === 'sinSesion') nota('Inicia sesión para ver los rankings');
+          else if (R.estado === 'cargando') nota('Cargando clasificación…');
+          else if (R.estado === 'error') { nota('No se pudo cargar (¿sin conexión?)', '#ffd23d'); f.push(btn('Reintentar', () => { N.olvidarRankings(); }, { alto: 46 })); }
+          else if (R.estado === 'vacio') nota(amigos ? 'Ningún amigo (ni tú) ha jugado todavía' : 'Aún no hay puntajes. ¡Sé el primero!');
+          else {
+            if (R.mi && R.mi.posicion) f.push({ t: 'txt', h: 28, draw: (g, x, y, w, h) => UI.txt(g, 'Tu posición: #' + R.mi.posicion + ' de ' + R.mi.total + ' · ' + Util.fmt(R.mi.valor), W / 2, y + h / 2, 12, '#7dffb3', 'center', 700) });
+            R.lista.slice(0, 10).forEach((e, i) => f.push({ t: 'txt', h: 44, draw: (g, x, y, w, h) => {
+              if (e.yo) { g.fillStyle = 'rgba(61,245,255,.12)'; g.fillRect(x, y + 2, w, h - 4); }
+              UI.txt(g, String(e.pos || i + 1), x + 14, y + h / 2, 16, (e.pos || i + 1) === 1 ? '#ffd23d' : '#9a8cff', 'center');
+              g.fillStyle = e.color || '#9a8cff'; g.fillRect(x + 32, y + 12, 4, h - 24);
+              UI.txt(g, e.nombre + (e.yo ? ' (tú)' : ''), x + 46, y + h / 2, 14, '#fff');
+              UI.txt(g, Util.fmt(e.valor), x + w - 10, y + h / 2, 17, '#3df5ff', 'right'); } }));
+          }
+          return f;
+        }
         const l = Datos.tabla(modos[tab]);
         if (!l.length) return [txtf('Aún no hay récords. ¡A jugar!', { centro: true, h: 60 })];
         return l.map((r, i) => ({ t: 'txt', h: 44, draw: (g, x, y, w, h) => {
@@ -234,6 +299,7 @@ const Pantallas = (() => {
           const nv = NAVES.find((q) => q.id === r.s); UI.txt(g, (nv ? nv.nombre : '') + ' · ' + String(r.f).replace(/(\d{4})(\d\d)(\d\d)/, '$3/$2/$1'), x + 40, y + h / 2 + 12, 9, '#6a5ac0', 'left', 500);
           UI.txt(g, Util.fmt(r.p), x + w - 10, y + h / 2, 17, '#3df5ff', 'right'); } }));
       } };
+    return o;
   };
   P.ayuda = () => ({
     titulo: 'AYUDA', tabs: ['Controles', 'Cómo jugar'], fondo: fondoMenu,
@@ -272,7 +338,14 @@ const Pantallas = (() => {
         if (extra.nuevoRecord) UI.txt(g, '¡NUEVO RÉCORD!', W / 2, yy + 6, 18, '#ffd23d', 'center', 800);
         if (extra.jugadores) { yy += 22; for (const j of extra.jugadores) { g.fillStyle = j.color; g.fillRect(x + 20, yy - 8, 8, 16); UI.txt(g, j.nombre, x + 36, yy, 13, '#fff'); UI.txt(g, Util.fmt(j.puntos) + '  ·  ' + j.kills + ' bajas', x + w - 20, yy, 12, '#c9c2ff', 'right'); yy += 30; } }
       } }];
+      f.push({ t: 'txt', h: 26, draw: (g, x, y, w, h) => {
+        const r = extra.rank; if (!r || r.estado === 'sinSesion') return;
+        const m = { cargando: ['Ranking: calculando tu posición…', '#9a8cff'], coop: ['Cooperativo: la puntuación es del equipo y no entra al ranking', '#9a8cff'], vacio: ['Ranking no disponible ahora', '#ffd23d'], error: ['Ranking no disponible (sin conexión)', '#ffd23d'],
+          ok: [r.pendiente ? 'Puntaje pendiente de enviar (sin conexión)' : 'Ranking global: #' + r.posicion + ' de ' + r.total + (r.mejoro ? ' · ¡nuevo mejor!' : ''), r.pendiente ? '#ffd23d' : '#7dffb3'] }[r.estado];
+        if (m) UI.txt(g, m[0], W / 2, y + h / 2, 12, m[1], 'center', 700);
+      } });
       if (!Juego.esMP()) f.push(btn('JUGAR DE NUEVO', () => Juego.reiniciar(), { color: '#2ad48a' }), btn('HANGAR', () => { Juego.salirAlMenu(); UI.empujar(P.hangar()); }));
+      if (!Juego.esMP() && usr()) f.push(btn('VER RANKING', () => { if (NC()) NC().olvidarRankings(); UI.empujar(P.records(4)); }, { alto: 48 }));
       if (Juego.esMP()) f.push(btn('VOLVER AL LOBBY', () => { Juego.salirAlMenu(); Juego.abrirLobby(); }, { color: '#2ad48a' }));
       f.push(btn('MENÚ PRINCIPAL', () => Juego.salirAlMenu()));
       return f;

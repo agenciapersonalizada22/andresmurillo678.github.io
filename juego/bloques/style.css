@@ -924,3 +924,30 @@ body.zurdo #tactil #palanca { transform-origin: center; }
 
 #btnChat { display: none; left: calc(10px + var(--seguro-izq)); top: calc(64px + var(--seguro-arriba)); width: 52px; height: 52px; }
 body.tactil.enMulti #btnChat { display: flex; }
+
+/* ---------------------------------------------------------- Cuenta, nube y records */
+body.esperaCuenta .pantalla, body.esperaCuenta .volver { visibility: hidden; }
+#textoEspera { display: none; position: fixed; inset: 0; z-index: 60; align-items: center; justify-content: center; margin: 0; font-size: 14px; letter-spacing: 2px; color: var(--suave); }
+body.esperaCuenta #textoEspera { display: flex; }
+
+.tarjeta button.chipCuenta { display: flex; align-items: center; justify-content: center; gap: 8px; width: auto; max-width: 100%; margin: -8px auto 12px; padding: 5px 12px; font-size: 12px; border-radius: 999px; border-width: 1px; background: rgba(255, 255, 255, 0.06); }
+.chipCuenta i { flex: 0 0 auto; width: 12px; height: 12px; border-radius: 50%; background: var(--c, var(--cian)); border: 1px solid #fff; }
+.chipCuenta span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; }
+.chipCuenta em { font-style: normal; font-size: 9px; letter-spacing: 1px; opacity: 0.65; }
+.chipCuenta.oculto { display: none !important; }
+.cuentaPerfil { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 0 0 10px; font: 14px system-ui, sans-serif; }
+.cuentaPerfil .av { flex: 0 0 auto; }
+.cuentaPerfil b { display: block; font-size: 17px; }
+.cuentaPerfil span { opacity: 0.75; font-size: 12px; }
+.filaAj .estadoNube { font: 12px system-ui, sans-serif; text-align: right; max-width: 60%; }
+
+#cuerpoRanking { min-height: 120px; margin: 8px 0; text-align: left; }
+.rankLista { display: grid; gap: 4px; }
+.rankFila { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.05); font: 14px system-ui, sans-serif; }
+.rankFila.yo { background: rgba(125, 217, 87, 0.22); outline: 1px solid var(--verde); }
+.rankFila .pos { flex: 0 0 38px; opacity: 0.7; }
+.rankFila .nom { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rankFila .nom::before { content: ''; display: inline-block; width: 9px; height: 9px; margin-right: 7px; border-radius: 50%; background: var(--c, #888); }
+.rankFila .val { flex: 0 0 auto; color: var(--verde); }
+.tarjeta .pestanas button.activa { background: rgba(125, 217, 87, 0.3); border-color: var(--verde); }
+.mundoFila .soloLocal { display: block; margin-top: 2px; color: #ffb347; font: 11px system-ui, sans-serif; opacity: 1; }

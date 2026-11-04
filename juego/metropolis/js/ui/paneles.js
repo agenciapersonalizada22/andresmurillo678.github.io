@@ -11,6 +11,7 @@ import { dinero, numero, semillaDeTexto } from '../sim/util.js';
 import * as Audio from './audio.js';
 import * as Foco from './foco.js';
 import * as Almacen from './almacen.js';
+import * as CuentaJ from './cuentaJuego.js';
 import { icono, alIcono } from './iconos.js';
 import { esc, ICONO_EVT, NOMBRE_EVT } from './hud.js';
 
@@ -322,6 +323,8 @@ export function crearPaneles(J) {
         <button type="button" class="btn foco ${J.c && J.c.undo.length ? '' : 'off'}" data-acc="deshacer">Deshacer última obra</button>
         <button type="button" class="btn foco" data-acc="capas">Capas del mapa</button>
         <button type="button" class="btn foco" data-acc="guardar">Guardar ahora</button>
+        <button type="button" class="btn foco" data-acc="ranking">Ranking de población</button>
+        <button type="button" class="btn foco" data-acc="cuenta">Cuenta</button>
         <button type="button" class="btn foco" data-acc="ajustes">Ajustes</button>
         <button type="button" class="btn foco" data-acc="ayuda">Ayuda y controles</button>
         <button type="button" class="btn foco" data-acc="estad">Gráficas e historial</button>
@@ -334,6 +337,8 @@ export function crearPaneles(J) {
         ciudad: () => ciudad(),
         objetivos: () => objetivos(),
         mejoras: () => mejoras(),
+        ranking: () => CuentaJ.ranking(J),
+        cuenta: () => CuentaJ.cuentaModal(J),
         deshacer: (b, a) => { a.cerrar(); J.deshacer(); },
         capas: (b, a) => { a.cerrar(); J.ciclarCapa(); },
         guardar: () => { J.guardar(); J.hud.nota('Partida guardada', 'ok'); Audio.tocar('ok'); },
@@ -351,16 +356,21 @@ export function crearPaneles(J) {
   // ---------------------------------------------------------------- título
   function fechaCorta(t) { const d = new Date(t); return d.toLocaleDateString('es', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' }); }
   let apiTitulo = null;
+  function CuentaJ_fila() {
+    const u = window.Cuenta && window.Cuenta.usuario;
+    if (!u) return '';
+    return `<p class="sub" style="margin:-2px 0 10px">Alcalde <b style="color:${esc(u.color || '#3df5ff')}">${esc(u.nombre)}</b> · <button type="button" class="btn mini foco" data-acc="cuenta">Cuenta</button></p>`;
+  }
   function titulo() {
     if (apiTitulo && !apiTitulo.cerrado) apiTitulo.cerrar(true);
     const filas = () => {
-      let h = '<h1 class="titulo">METRÓPOLIS</h1><p class="sub">construye · crece · prospera</p><div class="ranuras">';
+      let h = '<h1 class="titulo">METRÓPOLIS</h1><p class="sub">construye · crece · prospera</p>' + CuentaJ_fila() + '<div class="ranuras">';
       for (let n = 1; n <= Almacen.RANURAS; n++) {
         const m = Almacen.meta(n);
         if (!m) h += `<div class="ranura vacia"><div class="cab"><b>Ranura ${n}</b><small>vacía</small></div><div class="bts"><button type="button" class="btn primario foco" data-acc="nueva" data-n="${n}">Nueva ciudad</button></div></div>`;
         else h += `<div class="ranura"><div class="cab"><b>${esc(m.nombre)}</b><small>${fechaCorta(m.t)}</small></div><div style="font-size:11px;color:var(--suave)">${NIVELES[m.tier].nombre} · ${numero(m.pop)} hab. · Día ${m.dia}</div><div class="bts"><button type="button" class="btn primario foco" data-acc="jugar" data-n="${n}">Jugar</button><button type="button" class="btn foco" data-acc="exp" data-n="${n}">Texto</button><button type="button" class="btn peligro foco" data-acc="borrar" data-n="${n}">Borrar</button></div></div>`;
       }
-      return h + `</div><div class="seg" style="margin-top:12px"><button type="button" class="btn foco" data-acc="imp">Importar</button><button type="button" class="btn foco" data-acc="ajustes">Ajustes</button><button type="button" class="btn foco" data-acc="ayuda">Ayuda</button></div><div class="seg" style="margin-top:8px"><button type="button" class="btn primario foco" data-acc="multi">Multijugador</button></div><div class="seg" style="margin-top:8px"><a class="btn foco" href="../" style="text-decoration:none">← Menú de juegos</a></div>`;
+      return h + `</div><div class="seg" style="margin-top:12px"><button type="button" class="btn foco" data-acc="imp">Importar</button><button type="button" class="btn foco" data-acc="ajustes">Ajustes</button><button type="button" class="btn foco" data-acc="ayuda">Ayuda</button></div><div class="seg" style="margin-top:8px"><button type="button" class="btn primario foco" data-acc="multi">Multijugador</button></div><div class="seg" style="margin-top:8px"><button type="button" class="btn foco" data-acc="ranking">Ranking de población</button></div><div class="seg" style="margin-top:8px"><a class="btn foco" href="../" style="text-decoration:none">← Menú de juegos</a></div>`;
     };
     apiTitulo = modal({
       cerrable: false, pausa: true, html: filas(), ancho: false,
@@ -377,6 +387,8 @@ export function crearPaneles(J) {
         ajustes: () => ajustes(),
         ayuda: () => ayuda(),
         multi: () => J.multi.abrirLobby(),
+        ranking: () => CuentaJ.ranking(J),
+        cuenta: () => CuentaJ.cuentaModal(J),
       },
     });
     J.enTitulo = true;

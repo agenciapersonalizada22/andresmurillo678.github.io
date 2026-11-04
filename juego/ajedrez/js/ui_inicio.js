@@ -80,7 +80,8 @@ export class InicioUI {
     const r = Guardado.cargarRompe();
     return `<p class="sub">Tu nivel: <b class="gr">${r.elo}</b> · resueltos ${r.aciertos}/${r.total} · mejor racha ${r.mejorRacha}</p>
       <div class="modos">${MODOS.map((m) => `<button type="button" data-puzzle="${m.id}"><b>${m.nombre.toUpperCase()}</b><small>${m.desc}</small></button>`).join('')}</div>
-      <p class="info">Más de 300 posiciones con solución verificada por el motor: ${Object.values(TIPOS).join(', ')}.</p>`;
+      <p class="info">Más de 300 posiciones con solución verificada por el motor: ${Object.values(TIPOS).join(', ')}.</p>
+      ${window.Cuenta ? '<div class="fila"><button type="button" data-acc="ranking">RANKING</button></div>' : ''}`;
   }
 
   _lecciones() {
@@ -104,7 +105,7 @@ export class InicioUI {
       <h4>Por apertura</h4><table class="tab">${aperts.length ? aperts.map(([eco, a]) => `<tr><td>${eco} ${esc(a.n || '')}</td><td>${a.v}G ${a.t}T ${a.d}P</td></tr>`).join('') : '<tr><td>Sin datos todavía</td></tr>'}</table>
       <h4>Logros (${Object.keys(p.logros).length}/${LOGROS.length})</h4>
       <div class="logros">${LOGROS.map((l) => `<div class="${p.logros[l.id] ? 'ok' : ''}" title="${esc(l.desc)}"><b>${esc(l.nombre)}</b><small>${esc(l.desc)}</small></div>`).join('')}</div>
-      <div class="fila"><button type="button" data-acc="stats">POR RIVAL</button></div>`;
+      <div class="fila"><button type="button" data-acc="stats">POR RIVAL</button>${window.Cuenta ? '<button type="button" data-acc="ranking">RANKING</button>' : ''}</div>`;
   }
 
   _graficoPerfil() {
@@ -150,6 +151,7 @@ export class InicioUI {
       case 'importarPgn': { const msg = al.alImportarPGN($('pgnImport').value); $('pgnInfo').textContent = msg; this.pintar(); const i = $('pgnInfo'); if (i) i.textContent = msg; break; }
       case 'exportarBib': al.alExportarBiblioteca(); break;
       case 'stats': al.alStats(); break;
+      case 'ranking': al.alRanking && al.alRanking(); break;
       default: break;
     }
   }

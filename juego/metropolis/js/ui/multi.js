@@ -22,6 +22,7 @@ export function crearMulti(J) {
     ultCur: 0, ultHash: 0, ultSync: 0, votos: null, finVS: false, resyncs: 0, desync: 0,
   };
   const OPTS = { juego: 'Metrópolis', maxJugadores: 4, modos: MODOS, alIniciar: (cfg, jug) => alIniciar(cfg, jug) };
+  if (L() && L().registrar) L().registrar(OPTS); // invitaciones directas: el lobby sabe abrir este juego
   const vivo = () => document.dispatchEvent(new Event('metro-vivo'));
 
   M.hayEnlace = () => !!(L() && L().hayEnlace && L().hayEnlace());

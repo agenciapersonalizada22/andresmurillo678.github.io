@@ -27,6 +27,7 @@ import { Vistas } from './vistas.js';
 import { Hangar, pintarPerfil, el } from './hangar.js';
 import { Menus } from './menus.js';
 import { mover, enfocables, enfocar } from './navMando.js';
+import { enviarPuntaje, reportarLogro, reportarPendientes, darXp, pintarRanking, alBajarDatos, borrarNube, hayCuenta } from './cuentaJuego.js';
 
 const $ = (id) => document.getElementById(id);
 THREE.ColorManagement.enabled = false;
@@ -159,7 +160,7 @@ const imagen = (tipo, id) => {
   return vistas.obtener(tipo, id, c && c.c ? c.c : null, p.marca, perfil().color);
 };
 
-const PANTALLAS = ['pantallaTitulo', 'pantallaJugar', 'pantallaHangar', 'pantallaMisiones', 'pantallaLogros', 'pantallaAjustes', 'pantallaEquipos', 'pantallaPausa', 'pantallaFin'];
+const PANTALLAS = ['pantallaTitulo', 'pantallaJugar', 'pantallaHangar', 'pantallaMisiones', 'pantallaLogros', 'pantallaRanking', 'pantallaAjustes', 'pantallaEquipos', 'pantallaPausa', 'pantallaFin'];
 const PREFERIDO = { pantallaTitulo: 'btnJugar', pantallaJugar: 'btnCombatir', pantallaPausa: 'btnSeguir', pantallaFin: 'btnReintentar', pantallaMisiones: null, pantallaEquipos: 'btnEqComenzar' };
 let tPantalla = 0;
 let actual = 'pantallaTitulo';
@@ -183,6 +184,7 @@ function refrescarPantalla(id) {
   else if (id === 'pantallaJugar') menus.dibujarJugar();
   else if (id === 'pantallaMisiones') menus.dibujarMisiones();
   else if (id === 'pantallaLogros') menus.dibujarLogros();
+  else if (id === 'pantallaRanking') pintarRanking($('contRanking'), { modo: 'aire', alcance: 'global' });
   else if (id === 'pantallaAjustes') panelAj.dibujar();
 }
 
@@ -225,7 +227,7 @@ const panelAj = new PanelAjustes($('contAjustes'), {
     const quitar = [];
     for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('guerra_')) quitar.push(k); }
     quitar.forEach((k) => localStorage.removeItem(k));
-    location.reload();
+    borrarNube().then(() => location.reload());
   },
 });
 $('btnRecarga').addEventListener('click', () => location.reload());
@@ -343,11 +345,13 @@ function reanudar() {
   pedirWake();
 }
 
+let recargaPendiente = false; // la nube trajo datos nuevos mientras jugabas: se recargan al volver al menú
 function volverTitulo() {
   if (modo) modo.destruir();
   modo = null;
   multi = null;
   estado = 'menu';
+  if (recargaPendiente) { location.reload(); return; }
   entrada.activa = false;
   entrada.soltarTodo();
   entrada.soltarRaton();
@@ -381,6 +385,7 @@ function terminar(r) {
     titulo = r.victoria ? '¡VICTORIA!' : 'DERROTA';
     datos = `Puntaje: ${r.puntaje} · Oleada: ${r.oleada}/${CONFIG.oleadas} · ${ctx.mapa.nombre}`;
     const nuevo = guardarRecord(modo.nombre, ctx.mapa.id, r.puntaje, r.oleada);
+    enviarPuntaje(modo.nombre === 'tanque' ? 'tanque' : 'aire', r.puntaje);
     const rec = cargarRecords()[claveRecord(modo.nombre, ctx.mapa.id)];
     $('finRecord').textContent = nuevo ? '¡Nuevo récord!' : `Récord: ${rec ? rec.puntaje : 0}`;
   }
@@ -406,6 +411,13 @@ function terminar(r) {
   $('finDatos').textContent = datos;
   $('finRecomp').textContent = recText;
   if (logros.length) $('finRecomp').appendChild(el('div', 'info', 'LOGRO: ' + logros.map((l) => l.nombre).join(', ')));
+  // cuenta: logros nuevos y XP moderada (por hito de la partida, nunca por tiempo jugado)
+  for (const l of logros) reportarLogro(l.id);
+  const hitos = r.batalla ? (r.kills || 0) : (E.bajas || 0);
+  if ((hitos > 0 || r.victoria) && !(ultimaCfg && ultimaCfg.modo === 'simulacro')) darXp(8 + (r.victoria ? 20 : 0) + Math.min(17, hitos * 2) + (recText.startsWith('MISIÓN') ? 5 : 0));
+  const rk = $('finRanking');
+  if (!r.batalla && hayCuenta()) { rk.classList.remove('oculto'); pintarRanking(rk, { modo: modo.nombre === 'tanque' ? 'tanque' : 'aire', alcance: 'global', selectorModo: false }); }
+  else { rk.classList.add('oculto'); rk.textContent = ''; }
   const ft = $('finTabla');
   ft.textContent = '';
   if (modo.tablaFinal) {
@@ -425,6 +437,7 @@ $('btnJugar').addEventListener('click', () => ir('pantallaJugar'));
 $('btnHangar').addEventListener('click', () => { hangar.abrir(); ir('pantallaHangar'); });
 $('btnMisiones').addEventListener('click', () => ir('pantallaMisiones'));
 $('btnLogros').addEventListener('click', () => ir('pantallaLogros'));
+$('btnRanking').addEventListener('click', () => ir('pantallaRanking'));
 $('btnAjustes').addEventListener('click', () => ir('pantallaAjustes'));
 $('btnPausaAjustes').addEventListener('click', () => ir('pantallaAjustes'));
 $('btnCombatir').addEventListener('click', () => {
@@ -589,8 +602,10 @@ const MODOS_MULTI = [
   { id: 'combinado', nombre: 'Combate combinado aire + tierra' },
 ];
 const OPTS_LOBBY = { juego: 'Alas y Acero', maxJugadores: 4, minJugadores: 1, modos: MODOS_MULTI, alIniciar: (config, jugadores) => prepararMulti(config, jugadores) };
-const Lobby_abierto = () => !!(window.Lobby && window.Lobby.abierto);
+// true mientras el lobby o un cuadro de la plataforma (conflicto de nube, cuenta) tapan el juego: la entrada se pausa
+const Lobby_abierto = () => !!(window.Lobby && window.Lobby.abierto) || !!document.querySelector('.cu-fondo');
 let mp = null;
+if (window.Lobby && window.Lobby.registrar) window.Lobby.registrar(OPTS_LOBBY);
 
 $('btnMulti').addEventListener('click', () => { if (window.Lobby) window.Lobby.abrir(OPTS_LOBBY); });
 
@@ -711,6 +726,10 @@ if (window.Red) {
   });
   if (window.Lobby && window.Lobby.hayEnlace && window.Lobby.hayEnlace()) window.Lobby.abrir(OPTS_LOBBY);
 }
+
+// ----------------------------------------------------------- Nube
+alBajarDatos(() => { if (estado === 'menu') location.reload(); else { recargaPendiente = true; toast('DATOS NUEVOS EN LA NUBE: SE APLICAN AL VOLVER AL MENÚ'); } });
+reportarPendientes(Object.keys(Progreso.datos().logros || {}));
 
 // ----------------------------------------------------------- Ciclo
 let ultimo = performance.now();

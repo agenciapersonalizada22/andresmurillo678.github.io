@@ -48,6 +48,8 @@ import { Hud } from './hud.js';
 import { pintarMochila, pintarRecetas, pintarCofre, pintarHorno, pintarComercio } from './paneles.js';
 import { Remotos } from './remotos.js';
 import { Multi } from './multi.js';
+import { Cta, pintarFilas, textoMiPosicion } from './cuentaJuego.js';
+import * as Nube from './nube.js';
 
 const V = CONFIG.vista;
 const J = CONFIG.jugador;
@@ -131,7 +133,7 @@ contorno.visible = false;
 escena.add(contorno);
 
 // ----------------------------------------------------------- Estado del juego
-// 'titulo' | 'mundos' | 'jugando' | 'pausa' | 'inventario' | 'ajustes' | 'logros' | 'contenedor' | 'muerte' | 'foto'
+// 'titulo' | 'mundos' | 'jugando' | 'pausa' | 'inventario' | 'ajustes' | 'logros' | 'cuenta' | 'ranking' | 'contenedor' | 'muerte' | 'foto'
 let estado = 'titulo';
 let esperandoMundo = false;   // se está creando el terreno bajo tus pies
 let buscarSuelo = false;      // mundo nuevo: hay que pararte sobre el suelo
@@ -267,7 +269,8 @@ function objetoEnMano() {
 }
 
 // ----------------------------------------------------------- Controles
-const lobbyAbierto = () => !!(window.Lobby && window.Lobby.abierto);
+// el lobby o un diálogo de la plataforma (conflicto de guardado) usan el mando por su cuenta
+const lobbyAbierto = () => !!(window.Lobby && window.Lobby.abierto) || !!document.querySelector('.cu-fondo');
 const controles = new Controles({
   lienzo,
   capaTactil: $('tactil'),
@@ -571,6 +574,7 @@ function morir(causa) {
   estado = 'muerte';
   interfaz.pantalla('muerte');
   guardar(true);
+  resumenMuerte();
 }
 
 function reaparecer() {
@@ -1197,6 +1201,7 @@ function mostrar(est, pantalla) {
 }
 
 function actualizarTitulo() {
+  pintarChipCuenta();
   const u = Mundos.ultimo();
   $('btnContinuar').classList.toggle('oculto', !u);
   $('infoGuardado').classList.toggle('oculto', !u);
@@ -1327,6 +1332,8 @@ function atras() {
     case 'contenedor': cerrarContenedor(true); break;
     case 'ajustes': cerrarAjustes(); break;
     case 'logros': cerrarLogros(); break;
+    case 'cuenta': cerrarCuenta(); break;
+    case 'ranking': cerrarRanking(); break;
     case 'mundos':
       if (!$('panelNuevo').classList.contains('oculto')) $('panelNuevo').classList.add('oculto');
       else if (!$('panelImportar').classList.contains('oculto')) $('panelImportar').classList.add('oculto');
@@ -1358,6 +1365,98 @@ function abrirLogros(desde) {
 function cerrarLogros() {
   estado = logrosDesde === 'pausa' ? 'pausa' : 'titulo';
   interfaz.pantalla(logrosDesde === 'pausa' ? 'pausa' : 'titulo');
+}
+
+// ----------------------------------------------------------- Cuenta y records
+function pintarChipCuenta() {
+  const u = Cta.usuario;
+  $('btnCuentaTitulo').classList.toggle('oculto', !u);
+  if (!u) return;
+  $('nombreCuenta').textContent = u.nombre || u.usuario;
+  $('puntoCuenta').style.setProperty('--c', u.color || '#3df5ff');
+}
+
+// desde el título no se ve el HUD de la partida de fondo
+function fondoDeTitulo(si) {
+  interfaz.el.hud.classList.toggle('oculto', si);
+  document.body.classList.toggle('enTitulo', si);
+}
+
+let cuentaDesde = 'titulo';
+function abrirCuenta(desde = 'titulo') {
+  cuentaDesde = desde;
+  mostrar('cuenta', 'cuenta');
+  fondoDeTitulo(desde === 'titulo');
+  pintarCuenta();
+  $('btnCuentaSalir').textContent = 'CERRAR SESIÓN';
+}
+function cerrarCuenta() {
+  if (cuentaDesde === 'pausa') { estado = 'pausa'; interfaz.pantalla('pausa'); }
+  else { estado = 'titulo'; interfaz.pantalla('titulo'); actualizarTitulo(); }
+}
+function pintarCuenta() {
+  const u = Cta.usuario;
+  const cont = $('cuentaPerfil');
+  cont.textContent = '';
+  if (u) {
+    const C = window.Cuenta;
+    try { if (C.ui && C.ui.avatarEl) { const av = C.ui.avatarEl(u.avatar, u.color, 44); av.classList.add('av'); cont.appendChild(av); } } catch (e) { /* sin avatar */ }
+    const t = document.createElement('div');
+    t.innerHTML = '<b></b><span></span>';
+    t.firstChild.textContent = u.nombre || u.usuario;
+    t.lastChild.textContent = '@' + u.usuario + (u.nivel ? ' · nivel ' + u.nivel : '');
+    cont.appendChild(t);
+  } else cont.textContent = 'Sin sesión';
+  $('cuentaNube').textContent = Nube.textoEstado();
+  $('notaConflicto').textContent = Nube.NOTA_CONFLICTO;
+  $('btnCuentaSync').disabled = !u;
+}
+Nube.alCambiar(() => {
+  if (estado === 'cuenta') $('cuentaNube').textContent = Nube.textoEstado();
+  if (estado === 'ajustes') menuAjustes.refrescar();
+  if (estado === 'mundos') pintarMundos();
+});
+
+let rankDesde = 'titulo', rankAmigos = false, rankSolicitud = 0;
+function abrirRanking(desde = 'titulo') {
+  rankDesde = desde;
+  mostrar('ranking', 'ranking');
+  fondoDeTitulo(desde === 'titulo');
+  cargarRanking();
+}
+function cerrarRanking() {
+  if (rankDesde === 'muerte') { estado = 'muerte'; interfaz.pantalla('muerte'); }
+  else if (rankDesde === 'pausa') { estado = 'pausa'; interfaz.pantalla('pausa'); }
+  else { estado = 'titulo'; interfaz.pantalla('titulo'); actualizarTitulo(); }
+}
+async function cargarRanking() {
+  const id = ++rankSolicitud;
+  $('pestRankGlobal').classList.toggle('activa', !rankAmigos);
+  $('pestRankAmigos').classList.toggle('activa', rankAmigos);
+  const cuerpo = $('cuerpoRanking');
+  cuerpo.textContent = '';
+  const p = document.createElement('p'); p.className = 'info'; p.textContent = 'Cargando…'; cuerpo.appendChild(p);
+  $('miPosRanking').textContent = '';
+  const r = await Cta.ranking(rankAmigos);
+  if (id !== rankSolicitud || estado !== 'ranking') return;
+  pintarFilas(cuerpo, r, rankAmigos);
+  $('miPosRanking').textContent = textoMiPosicion(r.yo);
+}
+// Al morir: tus días y tu lugar en el ranking (sin bloquear nada si no hay red)
+async function resumenMuerte() {
+  const t = $('rankMuerte');
+  t.textContent = '';
+  if (!Cta.activa) return;
+  const n = modo === 'supervivencia' ? dias : 0;
+  t.textContent = n ? `Días sobrevividos en este mundo: ${n}` : '';
+  const yo = await Cta.miMejor();
+  if (estado !== 'muerte' || !yo) return;
+  const pos = textoMiPosicion(yo);
+  t.textContent = (n ? `Días en este mundo: ${n} · ` : '') + pos;
+}
+function alNuevoDia() {
+  if (modo !== 'supervivencia' || multi.esInvitado) return;      // los invitados no cobran los días del anfitrión
+  Cta.diaSobrevivido(dias);
 }
 
 // ----------------------------------------------------------- Lista de mundos
@@ -1403,6 +1502,7 @@ function pintarMundos() {
     t.innerHTML = '<b></b><span></span>';
     t.firstChild.textContent = m.nombre;
     t.lastChild.textContent = `${ETIQ_MODO[m.modo] || ''} · ${m.tipo === 'plano' ? 'plano' : 'normal'} · semilla ${m.semilla} · ${fecha} · ${kb} KB`;
+    if (Nube.esSoloLocal(m.id)) { const sl = document.createElement('span'); sl.className = 'soloLocal'; sl.textContent = 'Solo en este dispositivo: es demasiado grande para la nube'; t.appendChild(sl); }
     f.appendChild(t);
     const bs = document.createElement('div');
     bs.className = 'bs';
@@ -1435,6 +1535,7 @@ function pintarMundos() {
 function accionDatos(id) {
   const aviso = (t) => { $('avisoAjustes').textContent = t; interfaz.aviso(t); };
   if (id === 'mundos') abrirMundos('ajustes');
+  else if (id === 'sincronizar') { Nube.ahora().then((r) => aviso(r && r.estado === 'ocupado' ? 'Ya se está sincronizando…' : Nube.textoEstado())); }
   else if (id === 'exportarMundo') {
     if (!mundoMeta || !partidaIniciada) { aviso('Entra a un mundo para exportarlo (o usa Mis mundos)'); return; }
     guardar(true);
@@ -1504,6 +1605,7 @@ function comenzar(meta, datos, invitado = null) {
   mobs.espejo = animales.espejo = !!invitado;
   aplicarModo(true);
   partidaIniciada = true;
+  if (!nuevo && !invitado && modo === 'supervivencia' && dias > 0) Cta.puntajeDias(dias);      // los días que ya llevabas cuentan
   if (invitado) multi.alEmpezarInvitado(invitado);
   interfaz.volando(jugador.volando);
   refrescarBarra();
@@ -1714,6 +1816,33 @@ boton('btnJugar', () => abrirMundos('titulo'));
 boton('btnMulti', () => multi.desdeTitulo());
 boton('btnAjustesTitulo', () => abrirAjustes('titulo'));
 boton('btnLogrosTitulo', () => abrirLogros('titulo'));
+boton('btnRecordsTitulo', () => abrirRanking('titulo'));
+boton('btnCuentaTitulo', () => abrirCuenta('titulo'));
+boton('btnVolverCuenta', () => cerrarCuenta());
+boton('btnCuentaPortal', () => { guardar(true); const C = window.Cuenta; location.href = C && C.portalUrl ? C.portalUrl() : '../'; });
+boton('btnCuentaSync', async () => {
+  const b = $('btnCuentaSync');
+  b.disabled = true;
+  const r = await Nube.ahora();
+  b.disabled = false;
+  $('cuentaNube').textContent = Nube.textoEstado();
+  if (r && r.estado === 'ocupado') $('cuentaNube').textContent = 'Ya se está sincronizando…';
+});
+boton('btnCuentaSalir', async () => {
+  const b = $('btnCuentaSalir');
+  if (!b.dataset.seguro) { b.dataset.seguro = '1'; b.textContent = '¿SEGURO?'; setTimeout(() => { b.dataset.seguro = ''; b.textContent = 'CERRAR SESIÓN'; }, 3500); return; }
+  b.dataset.seguro = '';
+  guardar(true);
+  b.disabled = true;
+  try { await Nube.ahora(); } catch (e) { /* sin red: se cierra igual */ }
+  try { await window.Cuenta.salir(); } catch (e) { /* nada */ }
+  location.href = window.Cuenta && window.Cuenta.portalUrl ? window.Cuenta.portalUrl() : '../';
+});
+boton('pestRankGlobal', () => { rankAmigos = false; cargarRanking(); });
+boton('pestRankAmigos', () => { rankAmigos = true; cargarRanking(); });
+boton('btnRankActualizar', () => cargarRanking());
+boton('btnVolverRanking', () => cerrarRanking());
+boton('btnMuerteRecords', () => abrirRanking('muerte'));
 boton('btnNuevoMundo', () => {
   $('panelImportar').classList.add('oculto');
   const p = $('panelNuevo');
@@ -2014,7 +2143,7 @@ function cuadro(ahora) {
   if (estado === 'jugando' || estado === 'titulo' || estado === 'mundos' || estado === 'foto' || multiViva) {
     const antes = hora;
     hora = (hora + dt / CONFIG.dia.duracion) % 1;
-    if (hora < antes && estado !== 'titulo' && estado !== 'mundos') { dias++; logros.maximo('diasMax', dias); }
+    if (hora < antes && estado !== 'titulo' && estado !== 'mundos') { dias++; logros.maximo('diasMax', dias); alNuevoDia(); }
   }
 
   // Cielo, luz y niebla
@@ -2202,8 +2331,11 @@ function iniciarJuego() {
   refrescarBarra();
   mostrarTitulo();
   requestAnimationFrame(cuadro);
-  logros.alLograr = (l) => { hud.toast('★ ' + l.nombre, l.desc, 'logro'); Sonido.logro(); };
-  // la gente que llega con un enlace de sala entra directo al lobby
+  logros.alLograr = (l) => { hud.toast('★ ' + l.nombre, l.desc, 'logro'); Sonido.logro(); Cta.logro(l.id); };
+  Cta.logrosPrevios(Object.keys(logros.hechos));      // los que ya tenías pasan a tu cuenta (una sola vez cada uno)
+  // invitaciones: el lobby necesita las opciones del juego desde el principio
+  if (window.Lobby && window.Lobby.registrar) multi.registrarLobby();
+  // la gente que llega con un enlace de sala (o una invitación directa) entra directo al lobby
   if (window.Lobby && window.Lobby.hayEnlace && window.Lobby.hayEnlace()) multi.abrirLobby();
 }
 iniciarJuego();
@@ -2244,7 +2376,7 @@ window.BLOQUES = {
   seguir,
   abrirInventario,
   cerrarInventario,
-  abrirAjustes, abrirMundos, abrirLogros,
+  abrirAjustes, abrirMundos, abrirLogros, abrirRanking, abrirCuenta, alNuevoDia,
   alternarVuelo,
   moverCamaraTitulo,
   herirJugador: (n, causa = 'zombi') => herirJugador(n, 0, 1, causa, null, null),

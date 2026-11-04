@@ -92,6 +92,7 @@ const Entrada = (() => {
     for (let i = 0; i < l.length; i++) if (l[i] && l[i].connected) return l[i];
     return null;
   }
+  const ABloq = () => !!(window.Amigos && Amigos.mandoBloqueado && Amigos.mandoBloqueado());
   function zona(x, y, z) {
     const m = Math.hypot(x, y);
     if (m < z) return 0;
@@ -114,7 +115,7 @@ const Entrada = (() => {
       const sx = p.axes[0] || 0, sy = p.axes[1] || 0, k = zona(sx, sy, a.zona);
       ax += sx * k; ay += sy * k;
       if (M.sostenido('IZQ')) ax -= 1; if (M.sostenido('DER')) ax += 1; if (M.sostenido('ARRIBA')) ay -= 1; if (M.sostenido('ABAJO')) ay += 1;
-      fuegoPad = M.sostenido('A') || M.gatillo.der > 0.35 || M.sostenido('RT');
+      fuegoPad = (!ABloq() && M.sostenido('A')) || M.gatillo.der > 0.35 || M.sostenido('RT');
       habPad = M.pulsado('X') || M.pulsado('LB') || M.pulsado('RB') || M.pulsado('LT');
       pausaPad = M.pulsado('MENU');
     }
@@ -144,8 +145,8 @@ const Entrada = (() => {
     nav.abajo = h('abajo', teclas.has('ArrowDown') || teclas.has('KeyS'), p && M.sostenido('ABAJO'), sy2 > 0 ? sy2 : 0);
     nav.izq = h('izq', teclas.has('ArrowLeft') || teclas.has('KeyA'), p && M.sostenido('IZQ'), sx2 < 0 ? sx2 : 0);
     nav.der = h('der', teclas.has('ArrowRight') || teclas.has('KeyD'), p && M.sostenido('DER'), sx2 > 0 ? sx2 : 0);
-    nav.ok = pulsadas.has('Enter') || pulsadas.has('Space') || pulsadas.has('NumpadEnter') || !!(p && M.pulsado('A'));
-    nav.atras = pulsadas.has('Escape') || pulsadas.has('Backspace') || !!(p && M.pulsado('B'));
+    nav.ok = pulsadas.has('Enter') || pulsadas.has('Space') || pulsadas.has('NumpadEnter') || !!(p && !ABloq() && M.pulsado('A'));
+    nav.atras = pulsadas.has('Escape') || pulsadas.has('Backspace') || !!(p && !ABloq() && M.pulsado('B'));
     nav.pestIzq = pulsadas.has('KeyQ') || !!(p && M.pulsado('LB'));
     nav.pestDer = pulsadas.has('KeyE') || !!(p && M.pulsado('RB'));
     nav.menu = !!(p && M.pulsado('MENU'));

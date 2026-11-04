@@ -122,5 +122,27 @@ await t('firestore.rules coincide con juegos.js', () => {
   assert.ok(r.includes("in ['" + Juegos.lista.map(j => j.id).join("', '") + "']"));
   for (const j of Juegos.lista) assert.ok(r.includes("'" + j.id + "'"), j.id);
 });
+await t('modos de Elo de ajedrez (elo, elo_online, elo_rompe)', () => {
+  for (const id of ['elo', 'elo_online', 'elo_rompe']) { const m = Juegos.modo('ajedrez', id); assert.ok(m, id); assert.equal(m.mayorEsMejor, true); assert.equal(m.tope, 4000); assert.ok(m.nombre && m.unidad === 'Elo'); }
+  assert.ok(Juegos.claves().includes('ajedrez__elo_online'));
+});
+await t('logros: ids validos, sin repetidos, nombre y descripcion, dentro del tope', () => {
+  for (const j of Juegos.lista) {
+    const ids = j.logros.map(l => l.id); assert.equal(new Set(ids).size, ids.length, 'repetidos en ' + j.id); assert.ok(ids.length <= Juegos.LOGROS_MAX, j.id);
+    for (const l of j.logros) { assert.ok(/^[a-z0-9_]{1,40}$/.test(l.id), j.id + ':' + l.id); assert.ok(l.nombre && l.desc, j.id + ':' + l.id); }
+  }
+});
+await t('logros: cobertura de lo que reportan los juegos', () => {
+  const n = { nebula: 21, ciudad: 24, guerra: 17, ajedrez: 15 }; for (const k in n) assert.equal(Juegos.juego(k).logros.length, n[k], k);
+  const tiene = (j, ids) => ids.forEach(i => assert.ok(Juegos.juego(j).logros.some(l => l.id === i), j + ':' + i));
+  tiene('ciudad', ['primera_mision', 'millonario', 'escapar', 'hist22']); tiene('metropolis', ['airelimpio', 'primero', 'primera_casa', 'pueblo', 'metropoli', 'dias100']);
+  tiene('ajedrez', ['primera_victoria', 'jaque_mate', 'mate_rapido', 'sin_red', 'gran_rival', 'rey_a_salvo', 'nueva_dama', 'estudiante', 'tactico', 'en_racha', 'aprendiz', 'analista', 'nivel_de_club', 'nivel5', 'online']);
+  tiene('guerra', ['primera_sangre', 'racha10', 'nivel10', 'bengalas']); tiene('nebula', ['vuelo', 'jefe1', 'oleada15', 'flota']);
+  assert.ok(Juegos.lista.every(j => !/[A-Z]/.test(j.logros.map(l => l.id).join(''))), 'ids en minuscula');
+});
+await t('Cuenta.logro rechaza ids no validos y respeta el tope de 100 en las reglas', () => {
+  const r = fs.readFileSync(path.join(dir, '..', 'firestore.rules'), 'utf8'); assert.equal((r.match(/\.size\(\) <= 100\)/g) || []).length, 6);
+  assert.equal(Juegos.LOGROS_MAX, 100);
+});
 console.log(`\n${ok} pruebas correctas`);
 setTimeout(() => process.exit(process.exitCode || 0), 50);

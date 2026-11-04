@@ -18,6 +18,7 @@ const MP = (() => {
     modos: [{ id: 'campana', nombre: 'Campaña cooperativa' }, { id: 'infinito', nombre: 'Infinito cooperativo' }, { id: 'jefes', nombre: 'Duelo de jefes cooperativo' }],
     alIniciar: (config, jugadores) => preparar(config, jugadores),
   };
+  Lobby.registrar(OPTS); // permite que una invitación directa de un amigo abra este lobby
   M.abrirLobby = () => { Lobby.abrir(OPTS); };
   const naveDe = (pid) => S.naves.find((n) => n.pid === pid);
   const jugador = (pid) => (Red.jugadores && Red.jugadores[pid]) || { nombre: 'Jugador', color: '#fff' };

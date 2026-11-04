@@ -9,27 +9,24 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../comun/lobby.css">
+  <link rel="stylesheet" href="../comun/cuenta.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <canvas id="juego" aria-label="Juego Nebula"></canvas>
 
-  <!-- El orden importa: datos y contenido primero, juego al final -->
+  <div id="cargando" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#9a8cff;font:500 14px Orbitron,sans-serif;pointer-events:none">Cargando…</div>
+
+  <!-- Plataforma (config, mando, red, lobby, juegos, cuenta, amigos) y despues arranque.js, que exige sesion,
+       sincroniza y carga los scripts del juego en orden: config, datos, sonido, musica, contenido, entrada, sim,
+       dibujo, hud, ui, pantallas, juego y mp. -->
+  <script src="../comun/firebase-config.js"></script>
   <script src="../comun/mando.js"></script>
   <script src="../comun/red.js"></script>
   <script src="../comun/lobby.js"></script>
-  <script src="js/config.js"></script>
-  <script src="js/datos.js"></script>
-  <script src="js/sonido.js"></script>
-  <script src="js/musica.js"></script>
-  <script src="js/contenido.js"></script>
-  <script src="js/entrada.js"></script>
-  <script src="js/sim.js"></script>
-  <script src="js/dibujo.js"></script>
-  <script src="js/hud.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/pantallas.js"></script>
-  <script src="js/juego.js"></script>
-  <script src="js/mp.js"></script>
+  <script src="../plataforma/juegos.js"></script>
+  <script src="../comun/cuenta.js"></script>
+  <script src="../comun/amigos.js"></script>
+  <script src="js/arranque.js"></script>
 </body>
 </html>

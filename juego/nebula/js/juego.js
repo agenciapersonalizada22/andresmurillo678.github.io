@@ -49,6 +49,7 @@ const Juego = (() => {
     const s = save(); if (s.logros[id]) return;
     const l = LOGROS.find((q) => q.id === id); if (!l) return;
     s.logros[id] = Datos.hoy(); Datos.guardarSave(); Hud.toast('LOGRO: ' + l.nom, '#ffd23d', l.desc); Sonido.logro();
+    if (window.NebulaCuenta) NebulaCuenta.logro(id); // además de lo local: a la cuenta (+25 XP, una sola vez)
   };
   function revisarLogros() { for (const l of LOGROS) if (l.st && !save().logros[l.id] && (save().stats[l.st] || 0) >= l.meta) J.logro(l.id); }
   J.diario = () => {
@@ -143,6 +144,13 @@ const Juego = (() => {
     estado = 'menu'; Entrada.juego = false; Sim.activo = false; Fx.limpiar(); Hud.limpiar(); soltarWake();
     Musica.pausar(false); Musica.mundo(0, 1); Musica.animo('menu');
     UI.raiz(Pantallas.principal()); fade = 1;
+    J.aplicarNube();
+  };
+  // Si otro dispositivo subió progreso nuevo: se aplica sólo en el menú (nunca a mitad de partida).
+  J.aplicarNube = function () {
+    const N = window.NebulaCuenta; if (!N || !N.bajadaPendiente || estado !== 'menu') return;
+    N.bajadaPendiente = false; Datos.recargar(); J.aplicarAjustes(); N.repasarLogros();
+    Hud.toast('Progreso actualizado desde tu cuenta', '#7dffb3');
   };
 
   function finalizar() {
@@ -161,12 +169,14 @@ const Juego = (() => {
     if (modo === 'diario') { const f = J.diario().fecha; s.diario[f] = Math.max(s.diario[f] || 0, res.puntos); }
     if (!s.tutorial) s.tutorial = true;
     Datos.guardarSave(); revisarLogros();
+    if (window.NebulaCuenta) NebulaCuenta.partidaTerminada(res, modo, mpActivo, extra);
     Musica.animo('fin'); if (res.victoria) Sonido.victoria(); else Sonido.finJuego();
     const mostrar = () => { UI.raiz(Pantallas.fin(res, extra)); };
     const clave = modo, nave = Sim.naves[0].def.id;
     if (!mpActivo && Datos.entraEnTabla(clave, res.puntos)) {
       extra.nuevoRecord = Datos.tabla(clave).length === 0 || res.puntos > Datos.tabla(clave)[0].p;
-      setTimeout(() => UI.dialogo({ titulo: 'Entras en la tabla de récords. ¿Tu nombre?', valor: Datos.perfil().nombre, max: 14, boton: 'Guardar', alAceptar: (v) => { Datos.anotarRecord(clave, res.puntos, (v || '').trim().slice(0, 14) || 'Jugador', nave); mostrar(); }, alCancelar: () => { Datos.anotarRecord(clave, res.puntos, Datos.perfil().nombre, nave); mostrar(); } }), 1200);
+      if (window.Cuenta && Cuenta.usuario) setTimeout(() => { Datos.anotarRecord(clave, res.puntos, Datos.perfil().nombre, nave); mostrar(); }, 900); // con cuenta: se usa su nombre, sin preguntar
+      else setTimeout(() => UI.dialogo({ titulo: 'Entras en la tabla de récords. ¿Tu nombre?', valor: Datos.perfil().nombre, max: 14, boton: 'Guardar', alAceptar: (v) => { Datos.anotarRecord(clave, res.puntos, (v || '').trim().slice(0, 14) || 'Jugador', nave); mostrar(); }, alCancelar: () => { Datos.anotarRecord(clave, res.puntos, Datos.perfil().nombre, nave); mostrar(); } }), 1200);
     } else setTimeout(mostrar, 900);
   }
   J.finalizar = finalizar;
@@ -200,7 +210,7 @@ const Juego = (() => {
     const lim = aj().fpsLimite;
     if (lim && now - ultimo < 1000 / lim - 2) return;
     const dt = Math.min(0.05, (now - ultimo) / 1000); ultimo = now; tGlobal += dt;
-    const lobby = window.Lobby && Lobby.abierto;
+    const lobby = (window.Lobby && Lobby.abierto) || !!document.querySelector('.cu-fondo'); // lobby o aviso/modal de la cuenta: el juego cede mando y teclado
     if (lobby) Entrada.limpiarEventos(); else { Mando.leer(); Entrada.actualizar(dt); }
     const escribiendo = UI.dialogoAbierto();
     if (!lobby && !escribiendo) {
@@ -254,6 +264,8 @@ const Juego = (() => {
     } else { if (aj().pausaOculta) Sonido.suspender(false); if (estado === 'jugando' || mpActivo) pedirWake(); }
   });
   window.addEventListener('blur', () => { if (estado === 'jugando' && !mpActivo) J.pausar(); });
+  if (window.NebulaCuenta) NebulaCuenta.alBajar = () => { if (estado === 'menu' && !UI.dialogoAbierto()) J.aplicarNube(); };
+  setInterval(() => { if (estado === 'menu') J.aplicarNube(); }, 2000);
   Mando.alConectar(() => Hud.toast('Mando conectado', '#7dffb3'));
 
   // ------------------------------------------------ Multijugador (puente)

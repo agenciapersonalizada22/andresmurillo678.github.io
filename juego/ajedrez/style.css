@@ -573,3 +573,16 @@ body.zurdo #app { direction: ltr; } @media (min-width: 861px) and (min-aspect-ra
   #barraSup { gap: 5px; padding: 6px 8px; } #barraSup .titulo { display: none; } #barraSup .volver { padding: 6px 9px; font-size: 11px; }
   #barraSup .acciones { margin-left: auto; gap: 4px; } .icono { width: 34px; height: 34px; font-size: 15px; }
 }
+
+/* ---- cuenta y ranking ---- */
+.barraCuenta { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -6px 0 10px; padding: 6px 8px; border-radius: 10px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--borde); font-size: 12px; }
+.barraCuenta.oculto { display: none; }
+.barraCuenta small { color: var(--suave); font-weight: 400; }
+.cuNombre { display: inline-flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cuPunto { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex: none; box-shadow: 0 0 6px currentColor; }
+.rkLista { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 12px; max-height: 46vh; overflow-y: auto; text-align: left; }
+.rkFila { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 9px; background: rgba(255, 255, 255, 0.05); border: 1px solid transparent; font-size: 12px; }
+.rkFila.yo { border-color: var(--cian); background: rgba(61, 245, 255, 0.1); }
+.rkFila b { width: 34px; color: var(--suave); }
+.rkFila span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 800; }
+.rkFila em { font-style: normal; color: var(--cian); font-weight: 800; }

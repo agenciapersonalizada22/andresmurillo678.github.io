@@ -28,6 +28,7 @@ service cloud.firestore {
         'bloques__dias': 100000,
         'guerra__aire': 100000000, 'guerra__tanque': 100000000,
         'ajedrez__rompecabezas': 100000, 'ajedrez__racha': 10000,
+        'ajedrez__elo': 4000, 'ajedrez__elo_online': 4000, 'ajedrez__elo_rompe': 4000,
         'metropolis__poblacion': 100000000
       };
     }

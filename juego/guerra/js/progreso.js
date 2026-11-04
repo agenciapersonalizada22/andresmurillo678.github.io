@@ -3,6 +3,7 @@
 import { CONFIG, AVIONES } from './config.js';
 import { TANQUES, MEJORAS, ORDEN_MEJORAS, CAMUFLAJES, MARCAS, LOGROS } from './catalogo.js';
 import { mejorPuntaje } from './guardado.js';
+import { perfilCuenta } from './cuentaJuego.js';
 
 const NUEVO = () => ({
   v: 1, creditos: 600, xp: 0,
@@ -175,6 +176,8 @@ export const Progreso = {
 
 // Perfil compartido con los demás juegos
 export function perfil() {
+  const c = perfilCuenta();
+  if (c) return c;
   try {
     const p = JSON.parse(localStorage.getItem('juego_perfil') || 'null');
     if (p && typeof p === 'object') return { nombre: String(p.nombre || 'Jugador').slice(0, 16), color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : '#3df5ff' };

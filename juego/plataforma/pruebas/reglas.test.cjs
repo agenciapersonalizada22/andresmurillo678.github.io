@@ -59,6 +59,15 @@ const OK = (n, p) => t(n, p, false), NO = (n, p) => t(n, p, true);
   await NO('valor no numerico', () => P(A, 'nebula__puntos', 'ana', '9999'));
   await NO('fecha falsa', () => P(A, 'ciudad__dinero', 'ana', 5, { fecha: new Date('2020-01-01') }));
   await NO('campo extra', () => P(A, 'ciudad__dinero', 'ana', 5, { vip: true }));
+  await OK('elo contra el motor valido', () => P(A, 'ajedrez__elo', 'ana', 1500));
+  await OK('elo online valido', () => P(A, 'ajedrez__elo_online', 'ana', 1200));
+  await OK('elo de rompecabezas valido', () => P(A, 'ajedrez__elo_rompe', 'ana', 900));
+  await NO('elo sobre el tope (4001)', () => P(A, 'ajedrez__elo', 'ana', 4001));
+  await OK('elo en el tope exacto (4000)', () => P(A, 'ajedrez__elo_rompe', 'ana', 4000));
+  await NO('elo menor no reemplaza', () => P(A, 'ajedrez__elo', 'ana', 1400));
+  await OK('elo mayor reemplaza', () => P(A, 'ajedrez__elo', 'ana', 1600));
+  await NO('elo de otro uid', () => P(B, 'ajedrez__elo_online', 'ana', 3000));
+  await NO('modo elo inexistente', () => P(A, 'ajedrez__elo_blitz', 'ana', 1000));
   await OK('leer ranking con sesion', () => B.collection('puntajes/nebula__puntos/entradas').orderBy('valor', 'desc').limit(10).get());
   await NO('leer ranking sin sesion', () => anon.collection('puntajes/nebula__puntos/entradas').get());
 
@@ -126,6 +135,12 @@ const OK = (n, p) => t(n, p, false), NO = (n, p) => t(n, p, true);
   await NO('logros ajenos', () => B.doc('logros/ana').set({ nebula: ['x'] }));
   await NO('logros con juego inventado', () => A.doc('logros/ana').set({ trampa: ['x'] }));
   await NO('demasiados logros', () => A.doc('logros/ana').set({ nebula: Array.from({ length: 101 }, (_, i) => 'l' + i) }));
+  const ids = (n, p) => Array.from({ length: n }, (_, i) => p + i);
+  await OK('logros con ids de la tabla (metropolis, ajedrez)', () => A.doc('logros/ana').set({ metropolis: ['airelimpio', 'primera_casa', 'dias100'], ajedrez: ['nivel_de_club', 'sin_red'], xpJuego: { metropolis: 25 } }));
+  await OK('logro con id fuera de tabla (las reglas no lo limitan)', () => A.doc('logros/ana').set({ guerra: ['id_que_no_esta_en_la_tabla'] }));
+  await OK('exactamente 100 logros (tope)', () => A.doc('logros/ana').set({ metropolis: ids(100, 'l') }));
+  await NO('101 logros en metropolis', () => A.doc('logros/ana').set({ metropolis: ids(101, 'l') }));
+  await NO('101 logros en ajedrez', () => A.doc('logros/ana').set({ ajedrez: ids(101, 'l') }));
   await OK('amigo lee mis logros', () => B.doc('logros/ana').get());
   await NO('no amigo no lee logros', () => D.doc('logros/ana').get());
 

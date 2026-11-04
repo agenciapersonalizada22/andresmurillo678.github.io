@@ -6,6 +6,8 @@
 //  Mensajes (fiables): o_mov, o_estado, o_pedirEstado, o_fin, o_tablas,
 //  o_rendir, o_deshacer, o_revancha, o_elo, o_flecha, o_aviso.
 // =============================================================
+import * as Cu from './cuenta.js';
+
 const $ = (id) => document.getElementById(id);
 const GRACIA = 60000;
 
@@ -33,15 +35,18 @@ export function iniciarOnline(ctx) {
   $('onlineCuerpo').addEventListener('click', (e) => { const b = e.target.closest('button'); const f = b && b.closest('.fichas[data-c]'); if (f) { cfgUI[f.dataset.c] = f.dataset.c === 'p' ? b.dataset.v === 'true' : b.dataset.v; pintarCfg(); } });
   $('onlineCuerpo').addEventListener('change', (e) => { if (e.target.id === 'onReloj') cfgUI.r = e.target.value; });
   $('btnOnlineCerrar').addEventListener('click', () => ui.ocultar('Online'));
+  // Mismas OPTS en todas las entradas al lobby (también las registradas para invitaciones de amigos)
+  const optsLobby = (conModo) => ({ juego: 'Ajedrez 3D', maxJugadores: 4, minJugadores: 2, modos: conModo ? [{ id: idModo(cfgUI), nombre: `${cfgUI.c} · ${cfgUI.r} · ${cfgUI.v}${cfgUI.p ? ' · puntúa' : ''}` }] : [{ id: idModo(cfgUI), nombre: 'Partida' }], alIniciar: () => {} });
+  if (Lobby.registrar) Lobby.registrar(optsLobby(false));
   const abrirLobby = (conModo) => {
     ui.ocultar('Online');
-    Lobby.abrir({ juego: 'Ajedrez 3D', maxJugadores: 4, minJugadores: 2, modos: conModo ? [{ id: idModo(cfgUI), nombre: `${cfgUI.c} · ${cfgUI.r} · ${cfgUI.v}${cfgUI.p ? ' · puntúa' : ''}` }] : [{ id: idModo(cfgUI), nombre: 'Partida' }], alIniciar: () => {} });
+    Lobby.abrir(optsLobby(conModo));
   };
   $('btnOnlineIr').addEventListener('click', () => abrirLobby(true));
   $('btnOnlineUnir').addEventListener('click', () => abrirLobby(false));
 
   api.abrir = () => {
-    if (S.activo && Red.conectado) { Lobby.abrir({ juego: 'Ajedrez 3D', maxJugadores: 4, minJugadores: 2, modos: [{ id: idModo(cfgUI), nombre: 'Partida' }], alIniciar: () => {} }); return; }
+    if (S.activo && Red.conectado) { Lobby.abrir(optsLobby(false)); return; }
     if (Lobby.hayEnlace && Lobby.hayEnlace()) { abrirLobby(false); return; }
     pintarCfg(); ui.mostrar('Online');
   };
@@ -178,6 +183,8 @@ export function iniciarOnline(ctx) {
     if (S.espectador) return '';
     ctx.logro('online');
     const r = ctx.Perfil.registrarPartida({ res, rival: S.rival, eloRival: S.eloRival || 1200, puntua: S.puntua && partida.jugadas.length >= 4, online: true, modo: 'online', eco: '', apertura: '' });
+    Cu.reportarElos();
+    Cu.xpPartida({ res, eloRival: S.eloRival || 1200, puntua: S.puntua && partida.jugadas.length >= 4, jugadas: partida.jugadas.length, online: true });
     return S.puntua && partida.jugadas.length >= 4 ? `Elo online ${r.elo} (${r.delta >= 0 ? '+' : ''}${r.delta})` : 'Partida amistosa: no cambia tu Elo.';
   };
   api.finDeJuego = () => { S.jugando = false; };

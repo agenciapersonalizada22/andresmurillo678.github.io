@@ -27,6 +27,7 @@
 .cu-inv-t { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 14px; border-radius: 14px; background: rgba(11, 7, 32, 0.97); border: 2px solid var(--c, #ff4fd8); box-shadow: 0 0 22px color-mix(in srgb, var(--c, #ff4fd8) 55%, transparent); animation: cuSube 0.25s ease-out; color: #fff; }
 .cu-inv-t > div { flex: 1 1 160px; font-family: system-ui, sans-serif; font-size: 14px; line-height: 1.35; }
 .cu-inv-t b { color: var(--c, #ff4fd8); font-family: Orbitron, monospace; }
+.cu-inv-pista { flex: 1 1 100%; text-align: center; font-size: 12px; letter-spacing: 0.04em; color: #bdb4ff; }
 .cu-inv-t .cu-btn { min-height: 40px; padding: 6px 14px; }
 @keyframes cuSube { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .cu-aviso, .cu-tarjeta, .cu-inv-t { animation: none; transition: none; } .cu-btn { transition: none; } }
