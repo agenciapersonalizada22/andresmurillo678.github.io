@@ -5,7 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#05030f">
   <title>Mis juegos</title>
-  <link rel="icon" href="data:,">
+  <link rel="icon" href="comun/icono-192.png" type="image/png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="comun/icono-180.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Mis juegos">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="comun/lobby.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
@@ -87,6 +94,7 @@
       font-weight: 800;
       font-size: 14px;
     }
+    .perfil-juego { max-width: 960px; margin: 0 auto 24px; }
     .pie {
       text-align: center;
       margin-top: 36px;
@@ -132,6 +140,8 @@
     <span><b>A</b>jugar</span>
     <span><b>B</b>volver</span>
   </p>
+
+  <section class="perfil-juego" id="perfil" aria-label="Perfil de jugador"></section>
 
   <main class="lista">
     <a class="juego" href="nebula/" style="--color:#3df5ff">
@@ -262,13 +272,17 @@
   <p class="pie"><a href="../">← volver a mi página</a></p>
 
   <script src="comun/mando.js"></script>
+  <script src="comun/red.js"></script>
+  <script src="comun/lobby.js"></script>
+  <script>Lobby.editorPerfil(document.getElementById('perfil'));</script>
   <script>
   (function () {
     // Navegación con mando: cruceta / stick izq. mueven el foco entre tarjetas, A abre, B vuelve
     if (!window.Mando) return;
     var tarjetas = Array.prototype.slice.call(document.querySelectorAll('.juego'));
     var volver = document.querySelector('.pie a');
-    var todos = tarjetas.concat(volver ? [volver] : []);
+    var perfil = Array.prototype.slice.call(document.querySelectorAll('#perfil [data-f]'));
+    var todos = perfil.concat(tarjetas, volver ? [volver] : []);
     var dirActual = '', tRepite = 0, bloqueo = true; // bloqueo: ignora A/B hasta soltarlos (p. ej. B pulsado en el juego anterior)
 
     function marcarFuente() { document.body.classList.toggle('conMando', Mando.conectado && Mando.activo); }
