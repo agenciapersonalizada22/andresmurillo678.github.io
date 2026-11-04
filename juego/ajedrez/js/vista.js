@@ -5,19 +5,21 @@
 //  La lógica del juego vive en principal.js; aquí solo se muestra.
 // =============================================================
 import * as THREE from '../lib/three.module.min.js';
-import { CALIDADES } from './config.js';
-import { TEMAS } from './temas.js';
+import { CALIDADES, calidadEfectiva } from './config.js';
+import { TEMAS, temaEfectivo } from './temas.js';
 import { Camara } from './camara.js';
 import { Entorno } from './entorno.js';
-import { Tablero3D, deMundo } from './tablero3d.js';
+import { Tablero3D, deMundo, aMundo } from './tablero3d.js';
 import { Piezas3D } from './piezas3d.js';
 import { Chispas } from './chispas.js';
 
 export class Vista {
-  constructor(contenedor, { calidad = 'media', tema = 'clasico' } = {}) {
+  constructor(contenedor, { calidad = 'media', tema = 'clasico', set3d = 'tema', daltonico = 'no', limiteFps = 0, reducir = false, coordenadas = true } = {}) {
     this.contenedor = contenedor;
-    this.cal = CALIDADES.find((c) => c.id === calidad) || CALIDADES[1];
+    this.cal = typeof calidad === 'object' ? calidad : (CALIDADES.find((c) => c.id === calidad) || CALIDADES[1]);
     this.temaId = TEMAS[tema] ? tema : 'clasico';
+    this.set3d = set3d; this.daltonico = daltonico; this.limiteFps = limiteFps; this.reducir = reducir;
+    this.sacudida = 0; this.fpsMedia = 60; this.ultimoCuadro = 0; this.alFps = null; this.alDibujar = null;
     this.sucio = true;
     this.escena = new THREE.Scene();
     this.camara3 = new THREE.PerspectiveCamera(34, 1, 0.5, 120);
@@ -34,6 +36,9 @@ export class Vista {
     this.escena.add(this.chispas.puntos);
     this.entorno = new Entorno(this.escena, this.renderer);
     this.tablero = new Tablero3D();
+    this.tablero.coordenadas = coordenadas;
+    this.chispas.activo = this.cal.particulas !== false && !reducir;
+    this.entorno.reducir = reducir;
     this.piezas = new Piezas3D(this.chispas);
     this.escena.add(this.tablero.grupo, this.piezas.grupo);
 
@@ -84,7 +89,7 @@ export class Vista {
 
   fijarTema(id) {
     this.temaId = TEMAS[id] ? id : 'clasico';
-    const t = TEMAS[this.temaId];
+    const t = temaEfectivo(this.temaId, this.set3d, this.daltonico);
     this.entorno.aplicarTema(t, this.cal);
     this.entorno.aplicarCalidad(this.cal);
     this.tablero.aplicarTema(t, this.cal);
@@ -92,9 +97,28 @@ export class Vista {
     this.pedir();
   }
 
-  fijarCalidad(id) {
-    const c = CALIDADES.find((x) => x.id === id);
+  fijarOpciones(o) {
+    if (o.set3d !== undefined) this.set3d = o.set3d;
+    if (o.daltonico !== undefined) this.daltonico = o.daltonico;
+    if (o.limiteFps !== undefined) this.limiteFps = o.limiteFps;
+    if (o.reducir !== undefined) { this.reducir = o.reducir; this.entorno.reducir = o.reducir; this.chispas.activo = this.cal.particulas !== false && !o.reducir; }
+    if (o.coordenadas !== undefined) { this.tablero.coordenadas = o.coordenadas; if (this.tablero.etiquetas) this.tablero.etiquetas.visible = o.coordenadas; }
+    this.fijarTema(this.temaId);
+  }
+
+  sacudir(a = 0.12) { if (!this.reducir) { this.sacudida = a; this.pedir(); } }
+
+  // Posición en pantalla (px, relativa al contenedor) del centro de una casilla
+  pantallaDe(sq, y = 0) {
+    const { x, z } = aMundo(sq);
+    const v = new THREE.Vector3(x, y, z).project(this.camara3);
+    return { x: (v.x + 1) / 2 * this.contenedor.clientWidth, y: (1 - v.y) / 2 * this.contenedor.clientHeight };
+  }
+
+  fijarCalidad(arg) {
+    const c = typeof arg === 'object' ? arg : CALIDADES.find((x) => x.id === arg);
     if (!c) return;
+    this.chispas.activo = c.particulas !== false && !this.reducir;
     const reiniciar = c.antialias !== this.antialiasActual;
     this.cal = c;
     if (reiniciar) {
@@ -147,6 +171,8 @@ export class Vista {
   _bucle() {
     requestAnimationFrame(this._bucle);
     if (this.contextoPerdido) return;
+    const ahora0 = performance.now();
+    if (this.limiteFps && ahora0 - this.ultimoCuadro < 1000 / this.limiteFps - 2) return;
     const dt = Math.min(0.05, this.reloj.getDelta());
     let activo = this.sucio;
     if (this.camara.actualizar(dt)) activo = true;
@@ -159,6 +185,23 @@ export class Vista {
     if (!activo && !(ambiente && ahora - (this.ultimo || 0) > 48)) return;
     this.sucio = false;
     this.ultimo = ahora;
+    let sac = null;
+    if (this.sacudida > 0.002) {
+      sac = this.camara3.position.clone();
+      this.camara3.position.x += (Math.random() - 0.5) * this.sacudida;
+      this.camara3.position.y += (Math.random() - 0.5) * this.sacudida;
+      this.camara3.updateMatrixWorld();
+      this.sacudida *= Math.exp(-dt * 7);
+      this.sucio = true;
+    } else this.sacudida = 0;
     this.renderer.render(this.escena, this.camara3);
+    if (sac) { this.camara3.position.copy(sac); this.camara3.updateMatrixWorld(); }
+    if (this.alDibujar) this.alDibujar();
+    // FPS medio solo con animaciones seguidas (cuadros consecutivos)
+    if (this.ultimoCuadro && ahora - this.ultimoCuadro < 80) {
+      this.fpsMedia += (1000 / Math.max(1, ahora - this.ultimoCuadro) - this.fpsMedia) * 0.06;
+      if (this.alFps) this.alFps(this.fpsMedia);
+    }
+    this.ultimoCuadro = ahora;
   }
 }

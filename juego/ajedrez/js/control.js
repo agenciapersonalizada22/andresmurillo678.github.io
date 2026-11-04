@@ -9,11 +9,12 @@
 //  Todo se lee una vez por cuadro y solo con flancos (no dispara dos veces).
 // =============================================================
 
+import { vibrar } from './vibracion.js';
+
 const RETARDO = 380;      // ms antes de empezar a repetir al mantener
 const REPETIR = 130;      // ms entre repeticiones en el tablero
 const REPETIR_MENU = 190; // ms entre repeticiones en pantallas
 const UMBRAL = 0.5;
-const PANTALLAS = ['Inicio', 'Ajustes', 'Coronar', 'Fin', 'Stats', 'Texto', 'Confirmar']; // orden DOM (la última queda encima)
 const FOCO = 'button, select, input[type="checkbox"], input[type="range"], summary';
 
 const $ = (id) => document.getElementById(id);
@@ -23,8 +24,11 @@ export function iniciarControl(ctx) {
   const M = window.Mando;
   if (!M) return null;
   const { juego, vista, ui } = ctx;
+  const opts = ctx.opts;
+  const eje = (e) => { const z = opts.zonaMuerta, m = Math.hypot(e.x, e.y); if (m <= z) return { x: 0, y: 0 }; const k = (m - z) / (1 - z) / m; return { x: e.x * k, y: e.y * k }; };
 
   let cursor = -1;           // casilla del cursor (-1 = recalcular al mostrar)
+  let marcaOrigen = -1;
   let dirAntes = '';
   let proxima = 0;           // instante del siguiente paso al mantener
   let conectadoAntes = false;
@@ -47,11 +51,10 @@ export function iniciarControl(ctx) {
   document.addEventListener('visibilitychange', reposo);
   window.addEventListener('blur', reposo);
 
+  // pantalla visible más arriba: la última en el DOM (Inicio queda debajo de todas)
   function pantallaArriba() {
-    for (let i = PANTALLAS.length - 1; i >= 0; i--) {
-      if (!$('pantalla' + PANTALLAS[i]).classList.contains('oculto')) return PANTALLAS[i];
-    }
-    return '';
+    const v = [...document.querySelectorAll('.pantalla:not(.oculto)')];
+    return v.length ? v[v.length - 1].id.replace('pantalla', '') : '';
   }
 
   // ---- dirección discreta (cruceta + stick izquierdo) con repetición
@@ -59,7 +62,7 @@ export function iniciarControl(ctx) {
     let dx = (M.sostenido('DER') ? 1 : 0) - (M.sostenido('IZQ') ? 1 : 0);
     let dy = (M.sostenido('ABAJO') ? 1 : 0) - (M.sostenido('ARRIBA') ? 1 : 0);
     if (!dx && !dy) {
-      const s = M.ejes.izq;
+      const s = eje(M.ejes.izq);
       if (Math.abs(s.x) > UMBRAL) dx = Math.sign(s.x);
       if (Math.abs(s.y) > UMBRAL) dy = Math.sign(s.y);
     }
@@ -88,9 +91,9 @@ export function iniciarControl(ctx) {
     let nr = (cursor >> 3) + (d.dx * sn + arriba * cs);
     nf = Math.max(0, Math.min(7, nf)); nr = Math.max(0, Math.min(7, nr));
     const n = nr * 8 + nf;
-    if (n === cursor) { M.vibrar(0, 0.05, 15); return; } // tope del tablero
+    if (n === cursor) { vibrar(0, 0.05, 15); return; } // tope del tablero
     cursor = n;
-    M.vibrar(0, 0.12, 22);
+    vibrar(0, 0.12, 22);
     juego.cursor = cursor;
     ctx.marcas();
   }
@@ -113,10 +116,14 @@ export function iniciarControl(ctx) {
     if (M.pulsado('RB')) ctx.navegar('adelante');
     if (M.pulsado('VISTA')) ctx.accion('vista');
     if (M.pulsado('R3')) ctx.cambiarVista(juego.vista);
-    if (M.pulsado('MENU')) ui.mostrar('Ajustes');
+    if (M.pulsado('MENU')) ctx.pausar();
+    if (M.pulsado('L3')) { // flecha o círculo: primera pulsación fija el origen, la segunda el destino
+      if (marcaOrigen < 0) { marcaOrigen = cursor; ui.toast('Origen de la flecha: elige el destino y pulsa L3 (B cancela)', 1800); } else { ctx.marcaFlecha(marcaOrigen, cursor); marcaOrigen = -1; }
+    }
+    if (M.pulsado('B') && marcaOrigen >= 0) marcaOrigen = -1;
 
-    const r = M.ejes.der;
-    if (r.x || r.y) { vista.camara.girar(r.x * 420 * dt, r.y * 300 * dt); vista.pedir(); }
+    const r = eje(M.ejes.der);
+    if (r.x || r.y) { vista.camara.girar(r.x * 420 * dt * opts.sens, r.y * 300 * dt * opts.sens * (opts.invertirY ? -1 : 1)); vista.pedir(); }
     const z = M.gatillo.der - M.gatillo.izq;
     if (Math.abs(z) > 0.08) { vista.camara.acercar(Math.exp(-z * dt * 1.6)); vista.pedir(); }
   }
@@ -136,6 +143,10 @@ export function iniciarControl(ctx) {
     else if (nombre === 'Confirmar') el = $('btnConfNo');
     else if (nombre === 'Texto') el = $('btnTextoCerrar');
     else if (nombre === 'Stats') el = $('btnCerrarStats');
+    else if (nombre === 'Pausa') el = $('btnPausaSeguir');
+    else if (nombre === 'Ayuda') el = $('btnAyudaCerrar');
+    else if (nombre === 'Online') el = $('btnOnlineIr');
+    else if (nombre === 'Revision') el = $('btnRevCerrar');
     if (!el || !visible(el)) el = focales(raiz)[0];
     if (el) el.focus();
   }
@@ -158,7 +169,7 @@ export function iniciarControl(ctx) {
       const p = along + perp * 2.5;
       if (p < mejorP) { mejorP = p; mejor = el; }
     }
-    if (mejor) { mejor.focus(); M.vibrar(0, 0.1, 18); }
+    if (mejor) { mejor.focus(); vibrar(0, 0.1, 18); }
   }
 
   function ajustarValor(el, paso) {
@@ -189,7 +200,8 @@ export function iniciarControl(ctx) {
     if (d) {
       const act = document.activeElement;
       const ajustable = act && (act.tagName === 'SELECT' || act.type === 'range');
-      if (ajustable && d.dx && !d.dy && ajustarValor(act, d.dx)) M.vibrar(0, 0.1, 18);
+      if (nombre === 'Ajustes' && !ajustable) { /* LB/RB cambian de pestaña */ }
+      if (ajustable && d.dx && !d.dy && ajustarValor(act, d.dx)) vibrar(0, 0.1, 18);
       else if (d.dx && d.dy) moverFoco(raiz, Math.abs(M.ejes.izq.x) > Math.abs(M.ejes.izq.y) ? { dx: d.dx, dy: 0 } : { dx: 0, dy: d.dy });
       else moverFoco(raiz, d);
     }
@@ -204,9 +216,11 @@ export function iniciarControl(ctx) {
       if (nombre === 'Inicio') { const r = $('btnReanudar'); if (visible(r)) r.click(); }
       else document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     }
+    if (nombre === 'Ajustes') { if (M.pulsado('RB')) ctx.cambiarPestanaAjustes(1); if (M.pulsado('LB')) ctx.cambiarPestanaAjustes(-1); }
     if (M.pulsado('MENU')) {
       if (nombre === 'Ajustes') ui.ocultar('Ajustes');
       else if (nombre === 'Inicio') ui.mostrar('Ajustes');
+      else if (nombre === 'Pausa') ctx.pausar();
     }
   }
 
@@ -214,11 +228,11 @@ export function iniciarControl(ctx) {
   function dibujarPistas(nombre) {
     let h;
     if (nombre) {
-      h = pista('A', 'Aceptar') + pista('B', nombre === 'Inicio' ? 'Volver a la partida' : 'Atrás') + `<span><b>✥</b>Navegar</span>`;
+      h = pista('A', 'Aceptar') + pista('B', nombre === 'Inicio' ? 'Volver a la partida' : 'Atrás') + `<span><b>✥</b>Navegar</span>` + (nombre === 'Ajustes' ? '<span><b>LB</b><b>RB</b>Pestañas</span>' : '');
     } else {
       h = pista('A', juego.sel >= 0 ? 'Mover' : 'Elegir') + pista('B', 'Cancelar') + pista('X', 'Deshacer') + pista('Y', 'Pista')
         + `<span><b>LB</b><b>RB</b>Jugadas</span><span><b>RS</b>Cámara</span><span><b>LT</b><b>RT</b>Zoom</span>`
-        + `<span><b>≡</b>Ajustes</span>`;
+        + `<span><b>L3</b>Flecha</span><span><b>≡</b>Pausa</span>`;
     }
     if (h !== htmlPistas) { htmlPistas = h; $('pistasMando').innerHTML = h; }
   }
@@ -227,6 +241,7 @@ export function iniciarControl(ctx) {
     const dt = Math.min(0.05, Math.max(0.001, (ahora - tAntes) / 1000));
     tAntes = ahora;
     if (document.hidden) return;
+    if (window.Lobby && window.Lobby.abierto) { reposo(); return; }
     M.leer();
     if (M.conectado !== conectadoAntes) {
       conectadoAntes = M.conectado;

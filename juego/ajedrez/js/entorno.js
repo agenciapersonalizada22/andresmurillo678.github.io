@@ -99,7 +99,7 @@ export class Entorno {
     }
     this.renderer.shadowMap.enabled = s > 0;
     this.renderer.shadowMap.type = s > 1 ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
-    this.motas.visible = s > 1;
+    this.motas.visible = s > 1 && !this.reducir;
     this.escena.traverse((o) => { if (o.material) o.material.needsUpdate = true; });
   }
 

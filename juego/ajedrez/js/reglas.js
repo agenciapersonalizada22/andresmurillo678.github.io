@@ -27,8 +27,12 @@ export const casillaDe = (t) => 'abcdefgh'.indexOf(t[0]) + 8 * (parseInt(t[1], 1
 export const colorDe = (p) => p >> 3;
 export const tipoDe = (p) => p & 7;
 
-export function movAUci(m) {
-  const p = movPromo(m);
+// En Chess960 el enroque se escribe como "rey toma torre propia" (e1h1); pos es opcional
+export function movAUci(m, pos = null) {
+  const p = movPromo(m), fl = movBanderas(m);
+  if (pos && pos.es960 && (fl & (ENR_C | ENR_L))) {
+    return nombreCasilla(movDesde(m)) + nombreCasilla(pos.tor[pos.turno][fl & ENR_C ? 1 : 0]);
+  }
   return nombreCasilla(movDesde(m)) + nombreCasilla(movHasta(m)) + (p ? LETRAS[p] : '');
 }
 
@@ -59,10 +63,16 @@ export const ATAQ_PEON = [[], []];  // casillas desde las que un peón del color
   }
 })();
 
-// Derechos de enroque que se pierden al tocar una casilla
-const MASC = new Uint8Array(64).fill(15);
-MASC[0] = 13; MASC[4] = 12; MASC[7] = 14;
-MASC[56] = 7; MASC[60] = 3; MASC[63] = 11;
+// Derechos de enroque que se pierden al tocar una casilla (reyIni y tor dependen de la posición: Chess960)
+function crearMasc(reyIni, tor) {
+  const m = new Uint8Array(64).fill(15);
+  for (let c = 0; c < 2; c++) {
+    const K = c ? 4 : 1, Q = c ? 8 : 2;
+    m[reyIni[c]] &= ~(K | Q); m[tor[c][1]] &= ~K; m[tor[c][0]] &= ~Q;
+  }
+  return m;
+}
+const MASC_STD = crearMasc([4, 60], [[0, 7], [56, 63]]);
 
 // ---------------------------------------------------------- Zobrist
 const ZP_LO = new Int32Array(16 * 64), ZP_HI = new Int32Array(16 * 64);
@@ -96,6 +106,10 @@ export class Posicion {
     this.hLo = 0;
     this.hHi = 0;
     this.pila = [];        // 7 valores por jugada: m, cap, enroque, alPaso, medio, hLo, hHi
+    this.es960 = false;
+    this.reyIni = [4, 60];
+    this.tor = [[0, 7], [56, 63]]; // casilla inicial de la torre de cada bando: [dama, rey]
+    this.masc = MASC_STD;
   }
 
   static desdeFen(fen) {
@@ -126,10 +140,21 @@ export class Posicion {
     p.turno = partes[1] === 'b' ? NEGRAS : BLANCAS;
     if (partes[1] !== 'w' && partes[1] !== 'b') throw new Error('Turno no válido en el FEN');
     const e = partes[2] || '-';
-    if (e.includes('K') && p.b[4] === REY && p.b[7] === TORRE) p.enroque |= 1;
-    if (e.includes('Q') && p.b[4] === REY && p.b[0] === TORRE) p.enroque |= 2;
-    if (e.includes('k') && p.b[60] === (REY | 8) && p.b[63] === (TORRE | 8)) p.enroque |= 4;
-    if (e.includes('q') && p.b[60] === (REY | 8) && p.b[56] === (TORRE | 8)) p.enroque |= 8;
+    for (const ch of e) {
+      if (ch === '-') continue;
+      const c = ch === ch.toUpperCase() ? 0 : 1, fila = c * 56, k = p.rey[c], L = ch.toLowerCase();
+      if ((k >> 3) !== (c ? 7 : 0)) continue;
+      const kf = k & 7, torre = TORRE | (c << 3);
+      let rs = -1, ks = 0;
+      if (L === 'k') { ks = 1; for (let f = 7; f > kf; f--) if (p.b[fila + f] === torre) { rs = fila + f; break; } }
+      else if (L === 'q') { for (let f = 0; f < kf; f++) if (p.b[fila + f] === torre) { rs = fila + f; break; } }
+      else { const f = 'abcdefgh'.indexOf(L); if (f >= 0 && f !== kf && p.b[fila + f] === torre) { rs = fila + f; ks = f > kf ? 1 : 0; } }
+      if (rs < 0) continue;
+      p.enroque |= (c ? 4 : 1) << (ks ? 0 : 1);
+      p.tor[c][ks] = rs; p.reyIni[c] = k;
+      if (kf !== 4 || (rs & 7) !== (ks ? 7 : 0)) p.es960 = true;
+    }
+    p.masc = p.es960 ? crearMasc(p.reyIni, p.tor) : MASC_STD;
     p.alPaso = -1;
     if (partes[3] && partes[3] !== '-') {
       const s = casillaDe(partes[3]);
@@ -163,8 +188,11 @@ export class Posicion {
       if (v) s += v;
       if (r) s += '/';
     }
-    const e = (this.enroque & 1 ? 'K' : '') + (this.enroque & 2 ? 'Q' : '')
-      + (this.enroque & 4 ? 'k' : '') + (this.enroque & 8 ? 'q' : '');
+    const lt = (c, k) => 'abcdefgh'[this.tor[c][k] & 7];
+    const e = this.es960
+      ? (this.enroque & 1 ? lt(0, 1).toUpperCase() : '') + (this.enroque & 2 ? lt(0, 0).toUpperCase() : '')
+        + (this.enroque & 4 ? lt(1, 1) : '') + (this.enroque & 8 ? lt(1, 0) : '')
+      : (this.enroque & 1 ? 'K' : '') + (this.enroque & 2 ? 'Q' : '') + (this.enroque & 4 ? 'k' : '') + (this.enroque & 8 ? 'q' : '');
     return `${s} ${this.turno ? 'b' : 'w'} ${e || '-'} ${this.alPaso >= 0 ? nombreCasilla(this.alPaso) : '-'} ${this.medio} ${this.numero}`;
   }
 
@@ -265,15 +293,23 @@ export class Posicion {
         }
       }
     }
-    if (!soloCap) {
-      const ks = us ? 60 : 4;
+    if (!soloCap && this.enroque) {
       const der = us ? this.enroque >> 2 : this.enroque & 3;
-      if (der && b[ks] === (REY | (us << 3)) && !this.atacada(ks, them)) {
-        const torre = TORRE | (us << 3);
-        if ((der & 1) && b[ks + 1] === 0 && b[ks + 2] === 0 && b[ks + 3] === torre
-          && !this.atacada(ks + 1, them)) L.push(mov(ks, ks + 2, 0, ENR_C));
-        if ((der & 2) && b[ks - 1] === 0 && b[ks - 2] === 0 && b[ks - 3] === 0 && b[ks - 4] === torre
-          && !this.atacada(ks - 1, them)) L.push(mov(ks, ks - 2, 0, ENR_L));
+      const kf = this.reyIni[us];
+      if (der && b[kf] === (REY | (us << 3)) && !this.atacada(kf, them)) {
+        const torre = TORRE | (us << 3), fila = us * 56;
+        for (let ks = 1; ks >= 0; ks--) {
+          if (!(der & (ks ? 1 : 2))) continue;
+          const rf = this.tor[us][ks];
+          if (b[rf] !== torre) continue;
+          const kt = fila + (ks ? 6 : 2), rt = fila + (ks ? 5 : 3);
+          const lo = Math.min(kf, kt, rf, rt), hi = Math.max(kf, kt, rf, rt);
+          let ok = true;
+          for (let s = lo; s <= hi && ok; s++) if (s !== kf && s !== rf && b[s]) ok = false;
+          const d = kt > kf ? 1 : -1;
+          for (let s = kf + d; ok && s !== kt + d && kt !== kf; s += d) if (this.atacada(s, them)) ok = false;
+          if (ok) L.push(mov(kf, kt, 0, ks ? ENR_C : ENR_L));
+        }
       }
     }
     return L;
@@ -286,6 +322,8 @@ export class Posicion {
     const p = b[from], t = p & 7;
     let cap = b[to], capSq = to;
     if (fl & PASO) { capSq = us ? to + 8 : to - 8; cap = b[capSq]; }
+    const enr = fl & (ENR_C | ENR_L);
+    if (enr) cap = 0;
     this.pila.push(m, cap, this.enroque, this.alPaso, this.medio, this.hLo, this.hHi);
     let lo = this.hLo, hi = this.hHi;
     const ef0 = this._epHash(this.alPaso, us);
@@ -295,21 +333,20 @@ export class Posicion {
       b[capSq] = 0;
       lo ^= ZP_LO[cap * 64 + capSq]; hi ^= ZP_HI[cap * 64 + capSq];
     }
+    let tor = 0, rf = 0, rt = 0;
+    if (enr) { rf = this.tor[us][fl & ENR_C ? 1 : 0]; rt = us * 56 + (fl & ENR_C ? 5 : 3); tor = b[rf]; b[rf] = 0; }
     b[from] = 0;
     lo ^= ZP_LO[p * 64 + from]; hi ^= ZP_HI[p * 64 + from];
     const puesta = promo ? (promo | (us << 3)) : p;
     b[to] = puesta;
     lo ^= ZP_LO[puesta * 64 + to]; hi ^= ZP_HI[puesta * 64 + to];
-    if (fl & (ENR_C | ENR_L)) {
-      const rf = (fl & ENR_C) ? to + 1 : to - 2;
-      const rt = (fl & ENR_C) ? to - 1 : to + 1;
-      const tor = b[rf];
-      b[rf] = 0; b[rt] = tor;
+    if (enr) {
+      b[rt] = tor;
       lo ^= ZP_LO[tor * 64 + rf] ^ ZP_LO[tor * 64 + rt];
       hi ^= ZP_HI[tor * 64 + rf] ^ ZP_HI[tor * 64 + rt];
     }
     if (t === REY) this.rey[us] = to;
-    this.enroque &= MASC[from] & MASC[to];
+    this.enroque &= this.masc[from] & this.masc[to];
     lo ^= ZC_LO[this.enroque]; hi ^= ZC_HI[this.enroque];
     this.alPaso = (fl & DOBLE) ? (from + to) >> 1 : -1;
     this.medio = (t === PEON || cap) ? 0 : this.medio + 1;
@@ -338,11 +375,16 @@ export class Posicion {
     this.turno ^= 1;
     const us = this.turno;
     if (us) this.numero--;
+    if (fl & (ENR_C | ENR_L)) {
+      const rf = this.tor[us][fl & ENR_C ? 1 : 0], rt = us * 56 + (fl & ENR_C ? 5 : 3);
+      const rey = b[to], tor = b[rt];
+      b[to] = 0; b[rt] = 0; b[from] = rey; b[rf] = tor;
+      this.rey[us] = from;
+      return;
+    }
     const p = promo ? (PEON | (us << 3)) : b[to];
     b[from] = p;
     if (fl & PASO) { b[to] = 0; b[us ? to + 8 : to - 8] = cap; } else b[to] = cap;
-    if (fl & ENR_C) { b[to + 1] = b[to - 1]; b[to - 1] = 0; }
-    if (fl & ENR_L) { b[to - 2] = b[to + 1]; b[to + 1] = 0; }
     if ((p & 7) === REY) this.rey[us] = from;
   }
 
@@ -411,7 +453,10 @@ export class Posicion {
 
   uciAMov(uci, legales = null) {
     const L = legales || this.movimientosLegales();
-    for (const m of L) if (movAUci(m) === uci) return m;
+    for (const m of L) if (movAUci(m, this) === uci) return m;
+    if (this.es960) { // también se acepta el enroque escrito con el destino del rey (e1g1), si no es ambiguo
+      for (const m of L) if (movBanderas(m) & (ENR_C | ENR_L) && movAUci(m) === uci && !L.some((o) => o !== m && movAUci(o) === uci)) return m;
+    }
     return 0;
   }
 
@@ -463,6 +508,29 @@ export class Posicion {
     }
     return n;
   }
+}
+
+// ---------------------------------------------------------- Chess960
+const TABLA_CAB = [[0, 1], [0, 2], [0, 3], [0, 4], [1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]];
+// Posición inicial número n (0-959) según la numeración de Scharnagl; 518 = ajedrez clásico
+export function fen960(n) {
+  n = ((Math.floor(n) % 960) + 960) % 960;
+  const fila = new Array(8).fill('');
+  const libres = () => fila.map((x, i) => (x ? -1 : i)).filter((i) => i >= 0);
+  fila[[1, 3, 5, 7][n % 4]] = 'b';
+  const n2 = Math.floor(n / 4);
+  fila[[0, 2, 4, 6][n2 % 4]] = 'b';
+  const n3 = Math.floor(n2 / 4);
+  fila[libres()[n3 % 6]] = 'q';
+  const [c1, c2] = TABLA_CAB[Math.floor(n3 / 6)];
+  const l = libres();
+  fila[l[c1]] = 'n'; fila[l[c2]] = 'n';
+  const r = libres();
+  fila[r[0]] = 'r'; fila[r[1]] = 'k'; fila[r[2]] = 'r';
+  const f = fila.join('');
+  const cols = 'abcdefgh';
+  const d = cols[r[0]], h = cols[r[2]];
+  return `${f}/pppppppp/8/8/8/8/PPPPPPPP/${f.toUpperCase()} w ${(h + d).toUpperCase()}${h}${d} - 0 1`;
 }
 
 // Figuras Unicode para mostrar jugadas (♘ en vez de N)

@@ -12,6 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../comun/lobby.css">
 </head>
 <body class="enInicio">
   <div id="app">
@@ -19,9 +20,12 @@
       <a class="volver" href="../">← Menú</a>
       <h1 class="titulo">AJEDREZ</h1>
       <div class="acciones">
+        <button type="button" class="icono" id="btnPantalla" aria-label="Pantalla completa" title="Pantalla completa">⛶</button>
         <button type="button" class="icono" id="btnSonido" aria-label="Sonido" title="Sonido">♪</button>
         <button type="button" class="icono" id="btnMusica" aria-label="Música" title="Música ambiental">♫</button>
+        <button type="button" class="icono" id="btnPausa" aria-label="Pausa" title="Pausa">⏸</button>
         <button type="button" class="icono" id="btnAjustes" aria-label="Ajustes" title="Ajustes">⚙</button>
+        <button type="button" class="icono" id="btnAyuda" aria-label="Ayuda" title="Ayuda">?</button>
       </div>
     </header>
 
@@ -30,12 +34,20 @@
     <main id="escena">
       <div id="ventaja" aria-label="Ventaja de material"><i></i><b id="ventajaTxt">0</b></div>
       <div id="estado" aria-live="polite"></div>
+      <div id="fps" class="oculto"></div>
+      <div id="confirmaMov" class="oculto"><span id="confirmaTxt"></span><button type="button" id="btnConfOk" class="principal">JUGAR</button><button type="button" id="btnConfNo2">✖</button></div>
       <div id="revision" class="oculto"><span id="revisionTxt"></span><button type="button" id="btnContinuar2">Continuar desde aquí</button></div>
     </main>
 
     <section id="jugAbajo" class="jugador"></section>
 
     <aside id="lateral">
+      <div id="infoLat" class="vacio">
+      <div id="aperturaTxt"></div>
+      <div id="panelTarea" class="oculto"></div>
+      <div id="panelAnalisis" class="oculto"></div>
+      <div id="notaCaja" class="oculto"><input type="text" id="notaTxt" placeholder="Anota esta jugada…" maxlength="300" autocomplete="off"></div>
+    </div>
       <div id="jugadasCaja">
         <div id="navJug">
           <button type="button" data-nav="ini" aria-label="Al inicio">⏮</button>
@@ -54,6 +66,9 @@
         <div id="masCaja">
           <button type="button" data-acc="nueva"><span>＋</span>Nueva</button>
           <button type="button" data-acc="girar"><span>⇅</span>Girar</button>
+          <button type="button" data-acc="analisis"><span>◔</span>Análisis</button>
+          <button type="button" data-acc="revisar"><span>★</span>Revisión</button>
+          <button type="button" data-acc="guardar"><span>▣</span>Guardar</button>
           <button type="button" data-acc="tablas"><span>½</span>Tablas</button>
           <button type="button" data-acc="rendirse"><span>⚑</span>Rendirse</button>
           <button type="button" data-acc="pgn"><span>≡</span>PGN</button>
@@ -65,53 +80,67 @@
 
   <!-- Inicio / nueva partida -->
   <div id="pantallaInicio" class="pantalla">
-    <div class="tarjeta ancha">
+    <div class="tarjeta ancha grande">
       <h2 class="titulo grande"><span>AJEDREZ</span><span>3D</span></h2>
-      <p class="sub">reglas completas · motor propio · tablero en 3D</p>
+      <p class="sub">reglas completas · motor propio · análisis · rompecabezas · online</p>
       <button type="button" id="btnReanudar" class="principal oculto">CONTINUAR PARTIDA</button>
       <p id="infoReanudar" class="info oculto"></p>
-      <div id="panelNueva">
-        <div class="campo"><label>Modo</label>
-          <div class="fichas" data-campo="modo">
-            <button type="button" data-v="ia" class="sel">VS COMPUTADORA</button>
-            <button type="button" data-v="dos">2 JUGADORES</button>
-          </div></div>
-        <div class="campo" data-solo="ia"><label>Juegas con</label>
-          <div class="fichas" data-campo="color">
-            <button type="button" data-v="blancas" class="sel">BLANCAS</button>
-            <button type="button" data-v="negras">NEGRAS</button>
-            <button type="button" data-v="azar">AL AZAR</button>
-          </div></div>
-        <div class="campo" data-solo="ia"><label>Nivel</label>
-          <div class="fichas" data-campo="nivel" id="fichasNivel"></div>
-          <p class="info" id="descNivel"></p></div>
-        <div class="campo"><label>Reloj</label>
-          <select id="selReloj"></select></div>
-        <div class="campo" data-solo="dos"><label class="check"><input type="checkbox" id="chkGirarAuto"> Girar el tablero en cada turno</label></div>
-        <details class="avanzado"><summary>Cargar posición (FEN)</summary>
-          <input id="campoFenInicio" type="text" placeholder="vacío = posición inicial" autocomplete="off" spellcheck="false">
-          <p class="info" id="errFenInicio"></p></details>
-        <button type="button" id="btnEmpezar" class="principal">EMPEZAR</button>
-      </div>
-      <div class="fila"><button type="button" id="btnStats">ESTADÍSTICAS</button><button type="button" id="btnAjustes2">AJUSTES</button></div>
-      <p class="pista solo-compu">clic o arrastra una pieza · arrastra el fondo para girar · rueda para acercar</p>
+      <div class="pestanas" id="pestanasInicio"></div>
+      <div id="panelesInicio"></div>
+      <div class="fila"><button type="button" id="btnOnline">JUGAR ONLINE</button><button type="button" id="btnAjustes2">AJUSTES</button><button type="button" id="btnAyuda2">AYUDA</button></div>
+      <p class="pista solo-compu">clic o arrastra una pieza · clic derecho dibuja flechas · arrastra el fondo para girar</p>
       <p class="pista solo-tactil">toca una pieza y su destino · arrastra el fondo para girar · pellizca para acercar</p>
     </div>
   </div>
 
   <!-- Ajustes -->
   <div id="pantallaAjustes" class="pantalla oculto">
-    <div class="tarjeta">
+    <div class="tarjeta ancha grande">
       <h2 class="titulo">AJUSTES</h2>
-      <div class="campo"><label>Tema</label><div class="fichas" id="fichasTema"></div></div>
-      <div class="campo"><label>Calidad gráfica</label><div class="fichas" id="fichasCalidad"></div>
-        <p class="info">Alta: sombras suaves y partículas. Baja: más rápido en celulares lentos.</p></div>
-      <div class="campo"><label class="check"><input type="checkbox" id="chkSonido"> Sonidos</label></div>
-      <div class="campo"><label class="check"><input type="checkbox" id="chkMusica"> Música ambiental</label></div>
-      <div class="campo"><label for="rngVol">Volumen</label><input type="range" id="rngVol" min="0" max="100" value="70"></div>
-      <div class="campo"><label class="check"><input type="checkbox" id="chkAyuda"> Mostrar jugadas posibles</label></div>
-      <div class="campo"><label class="check"><input type="checkbox" id="chkGirar"> Girar el tablero en cada turno (2 jugadores)</label></div>
+      <div class="pestanas"></div>
+      <div class="cuerpoAjustes"></div>
       <div class="fila"><button type="button" id="btnCerrarAjustes" class="principal">LISTO</button></div>
+    </div>
+  </div>
+
+  <!-- Jugar online -->
+  <div id="pantallaOnline" class="pantalla oculto">
+    <div class="tarjeta">
+      <h2 class="titulo">JUGAR ONLINE</h2>
+      <p class="sub">Dos jugadores y hasta dos espectadores. Tú creas la sala y envías el enlace a tu amigo.</p>
+      <div id="onlineCuerpo"></div>
+      <div class="fila"><button type="button" id="btnOnlineCerrar">CANCELAR</button><button type="button" id="btnOnlineIr" class="principal">CREAR SALA</button></div>
+      <div class="fila"><button type="button" id="btnOnlineUnir">UNIRME CON UN ENLACE O CÓDIGO</button></div>
+    </div>
+  </div>
+
+  <!-- Pausa -->
+  <div id="pantallaPausa" class="pantalla oculto">
+    <div class="tarjeta">
+      <h2 class="titulo">PAUSA</h2>
+      <p class="sub" id="pausaTxt">La partida y el reloj están detenidos.</p>
+      <button type="button" id="btnPausaSeguir" class="principal">CONTINUAR</button>
+      <button type="button" id="btnPausaAjustes">AJUSTES</button>
+      <button type="button" id="btnPausaAyuda">AYUDA</button>
+      <button type="button" id="btnPausaMenu">MENÚ PRINCIPAL</button>
+    </div>
+  </div>
+
+  <!-- Ayuda -->
+  <div id="pantallaAyuda" class="pantalla oculto">
+    <div class="tarjeta ancha">
+      <h2 class="titulo">AYUDA</h2>
+      <div id="ayudaCuerpo" class="ayuda"></div>
+      <div class="fila"><button type="button" id="btnAyudaCerrar" class="principal">ENTENDIDO</button></div>
+    </div>
+  </div>
+
+  <!-- Revisión de la partida -->
+  <div id="pantallaRevision" class="pantalla oculto">
+    <div class="tarjeta ancha grande">
+      <h2 class="titulo">REVISIÓN DE LA PARTIDA</h2>
+      <div id="revCuerpo"></div>
+      <div class="fila"><button type="button" id="btnRevCerrar" class="principal">VER EN EL TABLERO</button></div>
     </div>
   </div>
 
@@ -129,9 +158,14 @@
     <div class="tarjeta">
       <h2 class="titulo" id="finTitulo"></h2>
       <p class="sub" id="finTexto"></p>
+      <p class="info" id="finElo"></p>
       <div class="fila">
         <button type="button" id="btnRevancha" class="principal">REVANCHA</button>
         <button type="button" id="btnFinNueva">NUEVA</button>
+      </div>
+      <div class="fila">
+        <button type="button" id="btnFinRevisar">REVISAR PARTIDA</button>
+        <button type="button" id="btnFinGuardar">GUARDAR</button>
         <button type="button" id="btnFinVer">VER TABLERO</button>
       </div>
     </div>
@@ -175,6 +209,8 @@
   <div id="pistasMando" aria-hidden="true"></div>
   <div id="toast" aria-live="polite"></div>
   <script src="../comun/mando.js"></script>
+  <script src="../comun/red.js"></script>
+  <script src="../comun/lobby.js"></script>
   <script type="module" src="js/principal.js"></script>
 </body>
 </html>

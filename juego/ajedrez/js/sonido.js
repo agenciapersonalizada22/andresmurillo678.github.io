@@ -32,6 +32,7 @@ export function iniciar() {
     ruidoBuf = ctx.createBuffer(1, ctx.sampleRate * 0.5, ctx.sampleRate);
     const d = ruidoBuf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    musicaOut.gain.value = volMus; efectos.gain.value = volFx;
     aplicarVolumen();
     return true;
   } catch (e) {
@@ -45,6 +46,11 @@ function aplicarVolumen() {
   maestro.gain.setTargetAtTime(silencio ? 0 : volumen, ctx.currentTime, 0.03);
 }
 
+export function fijarVolumenes(musica, fx) {
+  if (!ctx) { volMus = musica; volFx = fx; return; }
+  musicaOut.gain.setTargetAtTime(musica, ctx.currentTime, 0.05); efectos.gain.setTargetAtTime(fx, ctx.currentTime, 0.05);
+}
+let volMus = 0.5, volFx = 0.9;
 export function fijarSilencio(s) { silencio = !!s; aplicarVolumen(); }
 export function fijarVolumen(v) { volumen = Math.max(0, Math.min(1, v)); aplicarVolumen(); }
 export const estaSilenciado = () => silencio;

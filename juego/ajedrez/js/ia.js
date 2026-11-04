@@ -62,7 +62,8 @@ export class IA {
     const m = { tipo: 'pensar', id, ...msg };
     if (this.directo) return this._pedirDirecto(m);
     return new Promise((resolver, rechazar) => {
-      const temporizador = setTimeout(() => this._fallar('el worker tardó demasiado'), (msg.nivel.tiempo || 1000) + 10000);
+      const t = (msg.nivel && msg.nivel.tiempo) || msg.tiempo || 1000;
+      const temporizador = setTimeout(() => this._fallar('el worker tardó demasiado'), t + 10000);
       this.pendiente = { id, msg: m, resolver, rechazar, temporizador };
       this.worker.postMessage(m);
     });
@@ -77,6 +78,7 @@ export class IA {
     this.idDirecto = id;
     await new Promise((r) => setTimeout(r, 40)); // deja respirar a la interfaz antes de calcular
     if (this.idDirecto !== id) return { cancelado: true, id };
+    if (m.tipo === 'analizar') return this.motorDirecto.pensar({ ...m, tiempo: Math.min(m.tiempo || 700, 700), prof: Math.min(m.prof || 8, 8) }, this.motorDirecto.motor);
     const nivel = { ...m.nivel, tiempo: Math.min(m.nivel.tiempo || 800, 900), prof: Math.min(m.nivel.prof || 6, 6) };
     return this.motorDirecto.pensar({ ...m, nivel }, this.motorDirecto.motor);
   }

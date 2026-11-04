@@ -37,8 +37,9 @@ export class Partida {
     const cap = (fl & PASO) ? (PEON | ((this.pos.turno ^ 1) << 3)) : b[movHasta(m)];
     const pieza = b[movDesde(m)];
     const san = this.pos.san(m, L);
+    const uci = movAUci(m, this.pos);
     this.pos.hacer(m);
-    this.jugadas.push({ m, san, uci: movAUci(m), cap, pieza });
+    this.jugadas.push({ m, san, uci, cap, pieza });
     this.cursor++;
     this.finManual = null;
     return true;
@@ -91,7 +92,7 @@ export class Partida {
 
   uciHasta() { return this.jugadas.slice(0, this.cursor).map((j) => j.uci); }
 
-  pgn(meta = {}) {
+  pgn(meta = {}, notas = {}) {
     const est = this.estado();
     let res = '*';
     if (est.fin) res = est.ganador === BLANCAS ? '1-0' : est.ganador === NEGRAS ? '0-1' : '1/2-1/2';
@@ -100,6 +101,7 @@ export class Partida {
       Round: '-', White: 'Blancas', Black: 'Negras', ...meta, Result: res,
     };
     if (this.fenInicial !== FEN_INICIAL) { h.SetUp = '1'; h.FEN = this.fenInicial; }
+    if (Posicion.desdeFen(this.fenInicial).es960) h.Variant = 'Chess960';
     let t = Object.entries(h).map(([k, v]) => `[${k} "${String(v).replace(/"/g, "'")}"]`).join('\n') + '\n\n';
     const ini = Posicion.desdeFen(this.fenInicial);
     let num = ini.numero, negras = ini.turno === NEGRAS;
@@ -108,6 +110,7 @@ export class Partida {
       if (!negras) partes.push(`${num}.`);
       else if (i === 0) partes.push(`${num}...`);
       partes.push(j.san);
+      if (notas[i + 1]) partes.push(`{${String(notas[i + 1]).replace(/[{}]/g, '')}}`);
       if (negras) num++;
       negras = !negras;
     });
