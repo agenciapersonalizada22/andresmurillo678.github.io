@@ -188,6 +188,11 @@ const Mundo = (() => {
     const asignar = (tipo) => { const m = tomar(() => true); if (m) m.tipo = tipo; };
     asignar('comisaria');
     asignar('hogar');
+    // Puerto (frente al río, lo más cerca del mar) y aeropuerto (lo más lejos del centro)
+    const puertoM = libres.filter((m) => m.j === rioJ - 1 || m.j === rioJ + 1).sort((a, b) => b.i - a.i)[0];
+    if (puertoM) { puertoM.tipo = 'puerto'; libres.splice(libres.indexOf(puertoM), 1); tomados.push(puertoM); }
+    const aeroM = libres.slice().sort((a, b) => centro(b) - centro(a)).find((m) => !tomados.some((o) => Math.hypot(o.x0 - m.x0, o.y0 - m.y0) < 9));
+    if (aeroM) { aeroM.tipo = 'aeropuerto'; libres.splice(libres.indexOf(aeroM), 1); tomados.push(aeroM); }
     // Los demás lugares especiales, revueltos por la ciudad
     for (let k = libres.length - 1; k > 0; k--) {
       const r = Math.floor(rng() * (k + 1));
@@ -359,6 +364,25 @@ const Mundo = (() => {
         crearEdificio(ix0, iy0, iw, hb, { color: '#3e8e5a', letrero: 'TALLER', techo: 'plano', pisos: 2 });
         for (let y = iy0 + hb; y <= iy1; y++) for (let x = ix0; x <= ix1; x++) poner(x, y, TIPO.PLAZA);
         lugares.taller = { x: (mx + 0.5) * T, y: (iy0 + hb + Math.floor((ih - hb) / 2) + 0.5) * T };
+        break;
+      }
+      case 'puerto': {
+        for (let y = iy0; y <= iy1; y++) for (let x = ix0; x <= ix1; x++) poner(x, y, TIPO.PLAZA);
+        const alRio = m.j === rioJ - 1 ? 1 : -1;       // 1 = el río queda al sur
+        const cols = ['#c0392b', '#2980b9', '#e67e22', '#27ae60', '#8e44ad', '#d4ac0d'];
+        const lejos = alRio === 1 ? iy0 : iy1;
+        for (let k = 0; k < Math.max(1, Math.floor(ih / 2)); k++) {
+          const yy = lejos + (alRio === 1 ? 1 : -1) * k * 2;
+          if (yy < iy0 || yy > iy1 || k > 1) continue;
+          for (let xx = ix0; xx + 1 <= ix1; xx += 3) crearEdificio(xx, yy, 2, 1, { color: cols[Math.floor(rng() * cols.length)], techo: 'plano', pisos: 1 });
+        }
+        lugares.puerto = { x: (mx + 0.5) * T, y: (my + 0.5) * T, x0: ix0 * T, y0: iy0 * T, x1: (ix1 + 1) * T, y1: (iy1 + 1) * T, alRio };
+        break;
+      }
+      case 'aeropuerto': {
+        for (let y = iy0; y <= iy1; y++) for (let x = ix0; x <= ix1; x++) poner(x, y, TIPO.PLAZA);
+        crearEdificio(ix0, iy0, Math.max(2, Math.min(4, iw - 1)), 2, { color: '#8d99ae', letrero: 'HANGAR', techo: 'plano', pisos: 2 });
+        lugares.aeropuerto = { x: (mx + 0.5) * T, y: (my + 0.5) * T, x0: ix0 * T, y0: iy0 * T, x1: (ix1 + 1) * T, y1: (iy1 + 1) * T };
         break;
       }
       default: {
@@ -1232,7 +1256,9 @@ const Mundo = (() => {
     T, N, TAM, CH,
     get xs() { return xs; },
     get ys() { return ys; },
-    edificios, lamparas, paradas, espacios, lugares,
+    edificios, lamparas, paradas, espacios, lugares, manzanas,
+    get filaRio0() { return filaRio0; }, get filaRio1() { return filaRio1; }, get rioJ() { return rioJ; }, get xCosta() { return xCosta; },
+    idEdificio: (tx, ty) => (dentro(tx, ty) ? idEdificio[idx(tx, ty)] : -1),
     get mapa() { return mapa; },
     PX_MAPA,
     tipoEn, decoEn, viaEn, superficie, solidoCasilla, caminable, esCalle,

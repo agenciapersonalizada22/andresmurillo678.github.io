@@ -201,7 +201,7 @@ const Misiones = (() => {
       const d = Math.hypot(p.x - m.x, p.y - m.y);
       if (m.tipo === 'tienda' && J.jugador.carro) { if (d > 100) m.armado = true; continue; }
       if (d < 55) {
-        if (m.armado && (!activa || sinMision(m.tipo))) { m.armado = false; activar(m); }
+        if (m.armado && ((!activa && !(window.Historia && Historia.activa)) || sinMision(m.tipo))) { m.armado = false; activar(m); }
       } else if (d > 100) {
         m.armado = true;
       }

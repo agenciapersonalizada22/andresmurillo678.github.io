@@ -6,19 +6,24 @@
 // =============================================================
 const Armas = (() => {
   const A = CONFIG.armas;
-  const ROPAS = ['#13d6e8', '#ff3d81', '#ffd23d', '#7dff6b', '#c86bff', '#f2f2f2', '#ff8a3d'];
-  const NOMBRES = ['pistola', 'escopeta'];
+  const ROPAS = ['#13d6e8', '#ff3d81', '#ffd23d', '#7dff6b', '#c86bff', '#f2f2f2', '#ff8a3d', '#2f3542', '#e94b3c', '#3c8de9', '#8a5ad6', '#2ec4b6', '#a3b2c2', '#6b2f3c'];
+  const NOMBRES = ['pistola', 'escopeta', 'subfusil', 'fusil'];
 
   // Partidas viejas no tienen estos datos: se rellenan con valores por defecto
   function cargar() {
     const v = Util.cargar('armas', null) || {};
-    const d = { tiene: { pistola: false, escopeta: false }, balas: { pistola: 0, escopeta: 0 }, actual: null, ropa: 0 };
+    const d = { tiene: {}, balas: {}, carga: {}, actual: null, ropa: 0 };
+    for (const n of NOMBRES) { d.tiene[n] = false; d.balas[n] = 0; d.carga[n] = 0; }
     if (v.tiene && typeof v.tiene === 'object') for (const n of NOMBRES) d.tiene[n] = v.tiene[n] === true;
     if (v.balas && typeof v.balas === 'object') {
       for (const n of NOMBRES) {
         const b = Number(v.balas[n]);
         d.balas[n] = isFinite(b) ? Util.limitar(Math.round(b), 0, A[n].municionMax) : 0;
       }
+    }
+    for (const n of NOMBRES) {
+      const c = v.carga && Number(v.carga[n]);
+      d.carga[n] = Util.limitar(isFinite(c) && v.carga ? Math.round(c) : Math.min(A[n].cargador, d.balas[n]), 0, Math.min(A[n].cargador, d.balas[n]));
     }
     if (NOMBRES.includes(v.actual) && d.tiene[v.actual]) d.actual = v.actual;
     const r = Number(v.ropa);
@@ -31,6 +36,7 @@ const Armas = (() => {
   let enfriar = 0;
   let destello = 0;
   let relojMiedo = 0;
+  let recargando = 0;
 
   function aplicarRopa() {
     if (J.jugador) J.jugador.colores.ropa = ROPAS[datos.ropa];
@@ -51,6 +57,14 @@ const Armas = (() => {
       const t = ox * dx + oy * dy;
       if (t < 0 || t >= mejor.t) continue;
       if (Math.abs(-ox * dy + oy * dx) < p.radio + 4) mejor = { t, tipo: 'peaton', obj: p };
+    }
+    if (window.Multi && Multi.activo) {
+      for (const r of Multi.aPie()) {
+        const ox = r.x - x, oy = r.y - y;
+        const t = ox * dx + oy * dy;
+        if (t < 0 || t >= mejor.t) continue;
+        if (Math.abs(-ox * dy + oy * dx) < 13) mejor = { t, tipo: 'jugador', obj: r };
+      }
     }
     for (const c of J.carros) {
       if (c.conductor === 'jugador') continue;
@@ -95,10 +109,14 @@ const Armas = (() => {
         J.stats.sustos = (J.stats.sustos || 0) + 1;
         J.delito('atropello', p.x, p.y);
       }
+    } else if (r.tipo === 'jugador') {
+      Efectos.chispas(hx, hy, 3);
+      Multi.golpeAPie(r.obj, dx, dy);
     } else if (r.tipo === 'carro') {
       const c = r.obj;
       Efectos.chispas(hx, hy, 3);
-      c.danar(fuerte ? 3.5 : 5);
+      if (c.remoto) { Multi.golpeCarro(c, A[J.armaImpacto || 'pistola'].dano * (fuerte ? 1 : 1.4) * 2); return; }
+      c.danar(A[J.armaImpacto || 'pistola'].dano ? A[J.armaImpacto || 'pistola'].dano * (fuerte ? 1 : 1.4) : 5);
       if (c.emergencia && c.conductor === 'ia' && J.tiempo - (J.ultimoChoquePolicia || -9) > 1.5) {
         J.ultimoChoquePolicia = J.tiempo;
         J.delito('chocarPolicia', c.x, c.y);
@@ -119,16 +137,20 @@ const Armas = (() => {
     const n = datos.actual;
     if (!n || j.carro || j.caido > 0 || enfriar > 0) return;
     const a = A[n];
+    if (recargando > 0) return;
     if (datos.balas[n] <= 0) {
       enfriar = 0.3;
       Sonido.vacia();
       J.pista(`Sin munición. Compra más en la Armería (${Util.dinero(a.precioPaquete)})`);
       return;
     }
+    if (datos.carga[n] <= 0) { recargar(); return; }
+    datos.carga[n]--;
     datos.balas[n]--;
+    J.armaImpacto = n;
     enfriar = a.cadencia;
     destello = 0.07;
-    const fuerte = n === 'escopeta';
+    const fuerte = n === 'escopeta' || n === 'fusil';
     const ang = apuntar(j, a.alcance);
     j.ang = ang;
     for (let k = 0; k < a.perdigones; k++) {
@@ -149,6 +171,17 @@ const Armas = (() => {
       }
     }
     if (datos.balas[n] === 0) J.pista('¡Última bala gastada!');
+    else if (datos.carga[n] === 0) recargar();
+  }
+
+  function recargar() {
+    const n = datos.actual;
+    if (!n || J.jugador.carro || recargando > 0) return;
+    const a = A[n];
+    if (datos.carga[n] >= Math.min(a.cargador, datos.balas[n])) { if (datos.balas[n] <= 0) J.pista('Sin munición'); return; }
+    recargando = a.recarga;
+    Sonido.puerta();
+    Efectos.texto(J.jugador.x, J.jugador.y - 26, 'Recargando...', '#ffd23d', 12);
   }
 
   function ciclar() {
@@ -156,16 +189,29 @@ const Armas = (() => {
     if (j.carro) return;
     const lista = [null, ...NOMBRES.filter((n) => datos.tiene[n])];
     if (lista.length === 1) { J.pista('No tienes armas. Visita la Armería (A) en el mapa'); return; }
+    recargando = 0;
     datos.actual = lista[(lista.indexOf(datos.actual) + 1) % lista.length];
     guardar();
     Sonido.puerta();
     J.pista(datos.actual ? `${A[datos.actual].nombre} lista` : 'Guardaste el arma');
   }
 
+  function junto(j) {
+    const T = Mundo.T;
+    for (const [dx, dy] of DIRS) if (Mundo.solidoCasilla(Math.floor((j.x + dx * 24) / T), Math.floor((j.y + dy * 24) / T))) return true;
+    return false;
+  }
+
   // Cada cuadro, a pie
   function actualizar(dt) {
     const j = J.jugador;
     enfriar = Math.max(0, enfriar - dt);
+    if (recargando > 0 && datos.actual && !j.carro) {
+      recargando -= dt;
+      if (recargando <= 0) { recargando = 0; datos.carga[datos.actual] = Math.min(A[datos.actual].cargador, datos.balas[datos.actual]); guardar(); }
+    } else if (recargando > 0) recargando = 0;
+    // Cobertura: quieto y pegado a una pared con el arma en la mano
+    j.cubierto = !j.carro && !!datos.actual && Math.hypot(j.vx, j.vy) < 5 && junto(j);
     destello = Math.max(0, destello - dt);
     if (j.carro) return;
     if (Entrada.pulso('KeyQ')) ciclar();
@@ -227,11 +273,13 @@ const Armas = (() => {
       if (datos.tiene[n] || J.dinero < precio) return;
       datos.tiene[n] = true;
       datos.balas[n] = Math.min(A[n].municionMax, A[n].paquete);
+      datos.carga[n] = Math.min(A[n].cargador, datos.balas[n]);
       datos.actual = n;
     } else if (tipo === 'balas') {
       precio = A[n].precioPaquete;
       if (!datos.tiene[n] || datos.balas[n] >= A[n].municionMax || J.dinero < precio) return;
       datos.balas[n] = Math.min(A[n].municionMax, datos.balas[n] + A[n].paquete);
+      if (datos.carga[n] <= 0) datos.carga[n] = Math.min(A[n].cargador, datos.balas[n]);
     } else if (tipo === 'ropa') {
       precio = A.ropa.precio;
       if (J.dinero < precio) return;
@@ -262,19 +310,22 @@ const Armas = (() => {
   if (document.getElementById('bTiendaCerrar')) document.getElementById('bTiendaCerrar').addEventListener('click', cerrarTienda);
 
   return {
-    actualizar, ciclar, disparar, abrirTienda, cerrarTienda, aplicarRopa,
+    actualizar, ciclar, disparar, abrirTienda, cerrarTienda, aplicarRopa, recargar,
+    get datos() { return datos; }, guardar, NOMBRES, ROPAS,
+    get recargando() { return recargando; },
     get actual() { return datos.actual; },
     get destello() { return destello; },
-    get alguna() { return datos.tiene.pistola || datos.tiene.escopeta; },
+    get alguna() { return NOMBRES.some((n) => datos.tiene[n]); },
     // Para el HUD
     info() {
       const n = datos.actual;
-      return n ? { nombre: A[n].nombre, balas: datos.balas[n], max: A[n].municionMax } : null;
+      return n ? { nombre: A[n].nombre, balas: datos.balas[n], max: A[n].municionMax, carga: datos.carga[n], cargador: A[n].cargador, recargando } : null;
     },
     // Para pruebas
     dar(n, balas) {
       datos.tiene[n] = true;
       datos.balas[n] = Util.limitar(balas === undefined ? A[n].municionMax : balas, 0, A[n].municionMax);
+      datos.carga[n] = Math.min(A[n].cargador, datos.balas[n]);
       datos.actual = n;
       guardar();
     },

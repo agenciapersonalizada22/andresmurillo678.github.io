@@ -38,6 +38,16 @@ const J = {
 if (typeof J.dinero !== 'number' || !isFinite(J.dinero)) J.dinero = CONFIG.dinero.inicial;
 if (!J.stats || typeof J.stats !== 'object') J.stats = {};
 J.mostrarDinero = J.dinero;
+J.mods = [];
+J.registrar = (m) => { J.mods.push(m); return m; };
+J.llamar = (nombre, ...args) => { for (const m of J.mods) if (m[nombre]) { try { m[nombre](...args); } catch (e) { console.error(e); } } };
+J.perfil = (() => {
+  try {
+    const p = JSON.parse(localStorage.getItem('juego_perfil'));
+    if (p && p.nombre) return { nombre: String(p.nombre).slice(0, 16), color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : '#13d6e8' };
+  } catch (e) { /* sin perfil */ }
+  return { nombre: 'Jugador', color: '#13d6e8' };
+})();
 
 (() => {
   'use strict';
@@ -76,6 +86,7 @@ J.mostrarDinero = J.dinero;
     J.H = h;
     J.dpr = lienzo.width / w;
   }
+  window.CIUDAD_REDIM = redimensionar;
   window.addEventListener('resize', redimensionar);
   window.addEventListener('orientationchange', () => setTimeout(redimensionar, 200));
   redimensionar();
@@ -113,6 +124,7 @@ J.mostrarDinero = J.dinero;
   J.guardarPartida = () => {
     Util.guardar('dinero', Math.round(J.dinero));
     Util.guardar('stats', J.stats);
+    J.llamar('guardar');
   };
 
   function visible(x, y, margen) {
@@ -144,6 +156,8 @@ J.mostrarDinero = J.dinero;
   }
 
   J.delito = (tipo, x, y) => {
+    if (J.sinDelitos) return;
+    if (J.multiCliente) { Multi.enviarAlHost('delito', { tipo, x, y }); return; }
     const B = CONFIG.buscado;
     let cantidad = B[tipo] || 0;
     const testigo = testigoPolicia(x, y);
@@ -163,10 +177,11 @@ J.mostrarDinero = J.dinero;
     b.calor = 0; b.estrellas = 0; b.sinVer = 0; b.atrapar = 0;
     for (let k = J.carros.length - 1; k >= 0; k--) {
       const c = J.carros[k];
-      if (!(c.ia instanceof IAPolicia)) continue;
+      if (!(c.ia instanceof IAPolicia) || !c.esPolicia) continue;
       if (inmediato) J.carros.splice(k, 1);
       else c.ia.retirarse();
     }
+    J.llamar('alLimpiarBuscado', inmediato);
   };
 
   J.alChocarCarros = (a, b, fuerza) => {
@@ -209,17 +224,19 @@ J.mostrarDinero = J.dinero;
     J.carros.push(car);
   }
 
-  function crearPatrulla(foco) {
+  function crearPatrulla(foco, tipo) {
     const filtroBase = (q) => !visible(q.x, q.y, 90) && libre(q.x, q.y, 120);
     const haciaTi = (q) => filtroBase(q) && ((foco.x - q.x) * DIRS[q.dir][0] + (foco.y - q.y) * DIRS[q.dir][1]) > 0;
     const c = Mundo.carrilAzar(foco.x, foco.y, 650, 1150, haciaTi) || Mundo.carrilAzar(foco.x, foco.y, 650, 1200, filtroBase);
     if (!c) return;
-    const car = new Carro('policia', c.x, c.y, c.dir * Math.PI / 2, { conductor: 'ia' });
+    const car = new Carro(tipo || 'policia', c.x, c.y, c.dir * Math.PI / 2, { conductor: 'ia' });
     car.ia = new IAPolicia(car);
     car.vx = Math.cos(car.ang) * 220;
     car.vy = Math.sin(car.ang) * 220;
     J.carros.push(car);
+    return car;
   }
+  J.crearPatrulla = crearPatrulla;
 
   function crearPeaton(foco, puedeVerse) {
     const p = Mundo.aceraAzar(foco.x, foco.y, puedeVerse ? 80 : 420, 1000,
@@ -262,6 +279,11 @@ J.mostrarDinero = J.dinero;
   }
 
   let relojPoblacion = 0;
+  function distFocos(x, y, foco) {
+    let d = Math.hypot(x - foco.x, y - foco.y);
+    if (window.Multi && Multi.activo) for (const f of Multi.focos()) d = Math.min(d, Math.hypot(x - f.x, y - f.y));
+    return d;
+  }
   function gestionarPoblacion(dt) {
     relojPoblacion -= dt;
     if (relojPoblacion > 0) return;
@@ -269,8 +291,8 @@ J.mostrarDinero = J.dinero;
     const foco = enfoque();
     for (let k = J.carros.length - 1; k >= 0; k--) {
       const c = J.carros[k];
-      if (c.conductor === 'jugador' || c === J.camSigue) continue;
-      const d = Math.hypot(c.x - foco.x, c.y - foco.y);
+      if (c.conductor === 'jugador' || c === J.camSigue || c.propio || c.mision || c.remoto) continue;
+      const d = distFocos(c.x, c.y, foco);
       const ve = visible(c.x, c.y, 120);
       if (c === J.ultimoCarro && d < 2500) continue;
       const policia = c.ia instanceof IAPolicia;
@@ -282,15 +304,19 @@ J.mostrarDinero = J.dinero;
     for (let k = J.peatones.length - 1; k >= 0; k--) {
       const p = J.peatones[k];
       if (p.mision) continue;
-      const d = Math.hypot(p.x - foco.x, p.y - foco.y);
+      const d = distFocos(p.x, p.y, foco);
       if (d > 1200 && !visible(p.x, p.y, 60)) J.peatones.splice(k, 1);
     }
+    if (J.multiCliente) { gestionarEstacionados(foco, false); return; }
+    const focos = window.Multi && Multi.activo ? Multi.focos() : [foco];
+    const k = (J.ciclo = (J.ciclo || 0) + 1) % focos.length;
+    const fo = focos[k] || foco;
     let trafico = 0;
     for (const c of J.carros) if (c.ia instanceof IATrafico && c.conductor === 'ia') trafico++;
-    if (trafico < CONFIG.trafico.cantidad) crearTrafico(foco, false);
+    if (trafico < CONFIG.trafico.cantidad * focos.length) crearTrafico(fo, false);
     let gente = 0;
     for (const p of J.peatones) if (!p.mision) gente++;
-    if (gente < CONFIG.peatones.cantidad) { crearPeaton(foco, false); crearPeaton(foco, false); }
+    if (gente < CONFIG.peatones.cantidad * focos.length) { crearPeaton(fo, false); crearPeaton(fo, false); }
     gestionarEstacionados(foco, false);
   }
 
@@ -311,6 +337,7 @@ J.mostrarDinero = J.dinero;
   // ----------------------------------------------------------- Policía
   let relojPolicia = 0;
   function gestionarPolicia(dt) {
+    if (J.multiCliente) return;
     const b = J.buscado;
     const j = J.jugador;
     const p = j.carro || j;
@@ -329,7 +356,7 @@ J.mostrarDinero = J.dinero;
           if (c.ia.ve) visto = true;
           if (c.sirena) sirenaCerca = Math.min(sirenaCerca, d);
         }
-      } else if (b.estrellas > 0 && d < P.vision * 0.8) {
+      } else if (b.estrellas > 0 && d < P.vision * 0.8 && !c.bloqueo) {
         c.ia = new IAPolicia(c);
         persiguiendo++;
       }
@@ -388,6 +415,7 @@ J.mostrarDinero = J.dinero;
     J.dinero -= J.multa;
     J.stats.atrapado = (J.stats.atrapado || 0) + 1;
     Misiones.alSerAtrapado();
+    J.llamar('alSerAtrapado');
     J.aviso = null;
     Sonido.atrapado();
     Entrada.vibrar(0.9, 0.9, 400);
@@ -395,6 +423,8 @@ J.mostrarDinero = J.dinero;
     Radio.apagar();
     J.guardarPartida();
   }
+
+  J.atrapar = () => { if (J.modo === 'jugando') atrapar(); };
 
   function reaparecer() {
     const j = J.jugador;
@@ -428,9 +458,31 @@ J.mostrarDinero = J.dinero;
   function subirOBajar() {
     const j = J.jugador;
     if (j.caido > 0) return;
+    if (window.Multi && Multi.activo) {
+      if (j.pasajeroDe !== undefined && j.pasajeroDe !== null) { Multi.bajarPasajero(); return; }
+      if (!j.carro) {
+        const cc = buscarCarroCerca();
+        if (cc && cc.remoto) { Multi.subirA(cc); return; }
+      }
+    }
     if (j.carro) {
       const c = j.carro;
       if (c.velocidad > CONFIG.jugador.velocidadBajar) { J.pista('¡Frena para bajarte!'); return; }
+      if (c.aereo && (c.velocidad > 80 || !c.sobreSuelo())) { J.pista('Aterriza despacio sobre suelo libre para bajarte'); return; }
+      if (c.acuatico) {
+        let orilla = null;
+        for (let r = 40; r <= 150 && !orilla; r += 22) {
+          for (let a = 0; a < 16; a++) {
+            const x = c.x + Math.cos(a * Math.PI / 8) * r, y = c.y + Math.sin(a * Math.PI / 8) * r;
+            if (!Mundo.solidoCasilla(Math.floor(x / T), Math.floor(y / T))) { orilla = { x, y }; break; }
+          }
+        }
+        if (!orilla) { J.pista('Acércate a la orilla para bajarte'); return; }
+        j.x = orilla.x; j.y = orilla.y; j.ang = c.ang;
+        c.conductor = null; c.mando.gas = 0; c.mando.freno = true; j.carro = null; J.ultimoCarro = c;
+        Radio.apagar(); Sonido.puerta(); Sonido.actualizarMotor(false, 0, 0); Sonido.actualizarClaxon(false);
+        return;
+      }
       const fx = Math.cos(c.ang), fy = Math.sin(c.ang);
       const lados = [[fy, -fx, c.ancho / 2 + 13], [-fy, fx, c.ancho / 2 + 13], [-fx, -fy, c.largo / 2 + 13], [fx, fy, c.largo / 2 + 13]];
       let salio = false;
@@ -494,15 +546,17 @@ J.mostrarDinero = J.dinero;
   let relojClaxon = 0;
   function controlarJugador(dt) {
     const j = J.jugador;
+    if (j.pasajeroDe !== undefined && j.pasajeroDe !== null) { Sonido.actualizarClaxon(false); return; }
     const tecl = Entrada.teclado();
     const joy = Entrada.joystick();
     const pad = Entrada.mando;
+    const sens = Ajustes.v.sensibilidad;
     if (j.carro) {
       const c = j.carro;
       const m = c.mando;
       if (pad.usa && (pad.fuerza > 0 || pad.gatillo > 0.02 || pad.freno > 0.02)) {
         // Mando: stick = direccion, RT acelera y LT frena / reversa (analogico)
-        m.giro = pad.x;
+        m.giro = Util.limitar(pad.x * sens, -1, 1);
         let gas = pad.gatillo - pad.freno;
         if (!pad.gatillo && !pad.freno && Math.abs(pad.y) > 0.5) gas = -pad.y * 0.8;
         m.gas = Util.limitar(gas, -1, 1);
@@ -520,7 +574,7 @@ J.mostrarDinero = J.dinero;
           }
         } else {
           m.gas = fuerza * (Math.abs(dif) > 1.3 ? 0.55 : 1);
-          m.giro = Util.limitar(dif * 2.2, -1, 1);
+          m.giro = Util.limitar(dif * 2.2 * sens, -1, 1);
         }
       } else {
         m.gas = -tecl.y;
@@ -528,7 +582,9 @@ J.mostrarDinero = J.dinero;
       }
       m.freno = Entrada.mantenida('Space');
       if (c.tipo === 'ambulancia') c.sirena = Entrada.mantenida('KeyH');
-      if (Misiones.retener) { m.gas = 0; m.freno = true; }
+      if (Misiones.retener || (window.Historia && Historia.retener)) { m.gas = 0; m.freno = true; }
+      if (c.aereo) J.stats.horasVuelo = (J.stats.horasVuelo || 0) + dt / 3600;
+      if (c.acuatico) J.stats.kmAgua = (J.stats.kmAgua || 0) + c.velocidad * dt / 16000;
       const kmPorPx = 1 / 16000;
       J.stats.km = (J.stats.km || 0) + c.velocidad * dt * kmPorPx;
     } else {
@@ -562,6 +618,7 @@ J.mostrarDinero = J.dinero;
     const j = J.jugador;
     const enJuego = J.modo !== 'titulo';
     for (const c of J.carros) {
+      if (c.aereo || c.acuatico || c.remoto) continue;
       const v = c.velocidad;
       const fx = Math.cos(c.ang), fy = Math.sin(c.ang);
       const r = c.ancho / 2;
@@ -621,7 +678,7 @@ J.mostrarDinero = J.dinero;
     const la = Math.hypot(ax, ay);
     if (la > 260) { ax *= 260 / la; ay *= 260 / la; }
     // Stick derecho del mando: mirar alrededor
-    if (J.modo === 'jugando' && Entrada.mando.usa) { ax += Entrada.mando.rx * 240; ay += Entrada.mando.ry * 240; }
+    if (J.modo === 'jugando' && Entrada.mando.usa) { ax += Entrada.mando.rx * 240 * Ajustes.v.sensibilidad; ay += Entrada.mando.ry * 240 * Ajustes.v.sensibilidad; }
     const k = 1 - Math.exp(-C.suavidad * dt);
     cam.x += (objetivo.x + ax - cam.x) * k;
     cam.y += (objetivo.y + ay - cam.y) * k;
@@ -629,6 +686,7 @@ J.mostrarDinero = J.dinero;
     if (J.modo === 'titulo') zoomObj = 0.95;
     else if (J.jugador.carro) zoomObj = Util.mezclar(1, C.alejarConVelocidad, Math.min(1, vel / 700));
     else zoomObj = C.acercarAPie;
+    if (Ajustes.v.sinMovimiento && J.modo !== 'titulo') zoomObj = J.jugador.carro ? 0.9 : C.acercarAPie;
     cam.zoom += (zoomObj - cam.zoom) * (1 - Math.exp(-1.6 * dt));
     cam.sacudida = Math.max(0, cam.sacudida - dt * 30);
   }
@@ -658,6 +716,7 @@ J.mostrarDinero = J.dinero;
 
   // ----------------------------------------------------------- Clima
   function actualizarClima(dt) {
+    if (window.Clima) { Clima.actualizar(dt); Sonido.actualizarLluvia(J.lluvia); return; }
     const C = CONFIG.clima;
     J.climaReloj -= dt;
     if (J.climaReloj <= 0) {
@@ -738,6 +797,7 @@ J.mostrarDinero = J.dinero;
     Entrada.soltarTodo();
     document.body.classList.remove('en-mapa');
     capaPausa.classList.remove('oculto');
+    document.getElementById('bTelPausa').style.display = window.Telefono ? '' : 'none';
     bAbandonar.style.display = Misiones.activa ? '' : 'none';
     textoSonido();
     mostrarDatos(datosPausa);
@@ -768,6 +828,31 @@ J.mostrarDinero = J.dinero;
     Radio.amortiguar(false);
   }
 
+  const abrirTel = () => { if (window.Telefono && (J.modo === 'jugando' || J.modo === 'pausa')) Telefono.abrir(); };
+  document.getElementById('bTel').addEventListener('click', abrirTel);
+  document.getElementById('bTelPausa').addEventListener('click', () => Telefono.abrir());
+  document.getElementById('bAjustes').addEventListener('click', () => Ajustes.abrir());
+  document.getElementById('bAjustesTitulo').addEventListener('click', () => Ajustes.abrir());
+  document.getElementById('bRanuraTitulo').addEventListener('click', () => Ajustes.abrir('dat'));
+  document.getElementById('bRanuraTitulo').textContent = 'RANURA ' + Util.ranura;
+  document.getElementById('bGuardar').addEventListener('click', () => { J.guardarPartida(); J.pista('Partida guardada (ranura ' + Util.ranura + ')'); });
+
+  // Pantalla completa y pantalla encendida (celular)
+  let bloqueo = null;
+  async function pedirBloqueo() {
+    try { if (navigator.wakeLock && !bloqueo && !document.hidden) { bloqueo = await navigator.wakeLock.request('screen'); bloqueo.addEventListener('release', () => { bloqueo = null; }); } } catch (e) { bloqueo = null; }
+  }
+  window.CIUDAD_PANTALLA = () => {
+    try {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+    } catch (e) { /* sin pantalla completa */ }
+  };
+  document.getElementById('bPantalla').addEventListener('click', window.CIUDAD_PANTALLA);
+  ['bTel', 'bPantalla'].forEach((id) => document.getElementById(id).addEventListener('pointerdown', (e) => e.stopPropagation()));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && J.modo !== 'titulo') pedirBloqueo(); });
+  J.pedirBloqueo = pedirBloqueo;
+
   document.getElementById('bPausa').addEventListener('click', () => (J.modo === 'pausa' ? seguir() : pausar()));
   document.getElementById('bMapa').addEventListener('click', () => (J.modo === 'mapa' ? cerrarMapa() : abrirMapa()));
   document.getElementById('bSeguir').addEventListener('click', seguir);
@@ -786,6 +871,7 @@ J.mostrarDinero = J.dinero;
     if (J.modo !== 'titulo') return;
     Sonido.iniciar();
     J.modo = 'jugando';
+    pedirBloqueo();
     document.body.classList.remove('en-titulo');
     document.body.classList.add('jugando');
     capaPortada.classList.add('oculto');
@@ -802,8 +888,9 @@ J.mostrarDinero = J.dinero;
     J.avisar(CONFIG.titulo, Entrada.tactil ? 'Acércate a un carro y toca SUBIR' : Entrada.hayMando ? 'Acércate a un carro y pulsa A para subir' : 'Acércate a un carro y pulsa E para subir', '#ffb13d', 3.5);
   }
 
+  J.empezar = () => iniciarPartida();
   capaPortada.addEventListener('click', (e) => {
-    if (e.target.closest('a')) return;
+    if (e.target.closest('a,button')) return;
     iniciarPartida();
   });
 
@@ -822,8 +909,10 @@ J.mostrarDinero = J.dinero;
   let relojDerrape = 0;
   let dtCuadro = 1 / 60;
   function procesarTeclas() {
+    if (J.modo === 'menu' || J.modo === 'foto') { Entrada.tomarToques(); return; }
     if (J.modo === 'titulo') {
       Entrada.tomarToques();
+      if (Entrada.pulso('KeyO') || (window.Mando && Mando.conectado && Mando.pulsado('Y'))) { Ajustes.abrir(); return; }
       if (Entrada.pulso('Enter', 'Space', 'KeyE')) iniciarPartida();
       return;
     }
@@ -861,7 +950,8 @@ J.mostrarDinero = J.dinero;
       const z = J.zonaMinimapa;
       if (z && toques.some((t) => Math.hypot(t.x - z.x, t.y - z.y) < z.r + 8)) abrirMapa();
       if (Entrada.pulso('KeyE', 'Enter')) subirOBajar();
-      if (Entrada.pulso('KeyR')) cambiarRadio();
+      if (Entrada.pulso('KeyT') && window.Telefono) { Telefono.abrir(); return; }
+      if (Entrada.pulso('KeyR')) { if (J.jugador.carro || !Armas.alguna) cambiarRadio(); else Armas.recargar(); }
     }
   }
 
@@ -875,7 +965,7 @@ J.mostrarDinero = J.dinero;
     atropellos();
     Efectos.actualizar(dt);
     gestionarPoblacion(dt);
-    J.hora = (J.hora + dt * 24 / CONFIG.dia.duracion) % 24;
+    if (!J.horaFija) J.hora = (J.hora + dt * 24 / CONFIG.dia.duracion) % 24;
     J.noche = nocheDe(J.hora);
     actualizarClima(dt);
   }
@@ -893,7 +983,8 @@ J.mostrarDinero = J.dinero;
   function actualizar(dt) {
     J.tiempo += dt;
     dtCuadro = dt;
-    procesarTeclas();
+    if (window.Lobby && Lobby.abierto) { Entrada.tomarToques(); Entrada.soltarTodo(); if (!(window.Multi && Multi.activo)) return; }
+    else procesarTeclas();
     if (J.aviso) { J.aviso.t += dt; if (J.aviso.t >= J.aviso.dur) J.aviso = null; }
     if (J.pistaInfo) J.pistaInfo.t -= dt;
     if (J.deltaDinero) J.deltaDinero.t -= dt;
@@ -902,7 +993,20 @@ J.mostrarDinero = J.dinero;
     J.mostrarDinero += (J.dinero - J.mostrarDinero) * Math.min(1, dt * 6);
     if (Math.abs(J.dinero - J.mostrarDinero) < 1) J.mostrarDinero = J.dinero;
 
-    if (J.modo === 'pausa' || J.modo === 'mapa' || J.modo === 'tienda') return;
+    const enMulti = !!(window.Multi && Multi.activo);
+    if (J.modo === 'menu') Panel.actualizar(dt);
+    if (J.modo === 'foto') { J.llamar('actualizarFoto', dt); if (!enMulti) return; }
+    if (J.modo === 'menu' || J.modo === 'pausa' || J.modo === 'mapa' || J.modo === 'tienda' || J.modo === 'foto' || (window.Lobby && Lobby.abierto)) {
+      if (!enMulti || J.modo === 'titulo') return;
+      // En multijugador el mundo no se congela: tú te quedas quieto
+      const jc = J.jugador.carro;
+      if (jc) { jc.mando.gas = 0; jc.mando.giro = 0; jc.mando.freno = true; }
+      actualizarMundo(dt);
+      J.llamar('actualizar', dt);
+      gestionarPolicia(dt);
+      actualizarCamara(dt);
+      return;
+    }
     if (J.modo === 'atrapado') {
       J.relojAtrapado -= dt;
       actualizarMundo(dt * 0.25);
@@ -930,6 +1034,7 @@ J.mostrarDinero = J.dinero;
     }
     J.carroCerca = j.carro ? null : buscarCarroCerca();
     Misiones.actualizar(dt);
+    J.llamar('actualizar', dt);
     gestionarPolicia(dt);
     actualizarCamara(dt);
 
@@ -961,19 +1066,23 @@ J.mostrarDinero = J.dinero;
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.fillStyle = '#1c4224';
     g.fillRect(0, 0, cd.W, cd.H);
+    g.imageSmoothingEnabled = Ajustes.v.antialias;
     Mundo.dibujar(g, cd);
 
     const s = cd.s;
     const enMundo = () => g.setTransform(s, 0, 0, s, -cd.x * s + cd.W / 2, -cd.y * s + cd.H / 2);
     enMundo();
     Efectos.dibujarMarcas(g, v);
+    J.llamar('dibujarSuelo', g, J.tiempo, v);
 
     const ve = (o, m) => o.x > v.x0 - m && o.x < v.x1 + m && o.y > v.y0 - m && o.y < v.y1 + m;
     for (const p of J.peatones) if (p.estado === 'caido' && ve(p, 30)) p.dibujar(g);
     for (const p of J.peatones) if (p.estado !== 'caido' && ve(p, 30)) p.dibujar(g);
     if (J.modo !== 'titulo') J.jugador.dibujar(g);
     for (const c of J.carros) if (ve(c, 60)) c.dibujarSombra(g);
-    for (const c of J.carros) if (ve(c, 60)) c.dibujar(g, J.tiempo);
+    for (const c of J.carros) if (ve(c, 60) && !c.aereo) c.dibujar(g, J.tiempo);
+    for (const c of J.carros) if (ve(c, 60) && c.aereo) c.dibujar(g, J.tiempo);
+    J.llamar('dibujarEntidades', g, J.tiempo, v);
     Efectos.dibujarParticulas(g);
 
     // Atardecer y amanecer: un toque naranja
@@ -988,16 +1097,19 @@ J.mostrarDinero = J.dinero;
       g.fillRect(0, 0, cd.W, cd.H);
       g.restore();
     }
-    Efectos.dibujarNoche(g, cd, J.noche, v, J.tiempo);
+    J.llamar('dibujarAntesNoche', g, cd, v);
+    Efectos.dibujarNoche(g, cd, J.noche, v, J.tiempo, Ajustes.v.luces);
 
     enMundo();
     Misiones.dibujarSuelo(g, J.tiempo, v);
     dibujarDestino(g, J.tiempo);
+    J.llamar('dibujarMundo', g, J.tiempo, v);
     Efectos.dibujarTextos(g, s / J.dpr);
 
     g.setTransform(J.dpr, 0, 0, J.dpr, 0, 0);
+    if (window.Clima) Clima.dibujarPantalla(g, J.W, J.H, J.tiempo);
     Efectos.dibujarLluvia(g, J.W, J.H, J.lluvia, J.tiempo);
-    if (J.modo !== 'titulo') HUD.dibujar(g, J.W, J.H, J.tiempo);
+    if (J.modo !== 'titulo' && J.modo !== 'foto') HUD.dibujar(g, J.W, J.H, J.tiempo);
 
     // Botones táctiles que cambian de nombre
     if (J.modo !== 'titulo') {
@@ -1015,12 +1127,14 @@ J.mostrarDinero = J.dinero;
   // ----------------------------------------------------------- Bucle
   let ultimo = performance.now();
   function bucle(ahora) {
+    if (Ajustes.saltar(ahora)) { requestAnimationFrame(bucle); return; }
     const dt = Math.min(0.05, Math.max(0, (ahora - ultimo) / 1000));
     ultimo = ahora;
+    Ajustes.muestra(dt);
     try {
       const t0 = performance.now();
       Entrada.contexto = { modo: J.modo, carro: !!(J.jugador && J.jugador.carro) };
-      Entrada.leerMando();
+      if (!(window.Lobby && Lobby.abierto)) Entrada.leerMando();
       actualizar(dt);
       dibujar();
       J.msCuadro = (J.msCuadro || 0) * 0.95 + (performance.now() - t0) * 0.05;
@@ -1045,8 +1159,9 @@ J.mostrarDinero = J.dinero;
 
   // Para pruebas y para curiosos (abre la consola del navegador y escribe CIUDAD)
   window.CIUDAD = {
-    J, Mundo, Misiones, Radio, Sonido, Entrada, CONFIG,
+    J, Mundo, Misiones, Radio, Sonido, Entrada, CONFIG, Panel, Ajustes,
     empezar: iniciarPartida,
+    avanzar(seg, dt) { dt = dt || 1 / 30; for (let t = 0; t < seg; t += dt) { Entrada.contexto = { modo: J.modo, carro: !!J.jugador.carro }; actualizar(dt); Entrada.finDeCuadro(); } },
     subirBajar: subirOBajar,
     pausar, seguir, abrirMapa, cerrarMapa,
     teletransportar(x, y) {

@@ -8,10 +8,12 @@ const Efectos = (() => {
   let marcaIni = 0, marcaN = 0;
   const textos = [];
   const trazas = [];
-  const MAX_PARTICULAS = 350;
+  let MAX_PARTICULAS = 350;
+  let factor = 1;
   const MAX_MARCAS = 700;
 
   function agregar(p) {
+    if (factor < 1 && p.tipo === 'humo' && Math.random() > factor) return;
     if (particulas.length >= MAX_PARTICULAS) particulas.shift();
     particulas.push(p);
   }
@@ -243,9 +245,10 @@ const Efectos = (() => {
   const brilloCalido = brilloDeColor('rgba(255,220,150,0.6)');
 
   // cam = { x, y, s, W, H } (W y H en pixeles reales del lienzo)
-  function dibujarNoche(g, cam, noche, vista, tiempo) {
+  function dibujarNoche(g, cam, noche, vista, tiempo, calidad) {
     if (noche <= 0.01) return;
-    const W = Math.ceil(cam.W / 2), H = Math.ceil(cam.H / 2);
+    const div = calidad === 0 ? 3 : calidad === 2 ? 1.5 : 2;
+    const W = Math.ceil(cam.W / div), H = Math.ceil(cam.H / div);
     if (!mapaLuz) { mapaLuz = Util.lienzo(W, H); gl = mapaLuz.getContext('2d'); }
     if (mapaLuz.width !== W || mapaLuz.height !== H) { mapaLuz.width = W; mapaLuz.height = H; }
     gl.setTransform(1, 0, 0, 1, 0, 0);
@@ -255,7 +258,7 @@ const Efectos = (() => {
     gl.fillStyle = `rgba(10,10,42,${CONFIG.dia.oscuridad * noche})`;
     gl.fillRect(0, 0, W, H);
     gl.globalCompositeOperation = 'destination-out';
-    const s = cam.s / 2;
+    const s = cam.s / div;
     gl.setTransform(s, 0, 0, s, -cam.x * s + W / 2, -cam.y * s + H / 2);
     gl.globalAlpha = 0.72;
     for (const l of Mundo.lamparas) {
@@ -263,7 +266,8 @@ const Efectos = (() => {
       gl.drawImage(brillo, l.x - 90, l.y - 90, 180, 180);
     }
     for (const c of J.carros) {
-      if (!c.lucesPrendidas) continue;
+      if (!c.lucesPrendidas || c.aereo) continue;
+      if (calidad === 0 && c.conductor !== 'jugador') continue;
       if (c.x < vista.x0 - 300 || c.x > vista.x1 + 300 || c.y < vista.y0 - 300 || c.y > vista.y1 + 300) continue;
       gl.save();
       gl.translate(c.x, c.y);
@@ -322,6 +326,7 @@ const Efectos = (() => {
   return {
     humo, chispas, polvo, confeti, marca, texto, actualizar, explosion, traza, dibujarLluvia,
     dibujarMarcas, dibujarParticulas, dibujarTextos, dibujarNoche,
+    escala(f) { factor = f; MAX_PARTICULAS = Math.round(350 * Math.max(0.3, Math.min(1.6, f))); },
     limpiar() { particulas.length = 0; textos.length = 0; trazas.length = 0; marcaIni = 0; marcaN = 0; },
   };
 })();

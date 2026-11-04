@@ -59,7 +59,7 @@ function dibujarPersona(g, x, y, ang, colores, fase, opciones) {
   }
   if (op.arma) {
     // Arma extendida hacia el frente con la mano derecha
-    const esc = op.arma === 'escopeta';
+    const esc = op.arma === 'escopeta' || op.arma === 'fusil' || op.arma === 'subfusil';
     const largo = esc ? 19 : 11;
     g.fillStyle = esc ? '#6b4a2b' : '#2b2f3a';
     g.fillRect(2, 4, esc ? 6 : 4, 3);
@@ -398,7 +398,7 @@ class Jugador {
   }
 
   dibujar(g) {
-    if (this.carro) return;
+    if (this.carro || (this.pasajeroDe !== undefined && this.pasajeroDe !== null)) return;
     dibujarPersona(g, this.x, this.y, this.ang, this.colores, this.fase, {
       caido: this.caido > 0,
       angCaido: this.angCaido,
