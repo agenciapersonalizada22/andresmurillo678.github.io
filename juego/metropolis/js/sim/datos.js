@@ -19,6 +19,7 @@ export const CATEGORIAS = [
   { id: 'parques', nombre: 'Parques' },
   { id: 'deco', nombre: 'Adornos' },
   { id: 'monumentos', nombre: 'Monumentos' },
+  { id: 'economia', nombre: 'Economía' },
   { id: 'terreno', nombre: 'Terreno' },
 ];
 
@@ -70,6 +71,14 @@ export const ITEMS = [
   I({ id: 'aeropuerto', nombre: 'Aeropuerto', cat: 'monumentos', serv: 'monumento', w: 4, h: 4, costo: 120000, mant: 400, radio: 10, consE: 60, nivel: 3, bono: { ingreso: 2200, demC: 0.25 }, desc: 'Comercio global: +$2.200 al día.' }),
   I({ id: 'megatorre', nombre: 'Megatorre', cat: 'monumentos', serv: 'monumento', w: 3, h: 3, costo: 300000, mant: 600, radio: 18, consE: 80, nivel: 4, bono: { ingreso: 5000, puntos: 4, felic: 8 }, desc: 'La joya de la Megalópolis.' }),
 
+  I({ id: 'granja', nombre: 'Granja', cat: 'economia', serv: 'produccion', w: 3, h: 3, costo: 2400, mant: 14, consA: 4, trabajos: 8, nivel: 1, tech: 'agricultura', desc: 'Materia prima agrícola para exportar. Mejor junto a industria.' }),
+  I({ id: 'mina', nombre: 'Mina', cat: 'economia', serv: 'produccion', w: 3, h: 3, costo: 4200, mant: 30, consE: 10, trabajos: 15, contam: 1.5, nivel: 1, tech: 'mineria', desc: 'Minerales para la industria y la exportación.' }),
+  I({ id: 'centrotec', nombre: 'Parque tecnológico', cat: 'economia', serv: 'produccion', w: 3, h: 3, costo: 16000, mant: 120, consE: 25, consA: 6, trabajos: 55, nivel: 3, tech: 'informatica', desc: 'Empleo cualificado. Requiere educación cerca.' }),
+  I({ id: 'hotel', nombre: 'Hotel', cat: 'economia', serv: 'turismo', w: 2, h: 2, costo: 5200, mant: 40, consE: 6, consA: 4, trabajos: 14, nivel: 1, desc: 'Atrae turistas: ingresos extra si hay parques y monumentos.' }),
+  I({ id: 'puerto', nombre: 'Puerto comercial', cat: 'economia', serv: 'puerto', w: 3, h: 3, costo: 30000, mant: 220, consE: 30, trabajos: 40, nivel: 2, aguaCerca: true, desc: 'Triplica la capacidad de exportación. Junto al agua.' }),
+  I({ id: 'reciclaje', nombre: 'Planta de reciclaje', cat: 'economia', serv: 'reciclaje', w: 2, h: 2, costo: 3800, mant: 40, consE: 6, trabajos: 10, radio: 12, nivel: 1, tech: 'ecologia', desc: 'Reduce la contaminación cercana.' }),
+  I({ id: 'refugio', nombre: 'Defensa civil', cat: 'servicios', serv: 'defensa', mej: true, w: 2, h: 2, costo: 3000, mant: 35, consE: 4, radio: 14, trabajos: 14, nivel: 2, desc: 'Reduce daños de terremotos y tornados y acelera la reparación.' }),
+  I({ id: 'dique', nombre: 'Dique', cat: 'agua', serv: 'dique', costo: 400, mant: 2, radio: 6, nivel: 1, desc: 'Protege de inundaciones en 6 casillas.' }),
   I({ id: 'ayuntamiento', nombre: 'Ayuntamiento', cat: 'ninguna', serv: 'ayuntamiento', mej: true, w: 2, h: 2, costo: 0, mant: 0, radio: 5, consE: 3, consA: 2, trabajos: 15, desc: 'El corazón de tu ciudad.' }),
   I({ id: 'comprar', nombre: 'Comprar parcela', cat: 'terreno', tipo: 'comprar', desc: 'Amplía tu ciudad con un terreno vecino.' }),
 ];
@@ -105,6 +114,13 @@ export const TECNOLOGIAS = [
   { id: 'comercio', nombre: 'Libre comercio', rama: 'Economía', costo: 2, req: [], desc: 'Impuestos comerciales +10%.' },
   { id: 'industria', nombre: 'Industria 4.0', rama: 'Economía', costo: 4, req: ['comercio'], desc: 'Impuestos industriales +10%.' },
   { id: 'turismo', nombre: 'Turismo', rama: 'Economía', costo: 5, req: ['comercio'], desc: 'Ingresos de monumentos +50%.' },
+  { id: 'ingenieria', nombre: 'Ingeniería civil', rama: 'Urbanismo', costo: 2, req: [], desc: 'Permite construir puentes sobre el agua.' },
+  { id: 'ecologia', nombre: 'Ecología urbana', rama: 'Energía', costo: 3, req: ['solar'], desc: 'Reciclaje y ordenanza de aire limpio.' },
+  { id: 'sismologia', nombre: 'Sismología', rama: 'Servicios', costo: 4, req: ['medicina'], desc: 'Terremotos causan la mitad de daños.' },
+  { id: 'agricultura', nombre: 'Agricultura', rama: 'Economía', costo: 2, req: [], desc: 'Desbloquea granjas y la especialización agrícola.' },
+  { id: 'mineria', nombre: 'Minería', rama: 'Economía', costo: 3, req: ['comercio'], desc: 'Desbloquea minas y la especialización minera.' },
+  { id: 'informatica', nombre: 'Informática', rama: 'Economía', costo: 5, req: ['educacion', 'industria'], desc: 'Parque tecnológico y especialización tecnológica.' },
+  { id: 'comext', nombre: 'Comercio exterior', rama: 'Economía', costo: 3, req: ['comercio'], desc: 'Importar y exportar energía, agua y bienes.' },
   { id: 'offline', nombre: 'Gestión remota', rama: 'Economía', costo: 3, req: ['comercio'], desc: 'Ingresos sin conexión hasta 16 horas.' },
 ];
 export const TECH = {};
@@ -158,7 +174,69 @@ export const LOGROS = [
   { id: 'techs', nombre: 'Científicos', desc: 'Investiga 8 tecnologías.', meta: 8, prog: (c) => Object.keys(c.tech).length, rec: { dinero: 8000, puntos: 1 } },
   { id: 'apagafuegos', nombre: 'Héroe del fuego', desc: 'Apaga 3 incendios.', meta: 3, prog: (c) => c.cont.incendios, rec: { dinero: 2000 } },
   { id: 'festivo', nombre: 'Ciudad festiva', desc: 'Organiza 2 festivales.', meta: 2, prog: (c) => c.cont.festivales, rec: { dinero: 3000, puntos: 1 } },
+  { id: 'puente', nombre: 'Ingeniero', desc: 'Construye 4 casillas de puente.', meta: 4, prog: (c) => c.s.puentes, rec: { dinero: 2000 } },
+  { id: 'exporta', nombre: 'Exportador', desc: 'Gana $300/día exportando.', meta: 300, prog: (c) => c.s.ingExport, rec: { dinero: 6000, puntos: 1 } },
+  { id: 'seguro', nombre: 'Ciudad segura', desc: 'Crimen bajo 10 con 800 habitantes.', meta: 1, prog: (c) => (c.s.pop >= 800 && c.s.crimen < 10 ? 1 : 0), rec: { dinero: 5000 } },
+  { id: 'aireLimpio', nombre: 'Aire limpio', desc: 'Contaminación bajo 4 con 1.000 habitantes.', meta: 1, prog: (c) => (c.s.pop >= 1000 && c.s.contamRes < 4 ? 1 : 0), rec: { dinero: 5000, puntos: 1 } },
+  { id: 'turista', nombre: 'Destino turístico', desc: '300 de atractivo turístico.', meta: 300, prog: (c) => c.s.turismo, rec: { dinero: 8000 } },
+  { id: 'resiste', nombre: 'Resiliente', desc: 'Sobrevive 3 desastres.', meta: 3, prog: (c) => c.cont.desastres, rec: { dinero: 6000, puntos: 1 } },
+  { id: 'leyes', nombre: 'Legislador', desc: 'Ten 4 ordenanzas activas.', meta: 4, prog: (c) => Object.values(c.ord).filter(Boolean).length, rec: { dinero: 4000 } },
+  { id: 'especial', nombre: 'Especialista', desc: 'Elige una especialización industrial.', meta: 1, prog: (c) => (c.espec !== 'ninguna' ? 1 : 0), rec: { dinero: 3000 } },
+  { id: 'fotografo', nombre: 'Fotógrafo', desc: 'Haz una foto con el modo foto.', meta: 1, prog: (c) => c.cont.fotos, rec: { dinero: 500 } },
+  { id: 'escenario', nombre: 'Campeón de escenarios', desc: 'Gana un escenario.', meta: 1, prog: (c) => c.cont.escGanados, rec: { dinero: 20000, puntos: 3 } },
+  { id: 'buses', nombre: 'Transporte público', desc: 'Ten 5 paradas de bus o metro.', meta: 5, prog: (c) => (c.s.cuenta.bus || 0) + (c.s.cuenta.metro || 0), rec: { dinero: 3000 } },
   { id: 'dias100', nombre: 'Cien días', desc: 'Sobrevive 100 días.', meta: 100, prog: (c) => c.t.dia, rec: { dinero: 5000 } },
 ];
+
+export const ESTACIONES = ['Primavera', 'Verano', 'Otoño', 'Invierno'];
+export const DIAS_ESTACION = 12;
+export const CLIMAS = { despejado: 'Despejado', nublado: 'Nublado', lluvia: 'Lluvia', tormenta: 'Tormenta', nieve: 'Nieve' };
+
+export const ESPEC = [
+  { id: 'ninguna', nombre: 'Industria general', tech: null, mult: 1, desc: 'Fábricas variadas sin especialidad.' },
+  { id: 'agricultura', nombre: 'Agricultura', tech: 'agricultura', mult: 1.1, contam: 0.5, desc: 'Poca contaminación. Las granjas multiplican las exportaciones.' },
+  { id: 'mineria', nombre: 'Minería', tech: 'mineria', mult: 1.5, contam: 1.3, desc: 'Minerales valiosos pero más contaminación.' },
+  { id: 'tecnologia', nombre: 'Tecnología', tech: 'informatica', mult: 2.2, contam: 0.6, desc: 'Gran valor, necesita educación (40%+ cobertura).' },
+  { id: 'turismo', nombre: 'Turismo', tech: 'turismo', mult: 1, contam: 0.8, desc: 'Hoteles y monumentos pagan el doble.' },
+];
+
+export const ORDENANZAS = [
+  { id: 'ahorroE', nombre: 'Ahorro de energía', base: 25, pop: 0.02, desc: 'Consumo eléctrico -15%.' },
+  { id: 'ahorroA', nombre: 'Ahorro de agua', base: 20, pop: 0.02, desc: 'Consumo de agua -15%.' },
+  { id: 'reciclaje', nombre: 'Reciclaje obligatorio', base: 40, pop: 0.03, tier: 1, desc: 'Contaminación -25%.' },
+  { id: 'aire', nombre: 'Aire limpio', base: 40, pop: 0.02, tier: 1, tech: 'ecologia', desc: 'Industria contamina -45% pero paga 8% menos impuestos.' },
+  { id: 'patrullas', nombre: 'Patrullas nocturnas', base: 30, pop: 0.05, tier: 1, desc: 'Crimen -30%.' },
+  { id: 'transpGratis', nombre: 'Transporte gratuito', base: 30, pop: 0.06, tier: 2, desc: 'Tráfico -20% y +2 de felicidad.' },
+  { id: 'turismoPromo', nombre: 'Campaña turística', base: 50, pop: 0.03, tier: 1, desc: 'Turistas +40%.' },
+  { id: 'educObl', nombre: 'Educación obligatoria', base: 40, pop: 0.05, tier: 1, desc: 'La educación rinde +25% en impuestos comerciales e industriales.' },
+  { id: 'antisismica', nombre: 'Normas antisísmicas', base: 30, pop: 0.02, tier: 2, desc: 'Daños de terremoto -50%.' },
+];
+export const ORD = {}; ORDENANZAS.forEach((o) => { ORD[o.id] = o; });
+export const costoOrd = (o, pop) => Math.round(o.base + o.pop * pop);
+
+export const MAPAS = [
+  { id: 'isla', nombre: 'Isla', desc: 'Una isla rodeada de mar.' },
+  { id: 'costa', nombre: 'Costa', desc: 'Océano en un lado, tierra firme al otro.' },
+  { id: 'rio', nombre: 'Río', desc: 'Un río cruza el mapa: necesitarás puentes.' },
+  { id: 'montanas', nombre: 'Montañas', desc: 'Rocas y bosques, poco espacio llano.' },
+  { id: 'archipielago', nombre: 'Archipiélago', desc: 'Muchas islas pequeñas unidas por puentes.' },
+  { id: 'llanura', nombre: 'Llanura', desc: 'Terreno abierto con un lago.' },
+];
+
+// Escenarios: prog(c) -> { texto, ok } ; fallo(c) -> true si se perdió.
+export const ESCENARIOS = [
+  { id: 'libre', nombre: 'Ciudad libre', mapa: 'isla', desc: 'Sin límites ni prisa. Construye a tu ritmo.' },
+  { id: 'sandbox', nombre: 'Sandbox', mapa: 'isla', desc: 'Dinero infinito y todo desbloqueado.', sandbox: true },
+  { id: 'turistica', nombre: 'Ciudad turística', mapa: 'costa', desc: 'Logra 600 de atractivo turístico y 800 habitantes en 120 días.', dias: 120, dinero: 14000,
+    prog: (c) => ({ texto: 'Turismo ' + Math.round(c.s.turismo) + '/600 · Pob ' + Math.round(c.s.pop) + '/800', ok: c.s.turismo >= 600 && c.s.pop >= 800 }) },
+  { id: 'verde', nombre: 'Ciudad verde', mapa: 'rio', desc: '1.500 habitantes con contaminación baja y 80% de energía limpia en 150 días.', dias: 150,
+    prog: (c) => ({ texto: 'Pob ' + Math.round(c.s.pop) + '/1500 · Aire ' + Math.round(c.s.contamRes) + '/6 · Limpia ' + Math.round(c.s.limpia * 100) + '%/80', ok: c.s.pop >= 1500 && c.s.contamRes <= 6 && c.s.limpia >= 0.8 }) },
+  { id: 'industrial', nombre: 'Ciudad industrial', mapa: 'montanas', desc: '400 empleos industriales y $500/día de exportaciones en 150 días.', dias: 150,
+    prog: (c) => ({ texto: 'Empleos I ' + Math.round(c.s.empI) + '/400 · Export $' + Math.round(c.s.ingExport) + '/500', ok: c.s.empI >= 400 && c.s.ingExport >= 500 }) },
+  { id: 'crisis', nombre: 'Sobrevivir la crisis', mapa: 'llanura', desc: 'Impuestos -30%, más desastres. Sobrevive 60 días con 500 habitantes y fondos positivos.', dias: 60, dinero: 3500, crisis: true,
+    prog: (c) => ({ texto: 'Día ' + c.t.dia + '/60 · Pob ' + Math.round(c.s.pop) + '/500 · Fondos ' + Math.round(c.dinero), ok: c.t.dia >= 60 && c.s.pop >= 500 && c.dinero >= 0, esperar: true }),
+    fallo: (c) => c.dinero < -6000 },
+];
+export const ESC = {}; ESCENARIOS.forEach((e) => { ESC[e.id] = e; });
 
 export const DIARIA = [500, 800, 1200, 1800, 2600, 3600, 5000];

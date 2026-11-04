@@ -4,6 +4,8 @@ import { N, P, NP, parcelaComprable } from '../sim/ciudad.js';
 import { hash2 } from '../sim/util.js';
 import { modeloArbol } from './modelos.js';
 
+const ESTACION_ARBOL = [[1.08, 1.05, 1.0], null, [1.5, 0.85, 0.45], [1.5, 1.55, 1.6]];
+const COL_DUENO = [0x888888, 0x3df5ff, 0xff4fd8, 0xffd23d, 0x6dff6d];
 const matLambert = () => new THREE.MeshLambertMaterial({ vertexColors: true });
 
 export class Terreno {
@@ -38,6 +40,7 @@ export class Terreno {
     this.sel = new THREE.Mesh(new THREE.PlaneGeometry(P, P).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, depthWrite: false }));
     this.sel.visible = false; this.sel.renderOrder = 3; this.grupo.add(this.sel);
     this.capa = null;
+    this.est = 0; this.pal = { bien: 0x2fd27a, mal: 0xd9453d };
   }
 
   construir(c) {
@@ -66,18 +69,24 @@ export class Terreno {
     this.arboles(c);
   }
 
+  fijarEstacion(e, c, capa) {
+    if (e === this.est) return false;
+    this.est = e; this.colorear(c, capa); this.arboles(c); return true;
+  }
+
   colorear(c, capa) {
     this.capa = capa || null;
     const col = this.col, r = c.r, tmp = new THREE.Color();
     for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-      const i = y * N + x, t = c.terr[i], mia = c.parc[Math.floor(y / P) * NP + Math.floor(x / P)] === 1;
+      const i = y * N + x, t = c.terr[i], mia = c.parc[Math.floor(y / P) * NP + Math.floor(x / P)] > 0, dueno = c.parc[Math.floor(y / P) * NP + Math.floor(x / P)];
       const v = hash2(x, y, 5), chk = (x + y) & 1 ? 0.97 : 1.03;
-      let hx = t === 0 ? 0x6cc16a : t === 2 ? 0xe3d3a2 : t === 3 ? 0x8b909b : 0x3b87a4;
+      let hx = t === 0 ? [0x6cc16a, 0x5fbf55, 0xb8a455, 0xdfe9ee][this.est] : t === 2 ? 0xe3d3a2 : t === 3 ? 0x8b909b : 0x3b87a4;
       tmp.setHex(hx);
       let k = (0.92 + v * 0.16) * chk;
       if (t === 1) k = 0.85 + v * 0.2;
       tmp.multiplyScalar(k);
       if (!mia) { tmp.lerp(new THREE.Color(0x35465a), 0.38); tmp.multiplyScalar(0.8); }
+      else if (c.vs) tmp.lerp(new THREE.Color(COL_DUENO[dueno % 5]), 0.22);
       if (capa && r && t !== 1 && t !== 3) {
         let val = -1;
         if (capa === 'energia') val = r.cobE[i] ? 1 : 0;
@@ -87,8 +96,11 @@ export class Terreno {
         else if (capa === 'educacion') val = r.edu[i] ? 1 : 0;
         else if (capa === 'contaminacion') val = 1 - Math.min(1, r.contam[i] / 60);
         else if (capa === 'valor') val = r.valor[i] / 100;
+        else if (capa === 'crimen') val = 1 - Math.min(1, r.crim[i] / 50);
+        else if (capa === 'ruido') val = 1 - Math.min(1, r.ruido[i] / 50);
+        else if (capa === 'defensa') val = r.def[i] || r.dique[i] ? 1 : 0;
         if (val >= 0) {
-          const bueno = new THREE.Color(0x2fd27a), malo = new THREE.Color(0xd9453d);
+          const bueno = new THREE.Color(this.pal.bien), malo = new THREE.Color(this.pal.mal);
           tmp.lerp(malo.lerp(bueno, val), mia ? 0.7 : 0.25);
         }
       }
@@ -135,9 +147,10 @@ export class Terreno {
       p.set(x + 0.5 + (hash2(x, y, 13) - 0.5) * 0.3, 0, y + 0.5 + (hash2(x, y, 14) - 0.5) * 0.3);
       s.set(esc, esc * (0.9 + h * 0.3), esc);
       m4.compose(p, q, s); im.setMatrixAt(n, m4);
-      const mia = c.parc[Math.floor(y / P) * NP + Math.floor(x / P)] === 1;
+      const mia = c.parc[Math.floor(y / P) * NP + Math.floor(x / P)] > 0;
       const br = (mia ? 1 : 0.62) * (0.9 + hash2(x, y, 15) * 0.2);
-      tint.setRGB(br, br, br); im.setColorAt(n, tint);
+      const E = k === 'roca' ? null : ESTACION_ARBOL[this.est];
+      if (E) tint.setRGB(br * E[0], br * E[1], br * E[2]); else tint.setRGB(br, br, br); im.setColorAt(n, tint);
       cuentas[k]++;
     }
     for (const k in this.arbMesh) {

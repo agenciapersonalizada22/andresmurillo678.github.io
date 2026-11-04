@@ -1,6 +1,6 @@
 // Estado de la ciudad y acciones del jugador (sin Three.js).
-import { N, P, NP, CENTRO, generarMapa, esConstruible } from './mapa.js';
-import { ITEM, ITEMS, NIVELES, TECH } from './datos.js';
+import { N, P, NP, CENTRO, generarMapa, esConstruible, esAgua } from './mapa.js';
+import { ITEM, ITEMS, NIVELES, TECH, ESC } from './datos.js';
 import { limitar } from './util.js';
 
 export { N, P, NP };
@@ -17,29 +17,37 @@ export function azar(c) {
 
 export function xpNecesaria(l) { return Math.round(80 * Math.pow(l, 1.45)); }
 
-export function nuevaCiudad(semilla, nombre) {
-  const m = generarMapa(semilla);
+export function nuevaCiudad(semilla, nombre, opc = {}) {
+  const esc = ESC[opc.escenario] || null;
+  const mapa = opc.mapa || (esc && esc.mapa) || 'isla';
+  const m = generarMapa(semilla, mapa);
   const c = {
-    v: 1, nombre: nombre || 'Mi ciudad', semilla: semilla >>> 0, rs: (semilla ^ 0x9E3779B9) | 0,
+    v: 2, mapa, modo: esc && esc.sandbox ? 'sandbox' : 'normal',
+    esc: esc && !esc.sandbox && esc.id !== 'libre' ? { id: esc.id, estado: 'activo' } : null,
+    imp: { R: 10, C: 10, I: 10 }, ord: {}, espec: 'ninguna', com: { exp: true, impE: false, impA: false, venE: false },
+    clima: { tipo: 'despejado', horas: 6, lluvia: 0 }, serie: { pop: [], din: [], fel: [], ing: [], gas: [] }, mantEdif: 0, costoOrd: 0,
+    nombre: nombre || 'Mi ciudad', semilla: semilla >>> 0, rs: (semilla ^ 0x9E3779B9) | 0,
     terr: m.terr, arbol: m.arbol, arbol0: m.arbol.slice(),
     parc: new Uint8Array(NP * NP),
     cB: new Int32Array(N * N).fill(-1), via: new Uint8Array(N * N),
     edif: new Map(), sigId: 1,
-    dinero: 6000, xp: 0, nivelA: 1, puntos: 1, tech: {}, tier: 0,
-    misDone: 0, logros: {}, cont: { incendios: 0, festivales: 0, apagones: 0 },
+    dinero: esc && esc.dinero != null ? esc.dinero : 6000, xp: 0, nivelA: 1, puntos: 1, tech: {}, tier: 0,
+    misDone: 0, logros: {}, cont: { incendios: 0, festivales: 0, apagones: 0, desastres: 0, fotos: 0, escGanados: 0 },
     impuesto: 10, t: { hora: 8, dia: 1, tickDia: 0 },
-    evt: { apagon: 0, festival: 0, boom: 0, boomTipo: 0, pend: [] },
+    evt: { apagon: 0, festival: 0, boom: 0, boomTipo: 0, pend: [], tornado: null, epidemia: 0 },
     hist: [], neto: 0, ingresoDia: 0, gastoDia: 0,
     diaria: { ultimo: 0, racha: 0 }, ult: 0, undo: [], fx: [], notas: [],
-    sucio: true, r: null, s: null, dem: { R: 0.5, C: 0.3, I: 0.3 }, jr: null,
+    actor: 0, vs: false, mp: null, sucio: true, r: null, s: null, dem: { R: 0.5, C: 0.3, I: 0.3 }, jr: null,
   };
   for (const [px, py] of [[3, 3], [4, 3], [3, 4], [4, 4]]) c.parc[py * NP + px] = 1;
   // ayuntamiento
   for (let y = CENTRO - 1; y <= CENTRO + 2; y++) for (let x = CENTRO - 1; x <= CENTRO + 2; x++) { c.arbol[idx(x, y)] = 0; c.arbol0[idx(x, y)] = 0; }
   crearEdif(c, 'ayuntamiento', CENTRO, CENTRO, 1);
+  if (c.modo === 'sandbox') { c.dinero = 99999999; c.puntos = 99; }
   return c;
 }
 
+export const impuestoMedio = (c) => c.imp.R * 0.5 + c.imp.C * 0.25 + c.imp.I * 0.25;
 export function itemDe(b) { return ITEM[b.t]; }
 
 export function crearEdif(c, itemId, x, y, n, id) {
@@ -72,10 +80,11 @@ export function ayuntamiento(c) {
   return null;
 }
 
-export function esMia(c, x, y) { return dentro(x, y) && c.parc[parcelaDe(x, y)] === 1; }
+export function esMia(c, x, y) { return dentro(x, y) && c.parc[parcelaDe(x, y)] > 0; }
 
 export function disponibilidad(c, it) {
   if (it.cat === 'ninguna') return { ok: false, razon: '' };
+  if (c.modo === 'sandbox') return { ok: true, razon: '' };
   if (c.tier < it.nivel) return { ok: false, razon: 'Requiere ' + NIVELES[it.nivel].nombre };
   if (it.tech && !c.tech[it.tech]) return { ok: false, razon: 'Investiga ' + TECH[it.tech].nombre };
   return { ok: true, razon: '' };
@@ -91,7 +100,7 @@ export function precioParcela(c) {
 
 export function parcelaComprable(c, px, py) {
   if (px < 0 || py < 0 || px >= NP || py >= NP || c.parc[py * NP + px]) return false;
-  const v = (a, b) => a >= 0 && b >= 0 && a < NP && b < NP && c.parc[b * NP + a] === 1;
+  const v = (a, b) => a >= 0 && b >= 0 && a < NP && b < NP && (c.vs ? c.parc[b * NP + a] === (c.actor || 0) + 1 : c.parc[b * NP + a] > 0);
   if (!(v(px - 1, py) || v(px + 1, py) || v(px, py - 1) || v(px, py + 1))) return false;
   let tierra = 0;
   for (let y = py * P; y < py * P + P; y++) for (let x = px * P; x < px * P + P; x++) if (esConstruible(c.terr, x, y)) tierra++;
@@ -120,6 +129,7 @@ export function darXp(c, n, enJr) {
 function abrir(c) { c.jr = { dinero: 0, xp: 0, nuevos: [], borrados: [], vias: [], arb: [], parc: null, nombre: '' }; }
 function cerrar(c, nombre) {
   const j = c.jr; c.jr = null;
+  if (j) j.actor = c.actor || 0;
   if (!j) return;
   const hubo = j.nuevos.length || j.borrados.length || j.vias.length || j.parc != null;
   if (!hubo) return;
@@ -127,12 +137,14 @@ function cerrar(c, nombre) {
   c.undo.push(j);
   if (c.undo.length > 12) c.undo.shift();
 }
-function gastar(c, n) { c.dinero -= n; if (c.jr) c.jr.dinero += n; }
+function gastar(c, n) { if (c.modo === 'sandbox') return; c.dinero -= n; if (c.jr) c.jr.dinero += n; }
 function setVia(c, i, v) { if (c.jr) c.jr.vias.push([i, c.via[i]]); c.via[i] = v; c.sucio = true; }
 function limpiarArbol(c, i) { if (c.arbol[i]) { if (c.jr) c.jr.arb.push([i, c.arbol[i]]); c.arbol[i] = 0; } }
 
 export function deshacer(c) {
-  const j = c.undo.pop();
+  let k = c.undo.length - 1;
+  while (k >= 0 && (c.undo[k].actor || 0) !== (c.actor || 0)) k--;
+  const j = k >= 0 ? c.undo.splice(k, 1)[0] : null;
   if (!j) return { ok: false, razon: 'Nada que deshacer' };
   for (const id of j.nuevos) { const b = c.edif.get(id); if (b) quitarEdif(c, b); }
   for (const b of j.borrados) {
@@ -156,18 +168,20 @@ function ocupada(c, x, y) {
   return b && !(ITEM[b.t].tipo === 'zona' && b.n === 0) ? b : null;
 }
 
+export const puedePuentes = (c) => c.modo === 'sandbox' || !!c.tech.ingenieria;
 export function evaluarVia(c, celdas, tipoId) {
   const it = ITEM[tipoId], nuevo = tipoId === 'avenida' ? 2 : 1;
   const out = []; let costo = 0, validas = 0;
   for (const [x, y] of celdas) {
-    let ok = esMia(c, x, y) && esConstruible(c.terr, x, y) && !ocupada(c, x, y);
+    const agua = esAgua(c.terr, x, y);
+    let ok = esMia(c, x, y) && (esConstruible(c.terr, x, y) || (agua && puedePuentes(c))) && !ocupada(c, x, y);
     let cobra = 0;
     if (ok) {
       const v = c.via[idx(x, y)];
       if (v >= nuevo) ok = true, cobra = 0;
-      else cobra = v === 0 ? it.costo : it.costo - ITEM.calle.costo;
+      else cobra = (v === 0 ? it.costo : it.costo - ITEM.calle.costo) * (agua ? 4 : 1);
     }
-    out.push({ x, y, ok, nada: ok && cobra === 0 });
+    out.push({ x, y, ok, nada: ok && cobra === 0, puente: agua });
     if (ok && cobra) { costo += cobra; validas++; }
   }
   return { celdas: out, costo, n: validas };
@@ -178,7 +192,7 @@ export function trazarVia(c, celdas, tipoId) {
   if (!d.ok) return { ok: false, razon: d.razon };
   const ev = evaluarVia(c, celdas, tipoId);
   if (ev.n === 0) return { ok: false, razon: 'No se puede construir ahí' };
-  if (c.dinero < ev.costo) return { ok: false, razon: 'Dinero insuficiente' };
+  if (c.dinero < ev.costo && c.modo !== 'sandbox') return { ok: false, razon: 'Dinero insuficiente' };
   abrir(c);
   const nuevo = tipoId === 'avenida' ? 2 : 1;
   for (const e of ev.celdas) {
@@ -250,12 +264,13 @@ export function evaluarEdificio(c, it, x, y) {
     if (!dentro(xx, yy)) bien = false;
     else if (!esMia(c, xx, yy)) { bien = false; if (!razon) razon = 'Fuera de tu terreno'; }
     else if (!esConstruible(c.terr, xx, yy)) { bien = false; if (!razon) razon = 'Terreno no apto'; }
+    else if (it.aguaCerca && !(c.r && c.r.cercaAgua[yy * N + xx])) { bien = false; if (!razon) razon = 'Debe estar junto al agua'; }
     else if (c.via[idx(xx, yy)]) { bien = false; if (!razon) razon = 'Hay una calle'; }
     else if (ocupada(c, xx, yy)) { bien = false; if (!razon) razon = 'Casilla ocupada'; }
     if (!bien) ok = false;
     celdas.push({ x: xx, y: yy, ok: bien });
   }
-  if (ok && c.dinero < it.costo) { ok = false; razon = 'Dinero insuficiente'; }
+  if (ok && c.modo !== 'sandbox' && c.dinero < it.costo) { ok = false; razon = 'Dinero insuficiente'; }
   return { ok, razon, celdas, costo: it.costo };
 }
 
@@ -312,9 +327,9 @@ export function demoler(c, celdas) {
 export function comprarParcela(c, px, py) {
   if (!parcelaComprable(c, px, py)) return { ok: false, razon: 'Elige una parcela vecina a tu terreno' };
   const p = precioParcela(c);
-  if (c.dinero < p) return { ok: false, razon: 'Dinero insuficiente' };
+  if (c.dinero < p && c.modo !== 'sandbox') return { ok: false, razon: 'Dinero insuficiente' };
   abrir(c);
-  c.parc[py * NP + px] = 1;
+  c.parc[py * NP + px] = c.vs ? (c.actor || 0) + 1 : 1;
   c.jr.parc = py * NP + px;
   gastar(c, p);
   darXp(c, 15, true);
@@ -335,9 +350,9 @@ export function puedeMejorar(c, b) {
   const it = ITEM[b.t];
   if (!it.mej) return { ok: false, razon: 'No mejorable' };
   if (b.n >= 3) return { ok: false, razon: 'Nivel máximo' };
-  if (c.tier < b.n) return { ok: false, razon: 'Requiere ' + NIVELES[b.n].nombre };
+  if (c.tier < b.n && c.modo !== 'sandbox') return { ok: false, razon: 'Requiere ' + NIVELES[b.n].nombre };
   const cs = costoMejora(c, b);
-  if (c.dinero < cs) return { ok: false, razon: 'Dinero insuficiente', costo: cs };
+  if (c.dinero < cs && c.modo !== 'sandbox') return { ok: false, razon: 'Dinero insuficiente', costo: cs };
   return { ok: true, costo: cs };
 }
 
@@ -346,7 +361,8 @@ export function mejorar(c, id) {
   if (!b) return { ok: false, razon: 'No existe' };
   const p = puedeMejorar(c, b);
   if (!p.ok) return p;
-  c.dinero -= p.costo; b.n++;
+  if (c.modo !== 'sandbox') c.dinero -= p.costo;
+  b.n++;
   c.sucio = true;
   darXp(c, 10 + b.n * 10);
   fx(c, { k: 'mejora', x: b.x, y: b.y, w: ITEM[b.t].w, h: ITEM[b.t].h, id });
@@ -355,7 +371,11 @@ export function mejorar(c, id) {
   return { ok: true, costo: p.costo };
 }
 
-export function fijarImpuesto(c, v) { c.impuesto = limitar(Math.round(v), 5, 20); }
+export function fijarImpuesto(c, v, z) {
+  v = limitar(Math.round(v), 0, 25);
+  if (z && c.imp[z] != null) c.imp[z] = v; else c.imp.R = c.imp.C = c.imp.I = v;
+  c.impuesto = Math.round(impuestoMedio(c));
+}
 
 export function conteo(c) {
   let n = 0;

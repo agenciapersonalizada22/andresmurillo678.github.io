@@ -1,20 +1,36 @@
 // Renderer, luces, ciclo día/noche y calidad gráfica.
 import * as THREE from '../../lib/three.module.min.js';
 
+const GRIS = new THREE.Color(0x6e7a8c);
 const lerpC = (a, b, t) => new THREE.Color(a).lerp(new THREE.Color(b), t);
 const suave = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
 export const CALIDADES = {
-  baja: { pr: 1, sombras: false, antialias: false, agentes: 24, agua: false, fps30: true, arboles: 0.5 },
-  media: { pr: 1.5, sombras: false, antialias: true, agentes: 60, agua: true, fps30: false, arboles: 1 },
-  alta: { pr: 2, sombras: true, antialias: true, agentes: 120, agua: true, fps30: false, arboles: 1 },
+  baja: { pr: 1, sombras: false, antialias: false, agentes: 28, agua: false, fps30: true, arboles: 0.5, variantes: 3, mapa: 1024, clima: 0.4 },
+  media: { pr: 1.5, sombras: false, antialias: true, agentes: 70, agua: true, fps30: false, arboles: 1, variantes: 5, mapa: 2048, clima: 0.7 },
+  alta: { pr: 2, sombras: true, antialias: true, agentes: 130, agua: true, fps30: false, arboles: 1, variantes: 8, mapa: 2048, clima: 1 },
+  ultra: { pr: 2.5, sombras: true, antialias: true, agentes: 230, agua: true, fps30: false, arboles: 1, variantes: 8, mapa: 4096, clima: 1.4 },
 };
+export const ORDEN_CALIDAD = ['baja', 'media', 'alta', 'ultra'];
+
+// Preset + ajustes sueltos del jugador (null = lo decide el preset)
+export function calidadEfectiva(nombre, aj = {}) {
+  const q = Object.assign({}, CALIDADES[nombre] || CALIDADES.media);
+  if (aj.sombras != null) q.sombras = !!aj.sombras;
+  if (aj.resolucion) q.pr = aj.resolucion;
+  if (aj.detalle != null) {
+    const d = aj.detalle;
+    q.arboles = d; q.agentes = Math.max(6, Math.round(q.agentes * (0.3 + 0.7 * d))); q.variantes = Math.max(1, Math.round(q.variantes * d)); q.clima *= d;
+  }
+  q.nombre = nombre;
+  return q;
+}
 
 export class Escena {
-  constructor(canvas, calidad) {
+  constructor(canvas, calidad, aj = {}) {
     this.canvas = canvas;
-    this.q = CALIDADES[calidad] || CALIDADES.media;
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: this.q.antialias, powerPreference: 'high-performance', alpha: false });
+    this.q = calidadEfectiva(calidad, aj);
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: aj.antialias != null ? !!aj.antialias : this.q.antialias, powerPreference: 'high-performance', alpha: false });
     this.renderer.shadowMap.enabled = this.q.sombras;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.scene = new THREE.Scene();
@@ -23,19 +39,23 @@ export class Escena {
     this.sol = new THREE.DirectionalLight(0xfff1d6, 1.0);
     this.sol.castShadow = this.q.sombras;
     const sc = this.sol.shadow.camera; sc.left = -22; sc.right = 22; sc.top = 22; sc.bottom = -22; sc.near = 1; sc.far = 200;
-    this.sol.shadow.mapSize.set(2048, 2048); this.sol.shadow.bias = -0.0006; this.sol.shadow.normalBias = 0.03;
+    this.sol.shadow.mapSize.set(this.q.mapa || 2048, this.q.mapa || 2048); this.sol.shadow.bias = -0.0006; this.sol.shadow.normalBias = 0.03;
     this.scene.add(this.hemi, this.sol, this.sol.target);
     this.matVent = new THREE.MeshBasicMaterial({ color: 0x3c5a7a, side: THREE.DoubleSide });
     this.noche = 0; this.elev = 1;
     this.w = 1; this.h = 1;
-    this.aplicarCalidad(calidad);
+    this.aplicarCalidad(calidad, aj);
   }
-  aplicarCalidad(nombre) {
-    this.q = CALIDADES[nombre] || CALIDADES.media;
+  aplicarCalidad(nombre, aj = {}) {
+    const antes = this.q && this.q.sombras;
+    this.q = calidadEfectiva(nombre, aj);
     const dpr = window.devicePixelRatio || 1;
     this.renderer.setPixelRatio(Math.min(dpr, this.q.pr));
     this.renderer.shadowMap.enabled = this.q.sombras;
     this.sol.castShadow = this.q.sombras;
+    const m = this.q.mapa || 2048;
+    if (this.sol.shadow.mapSize.x !== m) { this.sol.shadow.mapSize.set(m, m); if (this.sol.shadow.map) { this.sol.shadow.map.dispose(); this.sol.shadow.map = null; } }
+    if (antes !== this.q.sombras) this.scene.traverse((o) => { if (o.material) o.material.needsUpdate = true; });
     this.redim(true);
   }
   redim(forzar) {
@@ -68,6 +88,12 @@ export class Escena {
     this.noche = luz;
     this.matVent.color.copy(lerpC(0x4a6a8c, 0xffd27a, luz));
     return cielo;
+  }
+  // nubosidad 0..1 (tormenta/lluvia oscurecen y desaturan la escena)
+  nubes(k) {
+    if (k < 0.004) return;
+    this.scene.background.lerp(GRIS, k * 0.6);
+    this.hemi.intensity *= 1 - 0.18 * k; this.sol.intensity *= 1 - 0.5 * k;
   }
   dibujar(camara) { this.renderer.render(this.scene, camara); }
 }

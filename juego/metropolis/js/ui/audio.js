@@ -4,12 +4,44 @@ let sfxOn = true, musOn = true;
 let timer = null, proxNota = 0, proxAcorde = 0, acorde = 0, noche = 0;
 const ultima = {};
 
+let V = { maestro: 0.8, musica: 0.7, sfx: 0.8, ambiente: 0.6, silencio: false };
+let bAmb = null, capas = null, pajaroT = 0;
 export function configurar(sfx, mus) { sfxOn = sfx; musOn = mus; aplicarVol(); }
+export function volumenes(o) { Object.assign(V, o); aplicarVol(); }
 function aplicarVol() {
   if (!ctx) return;
   const t = ctx.currentTime;
-  bSfx.gain.setTargetAtTime(sfxOn ? 0.8 : 0, t, 0.05);
-  bMus.gain.setTargetAtTime(musOn ? 0.5 : 0, t, 0.4);
+  maestro.gain.setTargetAtTime(V.silencio ? 0 : V.maestro * 0.9, t, 0.05);
+  bSfx.gain.setTargetAtTime(sfxOn ? V.sfx : 0, t, 0.05);
+  bMus.gain.setTargetAtTime(musOn ? V.musica * 0.7 : 0, t, 0.4);
+  if (bAmb) bAmb.gain.setTargetAtTime(sfxOn ? V.ambiente : 0, t, 0.3);
+}
+// Pausa el audio al ocultar la pestaña
+export function pausar(si) {
+  if (!ctx) return;
+  if (si) { if (ctx.state === 'running') ctx.suspend().catch(() => {}); } else if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+}
+function crearAmbiente() {
+  bAmb = ctx.createGain(); bAmb.connect(maestro);
+  capas = {};
+  const def = { trafico: ['lowpass', 260, 0.9], industria: ['lowpass', 110, 1.2], agua: ['bandpass', 700, 0.6], lluvia: ['highpass', 2600, 0.5], gente: ['bandpass', 520, 1.4], viento: ['bandpass', 380, 0.4] };
+  for (const k in def) {
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = ruidoBuf; s.loop = true; f.type = def[k][0]; f.frequency.value = def[k][1]; f.Q.value = def[k][2]; g.gain.value = 0;
+    s.connect(f); f.connect(g); g.connect(bAmb); s.start(0, Math.random());
+    capas[k] = g;
+  }
+}
+// o: intensidades 0..1 por tipo de zona cercana a la cámara
+export function ambiente(o) {
+  if (!ctx || !capas) return;
+  const t = ctx.currentTime, a = (k, v) => capas[k].gain.setTargetAtTime(Math.max(0, Math.min(1, v)) * 0.16, t, 0.6);
+  a('trafico', o.trafico); a('industria', o.industria); a('agua', o.agua); a('lluvia', o.lluvia * 1.4); a('gente', o.gente); a('viento', o.viento);
+  if (o.parque > 0.15 && o.dia && sfxOn && ctx.state === 'running' && t > pajaroT) {
+    pajaroT = t + 1.2 + Math.random() * 3 / (0.3 + o.parque);
+    const f = 2400 + Math.random() * 1400;
+    tono(f, 0.07, 'sine', 0.05 * o.parque, f * 1.25, 0, bAmb); tono(f * 1.1, 0.06, 'sine', 0.04 * o.parque, f * 1.4, 0.1, bAmb);
+  }
 }
 
 export function iniciar() {
@@ -26,6 +58,7 @@ export function iniciar() {
   eco = ctx.createDelay(1.5); eco.delayTime.value = 0.42;
   const fb = ctx.createGain(); fb.gain.value = 0.38; eco.connect(fb); fb.connect(eco);
   const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400; eco.connect(lp); lp.connect(bMus);
+  crearAmbiente();
   aplicarVol();
   arrancarMusica();
 }

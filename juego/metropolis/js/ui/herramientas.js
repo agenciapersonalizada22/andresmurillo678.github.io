@@ -67,9 +67,9 @@ export function crearHerramientas(J) {
     H.pint = null;
     const cs = celdasPint(p.ini, p.fin), c = J.c;
     let r;
-    if (H.tipoPint === 'via') r = C.trazarVia(c, cs, H.item.id);
-    else if (H.tipoPint === 'zona') r = C.zonificar(c, cs, H.item.id);
-    else r = C.demoler(c, cs);
+    if (H.tipoPint === 'via') r = J.cmd({ k: 'via', celdas: cs, tipo: H.item.id });
+    else if (H.tipoPint === 'zona') r = J.cmd({ k: 'zona', celdas: cs, zona: H.item.id });
+    else r = J.cmd({ k: 'demoler', celdas: cs });
     resultado(r);
   };
   function resultado(r) {
@@ -78,10 +78,10 @@ export function crearHerramientas(J) {
   }
   H.confirmarEdificio = () => {
     if (H.tipoPint !== 'edificio' || !H.fant) return;
-    const r = C.construir(J.c, H.item.id, H.fant.x, H.fant.y);
+    const r = J.cmd({ k: 'construir', item: H.item.id, x: H.fant.x, y: H.fant.y });
     resultado(r);
   };
-  H.demolerCelda = (cx, cy) => { resultado(C.demoler(J.c, [[cx, cy]])); };
+  H.demolerCelda = (cx, cy) => { resultado(J.cmd({ k: 'demoler', celdas: [[cx, cy]] })); };
 
   // toque en modo "ver" (o comprar)
   H.tocar = (cx, cy) => {

@@ -3,7 +3,7 @@ import * as THREE from '../../lib/three.module.min.js';
 import { N, idx, dentro } from '../sim/ciudad.js';
 import { ITEM } from '../sim/datos.js';
 import { modelo, TIENE_MODELO } from './modelos.js';
-import { geoVia, geoLoseta } from './modelosVia.js';
+import { geoPuente, geoVia, geoLoseta } from './modelosVia.js';
 import { hash2 } from '../sim/util.js';
 
 const COL_LOTE = { R: 0x7fd18a, C: 0x6fb6ee, I: 0xe8c25a };
@@ -26,10 +26,10 @@ export class Edificios {
     this.anims = new Map();
     this.t = 0;
     this.sombras = null;
-    if (!escena.q.sombras) {
+    {
       const g = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
       this.sombras = new THREE.InstancedMesh(g, new THREE.MeshBasicMaterial({ map: texturaSombra(), transparent: true, depthWrite: false }), 3000);
-      this.sombras.frustumCulled = false; this.sombras.renderOrder = 1; this.sombras.count = 0;
+      this.sombras.frustumCulled = false; this.sombras.renderOrder = 1; this.sombras.count = 0; this.sombras.visible = !escena.q.sombras;
       this.grupo.add(this.sombras);
     }
     // marcadores de problemas
@@ -150,10 +150,12 @@ export class Edificios {
           add('lote:' + it.zona, { cuerpo: this.geoLote(it.zona) }, x, 0, z, 0, 1, 1, 1, b.cobE && b.cobA && b.cn ? 0xffffff : 0xbbbbbb);
           continue;
         }
-        const clave = b.t + ':' + b.n;
-        const m = modelo(b.t, b.n);
+        const vn = this.escena.q.variantes || 5, vi = vn > 1 ? Math.floor(hash2(b.x, b.y, 21) * vn) : 0;
+        const clave = b.t + ':' + b.n + ':' + vi;
+        const m = modelo(b.t, b.n, vi);
+        if (b.n >= 2) { ay *= 0.9 + 0.2 * hash2(b.x, b.y, 22); a *= 0.95 + 0.1 * hash2(b.x, b.y, 23); }
         const rot = this.rotacion(c, b, it);
-        if (b.fuego > 0) tinte = 0xff7a50; else if (b.falta) tinte = 0x8a8a95;
+        if (b.fuego > 0) tinte = 0xff7a50; else if (b.dan) tinte = 0x9a7468; else if (b.falta) tinte = 0x8a8a95;
         else tinte = 0xffffff;
         const v = 0.92 + hash2(b.x, b.y, 3) * 0.14;
         if (tinte === 0xffffff) { tmpC.setRGB(v, v, v); tinte = tmpC.getHex(); }
@@ -171,7 +173,7 @@ export class Edificios {
         const clave = b.t + ':' + n;
         if (!TIENE_MODELO(b.t)) continue;
         const rot = this.rotacion(c, b, it);
-        if (b.fuego > 0) tinte = 0xff7a50;
+        if (b.fuego > 0) tinte = 0xff7a50; else if (b.dan) tinte = 0x9a7468;
         add(clave, this.geosDe(clave, modelo(b.t, n), b.t), x, 0, z, ['jardin', 'parque', 'plaza', 'parquegrande', 'arbol', 'fuente', 'estatua', 'farola', 'obelisco', 'eolica', 'solar', 'estadio', 'observatorio'].includes(b.t) ? 0 : rot, a, ay, a, tinte);
         if (!['jardin', 'parque', 'plaza', 'parquegrande', 'solar', 'aeropuerto'].includes(b.t)) pushSombra(x, z, it.w * 1.1, it.h * 1.1);
         const alto = this.entradas.get(clave).alto;
@@ -191,6 +193,7 @@ export class Edificios {
       if (y < N - 1 && c.via[i + N]) mask |= 4;
       if (x > 0 && c.via[i - 1]) mask |= 8;
       add('via:' + mask + ':' + v, geoVia(mask, v), x + 0.5, 0, y + 0.5, 0, 1, 1, 1, c.r && c.r.con[i] ? 0xffffff : 0xb0a6a0);
+      if (c.terr[i] === 1) add('puente:' + mask, geoPuente(mask), x + 0.5, 0, y + 0.5, 0, 1, 1, 1, 0xffffff);
     }
     // volcar
     for (const e of this.entradas.values()) {
@@ -240,6 +243,32 @@ export class Edificios {
   }
 
   // ---------------------------------------------------------------- fantasma
+  // Superposición de tráfico sobre las calles: rojo = congestión. todos: muestra también las fluidas.
+  trafico(c, todos, pal) {
+    if (!this.cong) {
+      this.cong = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.86, 0.86).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.55, depthWrite: false }), 1800);
+      this.cong.frustumCulled = false; this.cong.count = 0; this.cong.renderOrder = 3; this.cong.setColorAt(0, new THREE.Color(1, 1, 1));
+      this.grupo.add(this.cong);
+    }
+    const r = c.r, fl = r && r.flujo, col = new THREE.Color(), arr = this.cong.instanceMatrix.array;
+    let k = 0;
+    if (fl) for (let i = 0; i < c.via.length && k < 1800; i++) {
+      if (!c.via[i] || !r.con[i]) continue;
+      const q = fl[i] / (c.via[i] === 2 ? 18 : 6);
+      if (q < (todos ? 0.01 : 0.8)) continue;
+      const o = k * 16, x = i % 72, y = (i / 72) | 0;
+      arr[o] = 1; arr[o + 1] = 0; arr[o + 2] = 0; arr[o + 3] = 0; arr[o + 4] = 0; arr[o + 5] = 1; arr[o + 6] = 0; arr[o + 7] = 0; arr[o + 8] = 0; arr[o + 9] = 0; arr[o + 10] = 1; arr[o + 11] = 0;
+      arr[o + 12] = x + 0.5; arr[o + 13] = 0.062; arr[o + 14] = y + 0.5; arr[o + 15] = 1;
+      col.setHex(q > 1 ? pal.mal : q > 0.6 ? 0xffd54a : pal.bien); this.cong.setColorAt(k, col);
+      k++;
+    }
+    this.cong.count = k; this.cong.visible = k > 0;
+    this.cong.instanceMatrix.needsUpdate = true; if (this.cong.instanceColor) this.cong.instanceColor.needsUpdate = true;
+  }
+  setSombras(on) {
+    for (const e of this.entradas.values()) if (e.cuerpo) { e.cuerpo.castShadow = on; e.cuerpo.receiveShadow = on; }
+    if (this.sombras) this.sombras.visible = !on;
+  }
   ocultarFantasma() { this.fant.visible = false; this.anillo.visible = this.anilloRelleno.visible = false; this.celdas.count = 0; }
   fantasmaEdificio(it, x, y, ok, n = 1) {
     const clave = it.id + ':' + n;
