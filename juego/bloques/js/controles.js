@@ -79,6 +79,10 @@ export class Controles {
     this.padEsperar = 0;             // cuadros que se ignoran al volver a la pestaña
     this.padIgnorar = new Set();     // botones que ya estaban apretados al cambiar de pantalla
     this.menuMando = new MenuMando();
+    // lo que cambian los ajustes (principal.js lo rellena)
+    this.ajustes = { sensRaton: 1, sensTactil: 1, zonaMuerta: 0, zurdo: false, invertirY: false };
+    this.directo = new Map();        // tecla elegida por el jugador -> tecla original
+    this.bloqueadas = new Set();     // teclas originales que ya no valen porque se reasignaron
 
     this.joystick = document.getElementById('joystick');
     this.palanca = document.getElementById('palanca');
@@ -86,6 +90,25 @@ export class Controles {
     this.escucharTeclado();
     this.escucharRaton();
     this.escucharToques();
+  }
+
+  // Remapeo de teclas: tabla { accion: code } con las teclas originales de TECLA_DEFECTO
+  aplicarTeclas(defecto, actual) {
+    this.directo.clear();
+    this.bloqueadas.clear();
+    for (const a of Object.keys(defecto)) {
+      if (actual[a] === defecto[a]) continue;
+      this.bloqueadas.add(defecto[a]);
+      if (actual[a]) this.directo.set(actual[a], defecto[a]);
+    }
+    // si otra acción se quedó con esa tecla original, vuelve a valer
+    for (const a of Object.keys(defecto)) if (actual[a] === defecto[a]) this.bloqueadas.delete(defecto[a]);
+  }
+
+  traducir(code) {
+    if (this.directo.has(code)) return this.directo.get(code);
+    if (this.bloqueadas.has(code)) return null;
+    return code;
   }
 
   get bloqueado() {
@@ -160,7 +183,8 @@ export class Controles {
       if (e.ctrlKey || e.metaKey || e.altKey) return; // atajos del navegador (Ctrl+W, Alt+←…)
       const tag = e.target && e.target.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-      const c = e.code;
+      const c = this.traducir(e.code);
+      if (!c) return;
       if (MOVIMIENTO.has(c)) {
         if (this.puedeJugar()) {
           e.preventDefault();
@@ -194,10 +218,14 @@ export class Controles {
         case 'KeyE': this.alAccion('teclaE'); break;
         case 'KeyI': this.alAccion('inventario'); break;
         case 'KeyC': this.alAccion('camara'); break;
-        case 'KeyT': this.alAccion('repostar'); break;
+        case 'KeyG': this.alAccion('repostar'); break;
+        case 'KeyT': e.preventDefault(); this.alAccion('chat'); break;
+        case 'KeyN': this.alAccion('minimapa'); break;
+        case 'F2': e.preventDefault(); this.alAccion('foto'); break;
+        case 'Tab': e.preventDefault(); this.alAccion('jugadores', true); break;
         case 'KeyL': this.alAccion('luces'); break;
         case 'Escape': this.alAccion('pausa', 'esc'); break;
-        case 'F3': case 'KeyG': e.preventDefault(); this.alAccion('depuracion'); break;
+        case 'F3': e.preventDefault(); this.alAccion('depuracion'); break;
         case 'KeyM': this.alAccion('musica'); break;
         case 'KeyQ': this.alAccion('rueda', -1); break;
         case 'KeyR': this.alAccion('rueda', 1); break;
@@ -205,8 +233,11 @@ export class Controles {
       }
     });
     window.addEventListener('keyup', (e) => {
+      const c = this.traducir(e.code) || e.code;
+      this.teclas.delete(c);
       this.teclas.delete(e.code);
-      if (ADELANTE.includes(e.code) && !ADELANTE.some((k) => this.teclas.has(k))) this.carrera = false;
+      if (c === 'Tab') this.alAccion('jugadores', false);
+      if (ADELANTE.includes(c) && !ADELANTE.some((k) => this.teclas.has(k))) this.carrera = false;
     });
     window.addEventListener('blur', () => this.soltarTodo());
     // pestaña oculta: se suelta todo y, al volver, se ignoran los botones que cambiaron mientras tanto
@@ -262,13 +293,13 @@ export class Controles {
         if (!this.puedeJugar()) return;
         const dx = e.movementX || 0, dy = e.movementY || 0;
         if (Math.abs(dx) > 400 || Math.abs(dy) > 400) return; // saltos raros de algunos navegadores
-        this.alMirar(dx * J.sensibilidadRaton, dy * J.sensibilidadRaton);
+        this.alMirar(dx * J.sensibilidadRaton * this.ajustes.sensRaton, dy * J.sensibilidadRaton * this.ajustes.sensRaton * (this.ajustes.invertirY ? -1 : 1));
       } else if (this.arrastre && this.puedeJugar()) {
         const dx = e.clientX - this.arrastre.x, dy = e.clientY - this.arrastre.y;
         this.arrastre.x = e.clientX;
         this.arrastre.y = e.clientY;
         this.arrastre.movido += Math.abs(dx) + Math.abs(dy);
-        if (this.arrastre.movido > 4) this.alMirar(dx * J.sensibilidadRaton * 1.6, dy * J.sensibilidadRaton * 1.6);
+        if (this.arrastre.movido > 4) this.alMirar(dx * J.sensibilidadRaton * 1.6 * this.ajustes.sensRaton, dy * J.sensibilidadRaton * 1.6 * this.ajustes.sensRaton * (this.ajustes.invertirY ? -1 : 1));
       }
     });
     window.addEventListener('mouseup', (e) => {
@@ -350,19 +381,17 @@ export class Controles {
 
     if (!jugando) {
       this.soltarMando();
-      if (ctx.estado === 'titulo' || ctx.estado === 'pausa' || ctx.estado === 'inventario') {
+      if (this.menuMando.pantallaAbierta()) {
         this.menuMando.actualizar(M, dt, ign, {
           cancelar: (id) => {
             if (id === 'pantallaPausa') this.alAccion('pausa', 'esc');
             else if (id === 'pantallaInventario') this.alAccion('inventario');
-            else if (id === 'pantallaTitulo') {
-              const panel = document.getElementById('panelNuevo');
-              if (panel && !panel.classList.contains('oculto')) panel.classList.add('oculto');
-            }
+            else this.alAccion('cancelarMenu', id);
           },
           cerrar: (id) => {
             if (id === 'pantallaPausa') this.alAccion('pausa', 'esc');
             else if (id === 'pantallaInventario') this.alAccion('inventario');
+            else this.alAccion('cancelarMenu', id);
           },
           pestana: (d) => this.alAccion('pestana', d),
           ranura: (d) => this.alAccion('ranuraRel', d),
@@ -375,7 +404,14 @@ export class Controles {
     this.menuMando.quitarFoco();
     const veh = ctx.vehiculo;
     const aire = !!veh && veh.clase === 'aire';
-    const izq = M.ejes.izq, der = M.ejes.der;
+    const dz = this.ajustes.zonaMuerta;
+    const zona = (v) => {
+      const mm = Math.hypot(v.x, v.y);
+      if (mm <= dz) return { x: 0, y: 0 };
+      const k = (mm - dz) / (1 - dz) / mm;
+      return { x: v.x * k, y: v.y * k };
+    };
+    const izq = dz > 0 ? zona(M.ejes.izq) : M.ejes.izq, der = dz > 0 ? zona(M.ejes.der) : M.ejes.der;
     const rt = ign.has('RT') ? 0 : M.gatillo.der, lt = ign.has('LT') ? 0 : M.gatillo.izq;
     const p = this.pad;
     const aj = this.ajustesMando;
@@ -519,11 +555,11 @@ export class Controles {
         continue;
       }
       if (!this.puedeJugar()) continue;
-      if (this.joyId === null && t.clientX < ancho * 0.42 && t.clientY > alto * 0.3) {
+      if (this.joyId === null && (this.ajustes.zurdo ? t.clientX > ancho * 0.58 : t.clientX < ancho * 0.42) && t.clientY > alto * 0.3) {
         this.joyId = t.identifier;
         this.toques.set(t.identifier, { tipo: 'joy', x0: t.clientX, y0: t.clientY });
         this.joystick.classList.add('activo');
-        this.joystick.style.left = t.clientX + 'px';
+        this.joystick.style.left = (this.ajustes.zurdo ? window.innerWidth - t.clientX : t.clientX) + 'px';
         this.joystick.style.top = t.clientY + 'px';
         this.palanca.style.transform = 'translate(-50%, -50%)';
         continue;
@@ -556,13 +592,13 @@ export class Controles {
         // zona muerta pequeñita
         if (Math.abs(this.joy.derecha) < 0.12) this.joy.derecha = 0;
         if (Math.abs(this.joy.adelante) < 0.12) this.joy.adelante = 0;
-        this.palanca.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+        this.palanca.style.transform = `translate(calc(-50% + ${this.ajustes.zurdo ? -dx : dx}px), calc(-50% + ${dy}px))`;
       } else if (toque.tipo === 'mirar') {
         const dx = t.clientX - toque.x, dy = t.clientY - toque.y;
         toque.x = t.clientX;
         toque.y = t.clientY;
         toque.movido += Math.abs(dx) + Math.abs(dy);
-        if (this.puedeJugar()) this.alMirar(dx * J.sensibilidadTactil, dy * J.sensibilidadTactil);
+        if (this.puedeJugar()) this.alMirar(dx * J.sensibilidadTactil * this.ajustes.sensTactil, dy * J.sensibilidadTactil * this.ajustes.sensTactil * (this.ajustes.invertirY ? -1 : 1));
       }
     }
   }

@@ -47,6 +47,7 @@ export const B = {
   TEJAS: 105, CRISTAL_OSCURO: 106,
   ESCALERA_TEJAS: 107, // 107..110
   LOSA_TEJAS: 111,
+  MINERAL_DIAMANTE: 112, MINERAL_ESMERALDA: 113,
 };
 
 const solo = (t) => [t, t, t];
@@ -170,6 +171,8 @@ cubo(B.ARENISCA_CINCELADA, 'arenisca_cincelada', 'Arenisca cincelada', ['arenisc
 cubo(B.MESA_TRABAJO, 'mesa_trabajo', 'Mesa de trabajo', ['mesa_trabajo_arriba', 'mesa_trabajo_lado', 'tablas'], 'madera');
 cubo(B.HORNO, 'horno', 'Horno', ['piedra', 'horno_lado', 'piedra'], 'piedra');
 BLOQUES[B.MESA_TRABAJO].frenteTodos = 'mesa_trabajo_frente';
+BLOQUES[B.MESA_TRABAJO].usable = 'mesa';
+BLOQUES[B.HORNO].usable = 'horno';
 BLOQUES[B.HORNO].frenteTodos = 'horno_frente';
 cubo(B.TABLAS_ABETO, 'tablas_abeto', 'Tablas de abeto', solo('tablas_abeto'), 'madera');
 cubo(B.PIEDRA_PULIDA, 'piedra_pulida', 'Piedra pulida', solo('piedra_pulida'), 'piedra');
@@ -181,6 +184,8 @@ def(B.TEJAS, { clave: 'tejas', nombre: 'Tejas', dibujo: 'solido', caras: solo('t
 def(B.CRISTAL_OSCURO, { clave: 'cristal_oscuro', nombre: 'Cristal oscuro', dibujo: 'solido', caras: solo('cristal_oscuro'), sonido: 'vidrio', enMenu: true });
 escalera(B.ESCALERA_TEJAS, 'escalera_tejas', 'Escalera de tejas', 'tejas');
 losa(B.LOSA_TEJAS, 'losa_tejas', 'Losa de tejas', 'tejas');
+cubo(B.MINERAL_DIAMANTE, 'mineral_diamante', 'Mineral de diamante', solo('diamante_mineral'), 'piedra');
+cubo(B.MINERAL_ESMERALDA, 'mineral_esmeralda', 'Mineral de esmeralda', solo('esmeralda_mineral'), 'piedra');
 
 // Los 4 lados de las mesas y hornos: el de enfrente es otro dibujo. Se resuelve en el mallador con "frenteTodos".
 

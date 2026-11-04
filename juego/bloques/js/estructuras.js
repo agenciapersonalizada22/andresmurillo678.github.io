@@ -171,6 +171,9 @@ export function crearEstructuras(semilla, gen, opciones = {}) {
           plan.puntos.forEach((p, i) => {
             if (Math.floor(p.x) >> 4 === cx && Math.floor(p.z) >> 4 === cz) puntos.push({ ...p, id: tipo + ':' + inst.x + ',' + inst.z + ':' + i });
           });
+          (plan.aldeanos || []).forEach((p, i) => {
+            if (Math.floor(p.x) >> 4 === cx && Math.floor(p.z) >> 4 === cz) puntos.push({ ...p, id: tipo + ':' + inst.x + ',' + inst.z + ':a' + i });
+          });
         }
       }
     }

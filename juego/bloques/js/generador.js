@@ -14,6 +14,7 @@ import { crearRuido, hash2, hash3 } from './ruido.js';
 import { B } from './bloques.js';
 import { LADO, ALTO, CAPA } from './medidas.js';
 import { crearEstructuras } from './estructuras.js';
+import { crearGeneradorPlano } from './generadorPlano.js';
 
 export { LADO, ALTO, CAPA };
 
@@ -26,6 +27,7 @@ const suave = (a, b, x) => {
 };
 
 export function crearGenerador(semilla, version = 1, opciones = {}) {
+  if (opciones.tipo === 'plano') return crearGeneradorPlano(semilla, opciones);
   const M = CONFIG.mundo;
   const MAR = M.nivelMar;
   const esc = M.escalaTerreno || 1;
@@ -40,6 +42,7 @@ export function crearGenerador(semilla, version = 1, opciones = {}) {
   const rTemp = crearRuido(s ^ 0x3c6ef372);
   const rHum = crearRuido((s + 424242) | 0);
   const v2 = version >= 2;
+  const v3 = version >= 3;   // mundos nuevos: diamantes y esmeraldas
 
   // Biomas (solo en la versión 2): 0 llanura, 1 bosque, 2 desierto, 3 tundra, 4 taiga
   const NOMBRE_BIOMA = ['llanura', 'bosque', 'desierto', 'tundra', 'taiga'];
@@ -196,6 +199,10 @@ export function crearGenerador(semilla, version = 1, opciones = {}) {
               if (hash3(wx, y, wz, s + 13) < 0.5) datos[i] = B.HIERRO;
             } else if (g > 0.5 && g < 0.5035 && y < 36) {
               if (hash3(wx, y, wz, s + 14) < 0.5) datos[i] = B.ORO;
+            } else if (v3 && g > 0.3 && g < 0.3022 && y < 24) {
+              if (hash3(wx, y, wz, s + 15) < 0.6) datos[i] = B.MINERAL_DIAMANTE;
+            } else if (v3 && g > 0.7 && g < 0.7006 && y < 52 && y > 8) {
+              if (hash3(wx, y, wz, s + 16) < 0.6) datos[i] = B.MINERAL_ESMERALDA;
             }
           }
         }

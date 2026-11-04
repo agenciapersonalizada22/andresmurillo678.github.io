@@ -27,6 +27,12 @@ let efectos = null;     // volumen de los efectos
 let busMusica = null;   // por aquí sale la música
 let bufferRuido = null;
 let efectosActivos = true;
+let volMaestro = 1;
+let volEfectos = CONFIG.audio.volumen;
+let silencio = false;
+let pausarOculto = true;
+let panEsp = 0, volEsp = 1;       // sonido espacial: se fijan con Sonido.en()
+const oyente = { x: 0, y: 0, z: 0, yaw: 0 };
 const ultimaVez = {};
 
 try {
@@ -53,8 +59,9 @@ function iniciar() {
   maestro.gain.value = 1;
   maestro.connect(ctx.destination);
   efectos = ctx.createGain();
-  efectos.gain.value = efectosActivos ? CONFIG.audio.volumen : 0;
+  efectos.gain.value = efectosActivos && !silencio ? volEfectos : 0;
   efectos.connect(maestro);
+  maestro.gain.value = silencio ? 0 : volMaestro;
   busMusica = ctx.createGain();
   busMusica.gain.value = 1;
   busMusica.connect(maestro);
@@ -64,6 +71,7 @@ function iniciar() {
 document.addEventListener('visibilitychange', () => {
   if (!ctx) return;
   if (document.hidden) {
+    if (!pausarOculto) return;
     const pr = ctx.suspend();
     if (pr && pr.catch) pr.catch(() => {});
   } else {
@@ -71,6 +79,8 @@ document.addEventListener('visibilitychange', () => {
     if (pr && pr.catch) pr.catch(() => {});
   }
 });
+
+function maestro_ok() { return !!(ctx && maestro && efectos); }
 
 function listo(nombre, espera) {
   if (!ctx || !efectosActivos || ctx.state !== 'running') return false;
@@ -89,6 +99,20 @@ function ruidoBuffer() {
   return bufferRuido;
 }
 
+// Dónde conectar un sonido: directo o con volumen y paneo según dónde esté (Sonido.en)
+function salida() {
+  if (volEsp >= 0.999 && panEsp === 0) return efectos;
+  const g = ctx.createGain();
+  g.gain.value = volEsp;
+  if (ctx.createStereoPanner) {
+    const p = ctx.createStereoPanner();
+    p.pan.value = panEsp;
+    g.connect(p);
+    p.connect(efectos);
+  } else g.connect(efectos);
+  return g;
+}
+
 function ruido(t, dur, vol, tipo, frec, q, velocidad) {
   const fuente = ctx.createBufferSource();
   fuente.buffer = ruidoBuffer();
@@ -103,7 +127,7 @@ function ruido(t, dur, vol, tipo, frec, q, velocidad) {
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   fuente.connect(filtro);
   filtro.connect(g);
-  g.connect(efectos);
+  g.connect(salida());
   fuente.start(t, Math.random() * 0.5, dur + 0.05);
 }
 
@@ -117,7 +141,7 @@ function tono(t, frec, dur, vol, onda, frecFin) {
   g.gain.linearRampToValueAtTime(vol, t + 0.004);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   o.connect(g);
-  g.connect(efectos);
+  g.connect(salida());
   o.start(t);
   o.stop(t + dur + 0.03);
 }
@@ -260,11 +284,131 @@ export const Sonido = {
   salidaMusica: () => busMusica,
   get efectosActivos() { return efectosActivos; },
 
+  // Volúmenes de 0 a 1 (los pone el menú de ajustes)
+  ponerVolumenes({ maestro, efectos: ef, silenciar, pausarAlOcultar }) {
+    if (Number.isFinite(maestro)) volMaestro = maestro;
+    if (Number.isFinite(ef)) volEfectos = ef;
+    if (typeof silenciar === 'boolean') silencio = silenciar;
+    if (typeof pausarAlOcultar === 'boolean') pausarOculto = pausarAlOcultar;
+    if (maestro_ok()) {
+      maestro.gain.value = silencio ? 0 : volMaestro;
+      efectos.gain.value = efectosActivos && !silencio ? volEfectos : 0;
+    }
+  },
+  // Dónde está el que escucha (la cámara) para el sonido espacial
+  ponerOyente(x, y, z, yaw) { oyente.x = x; oyente.y = y; oyente.z = z; oyente.yaw = yaw; },
+  // Ejecuta fn() con el sonido saliendo desde (x, y, z): más bajito si está lejos y de lado a lado
+  en(x, y, z, fn) {
+    const dx = x - oyente.x, dz = z - oyente.z, dy = y - oyente.y;
+    const d = Math.hypot(dx, dy, dz);
+    if (d > 40) return;
+    volEsp = Math.max(0.05, 1 - d / 40);
+    volEsp *= volEsp;
+    // el eje derecho de la cámara con yaw: (cos, -sin)
+    const der = (dx * Math.cos(oyente.yaw) - dz * Math.sin(oyente.yaw)) / Math.max(0.001, d);
+    panEsp = Math.max(-1, Math.min(1, der * 0.9));
+    try { fn(); } finally { volEsp = 1; panEsp = 0; }
+  },
+
   alternarEfectos() {
     efectosActivos = !efectosActivos;
     try { localStorage.setItem('bloques_efectos', efectosActivos ? '1' : '0'); } catch (e) { /* nada */ }
-    if (efectos) efectos.gain.value = efectosActivos ? CONFIG.audio.volumen : 0;
+    if (efectos) efectos.gain.value = efectosActivos && !silencio ? volEfectos : 0;
     return efectosActivos;
+  },
+
+  // ---- supervivencia
+  dano() {
+    if (!listo('dano', 0.15)) return;
+    const t = ctx.currentTime;
+    tono(t, 200, 0.16, 0.2, 'sawtooth', 90);
+    ruido(t, 0.1, 0.25, 'lowpass', 700, 1, 1);
+  },
+  muerte() {
+    if (!listo('muerte', 0.5)) return;
+    const t = ctx.currentTime;
+    tono(t, 260, 0.8, 0.2, 'sawtooth', 50);
+    ruido(t, 0.5, 0.3, 'lowpass', 500, 1, 0.7);
+  },
+  comer() {
+    if (!listo('comer', 0.15)) return;
+    const t = ctx.currentTime;
+    for (let i = 0; i < 3; i++) ruido(t + i * 0.09, 0.07, 0.35, 'bandpass', 1400 + i * 200, 2, 1);
+  },
+  explosion() {
+    if (!listo('explosion', 0.1)) return;
+    const t = ctx.currentTime;
+    ruido(t, 0.9, 0.9, 'lowpass', 600, 0.7, 0.5);
+    tono(t, 110, 0.6, 0.35, 'sawtooth', 28);
+  },
+  silbido() {
+    if (!listo('silbido', 0.5)) return;
+    ruido(ctx.currentTime, 1.4, 0.35, 'highpass', 4200, 1, 1);
+  },
+  arco() {
+    if (!listo('arco', 0.2)) return;
+    const t = ctx.currentTime;
+    tono(t, 180, 0.14, 0.18, 'triangle', 420);
+    ruido(t + 0.04, 0.12, 0.25, 'highpass', 2600, 1, 1);
+  },
+  flechaImpacto() {
+    if (!listo('flechaImpacto', 0.1)) return;
+    golpe('madera', 0.5);
+  },
+  golpeCuerpo() {
+    if (!listo('golpeCuerpo', 0.08)) return;
+    const t = ctx.currentTime;
+    ruido(t, 0.09, 0.45, 'lowpass', 900, 1, 1);
+    tono(t, 140, 0.08, 0.15, 'square', 80);
+  },
+  // voces de bichos: 'zombi', 'esqueleto', 'arana', 'aldeano'
+  bicho(tipo, fuerza = 1) {
+    if (!listo('bicho' + tipo, 0.5)) return;
+    const t = ctx.currentTime + 0.01, v = 0.05 + 0.15 * fuerza, k = 0.9 + Math.random() * 0.2;
+    if (tipo === 'zombi') {
+      tono(t, 120 * k, 0.5, v, 'sawtooth', 70 * k);
+      tono(t + 0.05, 95 * k, 0.5, v * 0.7, 'square', 60 * k);
+    } else if (tipo === 'esqueleto') {
+      for (let i = 0; i < 4; i++) tono(t + i * 0.06, 900 * k + i * 90, 0.04, v * 0.6, 'square');
+    } else if (tipo === 'arana') {
+      ruido(t, 0.35, v * 1.6, 'highpass', 3500 * k, 1.2, 1.3);
+    } else {
+      tono(t, 190 * k, 0.12, v, 'triangle', 150 * k);
+      tono(t + 0.16, 170 * k, 0.16, v, 'triangle', 130 * k);
+    }
+  },
+  craft() {
+    if (!listo('craft', 0.1)) return;
+    const t = ctx.currentTime;
+    golpe('madera', 0.6);
+    tono(t + 0.05, 740, 0.1, 0.05, 'triangle', 980);
+  },
+  horno() {
+    if (!listo('horno', 0.3)) return;
+    ruido(ctx.currentTime, 0.4, 0.25, 'lowpass', 520, 1, 0.9);
+  },
+  logro() {
+    if (!listo('logro', 0.5)) return;
+    const t = ctx.currentTime;
+    [523, 659, 784, 1047].forEach((f, i) => tono(t + i * 0.1, f, 0.26, 0.09, 'triangle'));
+  },
+  moneda() {
+    if (!listo('moneda', 0.1)) return;
+    const t = ctx.currentTime;
+    tono(t, 1320, 0.1, 0.07, 'square'); tono(t + 0.08, 1760, 0.2, 0.07, 'square');
+  },
+  recoger() {
+    if (!listo('recoger', 0.05)) return;
+    tono(ctx.currentTime, 620 + Math.random() * 200, 0.08, 0.07, 'sine', 1100);
+  },
+  gota() {
+    if (!listo('gota', 0.2)) return;
+    tono(ctx.currentTime, 1500, 0.09, 0.05, 'sine', 700);
+  },
+  camara() {
+    if (!listo('camara', 0.3)) return;
+    const t = ctx.currentTime;
+    ruido(t, 0.05, 0.4, 'highpass', 3000, 1, 1); ruido(t + 0.08, 0.06, 0.4, 'highpass', 2200, 1, 1);
   },
 
   romper(material) {

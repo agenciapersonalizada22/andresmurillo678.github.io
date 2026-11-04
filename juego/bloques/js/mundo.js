@@ -48,6 +48,17 @@ export class Mundo {
     this.abiertos = new Set();      // cofres que ya se abrieron ("x,y,z")
     this.vehiculosUsados = new Set(); // lugares de vehículos que ya se usaron
     this.bloqueados = null;
+    this.tipo = 'normal';           // 'normal' | 'plano'
+    this.cofres = new Map();        // "x,y,z" -> ranuras guardadas en el cofre
+    this.hornos = new Map();        // "x,y,z" -> estado del horno
+    this.escuchas = [];             // quien quiera enterarse de cada cambio de bloque (multijugador, logros…)
+  }
+
+  // Cada vez que cambia un bloque (venga de quien venga) se avisa a estas funciones:
+  // fn({ x, y, z, id, antes, origen, registrar })
+  escuchar(fn) {
+    this.escuchas.push(fn);
+    return () => { const i = this.escuchas.indexOf(fn); if (i >= 0) this.escuchas.splice(i, 1); };
   }
 
   // Empieza un mundo nuevo (o uno guardado) con su semilla y sus cambios
@@ -64,7 +75,10 @@ export class Mundo {
     this.vehiculosUsados = new Set(opciones.vehiculosUsados || []);
     this.puntosNuevos = [];
     this.bloqueados = opciones.bloqueados ? new Set(opciones.bloqueados) : null;
-    this.gen = crearGenerador(this.semilla, this.versionGen, { bloqueados: this.bloqueados, estructuras: CONFIG.estructuras.activas });
+    this.tipo = opciones.tipo === 'plano' ? 'plano' : 'normal';
+    this.cofres = new Map(Object.entries(opciones.cofres || {}));
+    this.hornos = new Map(Object.entries(opciones.hornos || {}));
+    this.gen = crearGenerador(this.semilla, this.versionGen, { bloqueados: this.bloqueados, estructuras: CONFIG.estructuras.activas, tipo: this.tipo });
     if (cambiosGuardados && typeof cambiosGuardados === 'object') {
       for (const texto of Object.keys(cambiosGuardados)) {
         const [cx, cz] = texto.split(',').map(Number);
@@ -154,8 +168,9 @@ export class Mundo {
     return -1;
   }
 
-  // registrar = false: el cambio se ve pero no se guarda (lo hace el juego, no el jugador)
-  poner(x, y, z, id, registrar = true) {
+  // ÚNICA puerta para cambiar bloques. registrar = false: el cambio se ve pero no se guarda
+  // (lo hace el juego, no el jugador). origen: 'local' | 'remoto' | 'mundo' (para el multijugador)
+  poner(x, y, z, id, registrar = true, origen = 'local') {
     if (y < 0 || y >= ALTO) return false;
     const cx = x >> 4, cz = z >> 4;
     const k = clave(cx, cz);
@@ -192,6 +207,22 @@ export class Mundo {
       if (lz === 0) dzs.push(-1); else if (lz === 15) dzs.push(1);
     }
     for (const dx of dxs) for (const dz of dzs) this.sucios.add(clave(cx + dx, cz + dz));
+    if (this.escuchas.length) {
+      const ev = { x, y, z, id, antes, origen, registrar };
+      for (const f of this.escuchas) { try { f(ev); } catch (e) { console.error(e); } }
+    }
+    return true;
+  }
+
+  // Cambio que viene de otro jugador: si ese pedazo de mundo todavía no existe aquí, se anota para cuando se cree
+  ponerRemoto(x, y, z, id) {
+    if (y < 0 || y >= ALTO) return false;
+    const k = clave(x >> 4, z >> 4);
+    if (this.chunks.has(k)) return this.poner(x, y, z, id, true, 'remoto');
+    let m = this.cambios.get(k);
+    if (!m) { m = new Map(); this.cambios.set(k, m); }
+    m.set(y * CAPA + (z & 15) * LADO + (x & 15), id);
+    this.hayCambiosSinGuardar = true;
     return true;
   }
 

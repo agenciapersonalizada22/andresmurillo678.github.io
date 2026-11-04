@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../comun/lobby.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="enTitulo">
@@ -18,6 +19,15 @@
   <!-- Lo que se ve mientras juegas -->
   <div id="hud" class="oculto">
     <div id="bajoAgua"></div>
+    <div id="danoPantalla"></div>
+    <div id="vitales" class="oculto"><div id="filaArmadura"></div><div id="filaAire"></div><div class="filas"><div id="filaVida"></div><div id="filaHambre"></div></div></div>
+    <canvas id="minimapa" width="96" height="96" class="oculto"></canvas>
+    <div id="fpsContador" class="oculto"></div>
+    <div id="toasts" aria-live="polite"></div>
+    <div id="chatLog"></div>
+    <div id="chatCaja" class="oculto"><input id="chatEntrada" type="text" maxlength="140" autocomplete="off" placeholder="Mensaje (Enter envía, Esc cancela)"><div id="chatRapido"></div></div>
+    <div id="listaJugadores" class="oculto"></div>
+    <div id="barraComer" class="oculto"><i></i></div>
     <div id="mira" aria-hidden="true"></div>
     <pre id="depuracion" class="oculto"></pre>
     <div id="brujula" aria-hidden="true"></div>
@@ -39,6 +49,7 @@
   <!-- Controles para celular -->
   <div id="tactil">
     <div id="joystick"><div id="palanca"></div></div>
+    <button type="button" class="btnTactil" id="btnChat" data-accion="chat" aria-label="Chat">CHAT</button>
     <button type="button" class="btnTactil" id="btnPausa" data-accion="pausa" aria-label="Pausa">II</button>
     <button type="button" class="btnTactil" id="btnVehiculo" data-accion="vehiculo">SUBIR</button>
     <button type="button" class="btnTactil" id="btnCamara" data-accion="camara">VISTA</button>
@@ -58,23 +69,88 @@
   <div id="pantallaTitulo" class="pantalla">
     <div class="tarjeta">
       <h1 class="titulo"><span>MUNDO</span><span>DE BLOQUES</span></h1>
-      <p class="sub">explora · rompe · construye</p>
+      <p class="sub">explora · sobrevive · construye</p>
       <button type="button" id="btnContinuar" class="principal oculto">CONTINUAR</button>
       <p id="infoGuardado" class="info oculto"></p>
-      <button type="button" id="btnNuevo">NUEVO MUNDO</button>
-      <div id="panelNuevo" class="oculto">
-        <label for="campoSemilla">Semilla (opcional)</label>
-        <input id="campoSemilla" type="text" maxlength="32" placeholder="vacío = al azar" autocomplete="off" spellcheck="false">
-        <div class="fila">
-          <button type="button" id="btnCrear" class="principal">CREAR</button>
-          <button type="button" id="btnCancelarNuevo">CANCELAR</button>
-        </div>
-        <p id="avisoNuevo" class="info oculto">Ojo: tu mundo guardado se reemplaza.</p>
-      </div>
-      <p class="pista solo-compu">WASD caminar · ratón mirar · clic izq. romper · clic der. poner</p>
+      <button type="button" id="btnJugar">MIS MUNDOS</button>
+      <button type="button" id="btnMulti">MULTIJUGADOR</button>
+      <div class="fila"><button type="button" id="btnAjustesTitulo">AJUSTES</button><button type="button" id="btnLogrosTitulo">LOGROS</button></div>
+      <p class="pista solo-compu">WASD caminar · ratón mirar · clic izq. romper · clic der. poner o usar</p>
       <p class="pista solo-mando">Mando: ↕ ↔ elegir · A aceptar · B volver<br>En el juego: stick izq. caminar · stick der. mirar · RT romper · LT poner</p>
       <p class="pista solo-tactil">joystick para caminar · arrastra para mirar · botones para romper y poner</p>
     </div>
+  </div>
+
+  <!-- Lista de mundos -->
+  <div id="pantallaMundos" class="pantalla oculto">
+    <div class="tarjeta ancha">
+      <h2>MIS MUNDOS</h2>
+      <div id="listaMundos"></div>
+      <div class="fila"><button type="button" id="btnNuevoMundo" class="principal">NUEVO MUNDO</button><button type="button" id="btnImportarMundo">IMPORTAR</button></div>
+      <div id="panelNuevo" class="oculto">
+        <label for="campoNombre">Nombre</label>
+        <input id="campoNombre" type="text" maxlength="28" placeholder="Mundo nuevo" autocomplete="off">
+        <label for="campoSemilla">Semilla (opcional)</label>
+        <input id="campoSemilla" type="text" maxlength="32" placeholder="vacío = al azar" autocomplete="off" spellcheck="false">
+        <div class="fila"><button type="button" id="btnTipoMundo">TIPO: NORMAL</button><button type="button" id="btnModoMundo">MODO: SUPERVIVENCIA</button></div>
+        <button type="button" id="btnDifMundo">DIFICULTAD: NORMAL</button>
+        <div class="fila"><button type="button" id="btnCrear" class="principal">CREAR</button><button type="button" id="btnCancelarNuevo">CANCELAR</button></div>
+      </div>
+      <div id="panelImportar" class="oculto">
+        <label for="textoImportar">Pega aquí el texto de un mundo exportado, o elige un archivo</label>
+        <textarea id="textoImportar" rows="3" spellcheck="false"></textarea>
+        <input id="archivoImportar" type="file" accept=".json,.txt,application/json,text/plain">
+        <div class="fila"><button type="button" id="btnHacerImportar" class="principal">IMPORTAR</button><button type="button" id="btnCancelarImportar">CANCELAR</button></div>
+      </div>
+      <p id="avisoMundos" class="info" aria-live="polite"></p>
+      <button type="button" id="btnVolverMundos">VOLVER</button>
+    </div>
+  </div>
+
+  <!-- Ajustes -->
+  <div id="pantallaAjustes" class="pantalla oculto">
+    <div class="tarjeta ancha">
+      <h2>AJUSTES</h2>
+      <div class="fila pestanas" id="ajustesPestanas"></div>
+      <div id="ajustesCuerpo"></div>
+      <p id="avisoAjustes" class="info" aria-live="polite"></p>
+      <div class="fila"><button type="button" id="btnRestablecer">RESTABLECER</button><button type="button" id="btnVolverAjustes" class="principal">VOLVER</button></div>
+    </div>
+  </div>
+
+  <!-- Logros y estadísticas -->
+  <div id="pantallaLogros" class="pantalla oculto">
+    <div class="tarjeta ancha">
+      <h2>LOGROS</h2>
+      <div id="cuerpoLogros"></div>
+      <button type="button" id="btnVolverLogros" class="principal">VOLVER</button>
+    </div>
+  </div>
+
+  <!-- Cofre, horno, comercio -->
+  <div id="pantallaContenedor" class="pantalla oculto">
+    <div class="tarjeta ancha">
+      <h2 id="tituloContenedor">COFRE</h2>
+      <div id="cuerpoContenedor"></div>
+      <p class="info" id="avisoContenedor"></p>
+      <button type="button" id="btnCerrarContenedor" class="principal">CERRAR</button>
+    </div>
+  </div>
+
+  <!-- Muerte -->
+  <div id="pantallaMuerte" class="pantalla oculto">
+    <div class="tarjeta">
+      <h2 class="rojo">HAS MUERTO</h2>
+      <p class="info" id="causaMuerte"></p>
+      <button type="button" id="btnReaparecer" class="principal">REAPARECER</button>
+      <button type="button" id="btnMuerteTitulo">SALIR AL TÍTULO</button>
+    </div>
+  </div>
+
+  <div id="panelFoto" class="oculto">
+    <button type="button" id="btnFotoCapturar" class="principal">CAPTURAR</button>
+    <button type="button" id="btnFotoHud">VER HUD</button>
+    <button type="button" id="btnFotoSalir">SALIR</button>
   </div>
 
   <!-- Menú de pausa -->
@@ -82,46 +158,20 @@
     <div class="tarjeta">
       <h2>PAUSA</h2>
       <button type="button" id="btnSeguir" class="principal">SEGUIR JUGANDO</button>
-      <div class="fila">
-        <button type="button" id="btnMusica">MÚSICA: SÍ</button>
-        <button type="button" id="btnEfectos">SONIDOS: SÍ</button>
-      </div>
-      <div class="fila distancia">
-        <span>DISTANCIA</span>
-        <button type="button" id="btnMenosDistancia" aria-label="Ver menos lejos">−</button>
-        <b id="valorDistancia">5</b>
-        <button type="button" id="btnMasDistancia" aria-label="Ver más lejos">+</button>
-      </div>
-      <div class="fila distancia solo-hay-mando">
-        <span>MIRAR (MANDO)</span>
-        <button type="button" id="btnMenosSens" aria-label="Mirar más lento">−</button>
-        <b id="valorSens">5</b>
-        <button type="button" id="btnMasSens" aria-label="Mirar más rápido">+</button>
-      </div>
-      <button type="button" id="btnInvertirY" class="solo-hay-mando">INVERTIR Y: NO</button>
-      <div class="fila">
-        <button type="button" id="btnCalidad">GRÁFICOS: ALTA</button>
-        <button type="button" id="btnGuardar">GUARDAR</button>
-      </div>
-      <div class="fila">
-        <button type="button" id="btnDepuracion">DATOS: NO</button>
-        <button type="button" id="btnMochila">MOCHILA</button>
-      </div>
+      <div class="fila"><button type="button" id="btnAjustes">AJUSTES</button><button type="button" id="btnLogros">LOGROS</button></div>
+      <div class="fila"><button type="button" id="btnGuardar">GUARDAR</button><button type="button" id="btnFoto">MODO FOTO</button></div>
+      <div class="fila"><button type="button" id="btnModo">MODO: SUPERVIVENCIA</button><button type="button" id="btnPantallaCompleta">PANTALLA COMPLETA</button></div>
+      <div class="fila"><button type="button" id="btnExportarMundo">EXPORTAR MUNDO</button><button type="button" id="btnMultiPausa">MULTIJUGADOR</button></div>
       <p id="avisoPausa" class="info" aria-live="polite"></p>
       <button type="button" id="btnTitulo">SALIR AL TÍTULO</button>
-      <p class="info">Semilla: <span id="textoSemilla"></span> · se guarda solo</p>
-      <p class="pista solo-compu">WASD caminar · Espacio saltar (2 veces = volar) · Shift correr ·
-        W 2 veces rápido = correr o volar rápido · F volar (Espacio sube, Shift baja) ·
-        clic izq. romper · clic der. poner · clic rueda copiar bloque · 1-9 / rueda elegir ·
-        E subir/bajar de vehículo (o bloques) · I bloques · clic der. usa puertas, cofres y camas ·
-        en vehículo: WASD, Espacio freno, Shift turbo, C vista, L luces, T bidón · M música · F3 datos · Esc pausa</p>
-      <p class="pista solo-tactil">joystick caminar (hasta el fondo = correr) · arrastra mirar ·
-        toca poner · mantén romper · ▦ bloques</p>
-      <p class="pista solo-mando"><b>Mando Xbox</b> · stick izq. caminar · stick der. mirar · L3 correr · A saltar (2 veces = volar; B baja) ·
-        RT romper (mantén) · LT poner · Y usar cofres, puertas y camas / subir a un vehículo · X inventario ·
-        LB/RB o ↑/↓ elegir ranura · ← copiar bloque · → volar · VISTA datos (F3) · MENU pausa.<br>
-        <b>En vehículo:</b> stick izq. dirigir · RT acelerar · LT frenar / reversa · B freno de mano · L3 turbo · A bajar · X luces · Y bidón · R3 o VISTA cámara.
-        <b>Avioneta:</b> stick izq. atrás = subir, izq./der. = girar · RT/LT motor.</p>
+      <p class="info">Mundo: <span id="textoMundo"></span> · semilla <span id="textoSemilla"></span> · se guarda solo</p>
+      <p class="pista solo-compu">WASD caminar · Espacio saltar · Shift correr · clic izq. romper / atacar (mantén) ·
+        clic der. poner, usar, comer o disparar · 1-9 / rueda elegir · E usar o subir al vehículo · I inventario y recetas ·
+        F volar (creativo) · N minimapa · F2 foto · F3 datos · T chat · Tab jugadores · Esc pausa. Las teclas se cambian en Ajustes.</p>
+      <p class="pista solo-tactil">joystick caminar (hasta el fondo = correr) · arrastra mirar · toca poner o usar · mantén romper o atacar · ▦ inventario</p>
+      <p class="pista solo-mando"><b>Mando Xbox</b> · stick izq. caminar · stick der. mirar · L3 correr · A saltar · RT romper/atacar · LT poner/usar/comer ·
+        Y usar cofres y vehículos · X inventario · LB/RB elegir ranura · ← copiar bloque · → volar (creativo) · VISTA datos · MENU pausa.<br>
+        <b>En vehículo:</b> stick izq. dirigir · RT acelerar · LT frenar · B freno de mano · A bajar.</p>
     </div>
   </div>
 
@@ -130,11 +180,15 @@
     <div class="tarjeta ancha">
       <h2>INVENTARIO</h2>
       <div class="fila pestanas">
-        <button type="button" id="pestBloques" class="activa">BLOQUES</button>
+        <button type="button" id="pestMochila" class="activa">MOCHILA</button>
+        <button type="button" id="pestRecetas">RECETAS</button>
+        <button type="button" id="pestBloques">BLOQUES</button>
         <button type="button" id="pestVehiculos">VEHÍCULOS</button>
       </div>
       <p class="info" id="infoInventario">Elige un bloque para la ranura marcada de tu barra</p>
-      <div id="rejillaInventario"></div>
+      <div id="panMochila"></div>
+      <div id="panRecetas" class="oculto"></div>
+      <div id="rejillaInventario" class="oculto"></div>
       <div id="rejillaVehiculos" class="oculto"></div>
       <button type="button" id="btnCerrarInventario">CERRAR</button>
       <p class="pista solo-mando">↕ ↔ moverte · A elegir · LB/RB pestañas · LT/RT ranura · B o X cerrar</p>
@@ -156,6 +210,8 @@
   <div id="avisoMando" role="status" aria-live="polite"></div>
 
   <script src="../comun/mando.js"></script>
+  <script src="../comun/red.js"></script>
+  <script src="../comun/lobby.js"></script>
   <script type="module" src="js/principal.js"></script>
 </body>
 </html>

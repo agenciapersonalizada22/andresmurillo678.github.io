@@ -27,7 +27,7 @@ const TIPOS = {
       [0.18, 0.3, 0.18, 0.18, 0.3, 0.3, 1, 1], [0.18, 0.3, 0.18, -0.18, 0.3, 0.3, 1, 1],
       [0.18, 0.3, 0.18, 0.18, 0.3, -0.3, 1, 1], [0.18, 0.3, 0.18, -0.18, 0.3, -0.3, 1, 1],
     ],
-    tono: 'oink', paso: 1.1,
+    tono: 'oink', paso: 1.1, vida: 10, rad: 0.45, alto: 0.95, botin: [['cerdo_crudo', 1, 3]],
   },
   oveja: {
     colores: ['#ece8e0', '#c9b9a4', '#222222', '#a89886'],
@@ -37,7 +37,7 @@ const TIPOS = {
       [0.16, 0.44, 0.16, 0.2, 0.44, 0.3, 3, 1], [0.16, 0.44, 0.16, -0.2, 0.44, 0.3, 3, 1],
       [0.16, 0.44, 0.16, 0.2, 0.44, -0.3, 3, 1], [0.16, 0.44, 0.16, -0.2, 0.44, -0.3, 3, 1],
     ],
-    tono: 'be', paso: 1.0,
+    tono: 'be', paso: 1.0, vida: 8, rad: 0.45, alto: 1.4, botin: [['cordero_crudo', 1, 2], [B.LANA_BLANCA, 1, 1]],
   },
   vaca: {
     colores: ['#f2f0ec', '#3a2a22', '#8a7a6a', '#1a1a1a'],
@@ -49,13 +49,15 @@ const TIPOS = {
       [0.18, 0.5, 0.18, 0.2, 0.5, -0.38, 1, 1], [0.18, 0.5, 0.18, -0.2, 0.5, -0.38, 1, 1],
     ],
     mancha: [[0.72, 0.4, 0.4, 0, 0.98, -0.2], [0.72, 0.3, 0.36, 0, 0.8, 0.3]],
-    tono: 'muu', paso: 0.8,
+    tono: 'muu', paso: 0.8, vida: 10, rad: 0.5, alto: 1.5, botin: [['res_cruda', 1, 3], ['cuero', 0, 2]],
   },
 };
 const NOMBRES = Object.keys(TIPOS);
 const CAJA = new THREE.BoxGeometry(1, 1, 1);
 
 function azarEntre(a, b) { return a + Math.random() * (b - a); }
+
+export const TIPOS_ANIMAL = TIPOS;
 
 export class Animales {
   constructor(escena, mundo) {
@@ -65,6 +67,9 @@ export class Animales {
     this.reserva = {};            // modelos libres por tipo (reciclaje)
     this.materiales = {};
     this.tiempoNacer = 0;
+    this.alMorir = null;          // (animal) para soltar el botín
+    this.sigId = 1;
+    this.espejo = false;          // invitado en multijugador: solo dibuja
     this.luz = [1, 1, 1];
     this.grupo = new THREE.Group();
     escena.add(this.grupo);
@@ -81,7 +86,7 @@ export class Animales {
   // Un modelo nuevo (o uno reciclado) de ese tipo
   modelo(nombre) {
     const libre = this.reserva[nombre].pop();
-    if (libre) { libre.visible = true; return libre; }
+    if (libre) { libre.visible = true; libre.rotation.z = 0; return libre; }
     const t = TIPOS[nombre];
     const mats = this.materiales[nombre];
     const g = new THREE.Group();
@@ -143,6 +148,7 @@ export class Animales {
       tipo, malla, x: x + 0.5, y: y + 1, z: z + 0.5, vx: 0, vy: 0, vz: 0,
       yaw: Math.random() * Math.PI * 2, rumbo: 0, estado: 'quieto', tiempo: azarEntre(0.5, 3),
       fase: Math.random() * 10, enSuelo: false, ruido: azarEntre(4, 12), cabeceo: 0,
+      id: this.sigId++, T: TIPOS[tipo], vida: TIPOS[tipo].vida, muriendo: 0, hurt: 0, huye: 0, kb: 0,
     };
     a.rumbo = a.yaw;
     this.lista.push(a);
@@ -152,6 +158,25 @@ export class Animales {
   quitar(i) {
     this.guardarModelo(this.lista[i]);
     this.lista.splice(i, 1);
+  }
+
+  // Un golpe (o flecha). Devuelve true si murió. Huye asustado y sale empujado.
+  herir(a, dano, desdeX, desdeZ, kb = 5) {
+    if (a.muriendo) return false;
+    a.vida -= dano;
+    a.hurt = 0.3;
+    a.huye = 4;
+    const dx = a.x - desdeX, dz = a.z - desdeZ, d = Math.hypot(dx, dz) || 1;
+    a.vx = (dx / d) * kb; a.vz = (dz / d) * kb; a.vy = 4; a.kb = 0.3;
+    a.rumbo = Math.atan2(dx, dz);
+    a.estado = 'camina';
+    Sonido.en(a.x, a.y, a.z, () => Sonido.animal(TIPOS[a.tipo].tono, 1));
+    if (a.vida <= 0) {
+      a.muriendo = 0.45;
+      if (this.alMorir) this.alMorir(a);
+      return true;
+    }
+    return false;
   }
 
   esSolido(x, y, z) {
@@ -206,7 +231,40 @@ export class Animales {
     }
   }
 
+  exportarSnapshot() {
+    return this.lista.map((a) => [a.id, NOMBRES.indexOf(a.tipo), +a.x.toFixed(2), +a.y.toFixed(2), +a.z.toFixed(2), +a.yaw.toFixed(2), a.muriendo ? 1 : 0]);
+  }
+
+  aplicarSnapshot(arr) {
+    const vistos = new Set();
+    for (const [id, ti, x, y, z, yaw, muerto] of arr) {
+      vistos.add(id);
+      let a = this.lista.find((q) => q.id === id);
+      if (!a) {
+        const tipo = NOMBRES[ti];
+        if (!tipo) continue;
+        a = { id, tipo, malla: this.modelo(tipo), x, y, z, vx: 0, vy: 0, vz: 0, yaw, rumbo: yaw, estado: 'quieto', tiempo: 1, fase: 0, enSuelo: true, ruido: 99, cabeceo: 0, T: TIPOS[tipo], vida: TIPOS[tipo].vida, muriendo: 0, hurt: 0, huye: 0, kb: 0 };
+        this.lista.push(a);
+      }
+      a.tx = x; a.ty = y; a.tz = z; a.tyaw = yaw; a.caido = !!muerto;
+    }
+    for (let i = this.lista.length - 1; i >= 0; i--) if (!vistos.has(this.lista[i].id)) this.quitar(i);
+  }
+
+  pasoEspejo(a, dt) {
+    const k = Math.min(1, dt * 12), px = a.x, pz = a.z;
+    a.x += (a.tx - a.x) * k; a.y += (a.ty - a.y) * k; a.z += (a.tz - a.z) * k;
+    let d = a.tyaw - a.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); a.yaw += d * k;
+    const v = Math.hypot(a.x - px, a.z - pz) / Math.max(dt, 0.001);
+    a.fase += v * dt * 7;
+    const m = a.malla;
+    m.position.set(a.x, a.y, a.z); m.rotation.y = a.yaw; m.rotation.z = a.caido ? 1.5 : 0;
+    const pata = Math.sin(a.fase) * Math.min(1, v) * 0.7, patas = m.userData.patas;
+    for (let q = 0; q < patas.length; q++) patas[q].rotation.x = (q === 0 || q === 3 ? pata : -pata);
+  }
+
   actualizar(dt, jugador, factorDia, max) {
+    if (this.espejo) { for (const a of this.lista) this.pasoEspejo(a, dt); return; }
     // aparecen de a poco, de día
     this.tiempoNacer -= dt;
     if (this.tiempoNacer <= 0) {
@@ -223,20 +281,31 @@ export class Animales {
         continue; // el terreno de abajo aún no existe: se queda quieto
       }
 
-      this.pensar(a, dt);
+      if (a.muriendo) {
+        a.muriendo -= dt;
+        a.malla.rotation.z = Math.min(1.5, (0.45 - a.muriendo) * 3.4);
+        a.malla.position.set(a.x, a.y, a.z);
+        if (a.muriendo <= 0) { a.malla.rotation.z = 0; this.quitar(i); }
+        continue;
+      }
+      a.hurt = Math.max(0, a.hurt - dt);
+      a.kb = Math.max(0, a.kb - dt);
+      if (a.huye > 0) { a.huye -= dt; a.tiempo = 1; } else this.pensar(a, dt);
       const dir = [Math.sin(a.rumbo), Math.cos(a.rumbo)];
       let rapidez = 0;
       if (a.estado === 'camina') {
-        if (this.seguro(a, dir[0], dir[1])) rapidez = TIPOS[a.tipo].paso;
+        if (this.seguro(a, dir[0], dir[1])) rapidez = TIPOS[a.tipo].paso * (a.huye > 0 ? 2.4 : 1);
         else { a.rumbo = Math.random() * Math.PI * 2; a.tiempo = Math.min(a.tiempo, 0.6); }
       }
       // gira suave hacia donde va
       let dy = a.rumbo - a.yaw;
       dy = Math.atan2(Math.sin(dy), Math.cos(dy));
       a.yaw += dy * Math.min(1, dt * 6);
-      const f = 1 - Math.exp(-8 * dt);
-      a.vx += (Math.sin(a.yaw) * rapidez - a.vx) * f;
-      a.vz += (Math.cos(a.yaw) * rapidez - a.vz) * f;
+      if (a.kb <= 0) {
+        const f = 1 - Math.exp(-8 * dt);
+        a.vx += (Math.sin(a.yaw) * rapidez - a.vx) * f;
+        a.vz += (Math.cos(a.yaw) * rapidez - a.vz) * f;
+      }
 
       const enAgua = DIBUJO[this.mundo.obtener(Math.floor(a.x), Math.floor(a.y + 0.2), Math.floor(a.z))] === DIBUJO_AGUA;
       if (enAgua) a.vy += (2 - a.vy) * (1 - Math.exp(-4 * dt));

@@ -104,7 +104,14 @@ function muebles(T, pal, tipo) {
 }
 
 // Casa básica: piso, paredes de 4 de alto, puerta, ventanas y techo
+// Un aldeano vive dentro (aparece cuando se crea el chunk; no se guarda)
+function aldeano(T, a, c) {
+  const [x, z] = T.mundo(a, c);
+  (T.plano.aldeanos || (T.plano.aldeanos = [])).push({ tipo: 'aldeano', x: x + 0.5, y: T.nivel + 1, z: z + 0.5, yaw: 0 });
+}
+
 export function casa(T, pal, tipo = 'vivienda') {
+  aldeano(T, T.w >> 1, Math.min(2, T.l - 2));
   const { w, l } = T;
   const H = 4;
   T.caja(0, 0, 0, w - 1, 0, l - 1, pal.piso);

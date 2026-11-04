@@ -26,6 +26,7 @@ export const LISTA_TEXTURAS = [
   'hojas_abeto', 'abedul_lado', 'abedul_arriba', 'hojas_abedul', 'terracota_naranja', 'terracota_azul', 'terracota_blanca', 'ladrillo_musgoso',
   'ladrillo_agrietado', 'arenisca_cincelada', 'mesa_trabajo_arriba', 'mesa_trabajo_lado', 'mesa_trabajo_frente', 'horno_frente', 'horno_lado', 'tablas_abeto',
   'piedra_pulida', 'cristal_oscuro', 'tejas', 'esmeralda', 'diamante',
+  'diamante_mineral', 'esmeralda_mineral',
 ];
 
 export const TAM = 32;          // pixeles por textura
@@ -923,6 +924,8 @@ const PINTORES = {
   tejas: pintarTejas,
   esmeralda: (u) => pintarGema(u, [40, 190, 90], [150, 255, 190]),
   diamante: (u) => pintarGema(u, [60, 200, 210], [190, 255, 255]),
+  diamante_mineral: (u) => pintarMineral(u, [40, 170, 180], [170, 250, 255]),
+  esmeralda_mineral: (u) => pintarMineral(u, [30, 150, 70], [140, 245, 175]),
 };
 
 // Cuánto relieve tiene cada textura (1 = normal, 0 = lisa)

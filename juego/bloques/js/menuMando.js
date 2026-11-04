@@ -5,7 +5,6 @@
 //  A = pulsar el botón con foco · B = volver · LB/RB = pestañas.
 //  Navega por posición: elige el botón más cercano en esa dirección.
 // =============================================================
-const PANTALLAS = ['sinWebgl', 'pantallaTitulo', 'pantallaPausa', 'pantallaInventario'];
 const CLASE = 'foco-mando';
 const PRIMERA = 0.38;    // segundos hasta que empieza a repetir
 const REPETIR = 0.11;    // y luego cada tanto
@@ -20,11 +19,7 @@ export class MenuMando {
 
   // La pantalla abierta (o null si estás jugando)
   pantallaAbierta() {
-    for (const id of PANTALLAS) {
-      const el = document.getElementById(id);
-      if (el && !el.classList.contains('oculto')) return el;
-    }
-    return null;
+    return document.querySelector('.pantalla:not(.oculto)');
   }
 
   botones(pantalla) {
@@ -55,7 +50,7 @@ export class MenuMando {
     const lista = this.botones(pantalla);
     if (!lista.length) return null;
     if (pantalla.id === 'pantallaInventario') {
-      const rejilla = pantalla.querySelector('#rejillaInventario:not(.oculto) button, #rejillaVehiculos:not(.oculto) button');
+      const rejilla = pantalla.querySelector('#panMochila:not(.oculto) button, #panRecetas:not(.oculto) button.fabricar, #rejillaInventario:not(.oculto) button, #rejillaVehiculos:not(.oculto) button');
       if (rejilla && lista.includes(rejilla)) return rejilla;
     }
     return lista.find((b) => b.classList.contains('principal')) || lista[0];
@@ -133,12 +128,11 @@ export class MenuMando {
     }
     if (pul('B')) a.cancelar(pantalla.id);
     if (pul('MENU')) a.cerrar(pantalla.id);
-    if (pantalla.id === 'pantallaInventario') {
-      if (pul('X')) a.cerrar(pantalla.id);
+    if (pantalla.id === 'pantallaInventario' || pantalla.id === 'pantallaAjustes') {
+      if (pul('X') && pantalla.id === 'pantallaInventario') a.cerrar(pantalla.id);
       if (pul('LB')) { a.pestana(-1); this.quitarFoco(); this.ponerFoco(this.inicial(pantalla)); }
       if (pul('RB')) { a.pestana(1); this.quitarFoco(); this.ponerFoco(this.inicial(pantalla)); }
-      if (pul('LT')) a.ranura(-1);
-      if (pul('RT')) a.ranura(1);
+      if (pantalla.id === 'pantallaInventario') { if (pul('LT')) a.ranura(-1); if (pul('RT')) a.ranura(1); }
     }
     return true;
   }
