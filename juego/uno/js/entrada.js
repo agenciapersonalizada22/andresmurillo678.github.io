@@ -7,7 +7,7 @@ export const E = { alMenu: null, alAyuda: null, alAtras: null, alPestana: null, 
 let repetir = { dir: '', t: 0, n: 0 };
 
 export function capaActiva() {
-  const capas = $$('.capa').filter((c) => !c.hidden && c.getClientRects().length > 0);
+  const capas = $$('.capa, .cu-fondo').filter((c) => !c.hidden && c.getClientRects().length > 0);
   return capas.length ? capas[capas.length - 1] : null;
 }
 function candidatos(capa) { return $$('[data-f]', capa).filter((e) => !e.disabled && e.getClientRects().length > 0); }
@@ -34,6 +34,8 @@ function mover(capa, dx, dy) {
   if (mejor) { mejor.focus(); mejor.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
 }
 function atras(capa) {
+  // .cu-fondo = dialogo de la plataforma (conflicto de guardado): se cierra con su propio atajo de Escape
+  if (capa && capa.classList.contains('cu-fondo')) { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })); return true; }
   const b = capa && capa.querySelector('[data-cerrar]');
   if (b) { b.click(); return true; }
   if (E.alAtras) return E.alAtras();

@@ -206,3 +206,17 @@ body.sinmov *, body.q-baja .chip, body.q-baja .carta { animation-duration: 0s !i
   .color-tag { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .dir { animation: none; } }
+
+/* ---------- cuenta, nube y ranking ---------- */
+.cuenta-linea { margin: -6px 0 12px; display: flex; justify-content: center; }
+.cuenta-chip { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px 4px 5px; border-radius: 999px; border: 1px solid var(--borde); background: var(--panel); color: var(--txt); font-size: .85em; min-height: 36px; }
+.cuenta-chip .cc-n { font-weight: 700; max-width: 12ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .cuenta-chip .cc-v { color: var(--suave); }
+.cu-avatar { display: inline-grid; flex: none; } .cu-perfil { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.cu-perfil div { display: flex; flex-direction: column; gap: 3px; min-width: 0; } .cu-perfil small { color: var(--suave); }
+.cu-barra { display: block; height: 6px; border-radius: 4px; background: #fff2; position: relative; overflow: hidden; } .cu-barra::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--p, 0%); background: var(--acc); }
+.cu-bloque { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+a.btn { display: inline-flex; align-items: center; justify-content: center; color: inherit; text-decoration: none; }
+.rk-cab { display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px; } .rk-lista { min-height: 80px; }
+.rk-tabla td:nth-child(2), .rk-tabla th:nth-child(2) { text-align: left; } .rk-tabla td:first-child { width: 2.4em; color: var(--suave); }
+.rk-tabla tr.rk-yo td { color: var(--aviso); font-weight: 800; } .rk-tabla tr.rk-yo td:nth-child(2) { border-left: 4px solid var(--c); }
+.cuenta-linea[hidden] { display: none; }
