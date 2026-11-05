@@ -46,8 +46,11 @@
     mem.forEach(function (r) { if (!r.d && r.k.indexOf(p) === 0) out.push({ k: r.k.slice(PRE.length), v: r.v, t: r.t }); });
     return out;
   }
+  /* para la sincronizacion con la cuenta: todos los registros (con lapidas, d:true) y escritura con marca de tiempo explicita */
+  function listaTodo() { var out = []; mem.forEach(function (r) { out.push({ k: r.k.slice(PRE.length), v: r.d ? null : r.v, t: r.t, d: !!r.d }); }); return out; }
+  function poner(k, v, t, d) { var r = d ? { k: PRE + k, v: null, t: t, d: true } : { k: PRE + k, v: v, t: t }; mem.set(r.k, r); persistir(r); }
   function suscribir(f) { subs.push(f); return function () { subs = subs.filter(function (x) { return x !== f; }); }; }
   function exportar() { var o = {}; mem.forEach(function (r) { if (!r.d) o[r.k] = { v: r.v, t: r.t }; }); return o; }
   function importar(o) { Object.keys(o || {}).forEach(function (k) { if (k.indexOf(PRE) === 0 && o[k]) { var r = { k: k, v: o[k].v, t: o[k].t || Date.now() }; mem.set(k, r); persistir(r); } }); }
-  return { abrir: abrir, get: get, set: set, borrar: borrar, lista: lista, suscribir: suscribir, exportar: exportar, importar: importar, get modo() { return modo; } };
+  return { abrir: abrir, get: get, set: set, borrar: borrar, lista: lista, listaTodo: listaTodo, poner: poner, suscribir: suscribir, exportar: exportar, importar: importar, get modo() { return modo; } };
 });
