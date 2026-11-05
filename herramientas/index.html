@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Herramientas</title>
+  <meta name="description" content="Notas, pizarra, mercados, apuestas, ofertas y estudio de contenido, en tu navegador.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%233e63dd'/%3E%3Cpath d='M18 33l9 9 19-20' fill='none' stroke='%23fff' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="comun/hub.css">
+</head>
+<body>
+  <div class="h-cont">
+    <nav class="h-barra" aria-label="Navegación">
+      <a class="h-enlace" data-f="1" data-volver href="../juego/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Volver al portal</a>
+      <span class="h-sep"></span>
+      <span class="h-sesion" id="estadoSesion" role="status"></span>
+      <button type="button" class="h-btn" id="btnTema" data-f="1" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.800A9 9 0 1 1 11.200 3a7 7 0 0 0 9.800 9.800z"/></svg><span>Tema</span></button>
+    </nav>
+    <header>
+      <h1>Herramientas</h1>
+      <p class="h-sub">Apps útiles que funcionan en tu navegador, también desde el móvil o con mando.</p>
+    </header>
+    <main>
+      <ul class="h-rejilla">
+        <li><a class="h-tarjeta" data-f="1" href="notas/" style="--c:#3e63dd">
+          <span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></span>
+          <span><h2>Notas y Tareas</h2><p>Notas, tareas y hábitos; funciona sin conexión.</p><span class="h-ir">Abrir →</span></span>
+        </a></li>
+        <li><a class="h-tarjeta" data-f="1" href="pizarra/" style="--c:#0ea5c6">
+          <span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M7 21l2-4M17 21l-2-4M7 13c2-4 4 0 6-3"/></svg></span>
+          <span><h2>Pizarra</h2><p>Pizarra colaborativa en tiempo real, con lápiz, ratón o mando.</p><span class="h-ir">Abrir →</span></span>
+        </a></li>
+        <li><a class="h-tarjeta" data-f="1" href="mercados/" style="--c:#12a37a">
+          <span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20V4M4 20h16"/><path d="M8 15l3-4 3 2 5-6"/></svg></span>
+          <span><h2>Mercados</h2><p>Terminal de mercados: cripto, acciones, divisas y noticias.</p><span class="h-ir">Abrir →</span></span>
+        </a></li>
+        <li><a class="h-tarjeta" data-f="1" href="apuestas/" style="--c:#e0455e">
+          <span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 8.5h.01M15.5 8.5h.01M12 12h.01M8.5 15.5h.01M15.5 15.5h.01"/></svg></span>
+          <span><h2>Apuestas</h2><p>Análisis y registro de apuestas con cuotas y estadísticas.</p><span class="h-ir">Abrir →</span></span>
+        </a></li>
+        <li><a class="h-tarjeta" data-f="1" href="ofertas/" style="--c:#e8820c">
+          <span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12V4h8l10 10-8 8z"/><path d="M7.5 8.5h.01"/></svg></span>
+          <span><h2>Ofertas</h2><p>Ofertas y promociones para comparar antes de comprar.</p><span class="h-ir">Abrir →</span></span>
+        </a></li>
+        <li><a class="h-tarjeta" data-f="1" href="contenido/" style="--c:#9b5de5">
+          <span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.500v5l4.500-2.500z"/></svg></span>
+          <span><h2>Estudio de contenido</h2><p>Imágenes, video, escritor y calendario para crear contenido.</p><span class="h-ir">Entrar →</span></span>
+        </a></li>
+      </ul>
+    </main>
+    <div class="h-aviso" role="note"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><p><b>Privacidad.</b> Mientras no inicies sesión, lo que crees en estas herramientas (notas, tableros, proyectos, ajustes) se guarda solo en este dispositivo, dentro del navegador, y no se envía a ningún servidor. Si borras los datos del navegador, se pierden: exporta copias de lo importante. Con una cuenta del portal de juegos podrás tenerlas ligadas a tu perfil.</p></div>
+    <p class="h-pista" aria-hidden="true"><span><b>+</b>mover</span><span><b>A</b>abrir</span><span><b>B</b>volver</span></p>
+  </div>
+  <script src="../juego/comun/firebase-config.js"></script>
+  <script src="../juego/comun/mando.js"></script>
+  <script src="../juego/plataforma/juegos.js"></script>
+  <script src="../juego/comun/cuenta.js"></script>
+  <script src="comun/hub.js"></script>
+</body>
+</html>

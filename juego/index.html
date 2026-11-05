@@ -77,9 +77,9 @@
 
       <div id="tab-juegos" role="region" aria-label="Juegos">
         <div id="continuar"></div>
-        <h2 class="p-sec-t">Elige un juego</h2>
+        <h2 class="p-sec-t" id="tituloCatalogo">Elige un juego o una herramienta</h2>
         <main class="lista" id="listaJuegos">
-    <a class="juego" data-f="1" data-juego="nebula" href="nebula/" style="--color:#3df5ff">
+    <a class="juego" data-f="1" data-juego="nebula" data-cat="Acción" href="nebula/" style="--color:#3df5ff">
       <svg viewBox="0 0 320 160" aria-hidden="true">
         <rect width="320" height="160" fill="#05030f"/>
         <circle cx="70" cy="50" r="70" fill="#3a1c8c" opacity="0.45"/>
@@ -104,7 +104,7 @@
         <span class="jugar">JUGAR</span>
       </div>
     </a>
-    <a class="juego" data-f="1" data-juego="ciudad" href="ciudad/" style="--color:#ffb13d">
+    <a class="juego" data-f="1" data-juego="ciudad" data-cat="Mundo abierto" href="ciudad/" style="--color:#ffb13d">
       <svg viewBox="0 0 320 160" aria-hidden="true">
         <rect width="320" height="160" fill="#2b2f36"/>
         <rect x="0" y="60" width="320" height="40" fill="#3b3f47"/>
@@ -126,7 +126,7 @@
         <span class="jugar">JUGAR</span>
       </div>
     </a>
-    <a class="juego" data-f="1" data-juego="bloques" href="bloques/" style="--color:#7dd957">
+    <a class="juego" data-f="1" data-juego="bloques" data-cat="Mundo abierto" href="bloques/" style="--color:#7dd957">
       <svg viewBox="0 0 320 160" aria-hidden="true">
         <rect width="320" height="160" fill="#7ec8ff"/>
         <rect x="236" y="18" width="30" height="30" fill="#fff6a8"/>
@@ -149,7 +149,7 @@
         <span class="jugar">JUGAR</span>
       </div>
     </a>
-    <a class="juego" data-f="1" data-juego="guerra" href="guerra/" style="--color:#ff7a3d">
+    <a class="juego" data-f="1" data-juego="guerra" data-cat="Acción" href="guerra/" style="--color:#ff7a3d">
       <svg viewBox="0 0 320 160" aria-hidden="true">
         <defs><linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a0f40"/><stop offset="1" stop-color="#ff7a3d"/></linearGradient></defs>
         <rect width="320" height="160" fill="url(#gg)"/>
@@ -167,7 +167,7 @@
         <span class="jugar">JUGAR</span>
       </div>
     </a>
-    <a class="juego" data-f="1" data-juego="ajedrez" href="ajedrez/" style="--color:#c9a8ff">
+    <a class="juego" data-f="1" data-juego="ajedrez" data-cat="Mesa y cartas" href="ajedrez/" style="--color:#c9a8ff">
       <svg viewBox="0 0 320 160" aria-hidden="true">
         <defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1a4a"/><stop offset="1" stop-color="#0b0618"/></linearGradient></defs>
         <rect width="320" height="160" fill="url(#ga)"/>
@@ -186,7 +186,7 @@
         <span class="jugar">JUGAR</span>
       </div>
     </a>
-    <a class="juego" data-f="1" data-juego="metropolis" href="metropolis/" style="--color:#3df5a8">
+    <a class="juego" data-f="1" data-juego="metropolis" data-cat="Estrategia" href="metropolis/" style="--color:#3df5a8">
       <svg viewBox="0 0 320 160" aria-hidden="true">
         <defs><linearGradient id="gm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14305a"/><stop offset="1" stop-color="#ff9f6b"/></linearGradient></defs>
         <rect width="320" height="160" fill="url(#gm)"/>
@@ -201,6 +201,180 @@
         <p>Construye y haz crecer tu ciudad: zonas, servicios, mejoras y objetivos. Pensado para el celular.</p>
         <div class="p-stats" data-stats></div>
         <span class="jugar">JUGAR</span>
+      </div>
+    </a>
+    <a class="juego" data-f="1" data-juego="buscaminas" data-cat="Estrategia" href="buscaminas/" style="--color:#ffd23d">
+      <svg viewBox="0 0 320 160" aria-hidden="true" focusable="false">
+        <rect width="320" height="160" fill="#1b2230"/>
+        <g stroke="#0f1520" stroke-width="2"><rect x="26" y="10" width="32" height="26" rx="3" fill="#2a3446"/><rect x="60" y="10" width="32" height="26" rx="3" fill="#2a3446"/><rect x="94" y="10" width="32" height="26" rx="3" fill="#2a3446"/><text x="110" y="29" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="17" fill="#5ab0ff" stroke="none">1</text><rect x="128" y="10" width="32" height="26" rx="3" fill="#8fa0b8"/><rect x="162" y="10" width="32" height="26" rx="3" fill="#2a3446"/><text x="178" y="29" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="17" fill="#5fe08a" stroke="none">2</text><rect x="196" y="10" width="32" height="26" rx="3" fill="#8fa0b8"/><rect x="230" y="10" width="32" height="26" rx="3" fill="#2a3446"/><text x="246" y="29" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="17" fill="#5ab0ff" stroke="none">1</text><rect x="264" y="10" width="32" height="26" rx="3" fill="#2a3446"/><rect x="26" y="38" width="32" height="26" rx="3" fill="#2a3446"/><text x="42" y="57" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="17" fill="#5ab0ff" stroke="none">1</text><rect x="60" y="38" width="32" height="26" rx="3" fill="#2a3446"/><text x="76" y="57" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="17" fill="#5ab0ff" stroke="none">1</text><rect x="94" y="38" width="32" height="26" rx="3" fill="#2a3446"/><text x="110" y="57" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="17" fill="#5fe08a" stroke="none">2</text><rect x="128" y="38" width="32" height="26" rx="3" fill="#8fa0b8"/><rect x="162" y="38" width="32" height="26" rx="3" fill="#2a3446"/><text x="178" y="57" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="17" fill="#ff6b6b" stroke="none">3</text><rect x="196" y="38" width="32" height="26" rx="3" fill="#8fa0b8"/><rect x="230" y="38" width="32" height="26" rx="3" fill="#2a3446"/><text x="246" y="57" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="17" fill="#5fe08a" stroke="none">2</text><rect x="264" y="38" width="32" height="26" rx="3" fill="#2a3446"/><text x="280" y="57" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="17" fill="#5ab0ff" stroke="none">1</text><rect x="26" y="66" width="32" height="26" rx="3" fill="#8fa0b8"/><rect x="60" y="66" width="32" height="26" rx="3" fill="#2a3446"/><text x="76" y="85" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="17" fill="#5fe08a" stroke="none">2</text><rect x="94" y="66" width="32" height="26" rx="3" fill="#8fa0b8"/><path d="M106 86V72l12 5-12 5" fill="#ff5a5a" stroke="#fff" stroke-width="2"/><rect x="128" y="66" width="32" height="26" rx="3" fill="#8fa0b8"/><rect x="162" y="66" width="32" height="26" rx="3" fill="#2a3446"/><text x="178" y="85" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="17" fill="#5fe08a" stroke="none">2</text><rect x="196" y="66" width="32" height="26" rx="3" fill="#2a3446"/><text x="212" y="85" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="17" fill="#5fe08a" stroke="none">2</text><rect x="230" y="66" width="32" height="26" rx="3" fill="#8fa0b8"/><rect x="264" y="66" width="32" height="26" rx="3" fill="#2a3446"/><text x="280" y="85" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="17" fill="#5ab0ff" stroke="none">1</text><rect x="26" y="94" width="32" height="26" rx="3" fill="#8fa0b8"/><rect x="60" y="94" width="32" height="26" rx="3" fill="#2a3446"/><text x="76" y="113" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="17" fill="#ff6b6b" stroke="none">3</text><rect x="94" y="94" width="32" height="26" rx="3" fill="#8fa0b8"/><rect x="128" y="94" width="32" height="26" rx="3" fill="#2a3446"/><text x="144" y="113" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="17" fill="#5fe08a" stroke="none">2</text><rect x="162" y="94" width="32" height="26" rx="3" fill="#2a3446"/><text x="178" y="113" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="17" fill="#5ab0ff" stroke="none">1</text><rect x="196" y="94" width="32" height="26" rx="3" fill="#8fa0b8"/><rect x="230" y="94" width="32" height="26" rx="3" fill="#8fa0b8"/><rect x="264" y="94" width="32" height="26" rx="3" fill="#8fa0b8"/><rect x="26" y="122" width="32" height="26" rx="3" fill="#8fa0b8"/><rect x="60" y="122" width="32" height="26" rx="3" fill="#2a3446"/><text x="76" y="141" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="17" fill="#5fe08a" stroke="none">2</text><rect x="94" y="122" width="32" height="26" rx="3" fill="#2a3446"/><text x="110" y="141" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="17" fill="#5fe08a" stroke="none">2</text><rect x="128" y="122" width="32" height="26" rx="3" fill="#2a3446"/><text x="144" y="141" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="17" fill="#5ab0ff" stroke="none">1</text><rect x="162" y="122" width="32" height="26" rx="3" fill="#2a3446"/><rect x="196" y="122" width="32" height="26" rx="3" fill="#2a3446"/><text x="212" y="141" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="17" fill="#5ab0ff" stroke="none">1</text><rect x="230" y="122" width="32" height="26" rx="3" fill="#8fa0b8"/><rect x="264" y="122" width="32" height="26" rx="3" fill="#8fa0b8"/></g>
+        <g><circle cx="190" cy="116" r="7" fill="#ffd23d"/><path d="M190 104v24M178 116h24M181 107l18 18M199 107l-18 18" stroke="#ffd23d" stroke-width="2.500" stroke-linecap="round"/></g>
+      </svg>
+      <div class="info">
+        <h2>BUSCAMINAS</h2>
+        <p>Despeja el campo minado: tres dificultades, reto diario, contrarreloj y supervivencia.</p>
+        <div class="p-stats" data-stats></div>
+        <span class="jugar">JUGAR</span>
+      </div>
+    </a>
+    <a class="juego" data-f="1" data-juego="celulas" data-cat="Acción" href="celulas/" style="--color:#5cf2a0">
+      <svg viewBox="0 0 320 160" aria-hidden="true" focusable="false">
+        <defs><radialGradient id="gce" cx="50%" cy="50%" r="70%"><stop offset="0" stop-color="#16324a"/><stop offset="1" stop-color="#07101c"/></radialGradient></defs>
+        <rect width="320" height="160" fill="url(#gce)"/>
+        <g stroke="#ffffff" stroke-opacity="0.07" stroke-width="1"><path d="M0 40H320M0 80H320M0 120H320M60 0V160M120 0V160M180 0V160M240 0V160M300 0V160"/></g>
+        <g><circle cx="40" cy="30" r="3" fill="#ff7ac6"/><circle cx="280" cy="30" r="3" fill="#ffd23d"/><circle cx="250" cy="130" r="3" fill="#7dd3fc"/><circle cx="30" cy="125" r="3" fill="#5cf2a0"/><circle cx="140" cy="140" r="3" fill="#ff7a3d"/><circle cx="170" cy="20" r="3" fill="#c77dff"/></g>
+        <circle cx="130" cy="82" r="48" fill="#2fbf7a" stroke="#5cf2a0" stroke-width="4"/><circle cx="118" cy="70" r="14" fill="#5cf2a0" opacity="0.5"/><circle cx="142" cy="92" r="7" fill="#1b8f58"/>
+        <circle cx="224" cy="78" r="26" fill="#ff6a8a" stroke="#ffb0c2" stroke-width="3"/><circle cx="217" cy="72" r="7" fill="#ffb0c2" opacity="0.6"/>
+        <circle cx="270" cy="104" r="14" fill="#ffd23d" stroke="#fff3b0" stroke-width="2.500"/><circle cx="76" cy="130" r="9" fill="#7dd3fc"/>
+      </svg>
+      <div class="info">
+        <h2>CÉLULAS</h2>
+        <p>Come, crece y devora: batallas de masa contra bots o amigos.</p>
+        <div class="p-stats" data-stats></div>
+        <span class="jugar">JUGAR</span>
+      </div>
+    </a>
+    <a class="juego" data-f="1" data-juego="serpientes" data-cat="Acción" href="serpientes/" style="--color:#7dff4f">
+      <svg viewBox="0 0 320 160" aria-hidden="true" focusable="false">
+        <defs><linearGradient id="gse" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0c2a14"/><stop offset="1" stop-color="#061509"/></linearGradient></defs>
+        <rect width="320" height="160" fill="url(#gse)"/>
+        <g stroke="#7dff4f" stroke-opacity="0.08"><path d="M0 40H320M0 80H320M0 120H320M80 0V160M160 0V160M240 0V160"/></g>
+        <path d="M40 120 C 80 150, 110 90, 150 112 S 210 60, 190 40 S 130 28, 150 62" fill="none" stroke="#2fb81f" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M40 120 C 80 150, 110 90, 150 112 S 210 60, 190 40 S 130 28, 150 62" fill="none" stroke="#7dff4f" stroke-width="12" stroke-linecap="round" stroke-dasharray="2 18" opacity="0.8"/>
+        <circle cx="150" cy="62" r="13" fill="#9cff6e"/><circle cx="145" cy="58" r="3.500" fill="#06150a"/><circle cx="156" cy="58" r="3.500" fill="#06150a"/>
+        <g><circle cx="258" cy="52" r="6" fill="#ff5a8a"/><circle cx="270" cy="112" r="6" fill="#ffd23d"/><circle cx="236" cy="130" r="5" fill="#4fd1ff"/><circle cx="76" cy="50" r="5" fill="#ff9f43"/><circle cx="285" cy="82" r="4" fill="#c77dff"/></g>
+        <path d="M230 90 C 250 80, 270 94, 292 138" fill="none" stroke="#ff5a8a" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
+      </svg>
+      <div class="info">
+        <h2>SERPIENTES</h2>
+        <p>Serpientes arcade: crece, esquiva y domina la arena, solo o en línea.</p>
+        <div class="p-stats" data-stats></div>
+        <span class="jugar">JUGAR</span>
+      </div>
+    </a>
+    <a class="juego" data-f="1" data-juego="uno" data-cat="Mesa y cartas" href="uno/" style="--color:#ff5a5a">
+      <svg viewBox="0 0 320 160" aria-hidden="true" focusable="false">
+        <rect width="320" height="160" fill="#2b0d14"/>
+        <g transform="translate(100 84) rotate(-24)"><rect x="-30" y="-44" width="60" height="88" rx="8" fill="#e53935" stroke="#fff" stroke-width="3"/><ellipse cx="0" cy="0" rx="22" ry="34" fill="#fff" transform="rotate(30)"/><text x="0" y="12" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="34" font-style="italic" fill="#e53935">7</text></g><g transform="translate(150 80) rotate(-8)"><rect x="-30" y="-44" width="60" height="88" rx="8" fill="#1e63e0" stroke="#fff" stroke-width="3"/><ellipse cx="0" cy="0" rx="22" ry="34" fill="#fff" transform="rotate(30)"/><text x="0" y="12" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="34" font-style="italic" fill="#1e63e0">2</text></g><g transform="translate(202 80) rotate(10)"><rect x="-30" y="-44" width="60" height="88" rx="8" fill="#2eae4e" stroke="#fff" stroke-width="3"/><ellipse cx="0" cy="0" rx="22" ry="34" fill="#fff" transform="rotate(30)"/><text x="0" y="12" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="34" font-style="italic" fill="#2eae4e">5</text></g><g transform="translate(250 88) rotate(26)"><rect x="-30" y="-44" width="60" height="88" rx="8" fill="#f2c200" stroke="#fff" stroke-width="3"/><ellipse cx="0" cy="0" rx="22" ry="34" fill="#fff" transform="rotate(30)"/><text x="0" y="12" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="34" font-style="italic" fill="#f2c200">9</text></g>
+      </svg>
+      <div class="info">
+        <h2>UNO</h2>
+        <p>El clásico de cartas de colores con bots, reglas de la casa y amigos.</p>
+        <div class="p-stats" data-stats></div>
+        <span class="jugar">JUGAR</span>
+      </div>
+    </a>
+    <a class="juego" data-f="1" data-juego="magnate" data-cat="Mesa y cartas" href="magnate/" style="--color:#ffb13d">
+      <svg viewBox="0 0 320 160" aria-hidden="true" focusable="false">
+        <rect width="320" height="160" fill="#0f3d26"/>
+        <g stroke="#0a2a1a" stroke-width="2">
+          <rect x="20" y="10" width="280" height="140" fill="#cfe8c8"/>
+          <rect x="62" y="40" width="196" height="80" fill="#0f3d26"/>
+          <rect x="62" y="10" width="24.5" height="30" fill="#e8f1df"/><rect x="62" y="10" width="24.5" height="9" fill="#8b4a2b"/><rect x="86.5" y="10" width="24.5" height="30" fill="#e8f1df"/><rect x="86.5" y="10" width="24.5" height="9" fill="#6ec0ff"/><rect x="111" y="10" width="24.5" height="30" fill="#e8f1df"/><rect x="111" y="10" width="24.5" height="9" fill="#d94f9a"/><rect x="135.5" y="10" width="24.5" height="30" fill="#e8f1df"/><rect x="135.5" y="10" width="24.5" height="9" fill="#ff9f1c"/><rect x="160" y="10" width="24.5" height="30" fill="#e8f1df"/><rect x="160" y="10" width="24.5" height="9" fill="#e53935"/><rect x="184.5" y="10" width="24.5" height="30" fill="#e8f1df"/><rect x="184.5" y="10" width="24.5" height="9" fill="#f2d200"/><rect x="209" y="10" width="24.5" height="30" fill="#e8f1df"/><rect x="209" y="10" width="24.5" height="9" fill="#2eae4e"/><rect x="233.5" y="10" width="24.5" height="30" fill="#e8f1df"/><rect x="233.5" y="10" width="24.5" height="9" fill="#2a4fd6"/>
+          <rect x="20" y="40" width="42" height="20" fill="#e8f1df"/><rect x="20" y="40" width="10" height="20" fill="#8b4a2b"/><rect x="20" y="60" width="42" height="20" fill="#e8f1df"/><rect x="20" y="60" width="10" height="20" fill="#d94f9a"/><rect x="20" y="80" width="42" height="20" fill="#e8f1df"/><rect x="20" y="80" width="10" height="20" fill="#e53935"/><rect x="20" y="100" width="42" height="20" fill="#e8f1df"/><rect x="20" y="100" width="10" height="20" fill="#2a4fd6"/>
+          <rect x="258" y="40" width="42" height="20" fill="#e8f1df"/><rect x="290" y="40" width="10" height="20" fill="#6ec0ff"/><rect x="258" y="60" width="42" height="20" fill="#e8f1df"/><rect x="290" y="60" width="10" height="20" fill="#ff9f1c"/><rect x="258" y="80" width="42" height="20" fill="#e8f1df"/><rect x="290" y="80" width="10" height="20" fill="#f2d200"/><rect x="258" y="100" width="42" height="20" fill="#e8f1df"/><rect x="290" y="100" width="10" height="20" fill="#2eae4e"/>
+        </g>
+        <rect x="78" y="116" width="34" height="34" fill="none"/>
+        <g transform="rotate(-12 120 80)"><rect x="104" y="64" width="34" height="34" rx="6" fill="#fff" stroke="#222" stroke-width="2"/><g fill="#111"><circle cx="113" cy="73" r="3"/><circle cx="129" cy="89" r="3"/><circle cx="121" cy="81" r="3"/><circle cx="129" cy="73" r="3"/><circle cx="113" cy="89" r="3"/></g></g>
+        <g transform="rotate(14 180 84)"><rect x="164" y="68" width="34" height="34" rx="6" fill="#fff" stroke="#222" stroke-width="2"/><g fill="#111"><circle cx="173" cy="77" r="3"/><circle cx="189" cy="93" r="3"/><circle cx="181" cy="85" r="3"/></g></g>
+        <g><path d="M222 62l8-18 8 12 8-12 8 18z" fill="#ffd23d" stroke="#8a6a00" stroke-width="2"/></g>
+      </svg>
+      <div class="info">
+        <h2>MAGNATE</h2>
+        <p>Compra calles, construye hoteles y arruina a tus rivales en un tablero 3D.</p>
+        <div class="p-stats" data-stats></div>
+        <span class="jugar">JUGAR</span>
+      </div>
+    </a>
+    <a class="juego" data-f="1" data-juego="cartas" data-cat="Mesa y cartas" href="cartas/" style="--color:#c77dff">
+      <svg viewBox="0 0 320 160" aria-hidden="true" focusable="false">
+        <defs><radialGradient id="gca" cx="50%" cy="40%" r="80%"><stop offset="0" stop-color="#1c6b43"/><stop offset="1" stop-color="#082a1a"/></radialGradient></defs>
+        <rect width="320" height="160" fill="url(#gca)"/>
+        <g transform="translate(112 86) rotate(-14)"><rect x="-32" y="-48" width="64" height="96" rx="8" fill="#fff" stroke="#bbb" stroke-width="2"/><text x="-22" y="-26" font-family="Arial,sans-serif" font-weight="800" font-size="20" fill="#c62828">K</text><path d="M0-6c-8-14-20-4-14 6 4 6 14 12 14 14 0-2 10-8 14-14 6-10-6-20-14-6z" fill="#c62828" transform="translate(0 4)"/></g>
+        <g transform="translate(160 82) rotate(0)"><rect x="-32" y="-48" width="64" height="96" rx="8" fill="#fff" stroke="#bbb" stroke-width="2"/><text x="-22" y="-26" font-family="Arial,sans-serif" font-weight="800" font-size="20" fill="#111">A</text><path d="M0-22c-6 14-22 14-22 28 0 8 8 12 14 8-1 8-3 12-6 14h28c-3-2-5-6-6-14 6 4 14 0 14-8 0-14-16-14-22-28z" fill="#111" transform="translate(0 10) scale(0.9)"/></g>
+        <g transform="translate(210 88) rotate(14)"><rect x="-32" y="-48" width="64" height="96" rx="8" fill="#fff" stroke="#bbb" stroke-width="2"/><text x="-22" y="-26" font-family="Arial,sans-serif" font-weight="800" font-size="20" fill="#c62828">7</text><path d="M0-22 14 0 0 22-14 0z" fill="#c62828" transform="translate(0 6)"/></g>
+        <g><ellipse cx="262" cy="130" rx="22" ry="8" fill="#c77dff" stroke="#fff" stroke-width="2"/><ellipse cx="262" cy="123" rx="22" ry="8" fill="#e3b7ff" stroke="#fff" stroke-width="2"/><ellipse cx="262" cy="116" rx="22" ry="8" fill="#c77dff" stroke="#fff" stroke-width="2"/></g>
+      </svg>
+      <div class="info">
+        <h2>CARTAS</h2>
+        <p>Póker, veintiuno, siete y medio, dompe, conquián y ve a pescar.</p>
+        <div class="p-stats" data-stats></div>
+        <span class="jugar">JUGAR</span>
+      </div>
+    </a>
+    <a class="juego" data-f="1" data-juego="notas" data-cat="Herramientas" href="../herramientas/notas/" style="--color:#ffd23d">
+      <svg viewBox="0 0 320 160" aria-hidden="true" focusable="false">
+        <rect width="320" height="160" fill="#1f2740"/><rect x="84" y="14" width="152" height="132" rx="10" fill="#fffbe6"/><rect x="84" y="14" width="152" height="22" rx="10" fill="#ffd23d"/>
+        <rect x="100" y="52" width="16" height="16" rx="4" fill="#3e63dd" stroke="#3e63dd" stroke-width="2.500"/><path d="M103 60l4 4 7-8" fill="none" stroke="#fff" stroke-width="2.500" stroke-linecap="round" stroke-linejoin="round"/><rect x="126" y="55" width="88" height="9" rx="4" fill="#c6cbd8"/><rect x="100" y="80" width="16" height="16" rx="4" fill="#3e63dd" stroke="#3e63dd" stroke-width="2.500"/><path d="M103 88l4 4 7-8" fill="none" stroke="#fff" stroke-width="2.500" stroke-linecap="round" stroke-linejoin="round"/><rect x="126" y="83" width="70" height="9" rx="4" fill="#c6cbd8"/><rect x="100" y="108" width="16" height="16" rx="4" fill="none" stroke="#3e63dd" stroke-width="2.500"/><rect x="126" y="111" width="96" height="9" rx="4" fill="#7b8296"/>
+      </svg>
+      <div class="info">
+        <h2>NOTAS Y TAREAS</h2>
+        <p>Notas, tareas y hábitos; funciona sin conexión.</p>
+        <div class="p-stats" data-stats></div>
+        <span class="jugar">ABRIR</span>
+      </div>
+    </a>
+    <a class="juego" data-f="1" data-juego="pizarra" data-cat="Herramientas" href="../herramientas/pizarra/" style="--color:#4fd1ff">
+      <svg viewBox="0 0 320 160" aria-hidden="true" focusable="false">
+        <rect width="320" height="160" fill="#10303a"/><rect x="30" y="20" width="260" height="112" rx="10" fill="#f4f7fa" stroke="#4fd1ff" stroke-width="4"/>
+        <path d="M56 100c24-50 40-10 60-30s30 30 54 6 28-40 50-14" fill="none" stroke="#e53935" stroke-width="5" stroke-linecap="round"/><path d="M60 54h60M60 70h40" stroke="#2a4fd6" stroke-width="5" stroke-linecap="round"/><circle cx="232" cy="96" r="18" fill="none" stroke="#2eae4e" stroke-width="5"/>
+        <g transform="rotate(35 262 112)"><rect x="254" y="86" width="12" height="54" rx="3" fill="#ffd23d" stroke="#8a6a00" stroke-width="2"/><path d="M254 140l6 14 6-14z" fill="#f5c9a0"/></g>
+      </svg>
+      <div class="info">
+        <h2>PIZARRA</h2>
+        <p>Pizarra colaborativa en tiempo real, con lápiz, ratón o mando.</p>
+        <div class="p-stats" data-stats></div>
+        <span class="jugar">ABRIR</span>
+      </div>
+    </a>
+    <a class="juego" data-f="1" data-juego="mercados" data-cat="Herramientas" href="../herramientas/mercados/" style="--color:#3ddc97">
+      <svg viewBox="0 0 320 160" aria-hidden="true" focusable="false">
+        <rect width="320" height="160" fill="#08241c"/><g stroke="#ffffff" stroke-opacity="0.08"><path d="M0 40H320M0 80H320M0 120H320"/></g>
+        <path d="M40 44V126" stroke="#3ddc97" stroke-width="3"/><rect x="32" y="90" width="16" height="26" rx="2" fill="#3ddc97"/><path d="M78 64V136" stroke="#ff5a6e" stroke-width="3"/><rect x="70" y="100" width="16" height="16" rx="2" fill="#ff5a6e"/><path d="M116 54V112" stroke="#3ddc97" stroke-width="3"/><rect x="108" y="84" width="16" height="22" rx="2" fill="#3ddc97"/><path d="M154 34V104" stroke="#3ddc97" stroke-width="3"/><rect x="146" y="70" width="16" height="16" rx="2" fill="#3ddc97"/><path d="M192 44V106" stroke="#ff5a6e" stroke-width="3"/><rect x="184" y="76" width="16" height="12" rx="2" fill="#ff5a6e"/><path d="M230 22V88" stroke="#3ddc97" stroke-width="3"/><rect x="222" y="56" width="16" height="14" rx="2" fill="#3ddc97"/><path d="M268 10V72" stroke="#3ddc97" stroke-width="3"/><rect x="260" y="36" width="16" height="22" rx="2" fill="#3ddc97"/>
+        <path d="M30 120C70 112 90 96 130 88S200 72 232 52 280 28 292 24" fill="none" stroke="#ffd23d" stroke-width="3" stroke-dasharray="6 5"/>
+      </svg>
+      <div class="info">
+        <h2>MERCADOS</h2>
+        <p>Terminal de mercados: cripto, acciones, divisas y noticias.</p>
+        <div class="p-stats" data-stats></div>
+        <span class="jugar">ABRIR</span>
+      </div>
+    </a>
+    <a class="juego" data-f="1" data-juego="apuestas" data-cat="Herramientas" href="../herramientas/apuestas/" style="--color:#ff6b81">
+      <svg viewBox="0 0 320 160" aria-hidden="true" focusable="false">
+        <rect width="320" height="160" fill="#2a1020"/><g transform="rotate(-10 110 88)"><rect x="70" y="48" width="64" height="64" rx="12" fill="#fff" stroke="#ff6b81" stroke-width="3"/><g fill="#d6264a"><circle cx="88" cy="66" r="6"/><circle cx="116" cy="66" r="6"/><circle cx="102" cy="80" r="6"/><circle cx="88" cy="94" r="6"/><circle cx="116" cy="94" r="6"/></g></g>
+        <ellipse cx="210" cy="124" rx="40" ry="12" fill="#c62828" stroke="#fff" stroke-width="3"/><ellipse cx="210" cy="112" rx="40" ry="12" fill="#e53935" stroke="#fff" stroke-width="3"/><ellipse cx="210" cy="100" rx="40" ry="12" fill="#c62828" stroke="#fff" stroke-width="3"/><ellipse cx="210" cy="88" rx="40" ry="12" fill="#e53935" stroke="#fff" stroke-width="3"/>
+        <text x="258" y="46" font-family="Arial,sans-serif" font-weight="800" font-size="24" fill="#ffd23d" text-anchor="middle">2.35</text>
+      </svg>
+      <div class="info">
+        <h2>APUESTAS</h2>
+        <p>Análisis y registro de apuestas con cuotas y estadísticas.</p>
+        <div class="p-stats" data-stats></div>
+        <span class="jugar">ABRIR</span>
+      </div>
+    </a>
+    <a class="juego" data-f="1" data-juego="ofertas" data-cat="Herramientas" href="../herramientas/ofertas/" style="--color:#ff9f43">
+      <svg viewBox="0 0 320 160" aria-hidden="true" focusable="false">
+        <rect width="320" height="160" fill="#33200c"/><g transform="rotate(-14 160 80)"><path d="M70 50h120l56 30-56 30H70z" fill="#ff9f43" stroke="#fff" stroke-width="3" stroke-linejoin="round"/><circle cx="92" cy="80" r="9" fill="#33200c"/><text x="150" y="92" font-family="Arial,sans-serif" font-weight="900" font-size="36" fill="#fff" text-anchor="middle">-30%</text></g>
+        <g fill="#ffd23d"><path d="M270 30l3 8 8 1-6 5 2 8-7-4-7 4 2-8-6-5 8-1z"/><path d="M40 124l2 6 6 1-5 4 1 6-5-3-5 3 1-6-5-4 6-1z"/></g>
+      </svg>
+      <div class="info">
+        <h2>OFERTAS</h2>
+        <p>Ofertas y promociones para comparar antes de comprar.</p>
+        <div class="p-stats" data-stats></div>
+        <span class="jugar">ABRIR</span>
+      </div>
+    </a>
+    <a class="juego" data-f="1" data-juego="contenido" data-cat="Herramientas" href="../herramientas/contenido/" style="--color:#c77dff">
+      <svg viewBox="0 0 320 160" aria-hidden="true" focusable="false">
+        <rect width="320" height="160" fill="#25123e"/><rect x="40" y="26" width="150" height="108" rx="10" fill="#3a1d63" stroke="#c77dff" stroke-width="3"/><circle cx="82" cy="62" r="12" fill="#ffd23d"/><path d="M48 124l40-40 28 28 22-20 44 32z" fill="#7b4fd1"/>
+        <rect x="170" y="52" width="110" height="82" rx="10" fill="#4a1f6e" stroke="#ff7ac6" stroke-width="3"/><path d="M206 76v36l32-18z" fill="#ff7ac6"/><rect x="190" y="38" width="70" height="8" rx="4" fill="#c77dff"/>
+        <path d="M268 30l10 10-34 34-14 4 4-14z" fill="#ffd23d" stroke="#8a6a00" stroke-width="2"/>
+      </svg>
+      <div class="info">
+        <h2>ESTUDIO DE CONTENIDO</h2>
+        <p>Imágenes, video, escritor y calendario para crear contenido.</p>
+        <div class="p-stats" data-stats></div>
+        <span class="jugar">ABRIR</span>
       </div>
     </a>
         </main>

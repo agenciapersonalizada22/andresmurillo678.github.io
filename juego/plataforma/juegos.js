@@ -1,10 +1,10 @@
 /* Tabla de juegos de la plataforma. Fuente unica para el portal, Cuenta y las reglas de Firestore (firestore.rules debe coincidir:
-   lo comprueba plataforma/pruebas/tablas.test.mjs). Cada modo: id, nombre, mayorEsMejor, tope (valor maximo aceptado por las reglas), unidad.
+   lo comprueba plataforma/pruebas/tablas.test.mjs). Cada modo: id, nombre, mayorEsMejor, tope (valor maximo aceptado por las reglas), min (opcional, valor minimo; para los modos de «menor es mejor»), unidad.
    Para anadir un modo o juego: editar aqui Y el mapa topes() y la lista de juegos en firestore.rules, y volver a publicar las reglas.
    Los ids de logros son libres (las reglas solo limitan la cantidad, 100 por juego: LOGROS_MAX); aqui se declaran para mostrar su nombre en el portal. */
 (function (G) {
   var J = [
-    { id: 'nebula', nombre: 'Nebula', ruta: 'nebula/', color: '#3df5ff', descripcion: 'Naves espaciales neon',
+    { id: 'nebula', nombre: 'Nebula', ruta: 'nebula/', color: '#3df5ff', categoria: 'Acción', descripcion: 'Naves espaciales neon',
       modos: [{ id: 'puntos', nombre: 'Puntos', mayorEsMejor: true, tope: 100000000, unidad: 'pts' }, { id: 'oleada', nombre: 'Oleada alcanzada', mayorEsMejor: true, tope: 10000, unidad: '' }],
       logros: [
         { id: 'vuelo', nombre: 'Primer vuelo', desc: 'Termina tu primera partida.' },
@@ -29,7 +29,7 @@
         { id: 'maxmej', nombre: 'Perfeccionista', desc: 'Lleva una mejora al máximo.' },
         { id: 'flota', nombre: 'Flota completa', desc: 'Desbloquea todas las naves.' }
       ] },
-    { id: 'ciudad', nombre: 'Ciudad Libre', ruta: 'ciudad/', color: '#ffb13d', descripcion: 'Mundo abierto',
+    { id: 'ciudad', nombre: 'Ciudad Libre', ruta: 'ciudad/', color: '#ffb13d', categoria: 'Mundo abierto', descripcion: 'Mundo abierto',
       modos: [{ id: 'dinero', nombre: 'Dinero', mayorEsMejor: true, tope: 1000000000, unidad: '$' }],
       logros: [
         { id: 'primera_mision', nombre: 'Primer paso', desc: 'Completa una misión' },
@@ -57,7 +57,7 @@
         { id: 'fotos', nombre: 'Fotógrafo', desc: 'Toma 3 fotos' },
         { id: 'atrapado', nombre: 'Con las manos en la masa', desc: 'Que te atrape la policía' }
       ] },
-    { id: 'bloques', nombre: 'Mundo de Bloques', ruta: 'bloques/', color: '#7dd957', descripcion: 'Construye y sobrevive',
+    { id: 'bloques', nombre: 'Mundo de Bloques', ruta: 'bloques/', color: '#7dd957', categoria: 'Mundo abierto', descripcion: 'Construye y sobrevive',
       modos: [{ id: 'dias', nombre: 'Dias sobrevividos', mayorEsMejor: true, tope: 100000, unidad: 'dias' }],
       logros: [
         { id: 'romper', nombre: 'Manos a la obra', desc: 'Rompe un bloque' },
@@ -79,7 +79,7 @@
         { id: 'foto', nombre: 'Fotógrafo', desc: 'Toma una foto' },
         { id: 'amigos', nombre: 'Mejor con amigos', desc: 'Juega con otra persona' }
       ] },
-    { id: 'guerra', nombre: 'Alas y Acero', ruta: 'guerra/', color: '#ff7a3d', descripcion: 'Combate aereo y de tanques',
+    { id: 'guerra', nombre: 'Alas y Acero', ruta: 'guerra/', color: '#ff7a3d', categoria: 'Acción', descripcion: 'Combate aereo y de tanques',
       modos: [{ id: 'aire', nombre: 'Caza: puntos', mayorEsMejor: true, tope: 100000000, unidad: 'pts' }, { id: 'tanque', nombre: 'Tanque: puntos', mayorEsMejor: true, tope: 100000000, unidad: 'pts' }],
       logros: [
         { id: 'primera_sangre', nombre: 'Primera sangre', desc: 'Destruye tu primer enemigo.' },
@@ -100,7 +100,7 @@
         { id: 'nivel10', nombre: 'Oficial', desc: 'Alcanza el nivel 10.' },
         { id: 'bengalas', nombre: 'Engañado', desc: 'Esquiva un misil con bengalas.' }
       ] },
-    { id: 'ajedrez', nombre: 'Ajedrez', ruta: 'ajedrez/', color: '#c9a8ff', descripcion: 'Ajedrez 3D',
+    { id: 'ajedrez', nombre: 'Ajedrez', ruta: 'ajedrez/', color: '#c9a8ff', categoria: 'Mesa y cartas', descripcion: 'Ajedrez 3D',
       modos: [{ id: 'rompecabezas', nombre: 'Rompecabezas resueltos', mayorEsMejor: true, tope: 100000, unidad: '' }, { id: 'racha', nombre: 'Mejor racha de victorias', mayorEsMejor: true, tope: 10000, unidad: '' },
         { id: 'elo', nombre: 'Elo contra el motor', mayorEsMejor: true, tope: 4000, unidad: 'Elo' }, { id: 'elo_online', nombre: 'Elo online', mayorEsMejor: true, tope: 4000, unidad: 'Elo' }, { id: 'elo_rompe', nombre: 'Elo de rompecabezas', mayorEsMejor: true, tope: 4000, unidad: 'Elo' }],
       logros: [
@@ -120,7 +120,7 @@
         { id: 'nivel5', nombre: 'Gran reto', desc: 'Vence al nivel Maestro sin deshacer ni pistas.' },
         { id: 'online', nombre: 'Jugador online', desc: 'Termina una partida online.' }
       ] },
-    { id: 'metropolis', nombre: 'Metropolis', ruta: 'metropolis/', color: '#3df5a8', descripcion: 'Construye tu ciudad',
+    { id: 'metropolis', nombre: 'Metropolis', ruta: 'metropolis/', color: '#3df5a8', categoria: 'Estrategia', descripcion: 'Construye tu ciudad',
       modos: [{ id: 'poblacion', nombre: 'Poblacion', mayorEsMejor: true, tope: 100000000, unidad: 'hab.' }],
       logros: [
         { id: 'primero', nombre: 'Primer edificio', desc: 'Construye tu primer edificio.' },
@@ -155,15 +155,261 @@
         { id: 'primera_casa', nombre: 'Primera casa', desc: 'Construye tu primera zona (equivale a Primer edificio).' },
         { id: 'pueblo', nombre: 'Gran pueblo', desc: 'Llega a 1.000 habitantes.' },
         { id: 'metropoli', nombre: 'Metrópoli', desc: 'Llega a 100.000 habitantes.' }
+      ] },
+    { id: 'buscaminas', nombre: 'Buscaminas', ruta: 'buscaminas/', color: '#ffd23d', categoria: 'Estrategia', descripcion: 'Despeja el campo minado: 3 dificultades, reto diario, contrarreloj y supervivencia',
+      modos: [
+        { id: 'tiempo_principiante', nombre: 'Principiante (tiempo)', mayorEsMejor: false, tope: 999, min: 0.5, unidad: 's' },
+        { id: 'tiempo_intermedio', nombre: 'Intermedio (tiempo)', mayorEsMejor: false, tope: 999, min: 0.5, unidad: 's' },
+        { id: 'tiempo_experto', nombre: 'Experto (tiempo)', mayorEsMejor: false, tope: 999, min: 0.5, unidad: 's' },
+        { id: 'diario', nombre: 'Reto diario (tiempo)', mayorEsMejor: false, tope: 999, min: 0.5, unidad: 's' },
+        { id: 'contrarreloj', nombre: 'Contrarreloj (puntos)', mayorEsMejor: true, tope: 100000, unidad: 'pts' },
+        { id: 'supervivencia', nombre: 'Supervivencia (puntos)', mayorEsMejor: true, tope: 1000000, unidad: 'pts' }
+      ],
+      logros: [
+        { id: 'primera_victoria', nombre: 'Primera victoria', desc: 'Gana una partida.' },
+        { id: 'relampago', nombre: 'Relámpago', desc: 'Gana Principiante en menos de 15 s sin ayudas.' },
+        { id: 'veloz_intermedio', nombre: 'Veloz', desc: 'Gana Intermedio en menos de 90 s sin ayudas.' },
+        { id: 'maestro_experto', nombre: 'Maestro artificiero', desc: 'Gana Experto en menos de 240 s sin ayudas.' },
+        { id: 'experto_ganado', nombre: 'Experto', desc: 'Gana un tablero Experto.' },
+        { id: 'racha_3', nombre: 'En racha', desc: 'Encadena 3 victorias seguidas.' },
+        { id: 'racha_10', nombre: 'Imparable', desc: 'Encadena 10 victorias seguidas.' },
+        { id: 'sin_banderas', nombre: 'Memoria de elefante', desc: 'Gana Intermedio o mayor sin colocar una sola bandera.' },
+        { id: 'acordista', nombre: 'Acordista', desc: 'Haz 100 acordes con éxito.' },
+        { id: 'sin_adivinar_ok', nombre: 'Pura lógica', desc: 'Gana un tablero Sin adivinar.' },
+        { id: 'diario_ok', nombre: 'Reto cumplido', desc: 'Completa un Reto diario.' },
+        { id: 'diario_7', nombre: 'Constancia', desc: 'Completa el Reto diario en 7 días distintos.' },
+        { id: 'contrarreloj_ok', nombre: 'Contra el reloj', desc: 'Gana una partida Contrarreloj.' },
+        { id: 'supervivencia_5', nombre: 'Superviviente', desc: 'Llega al nivel 5 en Supervivencia.' },
+        { id: 'supervivencia_10', nombre: 'Leyenda de campo minado', desc: 'Llega al nivel 10 en Supervivencia.' },
+        { id: 'colosal', nombre: 'Colosal', desc: 'Gana un tablero personalizado de 1000 casillas o más.' },
+        { id: 'veterano', nombre: 'Veterano', desc: 'Juega 50 partidas.' },
+        { id: 'explosivo', nombre: 'Explosivo', desc: 'Pierde 10 partidas. Se aprende explotando.' },
+        { id: 'pidio_pista', nombre: 'Una ayudita', desc: 'Usa una pista.' },
+        { id: 'aprendiz', nombre: 'Aprendiz', desc: 'Gana una partida en modo Práctica.' },
+        { id: 'maraton', nombre: 'Maratón', desc: 'Acumula una hora de juego.' },
+        { id: 'carrera_ganada', nombre: 'Primero en meta', desc: 'Gana una Carrera multijugador.' },
+        { id: 'coop_ganado', nombre: 'Equipo imbatible', desc: 'Gana una partida Cooperativa.' },
+        { id: 'duelo_ganado', nombre: 'Duelista', desc: 'Gana un Duelo multijugador.' }
+      ] },
+    { id: 'celulas', nombre: 'Células', ruta: 'celulas/', color: '#5cf2a0', categoria: 'Acción', descripcion: 'Come, crece y devora: batallas de masa contra bots o amigos',
+      modos: [
+        { id: 'masa_ffa', nombre: 'Masa máxima (Todos contra todos)', mayorEsMejor: true, tope: 100000000, unidad: 'masa' },
+        { id: 'masa_equipos', nombre: 'Masa máxima (Equipos)', mayorEsMejor: true, tope: 100000000, unidad: 'masa' },
+        { id: 'masa_superv', nombre: 'Masa máxima (Supervivencia)', mayorEsMejor: true, tope: 100000000, unidad: 'masa' },
+        { id: 'masa_batalla', nombre: 'Masa máxima (Batalla de masa)', mayorEsMejor: true, tope: 100000000, unidad: 'masa' }
+      ],
+      logros: [
+        { id: 'primer_bocado', nombre: 'Primer bocado', desc: 'Come tu primera comida.' },
+        { id: 'gloton_500', nombre: 'Glotón', desc: 'Come 500 puntos de comida.' },
+        { id: 'festin', nombre: 'Festín', desc: 'Come 5000 puntos de comida.' },
+        { id: 'masa_100', nombre: 'Crecidita', desc: 'Llega a 100 de masa.' },
+        { id: 'masa_500', nombre: 'Pesada', desc: 'Llega a 500 de masa.' },
+        { id: 'masa_1500', nombre: 'Gigante', desc: 'Llega a 1500 de masa.' },
+        { id: 'masa_5000', nombre: 'Leviatán', desc: 'Llega a 5000 de masa.' },
+        { id: 'primera_presa', nombre: 'Primera presa', desc: 'Devora a otra célula.' },
+        { id: 'cazador_15', nombre: 'Cazador', desc: 'Devora a 15 células.' },
+        { id: 'racha_5', nombre: 'Racha', desc: 'Devora a 5 células en una sola vida.' },
+        { id: 'mitosis', nombre: 'Mitosis', desc: 'Divídete por primera vez.' },
+        { id: 'emboscada', nombre: 'Emboscada', desc: 'Devora a alguien justo después de dividirte.' },
+        { id: 'pinchazo', nombre: 'Pinchazo', desc: 'Revienta contra un virus.' },
+        { id: 'expulsor_100', nombre: 'Escupe masa', desc: 'Expulsa masa 100 veces.' },
+        { id: 'superviviente_5', nombre: 'Superviviente', desc: 'Aguanta 5 minutos con una sola vida.' },
+        { id: 'numero_uno', nombre: 'Número uno', desc: 'Lidera la clasificación (con 150+ de masa).' },
+        { id: 'enjambre', nombre: 'Enjambre', desc: 'Ten 10 o más células a la vez.' },
+        { id: 'gigante_dificil', nombre: 'Rey de lo difícil', desc: 'Llega a 1000 de masa contra bots difíciles.' },
+        { id: 'ganador_superv', nombre: 'Último en pie', desc: 'Gana una Supervivencia.' },
+        { id: 'ganador_batalla', nombre: 'Rey de la zona', desc: 'Gana una Batalla de masa.' },
+        { id: 'ganador_equipos', nombre: 'Espíritu de equipo', desc: 'Gana una partida por Equipos.' },
+        { id: 'zona_final', nombre: 'Al borde', desc: 'Sigue vivo a los 4 minutos de una Batalla.' },
+        { id: 'multijugador', nombre: 'Mejor en compañía', desc: 'Juega una partida multijugador.' },
+        { id: 'veterano_10', nombre: 'Veterano', desc: 'Juega 10 partidas.' }
+      ] },
+    { id: 'serpientes', nombre: 'Serpientes', ruta: 'serpientes/', color: '#7dff4f', categoria: 'Acción', descripcion: 'Serpientes arcade: crece, esquiva y domina la arena',
+      modos: [
+        { id: 'ffa_longitud', nombre: 'Todos contra todos: longitud', mayorEsMejor: true, tope: 100000, unidad: 'longitud' },
+        { id: 'equipos_longitud', nombre: 'Equipos: longitud', mayorEsMejor: true, tope: 100000, unidad: 'longitud' },
+        { id: 'superv_tiempo', nombre: 'Supervivencia: tiempo', mayorEsMejor: true, tope: 7200, unidad: 's' },
+        { id: 'rey_zona', nombre: 'Rey de la colina: tiempo en zona', mayorEsMejor: true, tope: 7200, unidad: 's' }
+      ],
+      logros: [
+        { id: 'primera_sangre', nombre: 'Primera presa', desc: 'Elimina a otra serpiente.' },
+        { id: 'cazador_10', nombre: 'Cazador', desc: 'Acumula 10 eliminaciones.' },
+        { id: 'cazador_100', nombre: 'Depredador', desc: 'Acumula 100 eliminaciones.' },
+        { id: 'largo_100', nombre: 'Creciendo', desc: 'Alcanza longitud 100.' },
+        { id: 'largo_300', nombre: 'Gran serpiente', desc: 'Alcanza longitud 300.' },
+        { id: 'largo_1000', nombre: 'Leviatán', desc: 'Alcanza longitud 1000.' },
+        { id: 'comelon', nombre: 'Comelón', desc: 'Come 1000 orbes en total.' },
+        { id: 'gloton', nombre: 'Glotón', desc: 'Come 150 orbes en una sola vida.' },
+        { id: 'turbo_loco', nombre: 'Turbo loco', desc: 'Usa el turbo durante 60 s en total.' },
+        { id: 'superviviente', nombre: 'Superviviente', desc: 'Sobrevive 5 minutos en una vida.' },
+        { id: 'rey_colina', nombre: 'Rey de la colina', desc: 'Gana una partida de Rey de la colina.' },
+        { id: 'campeon_equipos', nombre: 'Campeón de equipo', desc: 'Gana una partida por Equipos.' },
+        { id: 'ultimo_en_pie', nombre: 'Último en pie', desc: 'Gana una partida de Supervivencia.' },
+        { id: 'racha_3', nombre: 'Racha triple', desc: 'Elimina a 3 serpientes en 10 segundos.' },
+        { id: 'estilista', nombre: 'Estilista', desc: 'Guarda una skin personalizada.' },
+        { id: 'multijugador', nombre: 'Mejor en compañía', desc: 'Juega una partida multijugador.' },
+        { id: 'numero_uno', nombre: 'Número uno', desc: 'Llega al primer puesto de la tabla.' },
+        { id: 'maraton', nombre: 'Maratón', desc: 'Juega 25 partidas.' },
+        { id: 'sin_turbo', nombre: 'Puro y paciente', desc: 'Llega a longitud 150 sin usar turbo en esa vida.' },
+        { id: 'mando', nombre: 'Jugador de mando', desc: 'Juega con un mando.' }
+      ] },
+    { id: 'uno', nombre: 'UNO', ruta: 'uno/', color: '#ff5a5a', categoria: 'Mesa y cartas', descripcion: 'El clásico de cartas de colores con bots y amigos',
+      modos: [
+        { id: 'puntos', nombre: 'Puntos acumulados', mayorEsMejor: true, tope: 1000000, unidad: 'pts' },
+        { id: 'racha', nombre: 'Mejor racha de rondas ganadas', mayorEsMejor: true, tope: 500, unidad: 'rondas' },
+        { id: 'victorias', nombre: 'Partidas ganadas', mayorEsMejor: true, tope: 100000, unidad: 'victorias' }
+      ],
+      logros: [
+        { id: 'primera_ronda', nombre: 'Primera ronda', desc: 'Gana una ronda.' },
+        { id: 'primera_partida', nombre: 'Campeón', desc: 'Gana una partida completa.' },
+        { id: 'racha_3', nombre: 'En racha', desc: 'Gana 3 rondas seguidas.' },
+        { id: 'racha_5', nombre: 'Imparable', desc: 'Gana 5 rondas seguidas.' },
+        { id: 'uno_10', nombre: '¡UNO!', desc: 'Grita UNO 10 veces.' },
+        { id: 'cazador', nombre: 'Cazador', desc: 'Atrapa a un rival que olvidó gritar UNO.' },
+        { id: 'cazador_5', nombre: 'Ojo de halcón', desc: 'Atrapa 5 UNO olvidados.' },
+        { id: 'desafio_ok', nombre: 'Farol descubierto', desc: 'Gana un desafío del comodín +4.' },
+        { id: 'desafio_mal', nombre: 'Fe ciega', desc: 'Pierde un desafío del comodín +4.' },
+        { id: 'vs_estratega', nombre: 'Domador de estrategas', desc: 'Gana una partida con un bot Estratega en la mesa.' },
+        { id: 'mesa_llena', nombre: 'Mesa llena', desc: 'Gana una partida de 6 jugadores.' },
+        { id: 'meta_500', nombre: 'Medio millar', desc: 'Llega a la meta de puntos en una partida por rondas.' },
+        { id: 'mano_limpia', nombre: 'Mano limpia', desc: 'Gana una ronda sin robar por decisión propia.' },
+        { id: 'relampago', nombre: 'Relámpago', desc: 'Gana una ronda en menos de 90 segundos.' },
+        { id: 'final_comodin', nombre: 'Final de comodín', desc: 'Gana una ronda jugando un comodín como última carta.' },
+        { id: 'torre_castigo', nombre: 'Torre de castigo', desc: 'Presencia un castigo acumulado de 8 o más cartas.' },
+        { id: 'triple', nombre: 'Triple', desc: 'Juega 3 cartas iguales de una vez.' },
+        { id: 'trueque', nombre: 'Trueque', desc: 'Intercambia tu mano con un 7.' },
+        { id: 'tiovivo', nombre: 'Tiovivo', desc: 'Juega un 0 que rota las manos.' },
+        { id: 'reflejos', nombre: 'Reflejos', desc: 'Gana una ronda en modo rápido (10 s).' },
+        { id: 'mesa_amigos', nombre: 'Mesa de amigos', desc: 'Gana una partida multijugador con humanos.' },
+        { id: 'remontada', nombre: 'Remontada', desc: 'Gana una ronda tras llegar a tener 12 cartas o más.' },
+        { id: 'veterano', nombre: 'Veterano', desc: 'Juega 25 partidas.' },
+        { id: 'mil_puntos', nombre: 'Coleccionista', desc: 'Acumula 1000 puntos en total.' }
+      ] },
+    { id: 'magnate', nombre: 'Magnate', ruta: 'magnate/', color: '#ffb13d', categoria: 'Mesa y cartas', descripcion: 'Compra calles, construye hoteles y arruina a tus rivales',
+      modos: [
+        { id: 'patrimonio_final', nombre: 'Patrimonio final (victorias)', mayorEsMejor: true, tope: 100000000, unidad: 'monedas' },
+        { id: 'turnos_victoria', nombre: 'Victoria más rápida', mayorEsMejor: false, tope: 100000, min: 1, unidad: 'turnos' },
+        { id: 'victorias', nombre: 'Victorias totales', mayorEsMejor: true, tope: 100000, unidad: 'victorias' }
+      ],
+      logros: [
+        { id: 'primera_compra', nombre: 'Primer paso', desc: 'Compra tu primera propiedad.' },
+        { id: 'barrio_completo', nombre: 'Barrio completo', desc: 'Reúne todas las calles de un barrio.' },
+        { id: 'hotel', nombre: 'Rascacielos', desc: 'Construye un hotel.' },
+        { id: 'subasta_ganada', nombre: 'Mejor postor', desc: 'Gana una subasta.' },
+        { id: 'trato_cerrado', nombre: 'Buen negociante', desc: 'Cierra un intercambio con otro jugador.' },
+        { id: 'dobles_carcel', nombre: 'Dobles de la fortuna', desc: 'Sal de la cárcel sacando dobles.' },
+        { id: 'aeropuertos', nombre: 'Rey del aire', desc: 'Posee los 4 aeropuertos y estaciones.' },
+        { id: 'servicios', nombre: 'Luz y agua', desc: 'Posee los 2 servicios.' },
+        { id: 'tiburon', nombre: 'Tiburón', desc: 'Lleva a la bancarrota a otro jugador.' },
+        { id: 'fortuna', nombre: 'Gran fortuna', desc: 'Alcanza 5000 de patrimonio.' },
+        { id: 'victoria', nombre: 'Magnate', desc: 'Gana una partida.' },
+        { id: 'victoria_bots', nombre: 'Domador de bots', desc: 'Gana contra 3 o más bots.' },
+        { id: 'mesa_compartida', nombre: 'Mesa compartida', desc: 'Termina una partida con 2 o más humanos.' },
+        { id: 'resiliente', nombre: 'Resiliente', desc: 'Gana habiendo hipotecado 3 propiedades o más.' },
+        { id: 'veterano', nombre: 'Veterano', desc: 'Juega 10 partidas.' }
+      ] },
+    { id: 'cartas', nombre: 'Cartas', ruta: 'cartas/', color: '#c77dff', categoria: 'Mesa y cartas', descripcion: 'Póker, veintiuno, siete y medio, dompe, conquián y ve a pescar',
+      modos: [
+        { id: 'monedero', nombre: 'Monedero máximo', mayorEsMejor: true, tope: 1000000000, unidad: 'fichas' },
+        { id: 'bote', nombre: 'Mayor bote ganado', mayorEsMejor: true, tope: 1000000000, unidad: 'fichas' },
+        { id: 'dompe_racha', nombre: 'Racha de victorias en Dompe', mayorEsMejor: true, tope: 1000, unidad: 'victorias' },
+        { id: 'conq_turnos', nombre: 'Conquián más rápido', mayorEsMejor: false, tope: 200, min: 1, unidad: 'turnos' },
+        { id: 'pesc_libros', nombre: 'Más libros en una partida de Ve a pescar', mayorEsMejor: true, tope: 26, unidad: 'libros' }
+      ],
+      logros: [
+        { id: 'primera_mano', nombre: 'Siéntate a la mesa', desc: 'Juega tu primera mano.' },
+        { id: 'diez_ganadas', nombre: 'Buena racha', desc: 'Gana 10 manos.' },
+        { id: 'cien_manos', nombre: 'Veterano', desc: 'Juega 100 manos.' },
+        { id: 'poker_full', nombre: 'Casa llena', desc: 'Gana una mano de póker con full o mejor.' },
+        { id: 'poker_escalera_color', nombre: 'Escalera de color', desc: 'Gana una mano de póker con escalera de color.' },
+        { id: 'poker_bote_grande', nombre: 'Bote gordo', desc: 'Gana un bote de 1000 fichas o más.' },
+        { id: 'poker_torneo', nombre: 'Campeón de torneo', desc: 'Gana un torneo de póker.' },
+        { id: 'bj_blackjack', nombre: 'Veintiuno natural', desc: 'Consigue un blackjack.' },
+        { id: 'bj_doblar', nombre: 'Doble o nada', desc: 'Gana una mano doblada.' },
+        { id: 'bj_racha_5', nombre: 'Cinco seguidas', desc: 'Gana 5 manos seguidas de veintiuno.' },
+        { id: 'sm_real', nombre: 'Siete y medio real', desc: 'Consigue un siete y medio real.' },
+        { id: 'sesion_positiva', nombre: 'Cerrar en positivo', desc: 'Termina una sesión con ganancias.' },
+        { id: 'monedero_10k', nombre: 'Banca llena', desc: 'Llega a 10 000 fichas en tu monedero.' },
+        { id: 'dompe_primera', nombre: 'Primer dompe', desc: 'Gana tu primera mano de Dompe.' },
+        { id: 'dompe_tres_pares', nombre: 'Tres pares', desc: 'Gana al instante con tres pares.' },
+        { id: 'dompe_escalera', nombre: 'Escalera de seis', desc: 'Gana con una escalera de 6 cartas.' },
+        { id: 'dompe_dos_tercias', nombre: 'Dos tercias', desc: 'Gana con dos tercias.' },
+        { id: 'dompe_cuarteto_par', nombre: 'Cuarteto y par', desc: 'Gana con un cuarteto más un par.' },
+        { id: 'dompe_escalera_color', nombre: 'Escalera de color', desc: 'Gana con seis cartas seguidas del mismo palo.' },
+        { id: 'dompe_ultima_vuelta', nombre: 'Remontada', desc: 'Gana en la última vuelta que abrió el dompe de otro jugador.' },
+        { id: 'dompe_dompeo_gana', nombre: 'Dompe certero', desc: 'Di dompe y gana la mano con la mejor mano.' },
+        { id: 'dompe_comodin', nombre: 'Comodín salvador', desc: 'Gana con una mano que usa un comodín.' },
+        { id: 'dompe_racha_3', nombre: 'Tres seguidas', desc: 'Gana 3 manos de Dompe seguidas.' },
+        { id: 'dompe_diez', nombre: 'Maestro del dompe', desc: 'Gana 10 manos de Dompe.' },
+        { id: 'dompe_bote', nombre: 'Bote de dompe', desc: 'Gana un bote de 200 fichas o más en Dompe.' },
+        { id: 'conq_primera', nombre: 'Primer conquián', desc: 'Gana tu primera ronda de Conquián.' },
+        { id: 'conq_sin_descarte', nombre: 'Conquián limpio', desc: 'Gana bajando todas tus cartas, sin descartar la última.' },
+        { id: 'conq_descarte', nombre: 'Cierre con descarte', desc: 'Gana descartando tu última carta.' },
+        { id: 'conq_diez', nombre: 'Veterano del conquián', desc: 'Gana 10 rondas de Conquián.' },
+        { id: 'conq_rapida', nombre: 'Ronda relámpago', desc: 'Gana una ronda en 8 turnos propios o menos.' },
+        { id: 'conq_cuatro_combos', nombre: 'Mesa llena', desc: 'Gana habiendo bajado 4 o más combinaciones.' },
+        { id: 'conq_comodin', nombre: 'Con comodín', desc: 'Gana una ronda en una mesa con comodines.' },
+        { id: 'conq_por_los_pelos', nombre: 'Por los pelos', desc: 'Gana cuando un rival se quedó con una sola carta.' },
+        { id: 'conq_puntos_50', nombre: 'Cincuenta puntos', desc: 'Suma 50 puntos de rondas en una partida de Conquián.' },
+        { id: 'conq_campeon', nombre: 'Campeón de conquián', desc: 'Gana una partida a puntos (meta alcanzada).' },
+        { id: 'conq_racha_3', nombre: 'Racha de conquián', desc: 'Gana 3 rondas de Conquián seguidas.' },
+        { id: 'conq_cuatro_jugadores', nombre: 'Mesa de cuatro', desc: 'Gana una ronda con 4 jugadores en la mesa.' },
+        { id: 'pesc_primera', nombre: 'Primera pesca', desc: 'Gana tu primera partida de Ve a pescar.' },
+        { id: 'pesc_libro', nombre: 'Primer libro', desc: 'Completa un libro de cartas.' },
+        { id: 'pesc_5_libros', nombre: 'Cinco libros', desc: 'Junta 5 o más libros en una partida.' },
+        { id: 'pesc_8_libros', nombre: 'Biblioteca', desc: 'Junta 8 o más libros en una partida.' },
+        { id: 'pesc_diez', nombre: 'Gran pescador', desc: 'Gana 10 partidas de Ve a pescar.' },
+        { id: 'pesc_suerte', nombre: 'Pesca milagrosa', desc: 'Pesca justo la carta que pedías.' },
+        { id: 'pesc_familiar', nombre: 'Juego en familia', desc: 'Gana una partida en versión familiar.' },
+        { id: 'pesc_cuarenta', nombre: 'Baraja española', desc: 'Gana una partida con baraja española.' },
+        { id: 'pesc_libros_3', nombre: 'Libros de tres', desc: 'Gana una partida con libros de 3 cartas.' },
+        { id: 'pesc_seis', nombre: 'Seis a la mesa', desc: 'Gana una partida con 6 jugadores.' },
+        { id: 'pesc_racha_3', nombre: 'Tres pescas seguidas', desc: 'Gana 3 partidas de Ve a pescar seguidas.' }
       ] }
   ];
+  /* Herramientas: apps del sitio (no son juegos: sin modos de puntaje, fuera de los rankings). ruta es relativa a juego/; carpeta, relativa a herramientas/. */
+  var H = [
+    { id: 'notas', tipo: 'herramienta', nombre: 'Notas y Tareas', ruta: '../herramientas/notas/', carpeta: 'notas', color: '#ffd23d', categoria: 'Herramientas', descripcion: 'Notas, tareas y hábitos; funciona sin conexión', modos: [], logros: [
+      { id: 'primera_tarea', nombre: 'Primera tarea', desc: 'Completa tu primera tarea.' },
+      { id: 'racha_7', nombre: 'Constancia', desc: 'Mantén un hábito 7 días seguidos.' },
+      { id: 'enfoque_1h', nombre: 'Una hora de enfoque', desc: 'Acumula una hora en el temporizador de enfoque.' },
+      { id: 'nota_enlazada', nombre: 'Nota enlazada', desc: 'Enlaza una nota con otra.' },
+      { id: 'colaborador', nombre: 'Colaborador', desc: 'Edita una nota en tiempo real con otra persona.' },
+      { id: 'bloqueo', nombre: 'Bajo llave', desc: 'Protege una nota con contraseña.' }
+    ] },
+    { id: 'pizarra', tipo: 'herramienta', nombre: 'Pizarra', ruta: '../herramientas/pizarra/', carpeta: 'pizarra', color: '#4fd1ff', categoria: 'Herramientas', descripcion: 'Pizarra colaborativa en tiempo real', modos: [], logros: [] },
+    { id: 'mercados', tipo: 'herramienta', nombre: 'Mercados', ruta: '../herramientas/mercados/', carpeta: 'mercados', color: '#3ddc97', categoria: 'Herramientas', descripcion: 'Terminal de mercados: cripto, acciones y divisas', modos: [], logros: [] },
+    { id: 'apuestas', tipo: 'herramienta', nombre: 'Apuestas', ruta: '../herramientas/apuestas/', carpeta: 'apuestas', color: '#ff6b81', categoria: 'Herramientas', descripcion: 'Análisis y registro de apuestas', modos: [], logros: [] },
+    { id: 'ofertas', tipo: 'herramienta', nombre: 'Ofertas', ruta: '../herramientas/ofertas/', carpeta: 'ofertas', color: '#ff9f43', categoria: 'Herramientas', descripcion: 'Ofertas y promociones', modos: [], logros: [] },
+    { id: 'contenido_imagenes', tipo: 'herramienta', nombre: 'Estudio: Imágenes', ruta: '../herramientas/contenido/imagenes/', carpeta: 'contenido/imagenes', color: '#c77dff', categoria: 'Herramientas', descripcion: 'Editor de imágenes y miniaturas', modos: [], logros: [] },
+    { id: 'contenido_video', tipo: 'herramienta', nombre: 'Estudio: Video', ruta: '../herramientas/contenido/video/', carpeta: 'contenido/video', color: '#ff7ac6', categoria: 'Herramientas', descripcion: 'Editor de video corto', modos: [], logros: [] },
+    { id: 'contenido_escritor', tipo: 'herramienta', nombre: 'Estudio: Escritor', ruta: '../herramientas/contenido/escritor/', carpeta: 'contenido/escritor', color: '#7dd3fc', categoria: 'Herramientas', descripcion: 'Escritor con IA para guiones y publicaciones', modos: [], logros: [] },
+    { id: 'contenido_calendario', tipo: 'herramienta', nombre: 'Estudio: Calendario', ruta: '../herramientas/contenido/calendario/', carpeta: 'contenido/calendario', color: '#a3e635', categoria: 'Herramientas', descripcion: 'Calendario editorial de contenido', modos: [], logros: [] }
+  ];
+  var TODO = J.concat(H);
   var T = {
-    lista: J, LOGROS_MAX: 100,
-    juego: function (id) { for (var i = 0; i < J.length; i++) if (J[i].id === id) return J[i]; return null; },
+    lista: J, herramientas: H, todos: TODO, LOGROS_MAX: 100,
+    /* devuelve juego o herramienta por id */
+    juego: function (id) { for (var i = 0; i < TODO.length; i++) if (TODO[i].id === id) return TODO[i]; return null; },
+    esHerramienta: function (id) { for (var i = 0; i < H.length; i++) if (H[i].id === id) return true; return false; },
+    /* modos de puntaje: solo juegos (las herramientas no tienen) */
     modo: function (juego, modo) { var j = T.juego(juego); if (!j) return null; for (var i = 0; i < j.modos.length; i++) if (j.modos[i].id === modo) return j.modos[i]; return null; },
     clave: function (juego, modo) { return juego + '__' + modo; },
     claves: function () { var r = []; J.forEach(function (j) { j.modos.forEach(function (m) { r.push(j.id + '__' + m.id); }); }); return r; },
-    juegoDeRuta: function (ruta) { var m = /\/juego\/([a-z0-9_-]+)\//.exec(ruta); return m && T.juego(m[1]) ? m[1] : ''; }
+    categorias: ['Acción', 'Mundo abierto', 'Mesa y cartas', 'Estrategia', 'Herramientas'],
+    /* id de juego/herramienta de una ruta (location.pathname): /juego/<id>/ o /herramientas/<carpeta>/ (contenido/<sub> -> contenido_<sub>),
+       en la raiz, en un subdirectorio (GitHub Pages) o en localhost. Devuelve '' si no es ninguno. */
+    juegoDeRuta: function (ruta) {
+      ruta = String(ruta || '');
+      var m = /\/juego\/([a-z0-9_-]+)(?:\/|$)/.exec(ruta);
+      if (m) { for (var i = 0; i < J.length; i++) if (J[i].id === m[1]) return m[1]; }
+      m = /\/herramientas\/([a-z0-9_-]+)(?:\/([a-z0-9_-]+))?(?:\/|$)/.exec(ruta);
+      if (m) {
+        var c = m[1] === 'contenido' ? 'contenido/' + (m[2] || '') : m[1];
+        for (var k = 0; k < H.length; k++) if (H[k].carpeta === c) return H[k].id;
+      }
+      return '';
+    }
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = T; else G.PlataformaJuegos = T;
 })(typeof window !== 'undefined' ? window : globalThis);

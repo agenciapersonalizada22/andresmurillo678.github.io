@@ -18,6 +18,8 @@ service cloud.firestore {
     }
     function texto(v, min, max) { return v is string && v.size() >= min && v.size() <= max; }
     function colorValido(v) { return v is string && v.matches('^#[0-9a-fA-F]{6}$'); }
+    // lista de logros de un juego/herramienta: ausente, o lista de a lo sumo 100 (PlataformaJuegos.LOGROS_MAX)
+    function listaOk(k) { return !(k in request.resource.data) || (request.resource.data[k] is list && request.resource.data[k].size() <= 100); }
     function avatarValido(v) { return v is string && v.matches('^a[0-9]{1,2}$'); }
 
     // Juegos y topes de puntaje por modo (clave = juego__modo). Debe coincidir con juegos.js
@@ -27,13 +29,24 @@ service cloud.firestore {
         'ciudad__dinero': 1000000000,
         'bloques__dias': 100000,
         'guerra__aire': 100000000, 'guerra__tanque': 100000000,
-        'ajedrez__rompecabezas': 100000, 'ajedrez__racha': 10000,
-        'ajedrez__elo': 4000, 'ajedrez__elo_online': 4000, 'ajedrez__elo_rompe': 4000,
-        'metropolis__poblacion': 100000000
+        'ajedrez__rompecabezas': 100000, 'ajedrez__racha': 10000, 'ajedrez__elo': 4000, 'ajedrez__elo_online': 4000, 'ajedrez__elo_rompe': 4000,
+        'metropolis__poblacion': 100000000,
+        'buscaminas__tiempo_principiante': 999, 'buscaminas__tiempo_intermedio': 999, 'buscaminas__tiempo_experto': 999, 'buscaminas__diario': 999, 'buscaminas__contrarreloj': 100000, 'buscaminas__supervivencia': 1000000,
+        'celulas__masa_ffa': 100000000, 'celulas__masa_equipos': 100000000, 'celulas__masa_superv': 100000000, 'celulas__masa_batalla': 100000000,
+        'serpientes__ffa_longitud': 100000, 'serpientes__equipos_longitud': 100000, 'serpientes__superv_tiempo': 7200, 'serpientes__rey_zona': 7200,
+        'uno__puntos': 1000000, 'uno__racha': 500, 'uno__victorias': 100000,
+        'magnate__patrimonio_final': 100000000, 'magnate__turnos_victoria': 100000, 'magnate__victorias': 100000,
+        'cartas__monedero': 1000000000, 'cartas__bote': 1000000000, 'cartas__dompe_racha': 1000, 'cartas__conq_turnos': 200, 'cartas__pesc_libros': 26
       };
     }
-    // Modos donde MENOR es mejor (ninguno por ahora; si agregas uno, anadelo aqui y en juegos.js con mayorEsMejor:false)
-    function menorEsMejor() { return []; }
+    // Modos donde MENOR es mejor (en juegos.js: mayorEsMejor:false). Solo se actualiza si el valor BAJA y debe ser >= su minimo.
+    function menorEsMejor() {
+      return ['buscaminas__tiempo_principiante', 'buscaminas__tiempo_intermedio', 'buscaminas__tiempo_experto', 'buscaminas__diario', 'magnate__turnos_victoria', 'cartas__conq_turnos'];
+    }
+    // Valor minimo aceptado en los modos de «menor es mejor» (un 0 seria una trampa evidente). Coincide con el campo min de juegos.js
+    function minimos() {
+      return {'buscaminas__tiempo_principiante': 0.5, 'buscaminas__tiempo_intermedio': 0.5, 'buscaminas__tiempo_experto': 0.5, 'buscaminas__diario': 0.5, 'magnate__turnos_victoria': 1, 'cartas__conq_turnos': 1};
+    }
 
     // ---------- nombres: nombres/{nombreLower} -> {uid}. Lectura publica (para comprobar disponibilidad al registrarse) ----------
     match /nombres/{nombre} {
@@ -77,7 +90,7 @@ service cloud.firestore {
     match /guardados/{uid}/juegos/{docId} {
       allow read: if yo(uid);
       allow create, update: if yo(uid)
-        && docId.matches('^(nebula|ciudad|bloques|guerra|ajedrez|metropolis)(~[a-z0-9]{1,12})?(_p[1-7])?$')
+        && docId.matches('^(nebula|ciudad|bloques|guerra|ajedrez|metropolis|buscaminas|celulas|serpientes|uno|magnate|cartas|notas|pizarra|mercados|apuestas|ofertas|contenido_imagenes|contenido_video|contenido_escritor|contenido_calendario)(~[a-z0-9]{1,12})?(_p[1-7])?$')
         && (
           (docId.matches('.*_p[1-7]$')
             && request.resource.data.keys().hasOnly(['datos', 'actualizado'])
@@ -103,14 +116,29 @@ service cloud.firestore {
       allow get: if yo(uid) || esAmigo(uid);
       allow list: if false;
       allow create, update: if yo(uid)
-        && request.resource.data.keys().hasOnly(['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis', 'xpJuego', 'ultimo'])
-        && (!('nebula' in request.resource.data) || (request.resource.data.nebula is list && request.resource.data.nebula.size() <= 100))
-        && (!('ciudad' in request.resource.data) || (request.resource.data.ciudad is list && request.resource.data.ciudad.size() <= 100))
-        && (!('bloques' in request.resource.data) || (request.resource.data.bloques is list && request.resource.data.bloques.size() <= 100))
-        && (!('guerra' in request.resource.data) || (request.resource.data.guerra is list && request.resource.data.guerra.size() <= 100))
-        && (!('ajedrez' in request.resource.data) || (request.resource.data.ajedrez is list && request.resource.data.ajedrez.size() <= 100))
-        && (!('metropolis' in request.resource.data) || (request.resource.data.metropolis is list && request.resource.data.metropolis.size() <= 100))
-        && (!('xpJuego' in request.resource.data) || (request.resource.data.xpJuego is map && request.resource.data.xpJuego.size() <= 6))
+        && request.resource.data.keys().hasOnly(['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis', 'buscaminas', 'celulas', 'serpientes', 'uno', 'magnate', 'cartas', 'notas', 'pizarra', 'mercados', 'apuestas', 'ofertas', 'contenido_imagenes', 'contenido_video', 'contenido_escritor', 'contenido_calendario', 'xpJuego', 'ultimo'])
+        && listaOk('nebula')
+        && listaOk('ciudad')
+        && listaOk('bloques')
+        && listaOk('guerra')
+        && listaOk('ajedrez')
+        && listaOk('metropolis')
+        && listaOk('buscaminas')
+        && listaOk('celulas')
+        && listaOk('serpientes')
+        && listaOk('uno')
+        && listaOk('magnate')
+        && listaOk('cartas')
+        && listaOk('notas')
+        && listaOk('pizarra')
+        && listaOk('mercados')
+        && listaOk('apuestas')
+        && listaOk('ofertas')
+        && listaOk('contenido_imagenes')
+        && listaOk('contenido_video')
+        && listaOk('contenido_escritor')
+        && listaOk('contenido_calendario')
+        && (!('xpJuego' in request.resource.data) || (request.resource.data.xpJuego is map && request.resource.data.xpJuego.size() <= 25))
         && (!('ultimo' in request.resource.data) || (request.resource.data.ultimo is map && request.resource.data.ultimo.size() <= 2));
       allow delete: if yo(uid);
     }
@@ -124,7 +152,7 @@ service cloud.firestore {
           && texto(request.resource.data.nombre, 3, 16)
           && colorValido(request.resource.data.color)
           && request.resource.data.valor is number
-          && request.resource.data.valor >= 0
+          && request.resource.data.valor >= (clave in minimos() ? minimos()[clave] : 0)
           && request.resource.data.valor <= topes()[clave]
           && request.resource.data.fecha == request.time;
       }
@@ -193,7 +221,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasAll(['de', 'nombre', 'juego', 'oferta', 'estado', 'respuesta', 'creado', 'expira'])
         && request.resource.data.de == request.auth.uid
         && texto(request.resource.data.nombre, 3, 16)
-        && request.resource.data.juego in ['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis']
+        && request.resource.data.juego in ['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis', 'buscaminas', 'celulas', 'serpientes', 'uno', 'magnate', 'cartas']
         && texto(request.resource.data.oferta, 1, 4000)
         && request.resource.data.estado == 'pendiente'
         && request.resource.data.respuesta == ''

@@ -124,12 +124,12 @@
   function pintarJuegos() {
     var cont = vaciar($('continuar')), j = ultimo();
     if (j) {
-      var a = h('a', { cls: 'p-continuar', 'data-f': 1, href: j.ruta, style: '--color:' + j.color }, [h('div', {}, [h('b', { txt: 'CONTINUAR JUGANDO' }), h('strong', { txt: j.nombre })]), h('span', { cls: 'jugar', txt: 'SEGUIR' })]);
+      var a = h('a', { cls: 'p-continuar', 'data-f': 1, href: j.ruta, style: '--color:' + j.color }, [h('div', {}, [h('b', { txt: T.esHerramienta(j.id) ? 'CONTINUAR CON' : 'CONTINUAR JUGANDO' }), h('strong', { txt: j.nombre })]), h('span', { cls: 'jugar', txt: 'SEGUIR' })]);
       cont.appendChild(a);
-    } else cont.appendChild(h('div', { cls: 'p-info', txt: 'Elige un juego para empezar. Aquí aparecerá el último al que juegues.' }));
+    } else cont.appendChild(h('div', { cls: 'p-info', txt: 'Elige un juego para empezar. Aquí aparecerá el último que uses.' }));
     Array.prototype.forEach.call(document.querySelectorAll('#listaJuegos .juego'), function (a) {
       var id = a.getAttribute('data-juego'), j2 = T.juego(id), st = a.querySelector('[data-stats]'); if (!j2 || !st) return;
-      vaciar(st);
+      vaciar(st); if (!j2.logros.length && !j2.modos.length) return;
       var n = Cu.logros(id).length, xp = Cu.xpJuego(id);
       st.appendChild(h('span', { txt: '★ ' + n + '/' + j2.logros.length + ' logros' }));
       if (xp) st.appendChild(h('span', { txt: fmt(xp) + ' XP' }));
@@ -140,10 +140,42 @@
     T.lista.forEach(function (j) { j.modos.forEach(function (m) { Cu.miMejor(j.id, m.id).then(function (e) { mejores[j.id + '__' + m.id] = e; pintarJuegos(); }).catch(function () {}); }); });
   }
 
+  /* ---------- catalogo por categorias ---------- */
+  var filtroCat = 'todos';
+  try { filtroCat = localStorage.getItem('portal_filtro_cat') || 'todos'; } catch (e) {}
+  function organizarCatalogo() {
+    var raiz = $('listaJuegos'); if (!raiz || raiz.getAttribute('data-org')) return; raiz.setAttribute('data-org', '1');
+    var tarjetas = Array.prototype.slice.call(raiz.querySelectorAll('.juego')), cats = T.categorias.slice();
+    if (cats.indexOf(filtroCat) < 0) filtroCat = 'todos';
+    raiz.className = 'p-catalogo'; raiz.removeAttribute('role');
+    var barra = h('div', { cls: 'p-chips p-cats', id: 'chipsCat', role: 'group', 'aria-label': 'Filtrar por categoría' });
+    var secciones = {};
+    cats.forEach(function (c, i) {
+      var grid = h('div', { cls: 'lista' }), n = 0;
+      tarjetas.forEach(function (a) { if (a.getAttribute('data-cat') === c) { grid.appendChild(a); n++; } });
+      if (!n) return;
+      var titulo = h('h3', { cls: 'p-cat-t', id: 'cat-' + i, txt: c + ' · ' + n });
+      var sec = h('section', { cls: 'p-cat', 'aria-labelledby': 'cat-' + i, 'data-cat': c }, [titulo, grid]);
+      if (c === 'Herramientas') titulo.appendChild(h('a', { cls: 'p-ver-todas', 'data-f': 1, href: '../herramientas/', txt: 'Ver todas las herramientas →' }));
+      secciones[c] = sec; raiz.appendChild(sec);
+    });
+    function aplicar() {
+      Object.keys(secciones).forEach(function (c) { secciones[c].hidden = filtroCat !== 'todos' && filtroCat !== c; });
+      Array.prototype.forEach.call(barra.children, function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-c') === filtroCat)); });
+      try { localStorage.setItem('portal_filtro_cat', filtroCat); } catch (e) {}
+    }
+    ['todos'].concat(cats).forEach(function (c) {
+      if (c !== 'todos' && !secciones[c]) return;
+      var b = h('button', { type: 'button', cls: 'p-chip', 'data-f': 1, 'data-c': c, 'aria-pressed': 'false', txt: c === 'todos' ? 'TODOS' : c.toUpperCase() });
+      b.addEventListener('click', function () { filtroCat = c; aplicar(); }); barra.appendChild(b);
+    });
+    raiz.parentNode.insertBefore(barra, raiz); aplicar();
+  }
+
   /* ---------- amigos ---------- */
   var textoEstado = { en_linea: 'En línea', jugando: 'Jugando', ausente: 'Ausente', desconectado: 'Desconectado' };
   function estadoTxt(a) {
-    if (a.estado === 'jugando' && a.juego) { var j = T.juego(a.juego); return 'Jugando ' + (j ? j.nombre : a.juego); }
+    if (a.estado === 'jugando' && a.juego) { var j = T.juego(a.juego); return (j && T.esHerramienta(j.id) ? 'Usando ' : 'Jugando ') + (j ? j.nombre : a.juego); }
     return textoEstado[a.estado] || '';
   }
   function filaAmigo(a, acciones) {
@@ -234,7 +266,7 @@
   /* ---------- logros ---------- */
   function pintarLogros() {
     var c = vaciar($('tab-logros'));
-    T.lista.forEach(function (j) {
+    T.todos.filter(function (j) { return j.logros.length || Cu.logros(j.id).length; }).forEach(function (j) {
       var ganados = Cu.logros(j.id), conocidos = j.logros.map(function (l) { return l.id; }), extra = ganados.filter(function (id) { return conocidos.indexOf(id) < 0; });
       c.appendChild(h('h2', { cls: 'p-sec-t', style: 'color:' + j.color, txt: j.nombre + ' · ' + ganados.length + ' / ' + (j.logros.length + extra.length) }));
       var ul = h('ul', { cls: 'p-lista' });
@@ -338,7 +370,7 @@
   function entrarPanel() {
     var v = Cu.volver();
     if (v) { vista('carga'); $('vistaCarga').insertAdjacentHTML('beforeend', '<p class="p-sub" style="margin-top:16px">Volviendo a tu juego…</p>'); location.replace(v); return; }
-    vista('panel');
+    vista('panel'); organizarCatalogo();
     pintarCabecera(); pintarJuegos(); pintarAmigos(); pintarInvitaciones();
     if (!yaPanel) { yaPanel = true; cargarMejores(); }
     var t = (location.hash || '').slice(1); irTab(TABS.indexOf(t) >= 0 ? t : 'juegos');
