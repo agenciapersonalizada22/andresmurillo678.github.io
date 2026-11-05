@@ -138,7 +138,7 @@ export function expulsar(i) {
 export async function invitar() {
   const r = R(); if (!r) throw new Error('Sin red');
   const inv = await r.invitar();
-  return { enlace: inv.enlace + (inv.enlace.indexOf('?') >= 0 ? '&' : '?') + 'm=' + Sesion.mesaId, id: inv.id };
+  return { enlace: inv.enlace + (inv.enlace.indexOf('?') >= 0 ? '&' : '?') + 'm=' + Sesion.mesaId, id: inv.id, codigo: inv.codigo };
 }
 export function terminarSesion() {
   const m = Sesion.m; if (!m) return null;

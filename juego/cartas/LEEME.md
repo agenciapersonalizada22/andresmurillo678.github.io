@@ -145,3 +145,9 @@ Pide a un rival un número que ya tengas; si lo tiene, te da todas esas cartas y
 
 ### Registro en la plataforma (nuevos)
 Mismo juego `cartas`; ids de motor: `dompe`, `conquian`, `pescar`. Modos de puntaje nuevos (`puntajes()` en `progreso.js` devuelve los valores): `dompe_racha` (mayorEsMejor, tope 1000, victorias), `conq_turnos` (menor es mejor, tope 200, turnos), `pesc_libros` (mayorEsMejor, tope 26, libros). Logros: ver `LOGROS` en `js/marco/progreso.js` (prefijos `dompe_`, `conq_`, `pesc_`).
+
+## Cuenta de la plataforma
+- `index.html` carga `comun/` (config, cuenta, amigos) y `plataforma/juegos.js`; `principal.js` llama `Cuenta.requerir()` antes de mostrar el juego y `marco/cuenta.js` es el unico puente con `window.Cuenta` (nunca lanza; sin cuenta/red todo sigue igual).
+- Nube (`autoSincronizar('cartas', ...)`): `cartas_monedero`, `cartas_stats`, `cartas_logros`, `cartas_historial`. No viajan: ajustes, ajustes de dispositivo, mesas/asientos, cobros.
+- Puntajes (ids de `juegos.js`): `monedero`, `bote`, `dompe_racha`, `conq_turnos` (menor es mejor), `pesc_libros`; se envian con retardo tras cada mano/sesion. Logros: mismos ids que `progreso.js`, reportados en `desbloquear()`. XP: 2/6/10 por mano, 50 por torneo ganado (tope 600 por carga).
+- UI: `ui/cuentaUI.js` (cuenta, ranking Global/Amigos, bloque "Cuenta y nube" en Ajustes > Datos). Invitacion de amigos en linea: `paneles.js` (`invitarAmigoEnLinea`); `?invitar=<uid>` abre el creador de mesas y luego invita.

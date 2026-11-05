@@ -13,9 +13,11 @@ import { Cartera } from './marco/cartera.js';
 import * as Pro from './marco/progreso.js';
 import * as A from './marco/almacen.js';
 import { Sonido, vol, desbloquear } from './marco/sonido.js';
+import * as Cta from './marco/cuenta.js';
+import { rankingDialogo } from './ui/cuentaUI.js';
 
 const app = document.getElementById('app');
-let vista = 'entrar', entrarUI = null, vmPrev = null, resVisto = -1, chatT = 0, noLeidos = 0, logT = 0, saliendo = false, finMostrado = false, idMesaVista = '', ofertaDlg = null, wake = null, pausaDlg = null;
+let pendInvitar = '', vista = 'entrar', entrarUI = null, vmPrev = null, resVisto = -1, chatT = 0, noLeidos = 0, logT = 0, saliendo = false, finMostrado = false, idMesaVista = '', ofertaDlg = null, wake = null, pausaDlg = null;
 const OPTS_LOBBY = { juego: 'Cartas', maxJugadores: 4, minJugadores: 1, modos: [], alIniciar() {}, alCerrar() {} };
 
 // ---------- estructura ----------
@@ -45,7 +47,15 @@ function irEntrar() {
   entrarUI = pantallaEntrar(vEntrar, { crear: irCrear, unirse: abrirUnirse, ajustes: () => Aj.ajustesDialogo(), ayuda: ayudaGeneral, continuar: continuar, liquidar: liquidarGuardada });
   setTimeout(() => { const f = vEntrar.querySelector('.prim'); if (f && document.body.classList.contains('modo-mando')) f.focus(); }, 50);
 }
-function irCrear() { mostrar('entrar'); pantallaCrear(vEntrar, (m, J) => { iniciarAnfitrion(m, J); entrarMesa(); }, irEntrar); }
+function irCrear() { mostrar('entrar'); pantallaCrear(vEntrar, (m, J) => { iniciarAnfitrion(m, J); entrarMesa(); invitarPendiente(); }, irEntrar); }
+// ?invitar=<uid> (desde el portal): tras crear la mesa se invita a ese amigo en linea
+function invitarPendiente() {
+  const uid = pendInvitar; if (!uid) return; pendInvitar = '';
+  let n = 0; const t = setInterval(() => {
+    const a = window.Cuenta && window.Cuenta.amigos && window.Cuenta.amigos.lista.find((x) => x.uid === uid);
+    if (a || ++n > 20) { clearInterval(t); if (!a) return aviso('No se encontró a ese amigo en tu lista', '#ff6b6b'); if (a.estado === 'desconectado') aviso(a.nombre + ' no está conectado; invítalo con el enlace.', '#ffd23d', 4500); else P.invitarAmigoEnLinea(a, { set textContent(x) { aviso(x, '#3df5ff', 3500); } }); }
+  }, 250);
+}
 function entrarMesa() { vmPrev = null; resVisto = -1; chatT = 0; logT = 0; noLeidos = 0; finMostrado = false; saliendo = false; MesaUI.reiniciarPrevio(); mostrar('mesa'); if (Sesion.vm) alVista(Sesion.vm); }
 function continuar(id) {
   if (!restaurarAnfitrion(id)) { aviso('No se pudo restaurar la mesa', '#ff6b6b'); A.mesas.olvidar(id); irEntrar(); return; }
@@ -130,7 +140,7 @@ function terminar() {
   const r = terminarSesion(); Pro.sesionTerminada(neto, torneoGanado);
   const cont = r && r.cobro ? `Recibes ${fmt(r.cobro)} fichas en tu monedero.` : 'Sin fichas que cobrar.';
   detener(); irEntrar();
-  dialogo({ titulo: 'Sesión terminada', cuerpo: [cont, `Resultado de la sesión: ${neto >= 0 ? '+' : '−'}${fmt(Math.abs(neto))} fichas.`], botones: [{ txt: 'Aceptar', cls: 'prim' }] });
+  dialogo({ titulo: 'Sesión terminada', cuerpo: [cont, `Resultado de la sesión: ${neto >= 0 ? '+' : '−'}${fmt(Math.abs(neto))} fichas.`], botones: [{ txt: 'Ver ranking', cls: 'sec', fn: () => rankingDialogo() }, { txt: 'Aceptar', cls: 'prim' }].filter((b) => b.txt !== 'Ver ranking' || Cta.hay()) });
 }
 function salirDeMesa() {
   const vm = Sesion.vm;
@@ -141,7 +151,7 @@ function salirDeMesa() {
 function mostrarFin(vm) {
   const neto = vm.yo >= 0 && vm.neto[vm.yo] ? vm.neto[vm.yo].neto : 0;
   if (vm.yo === 0 && Sesion.rol === 'anfitrion') { Pro.sesionTerminada(neto, vm.premio && vm.premio.asiento === 0); }
-  dialogo({ titulo: vm.premio ? 'Torneo terminado' : 'Sesión terminada', cerrable: false, cuerpo: [vm.premio ? `Ganador: ${vm.premio.nombre}. Premio: ${fmt(vm.premio.monto)} fichas.` : 'La mesa se cerró.', 'Tus fichas ya están en el monedero.'], botones: [{ txt: 'Volver al menú', cls: 'prim', fn: () => { if (Sesion.rol === 'anfitrion') detener(); else salirCliente(); irEntrar(); } }] });
+  dialogo({ titulo: vm.premio ? 'Torneo terminado' : 'Sesión terminada', cerrable: false, cuerpo: [vm.premio ? `Ganador: ${vm.premio.nombre}. Premio: ${fmt(vm.premio.monto)} fichas.` : 'La mesa se cerró.', 'Tus fichas ya están en el monedero.'], botones: [...(Cta.hay() ? [{ txt: 'Ver ranking', cls: 'sec', fn: () => rankingDialogo() }] : []), { txt: 'Volver al menú', cls: 'prim', fn: () => { if (Sesion.rol === 'anfitrion') detener(); else salirCliente(); irEntrar(); } }] });
 }
 
 // ---------- eventos de red ----------
@@ -198,9 +208,23 @@ function medirFps() {
 // ---------- arranque ----------
 document.addEventListener('pointerdown', desbloquear, { once: true });
 document.addEventListener('keydown', desbloquear, { once: true });
-try { if (window.Red && !localStorage.getItem('juego_perfil')) window.Red.perfil.guardar({ nombre: window.Red.perfil.nombreAleatorio(), color: window.Red.perfil.paleta[Math.floor(Math.random() * 8)] }); } catch (e) {}
-Aj.aplicar(); iniciarSuscripcion(); Entrada.iniciar(); requestAnimationFrame(medirFps);
-Pro.revisarMonedero(Cartera.saldo());
-irEntrar();
-if (window.Lobby && window.Lobby.hayEnlace()) { previstaDesdeUrl(); window.Lobby.abrir(OPTS_LOBBY); }
+// la nube bajo datos nuevos: se vuelve a leer el monedero y se repinta el menu (si hay una mesa en curso no se interrumpe)
+function alBajarNube() { Cartera.recargar(); if (vista === 'entrar' && entrarUI) entrarUI.pintar(); aviso('Progreso actualizado desde tu cuenta', '#6dff6d'); }
+async function arrancar() {
+  try { if (window.Cuenta) await window.Cuenta.requerir(); } catch (e) { console.warn(e); } // sin sesion redirige al portal (no resuelve)
+  app.hidden = false;
+  try { if (window.Cuenta && window.Cuenta.ui) window.Cuenta.ui.mandoPropio = true; } catch (e) {} // los modales de la plataforma (conflicto de guardado) se manejan con mando; Entrada cede mientras estan abiertos
+  const pi = /[?&]invitar=([A-Za-z0-9_-]+)/.exec(location.search);
+  if (pi) { pendInvitar = pi[1]; try { const u = new URL(location.href); u.searchParams.delete('invitar'); history.replaceState(null, '', u.pathname + u.search + u.hash); } catch (e) {} }
+  if (window.Lobby && window.Lobby.registrar) window.Lobby.registrar(OPTS_LOBBY);
+  await Cta.iniciarNube(alBajarNube, 4000); // antes de leer/escribir guardados; nunca espera mas de 4 s
+  try { if (window.Red && !localStorage.getItem('juego_perfil')) window.Red.perfil.guardar({ nombre: window.Red.perfil.nombreAleatorio(), color: window.Red.perfil.paleta[Math.floor(Math.random() * 8)] }); } catch (e) {}
+  Aj.aplicar(); iniciarSuscripcion(); Entrada.iniciar(); requestAnimationFrame(medirFps);
+  Pro.revisarMonedero(Cartera.saldo());
+  Cta.reportarLogrosLocales();
+  irEntrar();
+  if (window.Lobby && window.Lobby.hayEnlace()) { previstaDesdeUrl(); window.Lobby.abrir(OPTS_LOBBY); }
+  else if (pendInvitar && Cta.hay()) { irCrear(); aviso('Crea tu mesa y deja un asiento como «Jugador humano»: invitaremos a tu amigo.', '#3df5ff', 6000); }
+}
 window.__cartas = { Sesion, A, Cartera, accion };
+arrancar();

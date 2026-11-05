@@ -6,6 +6,8 @@ import { vol, Sonido } from '../marco/sonido.js';
 import { cfgUI } from './mesaUI.js';
 import * as Acc from './acciones.js';
 import { Cartera } from '../marco/cartera.js';
+import * as Cta from '../marco/cuenta.js';
+import { bloqueNube } from './cuentaUI.js';
 
 const PRESETS = { baja: { animaciones: false, sombras: false }, media: { animaciones: true, sombras: false }, alta: { animaciones: true, sombras: true }, ultra: { animaciones: true, sombras: true } };
 export const ORDEN_PRESET = ['baja', 'media', 'alta', 'ultra'];
@@ -40,6 +42,7 @@ function selector(valor, ops, fn) { const s = h('select', { cls: 'campo', 'data-
 export function ajustesDialogo(pestana) {
   let actual = pestana || 'graficos';
   const cuerpo = h('div', { cls: 'a-cuerpo' }), tabs = h('div', { cls: 'tabs', role: 'tablist' });
+  let limpiar = null;
   const T = {
     graficos() {
       const g = disp.graficos;
@@ -84,19 +87,21 @@ export function ajustesDialogo(pestana) {
     },
     datos() {
       const area = h('textarea', { cls: 'campo', rows: 4, 'aria-label': 'Guardado', 'data-f': 1, placeholder: 'Aquí aparece tu guardado; para importar pega el texto y pulsa Importar' });
-      return [h('p', { txt: 'El guardado incluye monedero, estadísticas, logros y mesas guardadas. No incluye los ajustes de gráficos y controles de este dispositivo.' }), area,
+      const nube = bloqueNube(); limpiar = nube.limpiar || null;
+      return [nube, h('p', { txt: 'El guardado incluye monedero, estadísticas, logros y mesas guardadas. No incluye los ajustes de gráficos y controles de este dispositivo.' }), area,
         h('div', { cls: 'fila' }, [boton('Exportar', () => { area.value = A.exportar(); area.select(); }, 'sec'), boton('Importar', () => { const r = A.importar(area.value); if (r.ok) { aviso(`Importado (${r.n} datos). Recargando…`, '#6dff6d'); Cartera.recargar(); setTimeout(() => location.reload(), 700); } else aviso(r.error, '#ff6b6b'); }, 'sec')]),
         fila('Fichas iniciales del monedero', deslizador(aj.economia.inicial, 500, 50000, 500, (v) => cambiar((a) => { a.economia.inicial = v; })), 'se usa al reiniciar el monedero'),
         fila('Regalo diario (fichas, 0 = desactivado)', deslizador(aj.economia.regalo, 0, 5000, 100, (v) => cambiar((a) => { a.economia.regalo = v; }))),
         h('div', { cls: 'fila' }, [boton('Reiniciar monedero', () => confirmar('El saldo vuelve a las fichas iniciales.', 'Reiniciar monedero', () => { Cartera.reiniciar(); aviso('Monedero reiniciado'); }), 'sec'),
-          boton('Borrar todo el progreso', () => confirmar('Se borran monedero, estadísticas, logros y mesas guardadas. No se puede deshacer.', 'Borrar progreso', () => { A.borrarTodo(false); Cartera.recargar(); setTimeout(() => location.reload(), 300); }, 'Borrar'), 'peligro')])];
+          boton('Borrar todo el progreso', () => confirmar('Se borran monedero, estadísticas, logros y mesas guardadas' + (Cta.hay() ? ' (y en la próxima sincronización también tu copia de la nube)' : '') + '. No se puede deshacer.', 'Borrar progreso', () => { A.borrarTodo(false); Cartera.recargar(); setTimeout(() => location.reload(), 300); }, 'Borrar'), 'peligro')])];
     },
   };
   const NOMBRES = [['graficos', 'Gráficos'], ['audio', 'Audio'], ['controles', 'Controles'], ['accesibilidad', 'Accesibilidad'], ['datos', 'Datos']];
   function pintar() {
     tabs.replaceChildren(...NOMBRES.map(([id, n]) => { const b = boton(n, () => { actual = id; pintar(); }, 'tab' + (id === actual ? ' on' : ''), { role: 'tab', 'aria-selected': String(id === actual) }); return b; }));
+    if (limpiar) { limpiar(); limpiar = null; }
     cuerpo.replaceChildren(...T[actual]().filter(Boolean));
   }
   pintar();
-  return dialogo({ titulo: 'Ajustes', ancho: 'ancho', cuerpo: [tabs, cuerpo], botones: [{ txt: 'Listo', cls: 'prim' }] });
+  return dialogo({ titulo: 'Ajustes', ancho: 'ancho', cuerpo: [tabs, cuerpo], alCerrar: () => { if (limpiar) { limpiar(); limpiar = null; } }, botones: [{ txt: 'Listo', cls: 'prim' }] });
 }

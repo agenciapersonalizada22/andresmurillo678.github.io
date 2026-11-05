@@ -6,6 +6,8 @@ import { AVATARES } from '../marco/mesa.js';
 import { LOGROS, grupoDe } from '../marco/progreso.js';
 import { CATALOGO } from '../juegos/registro.js';
 import { extraerCodigo, extraerMesa } from './red-util.js';
+import * as Cta from '../marco/cuenta.js';
+import { barraCuenta, cuentaDialogo, rankingDialogo } from './cuentaUI.js';
 
 function hace(t) { const s = Math.max(0, (Date.now() - t) / 1000); return s < 90 ? 'hace un momento' : s < 5400 ? 'hace ' + Math.round(s / 60) + ' min' : s < 172800 ? 'hace ' + Math.round(s / 3600) + ' h' : 'hace ' + Math.round(s / 86400) + ' días'; }
 
@@ -17,7 +19,8 @@ export function pantallaEntrar(cont, acc) {
     const saldo = h('b', { cls: 'saldo-num', txt: fmt(Cartera.saldo()) });
     const regalo = Cartera.puedeRegalo() ? boton('Regalo diario +' + fmt(A.ajustes.obtener().economia.regalo), () => { const g = Cartera.regalo(); aviso('Recibiste ' + fmt(g) + ' fichas de cortesía', '#ffd23d'); pintar(); }, 'prim chico') : h('small', { txt: 'Regalo diario ya reclamado' });
     const perfil = h('div', { cls: 'perfil' });
-    if (window.Lobby) window.Lobby.editorPerfil(perfil);
+    if (Cta.hay()) perfil.appendChild(h('p', { cls: 'nota', txt: 'Juegas como ' + Cta.usuario().nombre + ': el nombre y el color vienen de tu cuenta (cámbialos en el portal). Aquí eliges tu avatar de mesa.' }));
+    else if (window.Lobby) window.Lobby.editorPerfil(perfil);
     const av = A.ajustes.obtener().mesa.avatar;
     perfil.appendChild(h('div', { cls: 'avatares', role: 'group', 'aria-label': 'Avatar' }, AVATARES.map((a) => h('button', { type: 'button', cls: 'avatar-op' + (a === av ? ' on' : ''), 'data-f': 1, 'aria-pressed': String(a === av), 'aria-label': 'Avatar ' + a, txt: a, on: { click: () => { const x = A.ajustes.obtener(); x.mesa.avatar = a; A.ajustes.guardar(x); pintar(); } } }))));
     const guardadas = ids.map((id) => {
@@ -29,14 +32,14 @@ export function pantallaEntrar(cont, acc) {
     });
     const logros = A.logros.obtener();
     raiz.replaceChildren(...[
-      h('a', { cls: 'volver', href: '../', txt: '← Menú' }),
+      h('div', { cls: 'cta-cab' }, [h('a', { cls: 'volver', href: '../', txt: '← Menú' }), barraCuenta(() => cuentaDialogo())]),
       h('h1', { cls: 'logo', html: '<span>CARTAS</span>' }), h('p', { cls: 'sub', txt: 'Póker · Veintiuno · Siete y medio · Dompe · Conquián · Ve a pescar' }),
       h('div', { cls: 'monedero', role: 'status' }, [h('span', { txt: '🪙 Monedero: ' }), saldo, h('span', { txt: ' fichas' }), regalo]),
       h('p', { cls: 'nota', txt: 'Solo fichas virtuales: nunca dinero real.' }),
       guardadas.length ? h('section', { cls: 'guardadas' }, [h('h2', { txt: 'Mesas guardadas' }), ...guardadas]) : null,
       h('div', { cls: 'fila grande' }, [boton('Crear mesa', acc.crear, 'prim grande'), boton('Unirme con enlace', () => acc.unirse(''), 'sec grande')]),
       h('details', { cls: 'grupo' }, [h('summary', { txt: 'Mi perfil y avatar' }), perfil]),
-      h('div', { cls: 'fila' }, [boton('Ajustes', acc.ajustes, 'sec'), boton('Ayuda', acc.ayuda, 'sec'), boton('Logros (' + Object.keys(logros).length + '/' + LOGROS.length + ')', () => logrosDialogo(), 'sec')]),
+      h('div', { cls: 'fila' }, [boton('Ajustes', acc.ajustes, 'sec'), boton('Ayuda', acc.ayuda, 'sec'), boton('Logros (' + Object.keys(logros).length + '/' + LOGROS.length + ')', () => logrosDialogo(), 'sec'), Cta.hay() ? boton('Ranking', () => rankingDialogo(), 'sec') : null].filter(Boolean)),
       h('p', { cls: 'nota', txt: 'Para jugar con amigos: crea una mesa, pulsa «Invitar jugador» y envía el enlace. Si alguien se cae, pulsa «Reconectar jugador» y le das un enlace nuevo sin perder fichas ni mano.' })].filter(Boolean));
   }
   pintar();

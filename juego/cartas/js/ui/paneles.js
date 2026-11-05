@@ -44,6 +44,40 @@ export function resultadosDialogo(vm) {
     h('p', { cls: 'nota', txt: `Monedero: ${fmt(Cartera.saldo())} fichas · manos jugadas ${st.manos || 0} · ganadas ${st.ganadas || 0}` })], botones: [{ txt: 'Cerrar', cls: 'prim' }] });
 }
 
+
+// ---------- invitar amigos en linea (cuenta de la plataforma) ----------
+const ESTADO_AMIGO = { en_linea: 'en línea', jugando: 'jugando', ausente: 'ausente' };
+export async function invitarAmigoEnLinea(a, est) {
+  const C = window.Cuenta; if (!C || !C.usuario) return false;
+  const say = (t) => { if (est) est.textContent = t; };
+  try {
+    say('Invitando a ' + a.nombre + '…');
+    const r = await invitar(), inv = await C.invitar(a.uid, 'cartas', r.codigo);
+    say('Invitación enviada a ' + a.nombre + '. Esperando su respuesta (caduca en 5 minutos)…');
+    let fin = false, un = () => {};
+    const cierra = setTimeout(() => { if (fin) return; fin = true; un(); try { C.cancelarInvitacion(a.uid, inv.id); } catch (e) {} say('La invitación a ' + a.nombre + ' caducó.'); }, 300000);
+    un = C.escucharRespuesta(a.uid, inv.id, (d) => {
+      if (fin || d.estado === 'pendiente') return; fin = true; clearTimeout(cierra); un();
+      if (d.estado === 'aceptada' && d.respuesta) {
+        say(a.nombre + ' aceptó: conectando…');
+        aceptarRespuesta(d.respuesta).then(() => { say(a.nombre + ' se conectó. Ya puede pedir asiento.'); aviso(a.nombre + ' se conectó', '#6dff6d'); }, (e) => say('No se pudo conectar con ' + a.nombre + ': ' + e.message)).then(() => { try { C.borrarInvitacion(a.uid, inv.id); } catch (e) {} });
+      } else { say(a.nombre + (d.estado === 'rechazada' ? ' rechazó la invitación.' : ' no está disponible.')); try { C.borrarInvitacion(a.uid, inv.id); } catch (e) {} }
+    });
+    return true;
+  } catch (e) { say('No se pudo invitar: ' + ((e && e.message) || 'error')); return false; }
+}
+function amigosBloque(est) {
+  const C = window.Cuenta; if (!C || !C.usuario || !C.amigos) return null;
+  const caja = h('div', { cls: 'cta-amigos' });
+  const pintar = () => {
+    const am = C.amigos.lista.filter((a) => a.estado !== 'desconectado');
+    caja.replaceChildren(h('b', { txt: 'Amigos en línea' }), ...(am.length ? am.map((a) => h('div', { cls: 'fila' }, [h('span', { txt: a.nombre + ' · ' + (ESTADO_AMIGO[a.estado] || '') }), boton('Invitar', () => invitarAmigoEnLinea(a, est), 'prim chico')]))
+      : [h('small', { cls: 'nota', txt: C.amigos.lista.length ? 'Ningún amigo está conectado ahora.' : 'Aún no tienes amigos: agrégalos en el portal.' })]));
+  };
+  pintar(); try { const off = C.amigos.alCambiar(pintar); caja.limpiar = typeof off === 'function' ? off : null; } catch (e) {}
+  return caja;
+}
+
 // ---------- invitar / reconectar (anfitrion) ----------
 export function invitarDialogo(vm, asientoIdx) {
   const cuerpo = h('div', { cls: 'inv' });
@@ -63,8 +97,9 @@ export function invitarDialogo(vm, asientoIdx) {
     try { await aceptarRespuesta(resp.value); est.textContent = 'Jugador conectado.'; resp.value = ''; aviso('Jugador conectado', '#6dff6d'); } catch (e) { est.textContent = e.message; }
     btnOk.disabled = false;
   }, 'prim');
-  cuerpo.append(desc, btnGen, enlace, cb, resp, btnOk, est);
-  return dialogo({ titulo: asientoIdx != null ? 'Reconectar jugador' : 'Invitar jugador', cuerpo: [cuerpo], botones: [{ txt: 'Cerrar', cls: 'sec' }] });
+  const am = asientoIdx == null ? amigosBloque(est) : null;
+  cuerpo.append(...[am, desc, btnGen, enlace, cb, resp, btnOk, est].filter(Boolean));
+  return dialogo({ titulo: asientoIdx != null ? 'Reconectar jugador' : 'Invitar jugador', cuerpo: [cuerpo], alCerrar: () => { if (am && am.limpiar) am.limpiar(); }, botones: [{ txt: 'Cerrar', cls: 'sec' }] });
 }
 
 // ---------- gestion de la mesa (anfitrion) ----------
