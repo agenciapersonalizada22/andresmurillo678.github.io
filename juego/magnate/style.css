@@ -150,3 +150,14 @@ body.reducir *, body.reducir *::before { animation-duration: 0.01ms !important; 
   #barra { left: auto; right: 0; width: 46vw; background: linear-gradient(90deg, #0b122000, #0b1220f2 20%); }
   #jugs { right: 47vw; }
 }
+
+/* cuenta y ranking */
+.cuentaPie { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px auto 0; font-size: 0.85rem; color: var(--dim); }
+.cuentaPie .cn { max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--txt); }
+.cuentaPie .chip { min-height: 32px; padding: 2px 12px; }
+.rk { list-style: none; margin: 6px 0; padding: 0; display: grid; gap: 4px; }
+.rk li { display: flex; align-items: center; gap: 8px; background: var(--panel2); border-radius: 10px; padding: 6px 10px; font-size: 0.9rem; }
+.rk li.yo { border-left: 4px solid var(--oro); background: #1d2a40; }
+.rk .pos { min-width: 2.4em; color: var(--dim); font-weight: 700; }
+.rk b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rk .val { font-weight: 700; color: var(--oro); white-space: nowrap; }

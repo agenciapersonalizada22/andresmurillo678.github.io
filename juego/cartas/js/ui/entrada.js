@@ -4,6 +4,8 @@ import * as Acc from './acciones.js';
 
 const hooks = { pausa: null, chat: null, activo: () => true, contexto: null, umbral: () => 0.5, sens: () => 1 };
 export function configurar(o) { Object.assign(hooks, o); }
+// Un modal de la plataforma (conflicto de guardado, avisos de invitacion) maneja el mando por su cuenta.
+const cuentaOcupada = () => !!(window.Cuenta && window.Cuenta.ui && window.Cuenta.ui.mando && window.Cuenta.ui.mando.ocupado());
 let ultimaDir = '', tRep = 0, ultimaCant = 0, bucleId = 0, bloqueo = true;
 
 function ctxActual() {
@@ -29,6 +31,7 @@ export function mover(dir) {
   if (mejor) { mejor.focus({ preventScroll: true }); mejor.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
 }
 function tecla(e) {
+  if (cuentaOcupada()) return;
   const t = e.target, escribiendo = t && (t.tagName === 'INPUT' && t.type !== 'range' && t.type !== 'checkbox' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
   document.body.classList.remove('modo-mando');
   if (e.key === 'Escape') {
@@ -50,6 +53,7 @@ function bucle() {
   bucleId = requestAnimationFrame(bucle);
   const M = window.Mando, L = window.Lobby;
   if (!M || (L && L.abierto)) return;
+  if (cuentaOcupada()) { bloqueo = true; return; }
   M.leer(); if (!M.conectado) { ultimaDir = ''; return; }
   const t = performance.now();
   if (M.activo && t - M._ultimoUso < 200) document.body.classList.add('modo-mando');

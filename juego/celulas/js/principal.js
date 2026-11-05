@@ -5,7 +5,7 @@
   var J = C.Juego = { vista: null, mundo: null, yo: null, rol: null, pausado: false };
   var cam = { x: 2500, y: 2500, z: 1 }, obj = { x: 0, y: 0, pausa: false }, op = {}, centro = { x: 0, y: 0, m: 0, spread: 0, n: 0 };
   var acc = 0, ultimo = 0, tEj = 0, tHud = 0, tMini = 0, tProg = 0, tSave = 0, tPistas = 0, pistas = 0, miniCtx, W = 0, H = 0, wake = null;
-  var fpsN = 0, fpsT = 0, fpsMalos = 0, fpsAct = 0, masaPrev = 0, prog, prev = null, sesion = null, tFin = 0, muertoMostrado = false, finMostrado = false, cuentaVida = 0;
+  var xpDado = false, tPunt = 0, fpsN = 0, fpsT = 0, fpsMalos = 0, fpsAct = 0, masaPrev = 0, prog, prev = null, sesion = null, tFin = 0, muertoMostrado = false, finMostrado = false, cuentaVida = 0;
 
   /* ---------------- sesion ---------------- */
   J.perfil = function () { var p = U.perfil(); return { nombre: p.nombre, skin: p.skin }; };
@@ -47,18 +47,18 @@
   };
   function comienzo(modo) {
     sesion = { modo: modo, t0: G.performance.now(), kills: 0, maxMasa: 0, victoria: false };
-    muertoMostrado = finMostrado = false; tPistas = 0; pistas = 0; masaPrev = 0; cuentaVida = 0;
-    ['menu', 'pausa', 'muerte', 'ajustes', 'logros', 'ayuda', 'sala'].forEach(function (id) { U.ocultar(id); });
+    muertoMostrado = finMostrado = false; xpDado = false; tPunt = 0; tPistas = 0; pistas = 0; masaPrev = 0; cuentaVida = 0;
+    ['menu', 'pausa', 'muerte', 'ajustes', 'logros', 'ranking', 'ayuda', 'sala'].forEach(function (id) { U.ocultar(id); });
     doc.getElementById('hud').classList.remove('oculto'); doc.body.classList.remove('en-menu');
     E.reiniciar(); E.activa = true; Au.iniciar(); Au.musica(Aj.gen.musica > 0); pedirWake();
     U.cache = {};
   }
   J.alMenu = function () {
-    J.guardar();
+    J.guardar(); enviarPuntaje();
     if (C.Multi.rol) C.Multi.cerrar(true);
     J.vista = null; J.mundo = null; J.rol = null; E.activa = false; E.reiniciar();
     doc.getElementById('hud').classList.add('oculto'); doc.body.classList.add('en-menu'); Au.pararMusica(); soltarWake();
-    ['pausa', 'muerte', 'ajustes', 'logros', 'ayuda', 'sala'].forEach(function (id) { U.ocultar(id); });
+    ['pausa', 'muerte', 'ajustes', 'logros', 'ranking', 'ayuda', 'sala'].forEach(function (id) { U.ocultar(id); });
     menu();
   };
   J.guardar = function () {
@@ -98,18 +98,21 @@
     var vivo = J.mundo ? y.cel.length > 0 : v.vivo; if (vivo) return;
     if (v.estado === 'terminado') return;
     muertoMostrado = true; prog.stats.muertes++; guardarProg(true);
+    var sm = statsYo(); C.Cu.enviarPuntaje(v.modo, sm.max); C.Cu.xpHito(sm, false); xpDado = true;
     var puede = J.mundo ? J.mundo.puedeReaparecer(y) : v.cfg.reaparece || (v.modo === 'batalla' && v.t < v.cfg.gracia);
     var botones = [];
     if (puede) botones.push({ txt: 'REAPARECER', cls: 'principal', fn: J.reaparecer });
     else botones.push({ txt: 'SEGUIR MIRANDO', cls: 'principal', fn: function () { U.ocultar('muerte'); E.activa = false; muertoMostrado = true; } });
+    if (C.Cu.activa()) botones.push({ txt: 'RANKING', fn: function () { J.ranking(v.modo); } });
     botones.push({ txt: 'MENÚ', fn: J.alMenu, atras: !puede });
     var puesto = J.mundo ? y.puesto : (J.yo.puestoFinal || 0);
-    U.panelFin({ titulo: puede ? 'TE DEVORARON' : 'ELIMINADO', sub: !puede && puesto ? 'Puesto #' + puesto : '', datos: datosFin(), botones: botones });
+    U.panelFin({ titulo: puede ? 'TE DEVORARON' : 'ELIMINADO', sub: !puede && puesto ? 'Puesto #' + puesto : '', datos: datosFin(), botones: botones, modo: v.modo });
     E.activa = false;
   }
+  J.ranking = function (modo) { C.Cu.ranking(modo, function () { U.ocultar('ranking'); U.nav(); }); };
   J.reaparecer = function () {
     if (J.mundo) J.mundo.reaparecer(J.yo); else C.Multi.accion('r', 0, 0, false);
-    U.ocultar('muerte'); muertoMostrado = false; E.activa = true; cuentaVida++; prev = statsYo(); masaPrev = 0;
+    U.ocultar('muerte'); muertoMostrado = false; E.activa = true; cuentaVida++; prev = statsYo(); masaPrev = 0; xpDado = false;
   };
   function alFin(ganador, eq) {
     if (finMostrado) return; finMostrado = true;
@@ -117,13 +120,15 @@
     if (modo === 'equipos') gano = y.equipo === eq; else gano = !!ganador && ganador.id === y.id;
     sesion.victoria = gano; if (gano) { prog.stats.victorias++; Au.sfx('victoria'); } else Au.sfx('aviso');
     var ctx = contexto(); ctx.victoria = gano; var nuevos = C.Logros.evaluar(prog, ctx); anunciar(nuevos); guardarProg(true);
+    var sf = statsYo(); C.Cu.enviarPuntaje(modo, sf.max); if (!xpDado) C.Cu.xpHito(sf, gano); else if (gano) C.Cu.xp(20); xpDado = true;
     if (J.rol === 'solo') Al.borrar('partida');
     if (J.rol === 'anfitrion') Al.borrar('sala');
     var titulo = modo === 'equipos' ? 'GANA EL EQUIPO ' + C.EQUIPOS[eq >= 0 ? eq : 0].nombre.toUpperCase() : gano ? '¡VICTORIA!' : 'FIN DE LA PARTIDA';
     var botones = [];
     if (J.rol === 'solo') botones.push({ txt: 'JUGAR DE NUEVO', cls: 'principal', fn: function () { J.nuevaSolo(); } });
+    if (C.Cu.activa()) botones.push({ txt: 'RANKING', fn: function () { J.ranking(modo); } });
     botones.push({ txt: 'MENÚ', cls: J.rol === 'solo' ? '' : 'principal', fn: J.alMenu, atras: true });
-    U.panelFin({ titulo: titulo, sub: ganador && modo !== 'equipos' ? 'Ganador: ' + ganador.nombre : '', datos: datosFin(), botones: botones });
+    U.panelFin({ titulo: titulo, sub: ganador && modo !== 'equipos' ? 'Ganador: ' + ganador.nombre : '', datos: datosFin(), botones: botones, modo: modo });
     E.activa = false;
   }
 
@@ -137,7 +142,10 @@
     var s = statsYo(), v = J.vista, y = J.yo, rank = v.lb.indexOf(y.id);
     return { masa: s.masa, killsVida: s.kv, tVida: s.tv, celulas: s.celulas, top1: rank === 0 && s.masa >= 150 ? 1 : 0, dif: J.mundo ? J.mundo.dif : Aj.gen.dif, modo: v.modo, t: v.t, vivo: s.masa > 0, victoria: false };
   }
-  function anunciar(nuevos) { nuevos.forEach(function (l) { U.toast('🏆 Logro: ' + l.nombre, '#ffd23d', 4500); Au.sfx('logro'); }); }
+  function anunciar(nuevos) { nuevos.forEach(function (l) { C.Cu.logro(l.id); U.toast('🏆 Logro: ' + l.nombre, '#ffd23d', 4500); Au.sfx('logro'); }); }
+  function enviarPuntaje() { if (J.vista && sesion) { var s = statsYo(); C.Cu.enviarPuntaje(J.vista.modo, s.max); } }
+  /* tras bajar progreso de la nube: releer el progreso en memoria (en partida) o repintar el menu */
+  J.refrescarProgreso = function () { if (J.vista) { prog = C.progreso(); prev = statsYo(); } else if (U.visible('menu') && !doc.activeElement.matches('input')) menu(); };
   function guardarProg(forzar) { Al.escribir('progreso', prog); }
   function progresoTick(dt) {
     var s = statsYo(), st = prog.stats; if (!prev) { prev = s; return; }
@@ -147,6 +155,7 @@
     if (s.masa > prog.records[J.vista.modo]) prog.records[J.vista.modo] = s.masa;
     if (s.kv > st.rachaMax) st.rachaMax = s.kv;
     prev = s;
+    if (++tPunt >= 30) { tPunt = 0; enviarPuntaje(); }
     var nuevos = C.Logros.evaluar(prog, contexto()); if (nuevos.length) { anunciar(nuevos); guardarProg(); }
   }
 
@@ -219,6 +228,7 @@
       multi: function () { G.Lobby.abrir(C.Multi.opciones()); },
       restaurarSala: function () { C.Multi.restaurar = true; G.Lobby.abrir(C.Multi.opciones()); },
       logros: function () { U.logros(function () { U.ocultar('logros'); U.nav(); }); },
+      ranking: function () { J.ranking(Aj.gen.modo); },
       ajustes: function () { abrirAjustes('menu'); },
       ayuda: function () { U.ayuda(E.esTactil(), function () { U.ocultar('ayuda'); U.nav(); Al.escribir('progreso', Object.assign(C.progreso(), {})); }); }
     });
@@ -246,7 +256,8 @@
     var dt = Math.min(0.1, (now - ultimo) / 1000); ultimo = now; if (dt <= 0) return;
     fijarCamara.dt = dt;
     var lobby = G.Lobby && G.Lobby.abierto;
-    if (!lobby) {
+    var cuDlg = G.Cuenta && G.Cuenta.ui && G.Cuenta.ui.mando && G.Cuenta.ui.mando.ocupado();
+    if (!lobby && !cuDlg) {
       G.Mando.leer(); E.leerMando(G.Mando, dt);
       if (U.hayOverlay()) C.Nav.leer(G.Mando, dt);
     }
@@ -346,15 +357,19 @@
     G.addEventListener('keydown', function (e) { if (e.code === 'KeyF' && !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName || '') && J.vista) J.pantallaCompleta(); });
     doc.getElementById('btnPausaHud').onclick = function () { Au.iniciar(); if (U.visible('pausa')) J.reanudar(); else J.pausar(); };
     doc.addEventListener('visibilitychange', function () {
-      if (doc.hidden) { J.guardar(); Au.suspender(); if (J.rol === 'solo' && Aj.gen.pausaOculto && !J.pausado && J.vista && !finMostrado && !muertoMostrado) J.pausar(); }
+      if (doc.hidden) { J.guardar(); enviarPuntaje(); Au.suspender(); if (J.rol === 'solo' && Aj.gen.pausaOculto && !J.pausado && J.vista && !finMostrado && !muertoMostrado) J.pausar(); }
       else { Au.reanudar(); ultimo = G.performance.now(); acc = 0; if (J.vista) pedirWake(); }
     });
     G.addEventListener('pagehide', function () { J.guardar(); if (G.Red && G.Red.conectado) G.Red.salir(); });
     ['pointerdown', 'keydown'].forEach(function (ev) { G.addEventListener(ev, function () { Au.iniciar(); }, { once: true }); });
-    menu();
-    if (G.Lobby && G.Lobby.hayEnlace()) G.Lobby.abrir(C.Multi.opciones());
-    ultimo = G.performance.now(); G.requestAnimationFrame(frame);
     G.CelulasDepuracion = J;
+    ultimo = G.performance.now(); G.requestAnimationFrame(frame);
+    /* sesion obligatoria: sin cuenta redirige al portal; el guardado se lee tras la primera sincronizacion */
+    C.Cu.entrar(function () {
+      C.Cu.perfilRed();
+      menu();
+      if (G.Lobby) { G.Lobby.registrar(C.Multi.opciones()); if (G.Lobby.hayEnlace()) G.Lobby.abrir(C.Multi.opciones()); }
+    });
   }
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', arrancar); else arrancar();
 })(window);

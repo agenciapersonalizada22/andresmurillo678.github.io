@@ -13,6 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="../comun/lobby.css">
+  <link rel="stylesheet" href="../comun/cuenta.css">
 </head>
 <body class="en-menu">
 <div id="app">
@@ -33,6 +34,7 @@
     <div class="logo" aria-hidden="true"><i class="c0"></i><i class="c1"></i><i class="c2"></i><i class="c3"></i></div>
     <h2 class="gran">UNO</h2>
     <p class="lema">Cartas de colores, bots con carácter y mesas con amigos.</p>
+    <div id="cuentaLinea" class="cuenta-linea" hidden></div>
     <div class="lista-menu" id="listaMenu"></div>
   </section>
 
@@ -71,10 +73,14 @@
   <div id="fps" hidden></div>
   <canvas id="confeti" aria-hidden="true"></canvas>
 </div>
+<script src="../comun/firebase-config.js"></script>
 <script src="../comun/mando.js"></script>
 <script src="../comun/red.js"></script>
 <script src="../comun/lobby.js"></script>
-<script type="module" src="js/principal.js"></script>
+<script src="../plataforma/juegos.js"></script>
+<script src="../comun/cuenta.js"></script>
+<script src="../comun/amigos.js"></script>
+<script type="module" src="js/arranque.js"></script>
 <noscript><p style="color:#fff;padding:1rem">Este juego necesita JavaScript.</p></noscript>
 </body>
 </html>

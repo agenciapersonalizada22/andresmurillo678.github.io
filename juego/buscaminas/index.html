@@ -13,8 +13,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="../comun/lobby.css">
+  <link rel="stylesheet" href="../comun/cuenta.css">
 </head>
-<body class="en-inicio">
+<body class="en-inicio esperando">
   <div id="app">
     <header id="barra">
       <a class="volver" href="../" aria-label="Volver al menú de juegos">←</a>
@@ -49,10 +50,15 @@
   <section id="inicio" class="pantalla"></section>
   <div id="capas"></div>
   <div id="avisos" aria-live="polite"></div>
+  <div id="esperaCuenta" role="status">Conectando con tu cuenta…</div>
 
+  <script src="../comun/firebase-config.js"></script>
   <script src="../comun/mando.js"></script>
   <script src="../comun/red.js"></script>
   <script src="../comun/lobby.js"></script>
+  <script src="../plataforma/juegos.js"></script>
+  <script src="../comun/cuenta.js"></script>
+  <script src="../comun/amigos.js"></script>
   <script src="js/azar.js"></script>
   <script src="js/config.js"></script>
   <script src="js/motor.js"></script>
@@ -72,6 +78,7 @@
   <script src="js/ui_info.js"></script>
   <script src="js/ui_menu.js"></script>
   <script src="js/multi.js"></script>
+  <script src="js/cuenta_juego.js"></script>
   <script src="js/principal.js"></script>
 </body>
 </html>

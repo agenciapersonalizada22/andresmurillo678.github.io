@@ -8,6 +8,7 @@
 <meta name="description" content="Terminal de analisis de mercados: cripto, acciones, divisas, NFTs y noticias. Informacion educativa, no asesoria financiera.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b0e13'/%3E%3Cpath d='M7 22l6-8 5 4 7-10' stroke='%234c9aff' stroke-width='3' fill='none'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/mercados.css">
+<link rel="stylesheet" href="../../juego/comun/cuenta.css">
 </head>
 <body>
 <header class="cab">
@@ -27,14 +28,26 @@
 <script src="js/fmt.js"></script>
 <script src="../comun/datos.js"></script>
 <script src="../../juego/comun/mando.js"></script>
+<script src="../../juego/comun/firebase-config.js"></script><script src="../../juego/plataforma/juegos.js"></script><script src="../../juego/comun/cuenta.js"></script><script src="../../juego/comun/amigos.js"></script>
 <script src="js/indicadores.js"></script><script src="js/riesgo.js"></script><script src="js/patrones.js"></script><script src="js/backtest.js"></script>
 <script src="js/cartera.js"></script><script src="js/alertas.js"></script><script src="js/calculadoras.js"></script><script src="js/screener.js"></script>
 <script src="js/sentimiento.js"></script><script src="js/treemap.js"></script><script src="js/divisas.js"></script><script src="js/fixtures.js"></script>
-<script src="js/ops.js"></script><script src="js/calc.js"></script><script src="js/almacen.js"></script>
+<script src="js/ops.js"></script><script src="js/calc.js"></script><script src="js/almacen.js"></script><script src="js/cuenta-nube.js"></script><script src="js/nube.js"></script>
 <script src="js/ui.js"></script><script src="js/tabla.js"></script><script src="js/grafica.js"></script><script src="js/mercado.js"></script><script src="js/guia.js"></script>
 <script src="js/app.js"></script>
 <script src="js/v-resumen.js"></script><script src="js/v-mercados.js"></script><script src="js/v-activo.js"></script><script src="js/v-analisis.js"></script>
 <script src="js/v-cartera.js"></script><script src="js/v-noticias.js"></script><script src="js/v-mas.js"></script>
-<script>App.iniciar();</script>
+<script>
+(function () {
+  function arrancar() {
+    App.iniciar();
+    if (window.CuentaNube && window.Cuenta) {
+      var ch = CuentaNube.chip({ clase: 'chip', alClic: function () { App.ir('mas', 'ajustes'); } }), c = document.getElementById('btn-recargar');
+      c.parentNode.insertBefore(ch, c); CuentaNube.iniciar(CuentaNube.proveedor);
+    }
+  }
+  if (window.Cuenta && Cuenta.requerir) Cuenta.requerir().then(arrancar, arrancar); else arrancar();
+})();
+</script>
 </body>
 </html>

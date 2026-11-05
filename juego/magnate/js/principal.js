@@ -12,6 +12,7 @@ import { configurarEntrada } from './entrada.js';
 import { abrirAjustes } from './panel_ajustes.js';
 import { mostrarMenu, abrirPausa, primeraVez } from './menu.js';
 import { alLogro } from './logros.js';
+import { hayCambioPendienteDeNube } from './nube.js';
 
 const Mando = window.Mando, Lobby = window.Lobby;
 
@@ -80,7 +81,7 @@ $('btnVista').addEventListener('click', () => X.tablero.camara.cenital());
 configurarEntrada({ pausa: () => { if (X.E && !($('menu') && !$('menu').hidden)) abrirPausa(); }, ajustes: abrirAjustes, sonido: alternarSonido, pantalla: pantallaCompleta,
   atrasMenu: () => {} });
 
-X.alMenu = () => { cerrarTodas(); abandonar(false); Sonido.musica(false); mostrarMenu(true); };
+X.alMenu = () => { cerrarTodas(); abandonar(false); Sonido.musica(false); if (hayCambioPendienteDeNube()) { location.reload(); return; } mostrarMenu(true); };
 X.revancha = () => { cerrarTodas(); iniciarSolo(S.setup); };
 X.verFin = () => abrirFin();
 X.alArrancar = () => { mostrarMenu(false); cerrarTodas(); Sonido.musica(A.musica); pedirWake(); if (X.modo === 'solo') primeraVez(); };
@@ -107,5 +108,6 @@ window.addEventListener('pagehide', guardarPartida);
 iniciarRed();
 aplicar();
 mostrarMenu(true);
+if (Lobby) Lobby.registrar(opcionesLobby());
 if (Lobby && Lobby.hayEnlace()) { mostrarMenu(false); X.lobbyAbierto = true; Lobby.abrir(opcionesLobby()); }
 window.Magnate = { X, S, tablero };

@@ -82,6 +82,7 @@
     return d;
   }
   function datos(c) {
+    if (S.Cta && S.Cta.activa()) c.appendChild(S.Cta.bloqueDatos());
     var ta = h('textarea', { cls: 'campo', rows: 3, 'data-f': 1, 'aria-label': 'Texto de guardado', placeholder: 'Pega aquí un guardado para importarlo' });
     var msg = h('div', { cls: 'nota' });
     c.appendChild(h('div', { cls: 'etq', txt: 'Guardado (récord, skins, estadísticas, logros y ajustes de audio/accesibilidad)' }));

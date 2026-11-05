@@ -38,9 +38,12 @@
     var cats = BM.registro.modos;
     var cuerpo = UI.pestanas(cats.map(function (m) {
       return { id: m.id, nombre: m.nombre.replace(/ \(.*\)/, ''), pintar: function (c) {
-        var l = BM.progreso.d.records[m.id] || [];
-        if (!l.length) { c.appendChild(h('p', { cls: 'vacio', txt: 'Aún no hay récords. ¡Sé el primero!' })); return; }
-        c.appendChild(tabla(['#', 'Nombre', m.mayorEsMejor ? 'Puntos' : 'Tiempo', 'Fecha'], l.map(function (r, i) { return [i + 1, r.nombre, m.mayorEsMejor ? r.v + (r.nivel ? ' (niv. ' + r.nivel + ')' : '') : UI.fmtTiempo(r.v, true), UI.fmtFecha(r.fecha)]; })));
+        var local = function () {
+          var l = BM.progreso.d.records[m.id] || [];
+          if (!l.length) return h('p', { cls: 'vacio', txt: 'Aún no hay récords. ¡Sé el primero!' });
+          return tabla(['#', 'Nombre', m.mayorEsMejor ? 'Puntos' : 'Tiempo', 'Fecha'], l.map(function (r, i) { return [i + 1, r.nombre, m.mayorEsMejor ? r.v + (r.nivel ? ' (niv. ' + r.nivel + ')' : '') : UI.fmtTiempo(r.v, true), UI.fmtFecha(r.fecha)]; }));
+        };
+        c.appendChild(BM.cuenta ? BM.cuenta.vistaRecords(m, local) : local());
       } };
     }), inicial || 'tiempo_principiante');
     UI.panel({ titulo: 'Récords', cuerpo: cuerpo, ancho: 560 });

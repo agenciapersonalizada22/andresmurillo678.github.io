@@ -8,6 +8,7 @@
   <title>Ofertas y promociones</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234f46e5'/%3E%3Ctext x='32' y='46' font-size='38' text-anchor='middle' fill='white'%3E%25%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="estilo.css">
+  <link rel="stylesheet" href="../../juego/comun/cuenta.css">
 </head>
 <body>
 <a class="saltar" href="#feed">Saltar a las ofertas</a>
@@ -52,6 +53,10 @@
 <dialog id="dlgDetalle" aria-labelledby="detTitulo"></dialog>
 <dialog id="dlgGeneral" aria-labelledby="genTitulo"></dialog>
 <script src="../../juego/comun/mando.js"></script>
+<script src="../../juego/comun/firebase-config.js"></script>
+<script src="../../juego/plataforma/juegos.js"></script>
+<script src="../../juego/comun/cuenta.js"></script>
+<script src="../../juego/comun/amigos.js"></script>
 <script src="../comun/datos.js"></script>
 <script src="js/texto.js"></script>
 <script src="js/busqueda.js"></script>
@@ -61,6 +66,8 @@
 <script src="js/moneda.js"></script>
 <script src="js/fuentes.js"></script>
 <script src="js/almacen.js"></script>
+<script src="js/cuenta-nube.js"></script>
+<script src="js/nube.js"></script>
 <script src="js/demo.js"></script>
 <script src="js/grafica.js"></script>
 <script src="js/virtual.js"></script>
@@ -69,6 +76,17 @@
 <script src="js/ui_detalle.js"></script>
 <script src="js/ui_paneles.js"></script>
 <script src="js/ui_mando.js"></script>
-<script>Of.app.iniciar();</script>
+<script>
+(function () {
+  function arrancar() {
+    Of.app.iniciar();
+    if (window.CuentaNube && window.Cuenta) {
+      var ch = CuentaNube.chip({ clase: 'btn', alClic: function () { Of.app.ir('ajustes'); } }), ref = document.getElementById('btnVista');
+      ref.parentNode.insertBefore(ch, ref); CuentaNube.iniciar(CuentaNube.proveedor);
+    }
+  }
+  if (window.Cuenta && Cuenta.requerir) Cuenta.requerir().then(arrancar, arrancar); else arrancar();
+})();
+</script>
 </body>
 </html>

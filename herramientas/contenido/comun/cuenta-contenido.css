@@ -1,0 +1,25 @@
+/* Cuenta y nube para el Estudio de contenido (escritor, calendario, imagenes, video). Hereda colores de cada herramienta con valores de respaldo. */
+.cc-chip{display:inline-flex;align-items:center;gap:.4rem;min-height:34px;max-width:170px;padding:2px 10px 2px 3px;border-radius:99px;border:1px solid var(--borde,rgba(127,127,127,.4));background:var(--panel2,var(--campo,rgba(127,127,127,.14)));color:var(--texto,var(--tinta,var(--txt,inherit)));font:600 .8rem/1 system-ui,sans-serif;cursor:pointer;flex:none}
+.cc-chip:hover{border-color:var(--acento,#6c5ce7)}
+.cc-chip .cu-avatar{width:26px!important;height:26px!important;flex:none;display:inline-block}
+.cc-chip .cc-nom{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-chip .cc-pto{width:8px;height:8px;border-radius:50%;background:#9aa0b8;flex:none}
+.cc-chip[data-fase=ok] .cc-pto{background:#16a34a}.cc-chip[data-fase=sinRed] .cc-pto,.cc-chip[data-fase=pendiente] .cc-pto{background:#d97706}.cc-chip[data-fase=error] .cc-pto{background:#dc2626}.cc-chip[data-fase=sincronizando] .cc-pto{background:var(--acento,#6c5ce7)}
+@media (max-width:640px){.cc-chip{padding:2px;max-width:none}.cc-chip .cc-nom{display:none}.cc-chip .cc-pto{position:absolute;margin:20px 0 0 20px;width:9px;height:9px;border:2px solid var(--panel,#fff)}.cc-chip{position:relative}}
+.cc-bloque{border:1px solid var(--borde,rgba(127,127,127,.4));border-radius:12px;padding:1rem;background:var(--panel,transparent);color:var(--texto,var(--tinta,var(--txt,inherit)));font:14px/1.45 system-ui,sans-serif;text-align:left}
+.cc-bloque h3{margin:0 0 .6rem;font-size:1.05rem}
+.cc-bloque p{margin:.4rem 0}
+.cc-usuario{display:flex;align-items:center;gap:.7rem;margin-bottom:.4rem}
+.cc-usuario .cu-avatar{width:44px!important;height:44px!important;flex:none;display:inline-block}
+.cc-usuario b{display:block;font-size:1rem}
+.cc-sub{color:var(--suave,var(--tinta2,var(--mut,#6b7280)));font-size:.85rem}
+.cc-estado{padding:.5rem .7rem;border-radius:8px;background:var(--panel2,var(--campo,rgba(127,127,127,.12)));margin:.5rem 0}
+.cc-estado[data-fase=ok]{border-left:4px solid #16a34a}.cc-estado[data-fase=sinRed],.cc-estado[data-fase=pendiente],.cc-estado[data-fase=local]{border-left:4px solid #d97706}.cc-estado[data-fase=error]{border-left:4px solid #dc2626}
+.cc-acciones{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.7rem}
+.cc-btn{min-height:40px;padding:.45rem .9rem;border-radius:8px;border:1px solid var(--borde,rgba(127,127,127,.5));background:var(--panel2,var(--campo,rgba(127,127,127,.14)));color:inherit;font:600 .9rem system-ui,sans-serif;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+.cc-btn.cc-pri{background:var(--acento,#6c5ce7);border-color:var(--acento,#6c5ce7);color:var(--acento-t,#fff)}
+.cc-btn:disabled{opacity:.55;cursor:default}
+.cc-btn:focus-visible{outline:3px solid var(--acento,#6c5ce7);outline-offset:2px}
+dialog.cc-dlg{border:1px solid var(--borde,rgba(127,127,127,.5));border-radius:14px;padding:0;background:var(--panel,Canvas);color:var(--texto,var(--tinta,var(--txt,CanvasText)));width:min(92vw,480px);max-height:88vh;overflow:auto}
+dialog.cc-dlg::backdrop{background:rgba(0,0,0,.5)}
+dialog.cc-dlg .cc-bloque{border:0}

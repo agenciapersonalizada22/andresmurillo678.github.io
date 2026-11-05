@@ -3,6 +3,7 @@ import { CLAVES, leer, escribir, mezclar, exportar, importar, borrarTodo } from 
 import { h } from './dom.js';
 import { TEMAS } from './cartas.js';
 import { Sonido } from './sonido.js';
+import { bloqueNube } from './cuenta-uno.js';
 
 const BASE = {
   tema: 'clasico',
@@ -152,9 +153,10 @@ const CONSTRUCTORES = {
     c.appendChild(h('div', { cls: 'aj-botones' }, [
       h('button', { type: 'button', cls: 'btn', 'data-f': 1, txt: 'Exportar', on: { click: () => { guardarYa(); area.value = exportar(); area.select(); try { navigator.clipboard.writeText(area.value); msg.textContent = 'Texto copiado.'; } catch (e) { msg.textContent = 'Copia el texto manualmente.'; } } } }),
       h('button', { type: 'button', cls: 'btn', 'data-f': 1, txt: 'Importar', on: { click: () => { if (importar(area.value)) { msg.textContent = 'Importado. Recargando…'; setTimeout(() => location.reload(), 600); } else msg.textContent = 'Texto no válido.'; } } }),
-      h('button', { type: 'button', cls: 'btn peligro', 'data-f': 1, txt: 'Borrar todo', on: { click: () => { if (confirm('¿Borrar progreso, logros, ajustes y partida guardada?')) { borrarTodo(); location.reload(); } } } })
+      h('button', { type: 'button', cls: 'btn peligro', 'data-f': 1, txt: 'Borrar todo', on: { click: () => { if (confirm('¿Borrar progreso, logros, ajustes y partida guardada de este dispositivo? Si tienes sesión, la copia de tu cuenta en la nube se conserva y puede volver a bajarse al sincronizar.')) { borrarTodo(); location.reload(); } } } })
     ]));
     c.appendChild(msg);
+    c.appendChild(bloqueNube());
   }
 };
 function nombreTecla(k) { return ({ ' ': 'Espacio', arrowleft: '←', arrowright: '→', arrowup: '↑', arrowdown: '↓', enter: 'Enter', escape: 'Esc' })[k] || String(k).toUpperCase(); }

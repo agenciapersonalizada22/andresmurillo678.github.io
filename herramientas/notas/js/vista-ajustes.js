@@ -83,6 +83,7 @@
     if (G.navigator.storage && G.navigator.storage.estimate) G.navigator.storage.estimate().then(function (e) { almac.textContent = 'Uso: ' + (e.usage / 1048576).toFixed(1) + ' MB de ' + Math.round(e.quota / 1048576) + ' MB' + (S().persistente ? '' : ' · ATENCIÓN: sin almacenamiento persistente (modo privado)'); });
     var pers = h('button', { type: 'button', cls: 'btn', txt: 'Pedir almacenamiento persistente', 'data-f': 1, on: { click: function () { (G.navigator.storage && G.navigator.storage.persist ? G.navigator.storage.persist() : Promise.resolve(false)).then(function (ok) { UI.aviso(ok ? 'El navegador no borrará tus datos automáticamente' : 'El navegador no lo concedió (puede deberse a que la página no se usa lo suficiente)', { tipo: ok ? 'ok' : '' }); }); } } });
     return [
+      G.Nube ? G.Nube.bloque() : null,
       fila('Exportar todo (JSON)', 'Copia completa y fiel; úsala para migrar o respaldar.', h('button', { type: 'button', cls: 'btn', 'data-f': 1, on: { click: function () { UI.descargar('notas-' + F.hoy() + '.json', IO.exportarJSON(S()), 'application/json'); } } }, [UI.icono('download'), h('span', { txt: 'JSON' })])),
       fila('Exportar notas y tareas (Markdown)', 'ZIP con un .md por nota (libretas como carpetas), Tareas/ y adjuntos/.', h('button', { type: 'button', cls: 'btn', 'data-f': 1, on: { click: descargarZip } }, [UI.icono('download'), h('span', { txt: 'ZIP .md' })])),
       fila('Exportar tareas a calendario (.ics)', 'Tareas con fecha, con repetición y alarma.', h('div', { cls: 'fila' }, [h('button', { type: 'button', cls: 'btn', 'data-f': 1, on: { click: function () { UI.descargar('tareas-' + F.hoy() + '.ics', IO.exportarICS(S().lista('tareas', function (t) { return t.estado !== 'hecha'; })), 'text/calendar'); } } }, [UI.icono('download'), h('span', { txt: 'Eventos' })]), h('button', { type: 'button', cls: 'btn', 'data-f': 1, on: { click: function () { UI.descargar('tareas-' + F.hoy() + '.ics', IO.exportarICS(S().lista('tareas', function (t) { return t.estado !== 'hecha'; }), { formato: 'todo' }), 'text/calendar'); } } }, [h('span', { txt: 'Tareas (VTODO)' })])])),
@@ -94,10 +95,10 @@
     ];
   }
   function acerca() {
-    return [h('div', { cls: 'bloque', style: 'margin:14px' }, [h('b', { txt: 'Notas y Tareas' }), h('p', { cls: 'ayuda', txt: 'Funciona sin conexión. Todo se guarda en tu dispositivo (IndexedDB) de forma continua; al recargar no se pierde nada. No hay cuenta ni servidor.' }),
+    return [h('div', { cls: 'bloque', style: 'margin:14px' }, [h('b', { txt: 'Notas y Tareas' }), h('p', { cls: 'ayuda', txt: 'Funciona sin conexión. Todo se guarda en tu dispositivo (IndexedDB) de forma continua; al recargar no se pierde nada. Tu cuenta de la plataforma solo se usa para sincronizar y los logros; no hay otro servidor.' }),
       h('b', { txt: 'Bloqueo de notas' }), h('p', { cls: 'ayuda', txt: 'Las notas bloqueadas se cifran con AES-GCM de 256 bits; la clave se deriva de tu contraseña con PBKDF2-SHA256 (210 000 iteraciones). La contraseña no se guarda en ningún sitio y NO existe recuperación: si la olvidas, el contenido es irrecuperable. El título y las etiquetas no se cifran y las notas bloqueadas no guardan historial.' }),
       h('b', { txt: 'Colaboración en tiempo real' }), h('p', { cls: 'ayuda', txt: 'Conexión directa entre navegadores (WebRTC). Los cambios se fusionan campo a campo: gana la última escritura según un reloj lógico. Las imágenes adjuntas no se envían. Al recargar hay que volver a conectarse con un enlace nuevo; lo ya compartido permanece en tu copia local.' }),
-      h('b', { txt: 'Sincronización en la nube' }), h('p', { cls: 'ayuda', txt: 'Aún no disponible. Los datos usan un almacén con registro de cambios y marcas por campo, listo para sincronizarse en una fase posterior.' })])];
+      h('b', { txt: 'Sincronización en la nube' }), h('p', { cls: 'ayuda', txt: 'Con una cuenta de la plataforma, tus notas, tareas y hábitos se sincronizan entre dispositivos (bloque «Cuenta y nube» en Datos). Se fusionan por registro y campo; las notas bloqueadas viajan cifradas.' })])];
   }
   var TABS = [['general', 'Apariencia', general], ['tareas', 'Tareas y avisos', tareasAv], ['mando', 'Teclado y mando', mando], ['datos', 'Datos', datos], ['acerca', 'Acerca de', acerca]];
   V.pintar = function () {
@@ -105,6 +106,7 @@
     cont.appendChild(h('div', { cls: 'tabs', role: 'tablist' }, TABS.map(function (t) { return h('button', { type: 'button', cls: 'btn', role: 'tab', 'aria-selected': String(tab === t[0]), txt: t[1], 'data-f': 1, on: { click: function () { tab = t[0]; V.pintar(); } } }); })));
     var panel = h('div', { role: 'tabpanel' }, TABS.filter(function (t) { return t[0] === tab; })[0][2]()); cont.appendChild(panel); cont.scrollTop = y;
   };
+  V.irA = function (t) { tab = t; if (cont) V.pintar(); };
   V.montar = function (c) {
     var barra = h('div', { cls: 'barra-v' }, [h('button', { type: 'button', cls: 'btn ic-b solo-m', 'aria-label': 'Abrir menú', 'data-f': 1, on: { click: function () { G.App.alternarMenu(true); } } }, [UI.icono('menu')]), h('h1', { txt: 'Ajustes y datos' })]);
     cont = h('div', { cls: 'cuerpo-scroll', style: 'padding-bottom:90px' }); c.appendChild(h('div', { cls: 'ancho' }, [barra, cont])); V.pintar();

@@ -10,7 +10,7 @@
     hud = { raiz: $('hud'), long: $('hLong'), rank: $('hRank'), modo: $('hModo'), tabla: $('hTabla'), feed: $('hFeed'), aviso: $('hAviso'), fps: $('hFps'), mini: $('mini') };
     $('btnPausa').addEventListener('click', function () { cb.pausa(); });
     S.Nav.raiz = U.raizActiva; S.Nav.atras = function () { var t = pila[pila.length - 1]; if (t && t._atras) t._atras(); else if (t && t._cerrar) t._cerrar(); };
-    S.Nav.pestana = function (d) { if (pila.length && pila[pila.length - 1]._tabs) S.Ajustes.pestana(d); };
+    S.Nav.pestana = function (d) { var t = pila[pila.length - 1]; if (!t) return; if (t._pestana) t._pestana(d); else if (t._tabs) S.Ajustes.pestana(d); };
   };
   U.raizActiva = function () { if (pila.length) return pila[pila.length - 1]; return menu && menu.style.display !== 'none' ? menu : null; };
   U.hayModal = function () { return pila.length > 0; };
@@ -26,7 +26,7 @@
         h('div', { cls: 'cuerpo' }, [].concat(cuerpo))
       ])
     ]);
-    m._cerrar = opts.sinCerrar ? null : cerrar; m._atras = opts.atras || (opts.sinCerrar ? null : cerrar); m._tabs = !!opts.tabs;
+    m._cerrar = opts.sinCerrar ? null : cerrar; m._atras = opts.atras || (opts.sinCerrar ? null : cerrar); m._tabs = !!opts.tabs; m._pestana = opts.pestana || null;
     doc.body.appendChild(m); pila.push(m); U.enfocar(m); return m;
   };
   U.cerrar = function (m) { var i = pila.indexOf(m); if (i >= 0) pila.splice(i, 1); if (m.parentNode) m.parentNode.removeChild(m); };
@@ -40,7 +40,7 @@
   U.menu = function (info) {
     if (!menu) { menu = h('div', { id: 'menu', cls: 'menu' }); $('pantallas').appendChild(menu); }
     menu.style.display = ''; menu.textContent = ''; $('hud').classList.add('oculto'); S.Entrada.mostrarTactil(false);
-    var pf = G.Red ? G.Red.perfil.obtener() : { nombre: 'Jugador' };
+    var pf = G.Red ? G.Red.perfil.obtener() : { nombre: 'Jugador' }, chip = S.Cta && S.Cta.chip(U.cuenta);
     var nombre = h('input', { cls: 'campo nombre', type: 'text', maxlength: 16, value: pf.nombre, 'aria-label': 'Tu nombre', 'data-f': 1, autocomplete: 'off' });
     nombre.addEventListener('change', function () { if (G.Red) G.Red.perfil.guardar({ nombre: nombre.value, color: G.Red.perfil.obtener().color }); });
     skinCv = h('canvas', { width: 280, height: 120, cls: 'previa', 'aria-label': 'Tu skin' });
@@ -57,12 +57,12 @@
     var cont = info.partida ? btn('Continuar partida (' + info.partida + ')', function () { cb.continuar(); }, 'sec grande') : null;
     var salaBtn = info.sala ? btn('Multijugador: volver a abrir tu sala', function () { cb.multi(true); }, 'sec') : null;
     menu.appendChild(h('div', { cls: 'menu-in' }, [
-      h('h1', { cls: 'logo', txt: 'SERPIENTES' }), h('div', { cls: 'sub', txt: 'Crece, caza y no toques los cuerpos ajenos.' }),
-      h('div', { cls: 'perfil' }, [skinCv, h('div', { cls: 'perfil-d' }, [nombre, btn('Cambiar skin', function () { U.editorSkin(); }, 'sec peq'), h('div', { cls: 'record', txt: 'Récord de longitud: ' + fmt(A.prog.record) })])]),
+      h('h1', { cls: 'logo', txt: 'SERPIENTES' }), chip, h('div', { cls: 'sub', txt: 'Crece, caza y no toques los cuerpos ajenos.' }),
+      h('div', { cls: 'perfil' }, [skinCv, h('div', { cls: 'perfil-d' }, [chip ? null : nombre, btn('Cambiar skin', function () { U.editorSkin(); }, 'sec peq'), h('div', { cls: 'record', txt: 'Récord de longitud: ' + fmt(A.prog.record) })])]),
       h('div', { cls: 'etq', txt: 'Modo' }), modos, desc, h('div', { cls: 'etq', txt: 'Dificultad de los bots' }), difs,
       btn('JUGAR', function () { cb.jugar(); }, 'prim grande'), cont,
       btn('Multijugador (hasta 4 + bots)', function () { cb.multi(false); }, 'sec'), salaBtn,
-      h('div', { cls: 'fila-btns' }, [btn('Logros', U.logros, 'peq'), btn('Estadísticas', U.stats, 'peq'), btn('Ajustes', U.ajustes, 'peq'), btn('Ayuda', U.ayuda, 'peq')]),
+      h('div', { cls: 'fila-btns' }, [btn('Logros', U.logros, 'peq'), btn('Récords', U.records, 'peq'), btn('Estadísticas', U.stats, 'peq'), btn('Ajustes', U.ajustes, 'peq'), btn('Ayuda', U.ayuda, 'peq')]),
       h('a', { cls: 'volver', href: '../', 'data-f': 1, txt: '← Volver al menú de juegos' })
     ]));
     var first = menu.querySelector('.prim'); if (first) first.setAttribute('data-fdef', 1);
@@ -157,13 +157,13 @@
       h('div', { cls: 'stats' }, [fila('Longitud final', fmt(r.masa)), fila('Eliminaciones', r.kills), fila('Tiempo vivo', S.tiempo(r.vivo)), r.puesto ? fila('Puesto al morir', '#' + r.puesto) : null, fila('Récord', fmt(A.prog.record) + (r.nuevoRecord ? ' ★ nuevo' : ''))]),
       h('div', { cls: 'nota', txt: r.causa || '' })
     ];
-    var m = U.modal(r.titulo || 'Has muerto', cuerpo.concat([].concat(r.botones.map(function (b) { return btn(b[0], function () { U.cerrar(m); b[1](); }, b[2] || 'sec'); }))), { sinCerrar: true });
+    var m = U.modal(r.titulo || 'Has muerto', cuerpo.concat(r.extra || []).concat([].concat(r.botones.map(function (b) { return btn(b[0], function () { U.cerrar(m); b[1](); }, b[2] || 'sec'); }))), { sinCerrar: true });
     var p = m.querySelector('.prim'); if (p) p.setAttribute('data-fdef', 1);
     m._cuenta = r.cuenta; return m;
   };
   function fila(a, b) { return h('div', { cls: 'sf' }, [h('span', { txt: a }), h('b', { txt: String(b) })]); }
   U.fin = function (r) {
-    var m = U.modal(r.titulo, [h('div', { cls: 'fin-t', txt: r.texto }), r.lista ? h('ol', { cls: 'fin-l' }, r.lista.map(function (x) { return h('li', { txt: x }); })) : null].concat(r.botones.map(function (b) { return btn(b[0], function () { U.cerrar(m); b[1](); }, b[2] || 'sec'); })), { sinCerrar: true });
+    var m = U.modal(r.titulo, [h('div', { cls: 'fin-t', txt: r.texto }), r.lista ? h('ol', { cls: 'fin-l' }, r.lista.map(function (x) { return h('li', { txt: x }); })) : null].concat(r.extra || []).concat(r.botones.map(function (b) { return btn(b[0], function () { U.cerrar(m); b[1](); }, b[2] || 'sec'); })), { sinCerrar: true });
     var p = m.querySelector('.prim'); if (p) p.setAttribute('data-fdef', 1); return m;
   };
   U.info = function (titulo, texto, botones) {
@@ -197,6 +197,25 @@
       return h('li', { cls: ok ? 'ok' : '' }, [h('b', { txt: (ok ? '★ ' : '☆ ') + l.nombre }), h('span', { txt: l.desc })]);
     });
     U.modal('Logros ' + L.totales() + '/' + L.LISTA.length, [h('ul', { cls: 'logros' }, items)], { ancha: true });
+  };
+  /* Records: clasificacion por modo (Global/Amigos); LB/RB cambia de modo */
+  U.records = function () {
+    var ids = Object.keys(S.Cta.MODOS), idx = Math.max(0, ids.indexOf(A.aj.modo)), cont = h('div', { cls: 'records' }), m;
+    function pintar() {
+      cont.textContent = '';
+      cont.appendChild(h('div', { cls: 'pills', role: 'group', 'aria-label': 'Modo' }, ids.map(function (k, i) {
+        return h('button', { type: 'button', cls: 'pill' + (i === idx ? ' sel' : ''), 'aria-pressed': String(i === idx), 'data-f': 1, txt: S.MODOS[k].nombre, on: { click: function () { idx = i; pintar(); } } });
+      })));
+      cont.appendChild(h('div', { cls: 'nota', txt: k0() === 'superv' ? 'Tiempo sobrevivido (s)' : k0() === 'rey' ? 'Tiempo en la zona (s)' : 'Longitud máxima' }));
+      cont.appendChild(S.Cta.rankingEl(k0(), { n: 10 }).el);
+    }
+    function k0() { return ids[idx]; }
+    m = U.modal('Récords', [cont], { ancha: true, pestana: function (d) { idx = (idx + d + ids.length) % ids.length; pintar(); var q = cont.querySelector('.pill.sel'); if (q && G.Mando && G.Mando.activo) q.focus(); } });
+    pintar();
+  };
+  U.cuenta = function () {
+    var cuerpo = S.Cta.cuerpoCuenta(); if (!cuerpo) return;
+    var m = U.modal('Cuenta', cuerpo); var p = m.querySelector('.prim'); if (p) p.setAttribute('data-fdef', 1);
   };
   U.stats = function () {
     var s = A.prog.stats;

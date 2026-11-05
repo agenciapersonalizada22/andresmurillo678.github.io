@@ -201,3 +201,23 @@ html[data-calidad="ultra"] #fieltro { box-shadow: inset 0 0 0 3px rgba(61, 245, 
 .banner.grande { font-size: 1.15rem; padding: 10px 20px; }
 .vuelo { font-size: 1.8rem; }
 .logros li.grupo-logro { opacity: 1; color: var(--magenta); font-weight: 800; letter-spacing: .08em; margin-top: 8px; border-bottom: 1px solid var(--borde); }
+
+/* ---- cuenta y ranking (plataforma) ---- */
+.cta-cab { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cta-barra { display: inline-flex; align-items: center; gap: 6px; max-width: 60%; }
+.cta-barra span:not(.cta-punto) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cta-barra small { color: var(--suave); }
+.cta-punto { display: inline-block; width: 12px; height: 12px; flex: none; border-radius: 50%; background: var(--c, var(--cian)); box-shadow: 0 0 8px var(--c, var(--cian)); }
+.cta-perfil { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+.cta-perfil small { display: block; color: var(--suave); font-size: .68rem; }
+.cta-nube { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--borde); }
+.cta-nube h3 { margin: 0 0 4px; }
+.cta-chips { gap: 6px; }
+.cta-lista { min-height: 110px; max-height: 46vh; overflow: auto; margin: 6px 0; }
+.cta-top { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.cta-top li { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; background: rgba(255, 255, 255, .05); font-size: .76rem; }
+.cta-top li.yo { background: rgba(61, 245, 255, .16); outline: 1px solid var(--cian); }
+.cta-top .pos { width: 2.4em; color: var(--suave); font-weight: 800; }
+.cta-top .nom { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cta-amigos { display: grid; gap: 6px; margin: 6px 0; }
+.cta-amigos .fila { margin: 0; justify-content: space-between; }

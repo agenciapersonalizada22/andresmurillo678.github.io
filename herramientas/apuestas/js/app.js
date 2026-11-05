@@ -99,5 +99,13 @@
       setInterval(function () { if (document.visibilityState === 'visible' && !E.autoexcluido()) E.cargarDatos(); }, 120000);
     }).catch(function (e) { console.error(e); U.montar(document.getElementById('vista'), U.aviso('Error al iniciar: ' + e.message, 'peligro')); });
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
+  function arrancar() {
+    iniciar();
+    if (g.CuentaNube && g.Cuenta) {
+      var ch = g.CuentaNube.chip({ clase: 'btn', alClic: function () { location.hash = '#/mas'; } }), ref = document.getElementById('btnActualizar');
+      ref.parentNode.insertBefore(ch, ref); g.CuentaNube.iniciar(g.CuentaNube.proveedor);
+    }
+  }
+  function puerta() { if (g.Cuenta && g.Cuenta.requerir) g.Cuenta.requerir().then(arrancar, arrancar); else arrancar(); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', puerta); else puerta();
 })(window);

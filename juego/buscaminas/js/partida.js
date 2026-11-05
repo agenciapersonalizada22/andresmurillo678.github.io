@@ -146,6 +146,7 @@
     else { BM.vista.victoria(t); BM.sonido.gana(); vibrar([30, 40, 30, 40, 90], 0.4); }
     var res = resultado(como === 'ganada'), info = null;
     if (!P.cfg.mp && !(P.cfg.modo === 'practica' && !res.victoria)) info = BM.progreso.registrar(res);
+    try { if (BM.cuenta) BM.cuenta.alTerminar(res, info); } catch (e) {}
     P.fin = { res: res, info: info };
     BM.almacen.borrar(BM.almacen.CLAVES.partida);
     cb('fin', res, info);

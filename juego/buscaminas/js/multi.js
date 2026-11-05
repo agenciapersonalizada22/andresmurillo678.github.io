@@ -33,6 +33,7 @@
     Red.on('cerrado', function (motivo) { if (MP.J && activo()) { UI.toast('Se perdió la conexión con la sala', 'mal'); if (!Red.esAnfitrion) terminarLocal(); } });
     doc.addEventListener('visibilitychange', function () { if (doc.hidden) guardarSala(); });
     G.addEventListener('pagehide', guardarSala);
+    Lobby.registrar(OPTS);
     if (Lobby.hayEnlace()) { miToken(); Lobby.abrir(OPTS); }
   };
 
@@ -275,6 +276,7 @@
     P.corre = false; P.pausada = true;
     var yo = MP.miAsiento, gane = J.modo === 'coop' ? !!d.ok : d.ganador === yo;
     var info = BM.progreso.registrar({ modo: 'mp', dif: J.dif, w: J.w, h: J.h, m: J.m, victoria: gane, tiempoMs: Math.round(P.tiempoMs), mp: { modo: J.modo, gano: gane }, acordes: P.acordes, pistas: P.pistas });
+    try { if (BM.cuenta) BM.cuenta.alTerminarMulti(info, gane); } catch (e) {}
     var tit = J.modo === 'coop' ? (d.ok ? '¡Lo lograron juntos!' : 'Fin: se acabaron las vidas') : d.ganador < 0 ? 'Sin ganador' : d.ganador === yo ? '¡Ganaste!' : 'Ganó ' + (J.asientos[d.ganador] || {}).nombre;
     var tb = h('table', { cls: 'tabla mini' });
     (d.ranking || []).forEach(function (r, i) {

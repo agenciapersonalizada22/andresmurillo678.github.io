@@ -9,6 +9,7 @@ import { E as EntradaE, iniciarTeclado, cuadroMando, capaActiva } from './entrad
 import { NIVELES } from './bots.js';
 import { REGLAS_BASE } from './reglas.js';
 import { CLAVES, leer, escribir } from './almacen.js';
+import * as Cu from './cuenta-uno.js';
 
 const Red = window.Red, Lobby = window.Lobby, Mando = window.Mando;
 let pantalla = 'menu', capaPausa = null, capasAbiertas = [], wake = null, sinConexion = false;
@@ -52,12 +53,14 @@ function pintarMenu() {
   m.appendChild(btn('Jugar contra bots', () => preparar(false), g ? '' : 'grande'));
   m.appendChild(btn('Multijugador (2-4 personas + bots)', menuMulti));
   m.appendChild(btn('Logros', verLogros, 'sec'));
+  m.appendChild(btn('Rankings', () => verRanking(), 'sec'));
   m.appendChild(btn('Estadísticas', verStats, 'sec'));
   m.appendChild(btn('Ajustes', () => abrirAjustes(), 'sec'));
   m.appendChild(btn('Cómo jugar', () => verAyuda(), 'sec'));
   const pd = Progreso.datos;
   m.appendChild(h('p', { cls: 'resumen', txt: `${pd.victorias} partidas ganadas · ${pd.rondasGanadas} rondas · mejor racha ${pd.mejorRacha} · ${pd.puntos} puntos` }));
-  setTimeout(() => { const f = $('[data-f]', $('#menu')); if (f && !capaActiva()?.classList.contains('ventana')) f.focus({ preventScroll: true }); }, 50);
+  Cu.pintarChip($('#cuentaLinea'), verCuenta);
+  setTimeout(() => { const f = $('[data-f]', m); if (f && !capaActiva()?.classList.contains('ventana')) f.focus({ preventScroll: true }); }, 50);
 }
 function mostrar(p) {
   pantalla = p;
@@ -200,6 +203,15 @@ function verLogros() {
     c.appendChild(l); c.appendChild(btn('Cerrar', () => c.parentNode.querySelector('[data-cerrar]').click(), 'sec'));
   });
 }
+function verRanking(modo) {
+  abrirCapa('Rankings', (c, api) => {
+    Cu.panelRanking(c, { modo });
+    c.appendChild(btn('Cerrar', () => api.cerrar(), 'sec'));
+  });
+}
+function verCuenta() {
+  abrirCapa('Cuenta', (c, api) => Cu.panelCuenta(c, api, { ranking: () => verRanking(), antesDeSalir: () => { Progreso.guardar(); guardarMesa(); } }));
+}
 function verStats() {
   const d = Progreso.datos;
   abrirCapa('Estadísticas', (c) => {
@@ -220,6 +232,7 @@ Sesion.alPaquete = (p) => {
 UI.T.enviar = (cmd) => Sesion.enviar(cmd);
 UI.T.alEvento = (e, v) => {
   Progreso.evento(e, ctxLogro());
+  if (e.t === 'fin') { Cu.recompensaFin(e, v.yo); Cu.enviarPuntajes(Progreso.datos); }
   if (D.vibracion && Mando && Mando.conectado) {
     if (e.t === 'robo' && e.j === v.yo && e.motivo !== 'voluntario') Mando.vibrar(0.6, 0.4, 220);
     else if (e.t === 'cazado' && e.j === v.yo) Mando.vibrar(0.8, 0.5, 300);
@@ -228,6 +241,11 @@ UI.T.alEvento = (e, v) => {
   }
 };
 UI.T.alFin = {
+  ranking: () => verRanking(),
+  posicion: (slot) => {
+    slot.textContent = 'Consultando tu posición en el ranking…';
+    Cu.posicion('puntos').then((p) => { slot.textContent = p && p.posicion ? `Ranking global de puntos: #${p.posicion} de ${p.total}` : ''; });
+  },
   revancha: () => { if (Sesion.rol === 'anfitrion') Sesion.revancha(); else UI.aviso('Solo el anfitrión puede pedir revancha', '#ffd23d'); },
   menu: () => salirMenu(false)
 };
@@ -239,7 +257,7 @@ Sesion.alEstado = (e, extra) => {
   } else if (e === 'ausente') UI.aviso(`${UI.T.meta.nombres[extra] || 'Un jugador'} se desconectó: un bot juega por él`, '#ffd23d');
   else if (e === 'reanudada') pintarMenu();
 };
-Progreso.alLogro = (l) => { UI.aviso('★ Logro: ' + l.nombre, '#ffd23d'); Sonido.fx('gana'); };
+Progreso.alLogro = (l) => { UI.aviso('★ Logro: ' + l.nombre, '#ffd23d'); Sonido.fx('gana'); Cu.logro(l.id); };
 function mostrarBanner(txt, boton) {
   hideBanner();
   const b = h('div', { cls: 'banner', id: 'banner', role: 'alert' }, [h('span', { txt }), boton ? btn('Salir al menú', () => salirMenu(false), 'peq sec') : null]);
@@ -296,6 +314,11 @@ function bucle(t) {
 
 /* ---------- arranque ---------- */
 Progreso.cargar();
+Cu.aplicarPerfil();
+if (window.Cuenta && window.Cuenta.alCambiar) { try { window.Cuenta.on('perfil', () => { Cu.aplicarPerfil(); if (pantalla === 'menu') pintarMenu(); }); } catch (e) { /* sin eventos */ } }
+Cu.iniciarNube(() => { Progreso.cargar(); if (pantalla === 'menu') pintarMenu(); UI.aviso('Progreso actualizado desde tu cuenta', '#6dff6d'); });
+Cu.enviarPuntajes(Progreso.datos);
+Cu.sincronizarLogros(Progreso.datos.logros);
 aplicar();
 alCambiarAjustes(() => { UI.refrescarTema(); });
 UI.iniciar();
@@ -304,5 +327,6 @@ Sesion.suscribir();
 if (A.sonido.musicaOn) document.addEventListener('pointerdown', () => Sonido.musica(true), { once: true });
 mostrar('menu');
 requestAnimationFrame(bucle);
+if (Lobby && Lobby.registrar) Lobby.registrar(OPTS);
 if (Lobby && Lobby.hayEnlace()) Lobby.abrir(OPTS);
 window.__uno = { Sesion, UI, Progreso, A, D, abrirPausa, sinConexion };

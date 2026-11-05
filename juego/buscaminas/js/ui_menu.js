@@ -19,6 +19,7 @@
     sel = JSON.parse(JSON.stringify(A.gen.ultima));
     if (!C.MODOS.some(function (m) { return m.id === sel.modo; })) sel.modo = 'clasico';
     var guard = P.hayGuardada(), caja = h('div', { cls: 'inicio-caja' });
+    var chipCuenta = BM.cuenta && BM.cuenta.chipInicio(); if (chipCuenta) caja.appendChild(chipCuenta);
     caja.appendChild(h('h1', { cls: 'logo', html: 'BUSCA<span>MINAS</span>' }));
     caja.appendChild(h('p', { cls: 'lema', txt: 'Lógica, nervios fríos y cero azar (si quieres).' }));
     if (guard) {
@@ -137,6 +138,7 @@
       var tb = h('table', { cls: 'tabla mini' }); filas.forEach(function (f) { tb.appendChild(h('tr', {}, [h('th', { txt: f[0] }), h('td', { txt: String(f[1]) })])); }); cuerpo.appendChild(tb);
       if (c.modo === 'practica') cuerpo.appendChild(h('p', { cls: 'nota', txt: 'Modo Práctica: sin estadísticas ni récords.' }));
       else if ((res.pistas || res.peligro) && vic) cuerpo.appendChild(h('p', { cls: 'nota', txt: 'Con pistas o ayudas visuales no se guardan récords.' }));
+      if (info && info.envio) cuerpo.appendChild(BM.cuenta.nodoPosicion(info.envio));
       if (info && info.puesto >= 0) {
         cuerpo.appendChild(h('p', { cls: 'nuevo-record', txt: '¡Nuevo récord! Puesto ' + (info.puesto + 1) }));
         var nom = h('input', { type: 'text', maxlength: 16, cls: 'campo', value: BM.progreso.nombre(), 'aria-label': 'Nombre para el récord', 'data-f': 1 });
@@ -150,7 +152,7 @@
       var pie = [UI.btn('Jugar de nuevo', function () { p.cerrar(); UI.repetir(); }, 'prim', { 'data-foco': 1 })];
       if (P.puedeDeshacer()) pie.unshift(UI.btn('Deshacer', function () { p.cerrar(); P.deshacer(); }, 'sec'));
       pie.push(UI.btn('Menú', function () { p.cerrar(); UI.mostrarInicio(); }, 'sec'));
-      if (info && info.clave) pie.push(UI.btn('Récords', function () { UI.abrirRecords(info.clave); }, 'sec'));
+      if (info && (info.clave || info.envio)) pie.push(UI.btn('Récords', function () { UI.abrirRecords(info.envio ? info.envio.modo : info.clave); }, 'sec'));
       var p = UI.panel({ titulo: tit, cuerpo: cuerpo, pie: pie, ancho: 420, noCerrar: false, alCerrar: function () {} });
     }, vic ? 1100 : 1700);
   }

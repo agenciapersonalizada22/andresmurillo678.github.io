@@ -414,7 +414,7 @@
     var m = /[?&]volver=([^&]+)/.exec(location.search); if (!m) return '';
     try {
       var u = new URL(decodeURIComponent(m[1]), location.href);
-      if (u.origin !== location.origin || !/\/juego\//.test(u.pathname)) return '';
+      if (u.origin !== location.origin || !/\/(juego|herramientas)\//.test(u.pathname)) return '';
       return u.href;
     } catch (e) { return ''; }
   };

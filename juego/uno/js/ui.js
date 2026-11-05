@@ -514,10 +514,12 @@ function mostrarFin() {
   tabla.appendChild(h('tr', {}, [h('th', { txt: 'Jugador' }), h('th', { txt: 'Cartas' }), h('th', { txt: v.cfg.puntuacion === 'ronda' ? `Puntos (meta ${v.cfg.meta})` : 'Puntos' })]));
   ord.forEach((j) => tabla.appendChild(h('tr', { cls: j === f.ganador ? 'gana' : '', style: '--c:' + hex(j) }, [h('td', { txt: nombre(j) + (j === yo() ? ' (tú)' : '') }), h('td', { txt: String(f.conteos[j]) }), h('td', { txt: String(v.puntos[j]) })])));
   p.appendChild(tabla);
+  if (f.partida && T.alFin && T.alFin.posicion) { const pos = h('p', { cls: 'nota', 'aria-live': 'polite' }); p.appendChild(pos); T.alFin.posicion(pos); }
   const bt = h('div', { cls: 'botones' });
   if (!f.partida) bt.appendChild(h('button', { type: 'button', cls: 'btn', 'data-f': 1, txt: 'Siguiente ronda', on: { click: () => enviar({ t: 'siguiente' }) } }));
   else {
     if (T.alFin && T.alFin.revancha) bt.appendChild(h('button', { type: 'button', cls: 'btn', 'data-f': 1, txt: 'Revancha', on: { click: T.alFin.revancha } }));
+    if (T.alFin && T.alFin.ranking) bt.appendChild(h('button', { type: 'button', cls: 'btn sec', 'data-f': 1, txt: 'Ranking', on: { click: T.alFin.ranking } }));
     bt.appendChild(h('button', { type: 'button', cls: 'btn sec', 'data-f': 1, txt: 'Menú', on: { click: () => T.alFin && T.alFin.menu() } }));
   }
   p.appendChild(bt);

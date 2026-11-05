@@ -79,6 +79,7 @@
   }
   function datos(c) {
     var out = h('textarea', { cls: 'texto', readonly: true, rows: 3, 'aria-label': 'Código de guardado' }), inp = h('textarea', { cls: 'texto', rows: 3, placeholder: 'Pega aquí un código de guardado', 'aria-label': 'Importar guardado' });
+    if (BM.cuenta) c.appendChild(BM.cuenta.bloqueDatos());
     c.appendChild(h('p', { cls: 'nota', txt: 'El código incluye ajustes y progreso (estadísticas, récords y logros).' }));
     c.appendChild(UI.btn('Exportar guardado', function () { out.value = BM.almacen.exportar(); out.select(); try { navigator.clipboard.writeText(out.value); UI.toast('Código copiado'); } catch (e) {} }, 'sec'));
     c.appendChild(out); c.appendChild(inp);

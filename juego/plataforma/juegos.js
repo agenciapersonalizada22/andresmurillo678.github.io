@@ -375,9 +375,19 @@
       { id: 'enfoque_1h', nombre: 'Una hora de enfoque', desc: 'Acumula una hora en el temporizador de enfoque.' },
       { id: 'nota_enlazada', nombre: 'Nota enlazada', desc: 'Enlaza una nota con otra.' },
       { id: 'colaborador', nombre: 'Colaborador', desc: 'Edita una nota en tiempo real con otra persona.' },
-      { id: 'bloqueo', nombre: 'Bajo llave', desc: 'Protege una nota con contraseña.' }
+      { id: 'bloqueo', nombre: 'Bajo llave', desc: 'Protege una nota con contraseña.' },
+      { id: 'primera_nota', nombre: 'Primera nota', desc: 'Crea tu primera nota.' },
+      { id: 'tareas_25', nombre: 'Productivo', desc: 'Completa 25 tareas.' },
+      { id: 'en_la_nube', nombre: 'Con respaldo', desc: 'Sincroniza tus notas en la nube.' }
     ] },
-    { id: 'pizarra', tipo: 'herramienta', nombre: 'Pizarra', ruta: '../herramientas/pizarra/', carpeta: 'pizarra', color: '#4fd1ff', categoria: 'Herramientas', descripcion: 'Pizarra colaborativa en tiempo real', modos: [], logros: [] },
+    { id: 'pizarra', tipo: 'herramienta', nombre: 'Pizarra', ruta: '../herramientas/pizarra/', carpeta: 'pizarra', color: '#4fd1ff', categoria: 'Herramientas', descripcion: 'Pizarra colaborativa en tiempo real', modos: [], logros: [
+      { id: 'primer_trazo', nombre: 'Primer trazo', desc: 'Dibuja tu primer trazo.' },
+      { id: 'plantilla', nombre: 'Con plantilla', desc: 'Crea un tablero desde una plantilla.' },
+      { id: 'exportado', nombre: 'Exportado', desc: 'Exporta un tablero.' },
+      { id: 'tablero_50', nombre: 'Tablero lleno', desc: 'Llega a 50 objetos en un tablero.' },
+      { id: 'colaborativa', nombre: 'Pizarra compartida', desc: 'Dibuja en un tablero con otra persona.' },
+      { id: 'en_la_nube', nombre: 'Con respaldo', desc: 'Sincroniza tus tableros en la nube.' }
+    ] },
     { id: 'mercados', tipo: 'herramienta', nombre: 'Mercados', ruta: '../herramientas/mercados/', carpeta: 'mercados', color: '#3ddc97', categoria: 'Herramientas', descripcion: 'Terminal de mercados: cripto, acciones y divisas', modos: [], logros: [] },
     { id: 'apuestas', tipo: 'herramienta', nombre: 'Apuestas', ruta: '../herramientas/apuestas/', carpeta: 'apuestas', color: '#ff6b81', categoria: 'Herramientas', descripcion: 'Análisis y registro de apuestas', modos: [], logros: [] },
     { id: 'ofertas', tipo: 'herramienta', nombre: 'Ofertas', ruta: '../herramientas/ofertas/', carpeta: 'ofertas', color: '#ff9f43', categoria: 'Herramientas', descripcion: 'Ofertas y promociones', modos: [], logros: [] },

@@ -7,7 +7,10 @@
   var render, acc = 0, ult = 0, t0 = 0, tHud = 0, tVida = 0, tGuardar = 0, tPuntos = 0, tFps = 0, frames = 0, fps = 60, lowT = 0, mPausa = null, ultFoco = { x: 0, y: 0, r: 10 };
   var puntos = [], wake = null, finMostrado = false, tFinRonda = 0, ultMasa = 0, ultTurbo = false;
 
-  function perfilNombre() { return G.Red ? G.Red.perfil.obtener().nombre : 'Jugador'; }
+  function perfilNombre() { return S.Cta && S.Cta.usuario() ? S.Cta.nombre().slice(0, 16) : G.Red ? G.Red.perfil.obtener().nombre : 'Jugador'; }
+  var ultPunt = null;
+  function modoActual() { return P.tipo === 'cliente' ? (O.c && O.c.cfg && O.c.cfg.modo) || 'ffa' : (P.W ? P.W.modo.id : A.aj.modo); }
+  function rankingEl() { return S.Cta && S.Cta.usuario() ? [S.Cta.rankingEl(modoActual(), { n: 5, espera: ultPunt }).el] : []; }
   function skinPropia() { if (!A.prog.skin) { A.prog.skin = K().aleatoria(); A.guardarProg(); } return A.prog.skin; }
   function K() { return S.Skins; }
 
@@ -103,6 +106,8 @@
   }
   function onMuerteMP(d) {
     Z.efecto('muerte'); E.vibrar(0.8, 0.5, 250); render.temblor = 0.4;
+    var modoC = O.c && O.c.cfg && O.c.cfg.modo || 'ffa';
+    if (S.Cta && modoC !== 'rey') ultPunt = S.Cta.vida(modoC, { maxMasa: d.max || d.masa, vivo: d.vivo, kills: d.kills }); else if (S.Cta) S.Cta.xp(5);
     var st = A.prog.stats; st.muertes++; st.orbes += d.orbes || 0; st.tiempo += d.vivo || 0; st.turbo += d.turbo || 0; if ((d.max || 0) > st.maxMasa) st.maxMasa = d.max;
     var nuevo = (d.max || d.masa) > A.prog.record; if (nuevo) A.prog.record = d.max || d.masa; A.guardarProg();
     U.aviso(d.resp ? 'Has muerto. Reapareces en unos segundos…' : 'Has muerto. Te quedas mirando hasta el final de la ronda.', 3500);
@@ -118,7 +123,7 @@
     if (W.modo.respawn && !W.fin) botones.push(['Jugar de nuevo', function () { yo.est.maxMasa = 0; W.reaparecer(yo); E.sincronizar(yo.ang); }, 'prim']);
     botones.push(['Salir al menú', function () { A.borrar(A.CL.partida); irMenu(); }, 'sec']);
     var causa = ev ? (ev.killer && W.porId[ev.killer] ? 'Te eliminó ' + W.porId[ev.killer].nombre + '.' : ev.tipo === 'borde' ? 'Chocaste con el borde de la arena.' : 'Chocaste.') : '';
-    U.muerte({ masa: yo.est.maxMasa, kills: yo.est.kills, vivo: yo.est.vivo, puesto: ev && ev.puesto, nuevoRecord: nuevo, causa: causa, botones: botones, titulo: W.modo.respawn ? 'Has muerto' : 'Eliminado' });
+    U.muerte({ extra: rankingEl(), masa: yo.est.maxMasa, kills: yo.est.kills, vivo: yo.est.vivo, puesto: ev && ev.puesto, nuevoRecord: nuevo, causa: causa, botones: botones, titulo: W.modo.respawn ? 'Has muerto' : 'Eliminado' });
   }
   function contabilizar(yo, modo) {
     var st = A.prog.stats, e = yo.est;
@@ -127,6 +132,7 @@
     var mj = A.prog.mejores, clave = modo === 'ffa' ? 'ffa_longitud' : modo === 'equipos' ? 'equipos_longitud' : modo === 'superv' ? 'superv_tiempo' : 'rey_zona', val = modo === 'superv' ? e.vivo : modo === 'rey' ? (e.zona || 0) : e.maxMasa;
     if (val > (mj[clave] || 0)) mj[clave] = Math.floor(val);
     A.guardarProg();
+    if (S.Cta) ultPunt = S.Cta.vida(modo, e);
   }
   function eventosJuego(evs) {
     var W = P.W, yo = P.yo, i;
@@ -165,7 +171,8 @@
     else if (esHost) { botones.push(['Seguir (nueva ronda en breve)', function () {}, 'prim']); tFinRonda = 12; }
     else botones.push(['Seguir (el anfitrión inicia otra ronda)', function () {}, 'prim']);
     botones.push(['Salir al menú', function () { irMenu(); }, 'sec']);
-    U.cerrarTodo(); U.fin({ titulo: gano ? '¡Victoria!' : 'Fin de la ronda', texto: txt, lista: lista, botones: botones });
+    U.cerrarTodo(); if (gano && S.Cta) S.Cta.xp(15);
+    U.fin({ titulo: gano ? '¡Victoria!' : 'Fin de la ronda', texto: txt, lista: lista, extra: rankingEl(), botones: botones });
   }
   function nuevaRondaHost() {
     var W0 = P.W, W = new S.Mundo({ modo: W0.modo.id, dif: W0.dif.id }), yo = W.humano({ nombre: perfilNombre(), skin: skinPropia() });
@@ -325,11 +332,16 @@
     G.addEventListener('pagehide', function () { guardarTodo(); if (G.Red && G.Red.conectado) G.Red.salir(); });
     doc.addEventListener('pointerdown', function () { Z.iniciar(); }, { once: true });
     doc.addEventListener('keydown', function () { Z.iniciar(); }, { once: true });
+    if (S.Cta) {
+      S.Cta.alRecargar(function () { aplicar(); if (U.menuVisible()) U.menu(datosMenu()); });
+      S.Cta.alPerfil = function () { if (U.menuVisible()) U.menu(datosMenu()); };
+    }
     irMenu();
-    if (G.Lobby && G.Lobby.hayEnlace()) G.Lobby.abrir(OPTS);
+    if (G.Lobby) { G.Lobby.registrar(OPTS); if (G.Lobby.hayEnlace()) G.Lobby.abrir(OPTS); }
     G.requestAnimationFrame(function (t) { ult = t; bucle(t); });
   }
   P.abrirLobby = abrirLobby; P.guardarTodo = guardarTodo; P.iniciarHost = iniciarHost;
   P.estadoDebug = function () { return { tipo: P.tipo, estado: P.estado, fps: fps, calidad: A.disp.graficos.calidad, vivas: P.W ? P.W.vivas.length : 0, orbes: P.W ? P.W.orbes.n : 0, masa: P.yo ? P.yo.masa : 0 }; };
-  if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', init); else init();
+  function arrancar() { (S.Cta ? S.Cta.arrancar() : Promise.resolve()).then(init, init); }
+  if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', arrancar); else arrancar();
 })(window);

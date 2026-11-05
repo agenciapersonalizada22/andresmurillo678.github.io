@@ -13,6 +13,13 @@ export const ls = {
   claves() { try { return Object.keys(localStorage).filter(k => k.startsWith(PFX)); } catch (e) { return []; } }
 };
 
+// Puente con la nube (js/nube.js): avisa de cada escritura y recuerda los tableros eliminados (lapidas) para propagar el borrado.
+export const enlace = { alCambiar: null, silencio: 0 };
+const avisar = () => { if (!enlace.silencio && enlace.alCambiar) { try { enlace.alCambiar(); } catch (e) {} } };
+export const lapidas = () => ls.leer('lapidas', {});
+export function marcarLapida(id, ts = Date.now()) { const l = lapidas(); if (!l[id] || l[id] < ts) { l[id] = ts; ls.escribir('lapidas', l); } }
+export function quitarLapida(id) { const l = lapidas(); if (id in l) { delete l[id]; ls.escribir('lapidas', l); } }
+
 // ---- capa minima sobre IndexedDB / memoria ----
 let bd = null, mem = null;
 const STORES = { tableros: { keyPath: 'id' }, log: { autoIncrement: true, idx: 'tab' }, assets: { keyPath: 'k', idx: 'tab' }, versiones: { autoIncrement: true, idx: 'tab' } };
@@ -43,6 +50,7 @@ const prom = r => new Promise((ok, ko) => { r.onsuccess = () => ok(r.result); r.
 const fin = t => new Promise((ok, ko) => { t.oncomplete = () => ok(); t.onerror = t.onabort = () => ko(t.error); });
 
 async function put(store, val) {
+  avisar();
   const db = await abrir();
   if (!db) {
     if (store === 'tableros') mem.tableros.set(val.id, val);
@@ -111,6 +119,7 @@ export async function compactar(id, opsCompletas) {
   await borrarDe('log', id, new Set(antes));
 }
 export async function guardarAsset(tab, id, data) { await put('assets', { k: tab + '|' + id, tab, id, data }); }
+export const todosLosAssets = async tab => { const o = {}; for (const a of await todos('assets', tab)) o[a.id] = a.data; return o; };
 
 export async function actualizarMeta(id, cambios) {
   const m = await meta(id); if (!m) return null;
@@ -118,7 +127,8 @@ export async function actualizarMeta(id, cambios) {
 }
 export async function aPapelera(id) { return actualizarMeta(id, { borrado: Date.now() }); }
 export async function restaurar(id) { return actualizarMeta(id, { borrado: 0, mod: Date.now() }); }
-export async function eliminar(id) {
+export async function eliminar(id, ts) {
+  marcarLapida(id, ts || Date.now()); avisar();
   const db = await abrir();
   if (!db) mem.tableros.delete(id);
   else { const t = db.transaction('tableros', 'readwrite'); t.objectStore('tableros').delete(id); await fin(t); }

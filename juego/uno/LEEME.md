@@ -20,3 +20,8 @@ El anfitrion reparte y arbitra. Cada cliente recibe solo su mano y el conteo de 
 
 ## Pruebas
 `node juego/uno/pruebas/pruebas.mjs [rapido]`
+
+## Cuenta de la plataforma
+- `js/arranque.js` exige sesion (`Cuenta.requerir()`) antes de importar `principal.js`; `js/cuenta-uno.js` concentra perfil, nube, puntajes, logros/XP y ranking (todo tolerante a falta de sesion/red).
+- Nube: solo `uno_progreso` (`autoSincronizar`); los ajustes quedan por dispositivo. Puntajes (`puntos`, `racha`, `victorias`) se envian al terminar cada ronda; logros con ids de `juegos.js`; XP 10 por ronda ganada, +40 por partida ganada (+10 por partida perdida).
+- UI: chip de cuenta en el menu, panel Cuenta, Rankings (Global/Amigos), bloque «Cuenta y nube» en Ajustes > Datos, boton Ranking al fin de partida.

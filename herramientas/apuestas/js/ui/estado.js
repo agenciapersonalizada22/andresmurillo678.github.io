@@ -5,6 +5,7 @@
     limites: { perdidaDia: 0, perdidaSemana: 0, perdidaMes: 0, tiempoMin: 0, aviso: 80 }, autoexclusion: null, edad: null, reglas: [], notificadas: [], demo: false, meta: { beneficioMes: 0, yield: 0 }, tiempoHoy: { fecha: '', ms: 0, avisado: 0 } };
 
   E.alCambiar = function (f) { escuchas.push(f); };
+  E.almacen = function () { return store; };   // acceso del modulo de sincronizacion con la cuenta (js/nube.js)
   function avisar(que) { escuchas.forEach(function (f) { try { f(que); } catch (e) { console.error(e); } }); }
   E.avisar = avisar;
 

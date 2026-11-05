@@ -23,6 +23,8 @@
   A.disp = mezclar(DISP, A.leer(CL.disp, null) || {});
   A.aj = mezclar(AJ, A.leer(CL.aj, null) || {});
   A.prog = mezclar(PROG, A.leer(CL.prog, null) || {});
+  /* vuelve a leer el progreso de localStorage (tras una bajada de la nube o al iniciar sesion) */
+  A.recargar = function () { A.prog = mezclar(PROG, A.leer(CL.prog, null) || {}); };
   A.guardarDisp = function () { A.escribir(CL.disp, A.disp); };
   A.guardarAj = function () { A.escribir(CL.aj, A.aj); };
   A.guardarProg = function () { A.escribir(CL.prog, A.prog); };

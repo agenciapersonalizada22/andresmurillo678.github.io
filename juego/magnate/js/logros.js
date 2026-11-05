@@ -2,6 +2,7 @@
 import { leer, guardar, CLAVES } from './almacen.js';
 import { POR_GRUPO, ESTACIONES, SERVICIOS } from './datos.js';
 import { patrimonio } from './reglas.js';
+import * as Nube from './nube.js';
 
 export const LOGROS = [
   { id: 'primera_compra', nombre: 'Primer paso', desc: 'Compra tu primera propiedad.' },
@@ -33,6 +34,7 @@ const salvar = () => guardar(CLAVES.progreso, progreso);
 function dar(id) {
   if (progreso.logros[id]) return;
   progreso.logros[id] = Date.now(); salvar();
+  Nube.logro(id);
   const l = LOGROS.find((x) => x.id === id); avisos.forEach((f) => f(l));
 }
 let hip = 0;
@@ -58,8 +60,10 @@ export function evento(ev, e, yo) {
   if (pat >= 5000) dar('fortuna');
   if (pat > progreso.stats.mejorPatrimonio) { progreso.stats.mejorPatrimonio = pat; salvar(); }
 }
+let finRep = null;
 export function finPartida(e, yo, humanos) {
-  if (yo < 0) return;
+  if (yo < 0 || finRep === e.id) return;
+  finRep = e.id;
   const gano = e.ganador === yo, s = progreso.stats;
   s.partidas++; s.turnosTotales += e.turnoN; if (e.jug[yo].quebrado) s.quiebras++;
   if (s.partidas >= 10) dar('veterano');
@@ -74,4 +78,5 @@ export function finPartida(e, yo, humanos) {
     progreso.records.victorias = s.victorias;
   }
   salvar();
+  Nube.finPartida(gano, gano ? patrimonio(e, yo) : 0, e.turnoN, s.victorias);
 }

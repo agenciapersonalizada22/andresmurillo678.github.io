@@ -10,6 +10,7 @@ import { burbuja } from './hud.js';
 import { mensajes } from './hojas.js';
 import * as Logros from './logros.js';
 import { REGLAS_BASE } from './datos.js';
+import { usuario } from './nube.js';
 
 const Red = window.Red, Lobby = window.Lobby;
 const NOMBRES_BOT = ['Aurora', 'Bruno', 'Camila', 'Dante', 'Elena', 'Fabio'];
@@ -19,8 +20,10 @@ const rid = () => Array.from({ length: 16 }, () => 'abcdefghijkmnpqrstuvwxyz2345
 export const S = { meta: null, setup: null, afk: {}, tBot: 0, tTrato: 0, tLimite: 0, tick: 0, desc: {}, huerfano: false };
 
 export function setupBase() {
-  const p = Red ? Red.perfil.obtener() : { nombre: 'Tú', color: '#3df5ff' };
-  return Object.assign({ reglas: Object.assign({}, REGLAS_BASE), bots: [1, 2, 0], nombre: p.nombre, color: p.color }, leer(CLAVES.setup, {}) || {});
+  const p = Red ? Red.perfil.obtener() : { nombre: 'Tú', color: '#3df5ff' }, u = usuario();
+  const s = Object.assign({ reglas: Object.assign({}, REGLAS_BASE), bots: [1, 2, 0], nombre: p.nombre, color: p.color }, leer(CLAVES.setup, {}) || {});
+  if (u) { s.nombre = u.nombre; s.color = u.color || s.color; } // la cuenta manda sobre el nombre guardado en la partida
+  return s;
 }
 export const hayGuardada = () => { const g = leer(CLAVES.partida, null); return !!(g && g.E && g.E.fase !== 'fin_partida'); };
 

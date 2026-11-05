@@ -1,5 +1,6 @@
 // Estadisticas locales y logros (ids estables para la plataforma). Se alimenta con el resultado de cada mano desde el punto de vista del jugador local.
 import * as A from './almacen.js';
+import * as Cta from './cuenta.js';
 
 export const LOGROS = [
   { id: 'primera_mano', nombre: 'Siéntate a la mesa', descripcion: 'Juega tu primera mano.' },
@@ -70,7 +71,7 @@ export const grupoDe = (id) => (/^poker_/.test(id) ? 'Póker' : /^(bj_|sm_)/.tes
 const avisos = [];
 export function desbloquear(id) {
   const l = A.logros.obtener(); if (l[id]) return false;
-  l[id] = Date.now(); A.logros.guardar(l); const d = LOGROS.find((x) => x.id === id); if (d) avisos.push(d); return true;
+  l[id] = Date.now(); A.logros.guardar(l); Cta.logro(id); const d = LOGROS.find((x) => x.id === id); if (d) avisos.push(d); return true;
 }
 export function tomarAvisos() { return avisos.splice(0); }
 export function stat(f) { const s = A.stats.obtener(); f(s); A.stats.guardar(s); return s; }
@@ -98,6 +99,9 @@ export function registrarMano(info) {
     if (s['racha_veintiuno'] >= 5) desbloquear('bj_racha_5');
   }
   if (['dompe', 'conquian', 'pescar'].includes(info.juego)) nuevosJuegos(info, s);
+  // XP moderado por mano terminada (nunca por tiempo jugado) y puntajes de la plataforma
+  Cta.xp(info.ganada ? (['dompe', 'conquian', 'pescar'].includes(info.juego) ? 10 : 6) : 2);
+  Cta.programarPuntajes(puntajes);
   return s;
 }
 // logros y puntajes de Dompe, Conquian y Ve a pescar. info.meta viene de res.meta de cada juego.
@@ -146,9 +150,11 @@ function nuevosJuegos(info, s) {
 export function sesionTerminada(neto, torneoGanado) {
   stat((s) => { s.sesiones = (s.sesiones || 0) + 1; });
   if (neto > 0) desbloquear('sesion_positiva');
-  if (torneoGanado) desbloquear('poker_torneo');
+  if (torneoGanado) { desbloquear('poker_torneo'); Cta.xp(50); }
+  Cta.programarPuntajes(puntajes);
 }
 export function revisarMonedero(saldo) {
   stat((s) => { s.maxMonedero = Math.max(s.maxMonedero || 0, saldo); });
   if (saldo >= 10000) desbloquear('monedero_10k');
+  Cta.programarPuntajes(puntajes);
 }
