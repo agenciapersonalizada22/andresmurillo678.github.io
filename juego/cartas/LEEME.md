@@ -1,12 +1,12 @@
 # Cartas: plataforma de juegos de baraja
 
-Juego `cartas` (id propuesto). Marco reutilizable + Póker Texas Hold'em, Veintiuno (blackjack) y Siete y medio. Solo **fichas virtuales**, nunca dinero real. Sin build: módulos ES (`js/`), HTML estático. Usa `../comun/` (mando.js, red.js, lobby.js).
+Juego `cartas` (id propuesto). Marco reutilizable + Póker Texas Hold'em, Veintiuno (blackjack), Siete y medio, Dompe, Conquián y Ve a pescar. Solo **fichas virtuales**, nunca dinero real. Sin build: módulos ES (`js/`), HTML estático. Usa `../comun/` (mando.js, red.js, lobby.js).
 
 ```
 js/marco/   rng barajas dibujo sonido economia mesa sesion almacen cartera progreso   (sin lógica de ningún juego)
 js/ui/      dom mesaUI acciones entrada paneles ajustes creador entrar red-util          (UI genérica)
 js/juegos/  registro.js + <juego>/{reglas,bot,ui,index}.js
-pruebas/    *.test.mjs (Node, sin DOM):  node pruebas/poker.test.mjs | veintiuno.test.mjs | mesa.test.mjs
+pruebas/    *.test.mjs (Node, sin DOM):  poker | veintiuno | mesa | dompe_combos | dompe | conquian_melds | conquian | pescar | nuevos_mesa
 ```
 
 ## Arquitectura (anfitrión autoritativo)
@@ -129,3 +129,19 @@ id `cartas`. Puntajes: `monedero` (Monedero máximo, mayorEsMejor, tope 1e9, fic
 
 ## Pruebas
 `node pruebas/poker.test.mjs` (evaluador vs. fuerza bruta en 100 000 manos, side pots, conservación), `veintiuno.test.mjs`, `mesa.test.mjs` (miles de manos con bots, torneo, reconexión, serialización a mitad de mano, privacidad de mensajes).
+
+## Dompe, Conquián y Ve a pescar (añadidos)
+Extensiones genéricas del marco (retrocompatibles): `layout` puede devolver `bandeja` (mano propia ancha, `{cartas,clic,sel,etiqueta,turno}`), `barra` (chips de estado `[{txt,cls}]`) y `centro.tapete` (combinaciones `[{id,cartas,etiqueta,color,clic,destacada}]`); `panel` admite `local:()=>…` en un botón (acción solo de interfaz) y `cls:'chico'`; la UI del juego puede definir `alCarta(vm,idx,code,seat,mano)`, `alMeld(vm,id)`, `ayudaExtra(vm)`, `texto.controles` y `mandoCartas:true` (el mando navega también por las cartas). Opciones del formulario: `tipo:'orden'` (lista reordenable). El juego puede declarar `nDef`, `pausaMs`, `turnoSeg`. Estadísticas/logros: `info.meta` = `res.meta` de cada juego.
+
+### Dompe (`dompe`)
+Mano de 6 cartas; en tu turno robas (mazo o última del descarte) y descartas. **Victoria inmediata** al descartar si la mano cumple una combinación ganadora (por defecto: escalera de color, cuarteto+par, escalera de 6, dos tercias, tres pares; configurables una a una). **Dompe**: desde la vuelta 2 (configurable 2-4) quien acaba de descartar puede decir dompe; los demás juegan una última vuelta (un turno cada uno; quien forme una combinación ganadora gana al instante); si nadie gana, gana la mejor mano según el **orden de fuerza** (configurable en «Crear mesa»; propuesto: escalera de color, cuarteto+par, escalera, dos tercias, tres pares, cuarteto, tercia+par, color, tercia, dos pares, par, carta alta; desempate por cartas altas; empate exacto: se reparte, o gana el otro si se elige). Cuarteto+par cuenta también como «tres pares». Comodines: 2 de oros (baraja española 40/48) o los 2 jokers (americana 52+2); valen cualquier carta sin repetir una carta real ni pasar de 4 iguales. As bajo/alto/ambos; baraja de 40: 7 seguido de sota (opcional). Apuestas: ana por ronda (0 = ninguna), bote al ganador, penalización por dompear sin ganar (0 por defecto).
+`combos.js` (evaluador con comodines, distancia a cada combinación y salidas), `reglas.js`, `bot.js` (novato voraz; medio compara descarte/mazo; experto estima por simulación la probabilidad de ganar tras dompear), `ui.js` (chips de progreso «faltan N / 1 carta (salidas)», aviso «¿Dompear? sí/no» y «ÚLTIMA VUELTA», diálogo Combinaciones con el orden y tu progreso). Pruebas: `dompe_combos.test.mjs` (casos a mano, desempates, ~50 000 manos contra una implementación de fuerza bruta con y sin comodines, distancia/salidas contra fuerza bruta) y `dompe.test.mjs` (reglas, privacidad, miles de manos con bots sin errores).
+
+### Conquián (`conquian`, baraja española de 40, 2-4 jugadores)
+9 cartas por jugador y 10 al repartidor, que empieza descartando. Combinaciones: tríos/cuartetos del mismo número y escaleras del mismo palo de 3 o más (1…7-sota-caballo-rey; 7→sota configurable; As tras el rey opcional); comodín opcional (0-2, 1 por combinación). En el turno: robar del mazo o **tomar el descarte solo si se usa al instante** (combinación nueva o añadido a una existente), bajar combinaciones, añadir cartas a las propias o ajenas (configurable: todas/propias/no) y descartar. Gana quien se queda sin cartas (bajando todo o descartando la última; «ganar con descarte» configurable: si no, con una sola carta se pasa el turno). Si el mazo se acaba se rebaraja el descarte (máx. 2 veces) y luego son tablas. Puntuación por rondas (puntos de las cartas de los rivales: figuras 10, comodín 15) con meta opcional; ana, bote y pago por carta restante. Interfaz: elegir varias cartas, Bajar/Descartar, tocar una combinación para añadir, **arrastrar** (a una combinación, al descarte o al centro), 💡 Sugerir. `melds.js` (validación + planificador), `bot.js`. Pruebas: `conquian_melds.test.mjs` (validez contra enumeración exhaustiva de todos los subconjuntos de 3-5 cartas y planificador contra fuerza bruta) y `conquian.test.mjs`. Con 4 jugadores el mazo es corto (muchas tablas).
+
+### Ve a pescar (`pescar`, 2-6 jugadores)
+Pide a un rival un número que ya tengas; si lo tiene, te da todas esas cartas y sigues; si no, «¡ve a pescar!» (robas y pasa el turno; si robas lo pedido juegas otra vez, configurable). Libros de 4 (o 3 con baraja de 40: la cuarta carta queda muerta) se bajan solos; los números que ya no pueden completar libro se retiran. 5 o 7 cartas (automático: 7 con 2-3 jugadores, 5 con más), mano vacía: robar o quedar fuera. Gana quien más libros junte (empate: se reparte). Barajas americana 52, española 40 y 48. **Versión familiar**: banners y animaciones grandes, vuelo de cartas, confeti y pistas. Los bots reconstruyen lo que se sabe de cada mano a partir del historial público de peticiones (`creencias`). Interfaz: botones de rival/número o tocar una carta; con mando/teclado todo es navegable. Pruebas: `pescar.test.mjs`.
+
+### Registro en la plataforma (nuevos)
+Mismo juego `cartas`; ids de motor: `dompe`, `conquian`, `pescar`. Modos de puntaje nuevos (`puntajes()` en `progreso.js` devuelve los valores): `dompe_racha` (mayorEsMejor, tope 1000, victorias), `conq_turnos` (menor es mejor, tope 200, turnos), `pesc_libros` (mayorEsMejor, tope 26, libros). Logros: ver `LOGROS` en `js/marco/progreso.js` (prefijos `dompe_`, `conq_`, `pesc_`).

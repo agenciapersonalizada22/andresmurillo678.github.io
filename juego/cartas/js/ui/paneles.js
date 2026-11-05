@@ -128,11 +128,12 @@ export function solicitudDialogo(info, decidir) {
 }
 
 // ---------- ayuda y pausa ----------
-export function ayudaDialogo(UI) {
+export function ayudaDialogo(UI, vm) {
   const t = UI.texto;
   return dialogo({ titulo: 'Ayuda · ' + t.nombre, cuerpo: [...t.ayuda.map((x) => h('p', { txt: x })),
+    ...(UI.ayudaExtra && vm ? [].concat(UI.ayudaExtra(vm)) : []),
     h('h3', { txt: 'Controles' }),
-    h('ul', { cls: 'lista-ayuda' }, [
+    h('ul', { cls: 'lista-ayuda' }, t.controles ? t.controles.map((x) => h('li', { html: x })) : [
       h('li', { html: '<b>Táctil:</b> toca un botón de acción; desliza la barra para elegir cuánto apostar y usa ½ ¾ Pot All-in.' }),
       h('li', { html: '<b>Teclado:</b> F retirarse · C pasar/igualar · R subir · A all-in · ↑/↓ cantidad (Mayús ×10) · T chat · Esc menú.' }),
       h('li', { html: '<b>Mando Xbox:</b> cruceta/stick mueve el foco · A confirma · B retira o pasa · LB/RB cambia la cantidad · X chat · MENU pausa.' })]),

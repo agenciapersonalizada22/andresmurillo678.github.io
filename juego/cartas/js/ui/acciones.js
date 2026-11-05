@@ -50,7 +50,7 @@ export function render(vm, UI, L) {
     return;
   }
   espera.hidden = true;
-  const clave = JSON.stringify([vm.mano, j.fase, j.turno, j.legal && (j.legal.minTo || j.legal.min), j.legal && (j.legal.maxTo || j.legal.max)]);
+  const clave = JSON.stringify([vm.mano, j.fase, j.turno, j.sub, j.legal && (j.legal.minTo || j.legal.min), j.legal && (j.legal.maxTo || j.legal.max)]);
   const nuevo = clave !== est.clave; est.clave = clave;
   tituloEl.textContent = panel.titulo || ''; infoEl.textContent = panel.info || '';
   const con = panel.botones.find((b) => b.cantidad);
@@ -63,6 +63,7 @@ export function render(vm, UI, L) {
     if (nuevo || est.cant < c.min || est.cant > c.max) est.cant = Math.max(c.min, Math.min(c.max, c.def));
     slider.value = est.cant;
   }
+  const previo = document.activeElement && raiz.contains(document.activeElement) ? document.activeElement.dataset.id : '';
   botonesEl.replaceChildren(...panel.botones.map((b) => {
     const txt = b.txt.replace('{v}', fmt(b.fijo || est.cant));
     const el = boton(txt, () => enviar(b), b.cls, { 'data-id': b.id });
@@ -72,6 +73,7 @@ export function render(vm, UI, L) {
     return el;
   }));
   if (con) pintarCant();
+  if (previo && !nuevo) { const f = botonesEl.querySelector(`[data-id="${previo}"]`); if (f) f.focus({ preventScroll: true }); }
   if (nuevo) {
     Sonido.turno();
     const def = botonesEl.querySelector('.prim') || botonesEl.firstChild;
@@ -105,6 +107,7 @@ function textoEspera(vm, L) {
   return out;
 }
 function enviar(b) {
+  if (b.local) { Sonido.clic(); b.local(); return; }
   if (est.enviando) return;
   est.enviando = true; Sonido.clic();
   const a = Object.assign({}, b.accion);

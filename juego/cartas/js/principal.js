@@ -51,7 +51,7 @@ function continuar(id) {
   if (!restaurarAnfitrion(id)) { aviso('No se pudo restaurar la mesa', '#ff6b6b'); A.mesas.olvidar(id); irEntrar(); return; }
   entrarMesa(); aviso('Mesa restaurada. Los jugadores remotos deben reconectarse con «Reconectar jugador».', '#3df5ff', 4500);
 }
-function ayudaGeneral() { P.ayudaDialogo({ texto: { nombre: 'Cartas', ayuda: ['Crea una mesa de póker, veintiuno o siete y medio con bots o amigos, o únete con un enlace.', 'Las fichas son virtuales: tu monedero se guarda en este dispositivo y recibes un regalo diario de cortesía.', 'Si se cae un jugador, el anfitrión pulsa «Reconectar jugador» y le da un enlace nuevo; recupera asiento, fichas y mano.'] } }); }
+function ayudaGeneral() { P.ayudaDialogo({ texto: { nombre: 'Cartas', ayuda: ['Crea una mesa de póker, veintiuno, siete y medio, Dompe, Conquián o Ve a pescar con bots o amigos, o únete con un enlace.', 'Las fichas son virtuales: tu monedero se guarda en este dispositivo y recibes un regalo diario de cortesía.', 'Si se cae un jugador, el anfitrión pulsa «Reconectar jugador» y le da un enlace nuevo; recupera asiento, fichas y mano.'] } }); }
 
 // ---------- unirse por enlace ----------
 function abrirUnirse(preMesa) {
@@ -90,12 +90,13 @@ function resultadoMano(vm) {
   resVisto = k;
   const delta = j.res.gan[vm.yo] || 0, jugo = j.jug[vm.yo] && (j.jug[vm.yo].st !== 'fuera' || (j.jug[vm.yo].manos && j.jug[vm.yo].manos.length));
   if (!jugo) return;
-  const info = { juego: vm.juego === 'poker' ? 'poker' : 'veintiuno', yo: vm.yo, delta, ganada: delta > 0, bote: j.res.total, mano: j.res.manos && j.res.manos[vm.yo] ? j.res.manos[vm.yo].nombre : '', variante: vm.juego === 'sietemedio' ? 'sm' : 'bj' };
-  if (vm.juego !== 'poker') { const ms = j.jug[vm.yo].manos; info.natural = ms.some((m) => m.res === 'blackjack' || m.res === 'real'); info.doblada = ms.some((m) => m.doblada && m.res === 'gana'); }
+  const nuevo = ['dompe', 'conquian', 'pescar'].includes(vm.juego), gano = nuevo ? (j.res.ganadores || []).includes(vm.yo) : delta > 0;
+  const info = { juego: vm.juego === 'poker' ? 'poker' : (vm.juego === 'veintiuno' || vm.juego === 'sietemedio') ? 'veintiuno' : vm.juego, meta: j.res.meta || null, yo: vm.yo, delta, ganada: gano, bote: j.res.total, mano: j.res.manos && j.res.manos[vm.yo] ? j.res.manos[vm.yo].nombre : '', variante: vm.juego === 'sietemedio' ? 'sm' : 'bj' };
+  if (vm.juego === 'veintiuno' || vm.juego === 'sietemedio') { const ms = j.jug[vm.yo].manos; info.natural = ms.some((m) => m.res === 'blackjack' || m.res === 'real'); info.doblada = ms.some((m) => m.doblada && m.res === 'gana'); }
   Pro.registrarMano(info);
-  if (delta > 0) Sonido.ganar(); else if (delta < 0) Sonido.perder();
-  window.Mando && window.Mando.vibrar && A.dispositivo.obtener().controles.vibracion && delta > 0 && window.Mando.vibrar(0.3, 0.5, 160);
-  anunciar(delta > 0 ? 'Ganaste ' + delta + ' fichas' : delta < 0 ? 'Perdiste ' + (-delta) + ' fichas' : 'Mano sin cambios');
+  if (gano) Sonido.ganar(); else if (delta < 0 || (nuevo && j.res.ganadores.length)) Sonido.perder();
+  window.Mando && window.Mando.vibrar && A.dispositivo.obtener().controles.vibracion && gano && window.Mando.vibrar(0.3, 0.5, 160);
+  anunciar(nuevo ? (gano ? '¡Ganaste! ' : 'Ganó otro jugador. ') + j.res.texto + (delta ? ' (' + (delta > 0 ? '+' : '−') + Math.abs(delta) + ' fichas)' : '') : delta > 0 ? 'Ganaste ' + delta + ' fichas' : delta < 0 ? 'Perdiste ' + (-delta) + ' fichas' : 'Mano sin cambios');
 }
 function abrirChat() {
   if (P.chatActual()) return P.chatDialogo(() => Sesion.vm, enviarChat);
@@ -116,7 +117,7 @@ function menuPausa() {
   if (anf && solo) pausar(true);
   pausaDlg = P.pausaDialogo({
     esAnfitrion: anf, texto: anf ? (solo ? 'Partida en pausa.' : 'Hay jugadores conectados: la mesa sigue corriendo.') : 'Menú de la mesa.',
-    resultados: () => Sesion.vm && P.resultadosDialogo(Sesion.vm), ajustes: () => Aj.ajustesDialogo(), ayuda: () => P.ayudaDialogo(motorDe(Sesion.vm.juego).ui),
+    resultados: () => Sesion.vm && P.resultadosDialogo(Sesion.vm), ajustes: () => Aj.ajustesDialogo(), ayuda: () => P.ayudaDialogo(motorDe(Sesion.vm.juego).ui, Sesion.vm),
     gestion: anf ? () => P.gestionDialogo(Sesion.vm, () => {}) : null,
     levantarse: Sesion.vm && Sesion.vm.yo >= 0 ? () => { levantarse(); aviso('Te levantarás al terminar la mano. Tus fichas vuelven al monedero.'); } : null,
     salir: () => (anf ? confirmar('Se cierra la mesa para todos y recibes tus fichas en el monedero.', 'Terminar sesión', terminar, 'Terminar y cobrar') : salirDeMesa()),
@@ -172,14 +173,15 @@ Sesion.alEvento = (ev) => {
   else if (ev.tipo === 'fin') { /* el cobro se acredita en sesion.js; la vista final muestra el cierre */ if (Sesion.vm) { Sesion.vm.fin = true; alVista(Sesion.vm); } }
   else if (ev.tipo === 'salio') aviso('Un jugador se desconectó. Puedes reconectarlo desde «Gestionar mesa».', '#ff6b6b');
 };
-MesaUI.hooks.carta = (seat, k, code) => { const vm = Sesion.vm; const UI = vm && motorDe(vm.juego).ui; const a = UI && UI.alCarta && UI.alCarta(vm, k, code); if (a) accion(a); };
+MesaUI.hooks.carta = (seat, k, code, mano) => { const vm = Sesion.vm; const UI = vm && motorDe(vm.juego).ui; const a = UI && UI.alCarta && UI.alCarta(vm, k, code, seat, mano); if (a) accion(a); };
+MesaUI.hooks.meld = (id) => { const vm = Sesion.vm; const UI = vm && motorDe(vm.juego).ui; const a = UI && UI.alMeld && UI.alMeld(vm, id); if (a) accion(a); };
 MesaUI.hooks.pila = (id) => { const vm = Sesion.vm; const UI = vm && motorDe(vm.juego).ui; const a = UI && UI.alPila && UI.alPila(vm, id); if (a) accion(a); };
 Acc.configurar({
   enviar: (a) => accion(a),
   sentar: () => { if (Sesion.rol === 'anfitrion') { P.invitarDialogo(Sesion.vm); return; } aviso('Pide al anfitrión que te abra un asiento', '#ffd23d'); },
   recomprar: () => { const vm = Sesion.vm; P.recompraDialogo(vm, (v) => { const r = recomprar(v); if (r.ok === false) aviso(r.error, '#ff6b6b'); else aviso('Recompra aplicada al empezar la próxima mano', '#6dff6d'); cabMesa.saldo.textContent = '🪙 ' + fmt(Cartera.saldo()); }); },
 });
-Entrada.configurar({ umbral: () => 0.25 + Aj.obtener().disp.controles.zonaMuerta, sens: () => Aj.obtener().disp.controles.sensibilidad, pausa: menuPausa, chat: abrirChat, activo: () => vista === 'mesa', contexto: () => (vista === 'mesa' ? Acc.contenedor() : vEntrar) });
+Entrada.configurar({ umbral: () => 0.25 + Aj.obtener().disp.controles.zonaMuerta, sens: () => Aj.obtener().disp.controles.sensibilidad, pausa: menuPausa, chat: abrirChat, activo: () => vista === 'mesa', contexto: () => (vista === 'mesa' ? (Sesion.vm && motorDe(Sesion.vm.juego).ui.mandoCartas ? vMesa : Acc.contenedor()) : vEntrar) });
 
 // ---------- FPS y calidad automatica ----------
 let fr = 0, t0 = performance.now(), bajos = 0;
@@ -201,4 +203,4 @@ Aj.aplicar(); iniciarSuscripcion(); Entrada.iniciar(); requestAnimationFrame(med
 Pro.revisarMonedero(Cartera.saldo());
 irEntrar();
 if (window.Lobby && window.Lobby.hayEnlace()) { previstaDesdeUrl(); window.Lobby.abrir(OPTS_LOBBY); }
-window.__cartas = { Sesion, A, Cartera };
+window.__cartas = { Sesion, A, Cartera, accion };

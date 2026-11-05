@@ -5,6 +5,18 @@ import { Cartera } from '../marco/cartera.js';
 import * as A from '../marco/almacen.js';
 import { crearMesa, CFG_BASE, semilla8 } from '../marco/mesa.js';
 
+// lista reordenable (botones subir/bajar: sirve con raton, tactil y mando)
+function listaOrden(o, valor, fn) {
+  let orden = valor.slice();
+  const nom = Object.fromEntries(o.items), ul = h('ol', { cls: 'lista-orden' }), caja = h('div', { cls: 'orden-caja' }, [h('small', { txt: o.etiqueta }), ul]);
+  const pintar = () => {
+    ul.replaceChildren(...orden.map((id, k) => h('li', {}, [h('b', { txt: (k + 1) + '.' }), h('span', { txt: nom[id] || id }),
+      boton('▲', () => { if (k > 0) { orden.splice(k - 1, 0, orden.splice(k, 1)[0]); fn(orden.slice()); pintar(); } }, 'sec chico', { 'aria-label': 'Subir ' + (nom[id] || id) }),
+      boton('▼', () => { if (k < orden.length - 1) { orden.splice(k + 1, 0, orden.splice(k, 1)[0]); fn(orden.slice()); pintar(); } }, 'sec chico', { 'aria-label': 'Bajar ' + (nom[id] || id) })])));
+  };
+  pintar();
+  return h('div', {}, [caja, boton('Restablecer orden propuesto', () => { orden = o.def.slice(); fn(orden.slice()); pintar(); }, 'sec chico')]);
+}
 export function pantallaCrear(cont, alCrear, alVolver) {
   const ajMesa = A.ajustes.obtener().mesa;
   const estado = { juego: 'poker', n: 4, asientos: [], privada: false };
@@ -24,8 +36,8 @@ export function pantallaCrear(cont, alCrear, alVolver) {
       e.cfgJuego = e.juego;
       const op = {}; J.opciones.forEach((o) => { op[o.id] = o.def; });
       const bj = e.juego !== 'poker';
-      e.cfg = { baraja: J.barajas[0][0], fichasIni: 1000, compraMin: bj ? 100 : 200, compraMax: 5000, compra: 1000, recompra: true, tope: 0, torneo: false, turnoSeg: ajMesa.turnoSeg, pausaMs: 2600, op };
-      e.n = Math.min(Math.max(J.min, bj ? 3 : 4), J.max);
+      e.cfg = { baraja: J.barajas[0][0], fichasIni: 1000, compraMin: bj ? 100 : 200, compraMax: 5000, compra: 1000, recompra: true, tope: 0, torneo: false, turnoSeg: J.turnoSeg != null ? J.turnoSeg : ajMesa.turnoSeg, pausaMs: J.pausaMs || 2600, op };
+      e.n = Math.min(Math.max(J.min, J.nDef || (bj ? 3 : 4)), J.max);
       e.asientos = [];
     }
     while (e.asientos.length < 8) e.asientos.push(e.asientos.length % 3 === 0 ? 'medio' : e.asientos.length % 3 === 1 ? 'novato' : 'experto');
@@ -37,6 +49,7 @@ export function pantallaCrear(cont, alCrear, alVolver) {
       const v = c.op[o.id];
       if (o.tipo === 'num') return f(o.etiqueta, num(v, o.min, o.max, o.paso, (x) => { c.op[o.id] = x; }));
       if (o.tipo === 'bool') return f(o.etiqueta, chk(v, (x) => { c.op[o.id] = x; }));
+      if (o.tipo === 'orden') return listaOrden(o, v, (x) => { c.op[o.id] = x; });
       return f(o.etiqueta, sel(v, o.opciones, (x) => { c.op[o.id] = typeof o.def === 'number' ? +x : x; }));
     })]));
     const asientosUI = [];

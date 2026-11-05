@@ -167,3 +167,37 @@ html[data-calidad="ultra"] #fieltro { box-shadow: inset 0 0 0 3px rgba(61, 245, 
 
 .pilas { display: flex; gap: 14px; justify-content: center; pointer-events: auto; } .pila-c { display: flex; flex-direction: column; align-items: center; } .pila-c .carta { --cw: clamp(34px, min(11vw, 8vh), 64px); }
 .carta.clic { cursor: pointer; pointer-events: auto; } .carta.sel { transform: translateY(-12px); outline: 3px solid var(--oro); border-radius: 7%; }
+
+/* ---- bandeja de mano, tapete de combinaciones, chips de estado (juegos de mano grande) ---- */
+.bandeja { position: absolute; left: 2%; right: 2%; bottom: 4px; z-index: 6; container-type: inline-size; display: flex; flex-direction: column; align-items: center; gap: 1px; --bw: 44px; }
+.bandeja .cartas { width: 100%; justify-content: center; padding-top: 16px; }
+.bandeja .carta { --cw: var(--bw); }
+.bandeja .carta + .carta { margin-left: calc(var(--cw) * -1 + min(var(--cw) + 4px, (100cqw - var(--cw) - 4px) / max(1, var(--k, 2) - 1))); }
+.bandeja .etq { font-size: .58rem; font-weight: 800; color: #fff; text-shadow: 0 1px 3px #000; min-height: 10px; }
+.bandeja.turno .cartas { filter: drop-shadow(0 0 8px var(--oro)); }
+#fieltro[data-bandeja="1"] .asiento.yo .manos { display: none; }
+.tapete { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; width: 100%; }
+.meld { pointer-events: auto; border: 1.5px solid var(--c, #fff); border-radius: 8px; padding: 2px 4px 1px; background: rgba(0, 0, 0, .32); display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+.meld.dest { box-shadow: 0 0 10px var(--oro); border-color: var(--oro); }
+.meld .carta { --cw: clamp(26px, 7.2vw, 40px); }
+.meld .cartas .carta + .carta { margin-left: calc(var(--cw) * -.52); }
+.meld .etq { font-size: .5rem; color: #e8e0ff; line-height: 1.2; }
+.chips { flex: none; display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; padding: 1px 8px 3px; max-height: 58px; overflow: hidden; }
+.chip { font-size: .56rem; font-weight: 800; padding: 2px 7px; border-radius: 10px; background: rgba(255, 255, 255, .1); border: 1px solid var(--borde); color: #fff; white-space: nowrap; }
+.chip.ok { background: rgba(109, 255, 109, .2); border-color: var(--verde); color: var(--verde); } .chip.cerca { background: rgba(255, 210, 61, .18); border-color: var(--oro); color: var(--oro); }
+.chip.alerta { background: var(--magenta); color: #fff; border-color: #fff; animation: pulso 1s ease-in-out infinite; } .chip.lejos { opacity: .6; }
+.carta.clic { touch-action: manipulation; }
+#fieltro[data-juego="conquian"] .carta.clic, #fieltro[data-juego="conquian"] .meld { touch-action: none; }
+.arrastre { position: fixed; left: 0; top: 0; z-index: 95; pointer-events: none; display: flex; filter: drop-shadow(0 6px 10px #000); }
+.arrastre .carta { --cw: 44px; } .arrastre .carta + .carta { margin-left: -26px; }
+.sobre { outline: 3px dashed var(--oro); outline-offset: 2px; }
+.lista-orden { list-style: none; margin: 4px 0; padding: 0; display: grid; gap: 4px; } .lista-orden li { display: flex; align-items: center; gap: 6px; font-size: .72rem; padding: 3px 6px; background: rgba(255, 255, 255, .05); border-radius: 8px; } .lista-orden li span { flex: 1; }
+.lista-orden li.gana { border-left: 4px solid var(--verde); }
+.tabla-prog { width: 100%; border-collapse: collapse; font-size: .7rem; } .tabla-prog td { padding: 3px 4px; border-bottom: 1px solid rgba(154, 140, 255, .15); }
+.banner { position: absolute; left: 50%; top: 56%; transform: translate(-50%, -50%); z-index: 8; pointer-events: none; padding: 6px 14px; border-radius: 14px; background: rgba(12, 9, 34, .92); border: 2px solid var(--oro); font-weight: 800; font-size: .72rem; text-align: center; max-width: 88%; box-shadow: 0 0 18px var(--oro); }
+.banner.alerta { border-color: var(--magenta); box-shadow: 0 0 20px var(--magenta); animation: pulso 1.1s ease-in-out infinite; }
+.vuelo { position: fixed; left: 0; top: 0; z-index: 92; pointer-events: none; font-size: 1.6rem; }
+.a-botones .btn.chico { flex: 1 1 54px; min-height: calc(38px * var(--escala-btn)); padding: 4px 6px; font-size: .7rem; }
+.banner.grande { font-size: 1.15rem; padding: 10px 20px; }
+.vuelo { font-size: 1.8rem; }
+.logros li.grupo-logro { opacity: 1; color: var(--magenta); font-weight: 800; letter-spacing: .08em; margin-top: 8px; border-bottom: 1px solid var(--borde); }

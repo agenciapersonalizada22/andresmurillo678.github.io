@@ -4,8 +4,8 @@ import { elementoCarta, poner } from '../marco/dibujo.js';
 import { Sonido } from '../marco/sonido.js';
 
 export const cfgUI = { animar: true };
-export const hooks = { carta: null, pila: null };
-let pilasEl, huecosEl, comunesWrap, bancaMano, fieltro, centro, mazo, comunes, grupoBanca, boteEl, subEl, extraEl, infoEl, asientos = [], nAnt = 0, dispAnt = '', ultimoLog = 0, prev = null, ctxAnim = { n: 0 };
+export const hooks = { carta: null, pila: null, meld: null };
+let bandejaEl, bandejaCartas, bandejaEtq, tapeteEl, barraEl, pilasEl, huecosEl, comunesWrap, bancaMano, fieltro, centro, mazo, comunes, grupoBanca, boteEl, subEl, extraEl, infoEl, asientos = [], nAnt = 0, dispAnt = '', ultimoLog = 0, prev = null, ctxAnim = { n: 0 };
 
 export function montar(cont) {
   fieltro = h('div', { id: 'fieltro', role: 'group', 'aria-label': 'Mesa de juego' });
@@ -15,16 +15,17 @@ export function montar(cont) {
   comunes = h('div', { cls: 'cartas comunes', 'aria-label': 'Cartas comunitarias' }); huecosEl = h('div', { cls: 'cartas comunes huecos', 'aria-hidden': 'true' });
   comunesWrap = h('div', { cls: 'comunes-wrap' }, [huecosEl, comunes]);
   subEl = h('div', { cls: 'sub', 'aria-live': 'off' }); boteEl = h('div', { cls: 'bote' }); extraEl = h('div', { cls: 'extra' });
-  pilasEl = h('div', { cls: 'pilas' });
-  centro = h('div', { id: 'centro' }, [grupoBanca, comunesWrap, pilasEl, boteEl, subEl, extraEl]);
-  infoEl = h('div', { id: 'info', 'aria-live': 'polite' });
-  fieltro.append(mazo, centro);
-  cont.append(fieltro, infoEl);
+  pilasEl = h('div', { cls: 'pilas' }); tapeteEl = h('div', { id: 'tapete', cls: 'tapete', hidden: '' });
+  centro = h('div', { id: 'centro' }, [grupoBanca, comunesWrap, pilasEl, tapeteEl, boteEl, subEl, extraEl]);
+  infoEl = h('div', { id: 'info', 'aria-live': 'polite' }); barraEl = h('div', { id: 'barra-chips', cls: 'chips', hidden: '' });
+  bandejaCartas = h('div', { cls: 'cartas' }); bandejaEtq = h('div', { cls: 'etq' }); bandejaEl = h('div', { id: 'bandeja', cls: 'bandeja', hidden: '', 'aria-label': 'Tu mano' }, [bandejaCartas, bandejaEtq]);
+  fieltro.append(mazo, centro, bandejaEl);
+  cont.append(fieltro, infoEl, barraEl);
   return fieltro;
 }
 export const mazoEl = () => mazo;
 
-function posiciones(n, disp, yo) {
+function posiciones(n, disp, yo, band) {
   const out = [];
   if (disp === 'arco') {
     for (let k = 0; k < n; k++) {
@@ -36,7 +37,7 @@ function posiciones(n, disp, yo) {
   const base = yo >= 0 ? yo : 0;
   for (let k = 0; k < n; k++) {
     const r = (k - base + n) % n, ang = (Math.PI / 2) + (r * 2 * Math.PI) / n;
-    out.push({ x: 50 + 37 * Math.cos(ang), y: 46 + 36 * Math.sin(ang) });
+    out.push(band ? { x: 50 + 38 * Math.cos(ang), y: 41 + 26 * Math.sin(ang) } : { x: 50 + 37 * Math.cos(ang), y: 46 + 36 * Math.sin(ang) });
   }
   return out;
 }
@@ -66,7 +67,7 @@ function sincronizarCartas(cont, codes, opt) {
     el.classList.toggle('dim', !!(opt && opt.dim));
     el.classList.toggle('sel', !!(opt && opt.sel && opt.sel.includes(k)));
     el.classList.toggle('clic', !!(opt && opt.clic));
-    el.onclick = opt && opt.clic && code ? () => hooks.carta && hooks.carta(opt.seat, k, code) : null;
+    el.onclick = opt && opt.clic && code ? () => hooks.carta && hooks.carta(opt.seat, k, code, opt.mano) : null;
     if (opt && opt.clic) { el.tabIndex = 0; el.setAttribute('data-f', 1); el.onkeydown = (e) => { if (e.key === 'Enter') el.click(); }; }
   });
   for (let k = ex.length - 1; k >= codes.length; k--) ex[k].remove();
@@ -103,14 +104,15 @@ export function render(vm, UI, opts) {
   const L = UI.layout(vm), n = L.asientos.length, yo = vm.yo;
   ctxAnim.n = 0;
   if (!fieltro) return;
-  fieltro.dataset.n = n; fieltro.dataset.disp = L.disposicion; fieltro.style.setProperty('--sw', (n > 3 ? 190 / n : 92 / n) + '%');
+  fieltro.dataset.n = n; fieltro.dataset.disp = L.disposicion; fieltro.dataset.juego = vm.juego; fieltro.dataset.bandeja = L.bandeja ? '1' : ''; fieltro.style.setProperty('--sw', (n > 3 ? 190 / n : 92 / n) + '%');
   if (asientos.length !== n || dispAnt !== L.disposicion) {
     asientos.forEach((a) => { a._r.apuesta.remove(); a.remove(); }); asientos = [];
     for (let i = 0; i < n; i++) { const a = crearAsiento(i); fieltro.append(a, a._r.apuesta); asientos.push(a); }
   }
   dispAnt = L.disposicion;
-  const pos = posiciones(n, L.disposicion, yo);
+  const pos = posiciones(n, L.disposicion, yo, !!L.bandeja);
   const c = { x: 50, y: L.disposicion === 'arco' ? 24 : 40 };
+  renderExtra(L, vm);
   L.asientos.forEach((s, i) => {
     const el = asientos[i], r = el._r, meta = vm.asientos[i], p = pos[i];
     el.style.left = p.x + '%'; el.style.top = p.y + '%';
@@ -134,7 +136,7 @@ export function render(vm, UI, opts) {
       let me = mc.children[k];
       if (!me) { me = h('div', { cls: 'mano' }, [h('div', { cls: 'cartas' }), h('div', { cls: 'etq' }), h('div', { cls: 'ap' })]); mc.appendChild(me); }
       me.classList.toggle('activa', !!m.activa); me.className = 'mano' + (m.activa ? ' activa' : '') + (m.cls ? ' ' + m.cls : '');
-      me.children[0].style.setProperty('--k', m.cartas.length); sincronizarCartas(me.children[0], m.cartas, { dim: s.estado === 'fold', clic: m.clic, sel: m.sel, seat: i });
+      me.children[0].style.setProperty('--k', m.cartas.length); sincronizarCartas(me.children[0], m.cartas, { dim: s.estado === 'fold', clic: m.clic, sel: m.sel, seat: i, mano: k });
       me.children[1].textContent = m.etiqueta || ''; me.children[2].textContent = m.apuesta ? '◉ ' + fmt(m.apuesta) : '';
     });
     // apuesta de la calle (poker)
@@ -163,8 +165,8 @@ export function render(vm, UI, opts) {
   while (pilasEl.children.length > pilas.length) pilasEl.lastChild.remove();
   pilas.forEach((pl, k) => {
     let pe = pilasEl.children[k];
-    if (!pe) { pe = h('div', { cls: 'pila-c' }, [h('div', { cls: 'cartas' }), h('small', { cls: 'etq' })]); pilasEl.appendChild(pe); }
-    sincronizarCartas(pe.children[0], pl.cartas, { clic: pl.clic, seat: pl.id }); pe.children[1].textContent = pl.etiqueta || '';
+    if (!pe) { pe = h('div', { cls: 'pila-c', data: { id: pl.id } }, [h('div', { cls: 'cartas' }), h('small', { cls: 'etq' })]); pilasEl.appendChild(pe); }
+    sincronizarCartas(pe.children[0], pl.cartas, { clic: pl.clic, seat: pl.id }); pe.children[1].textContent = pl.etiqueta || ''; pe.dataset.id = pl.id;
     const c0 = pe.children[0].firstChild; if (c0 && pl.clic) c0.onclick = () => hooks.pila && hooks.pila(pl.id);
   });
   grupoBanca.hidden = !cg.grupos.length;
@@ -177,6 +179,32 @@ export function render(vm, UI, opts) {
   infoEl.textContent = [L.cabecera, L.info].filter(Boolean).join('  ·  ');
   prev = { n, f: L.asientos.map((s) => s.fichas), ap: L.asientos.map((s) => s.apuesta || 0), bote: cg.bote || 0, fin: !!L.fin };
   return L;
+}
+// bandeja de mano propia (manos grandes), tapete de combinaciones y chips de estado
+function renderExtra(L, vm) {
+  const b = L.bandeja;
+  bandejaEl.hidden = !b;
+  if (b) {
+    const k = b.cartas.length; bandejaCartas.style.setProperty('--k', k);
+    bandejaEl.style.setProperty('--bw', k <= 7 ? 'clamp(40px, 14.5vw, 66px)' : k <= 11 ? 'clamp(36px, 11.5vw, 58px)' : 'clamp(32px, 9.5vw, 50px)');
+    sincronizarCartas(bandejaCartas, b.cartas, { clic: b.clic, sel: b.sel, seat: vm.yo, mano: -1, dim: false });
+    bandejaEtq.textContent = b.etiqueta || ''; bandejaEl.classList.toggle('turno', !!b.turno);
+  }
+  const tp = (L.centro && L.centro.tapete) || [];
+  tapeteEl.hidden = !tp.length;
+  while (tapeteEl.children.length > tp.length) tapeteEl.lastChild.remove();
+  tp.forEach((m, k) => {
+    let me = tapeteEl.children[k];
+    if (!me) { me = h('div', { cls: 'meld', tabindex: '0', 'data-f': 1, role: 'button' }, [h('div', { cls: 'cartas' }), h('small', { cls: 'etq' })]); tapeteEl.appendChild(me); }
+    me.dataset.meld = m.id; me.style.setProperty('--c', colorOk(m.color)); me.classList.toggle('dest', !!m.destacada); me.classList.toggle('clic', !!m.clic);
+    me.setAttribute('aria-label', m.aria || ('Combinación ' + m.etiqueta));
+    me.children[0].style.setProperty('--k', m.cartas.length); sincronizarCartas(me.children[0], m.cartas, { seat: -1 });
+    me.children[1].textContent = m.etiqueta || '';
+    me.onclick = () => hooks.meld && hooks.meld(m.id); me.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); me.click(); } };
+  });
+  const ch = L.barra || [];
+  barraEl.hidden = !ch.length;
+  barraEl.replaceChildren(...ch.map((c) => h('span', { cls: 'chip ' + (c.cls || ''), txt: c.txt, title: c.tit || '' })));
 }
 export function reiniciarPrevio() { prev = null; asientos.forEach((a) => { a._r.apuesta.remove(); a.remove(); }); asientos = []; }
 export function elementoBote() { return boteEl; }

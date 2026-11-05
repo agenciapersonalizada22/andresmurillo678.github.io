@@ -3,7 +3,7 @@ import { h, fmt, boton, aviso, dialogo, confirmar } from './dom.js';
 import { Cartera } from '../marco/cartera.js';
 import * as A from '../marco/almacen.js';
 import { AVATARES } from '../marco/mesa.js';
-import { LOGROS } from '../marco/progreso.js';
+import { LOGROS, grupoDe } from '../marco/progreso.js';
 import { CATALOGO } from '../juegos/registro.js';
 import { extraerCodigo, extraerMesa } from './red-util.js';
 
@@ -30,7 +30,7 @@ export function pantallaEntrar(cont, acc) {
     const logros = A.logros.obtener();
     raiz.replaceChildren(...[
       h('a', { cls: 'volver', href: '../', txt: '← Menú' }),
-      h('h1', { cls: 'logo', html: '<span>CARTAS</span>' }), h('p', { cls: 'sub', txt: 'Póker · Veintiuno · Siete y medio' }),
+      h('h1', { cls: 'logo', html: '<span>CARTAS</span>' }), h('p', { cls: 'sub', txt: 'Póker · Veintiuno · Siete y medio · Dompe · Conquián · Ve a pescar' }),
       h('div', { cls: 'monedero', role: 'status' }, [h('span', { txt: '🪙 Monedero: ' }), saldo, h('span', { txt: ' fichas' }), regalo]),
       h('p', { cls: 'nota', txt: 'Solo fichas virtuales: nunca dinero real.' }),
       guardadas.length ? h('section', { cls: 'guardadas' }, [h('h2', { txt: 'Mesas guardadas' }), ...guardadas]) : null,
@@ -45,7 +45,7 @@ export function pantallaEntrar(cont, acc) {
 export function logrosDialogo() {
   const l = A.logros.obtener(), st = A.stats.obtener();
   return dialogo({ titulo: 'Logros y estadísticas', cuerpo: [h('p', { cls: 'nota', txt: `Manos jugadas ${st.manos || 0} · ganadas ${st.ganadas || 0} · mayor bote ${fmt(st.mayorBote || 0)} · sesiones ${st.sesiones || 0}` }),
-    h('ul', { cls: 'logros' }, LOGROS.map((x) => h('li', { cls: l[x.id] ? 'ok' : '' }, [h('b', { txt: (l[x.id] ? '★ ' : '☆ ') + x.nombre }), h('small', { txt: ' ' + x.descripcion })])))], botones: [{ txt: 'Cerrar', cls: 'prim' }] });
+    h('ul', { cls: 'logros' }, LOGROS.flatMap((x, k) => [(k === 0 || grupoDe(LOGROS[k - 1].id) !== grupoDe(x.id)) ? h('li', { cls: 'grupo-logro', txt: grupoDe(x.id) }) : null, h('li', { cls: l[x.id] ? 'ok' : '' }, [h('b', { txt: (l[x.id] ? '★ ' : '☆ ') + x.nombre }), h('small', { txt: ' ' + x.descripcion })])].filter(Boolean)))], botones: [{ txt: 'Cerrar', cls: 'prim' }] });
 }
 export function unirseDialogo(preMesa, alUnir) {
   const area = h('textarea', { cls: 'campo', rows: 3, placeholder: 'Pega el enlace de invitación (o el código)', 'aria-label': 'Enlace de invitación', 'data-f': 1 });
