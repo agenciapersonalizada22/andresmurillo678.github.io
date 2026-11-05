@@ -233,6 +233,7 @@ export function crearUI(app) {
       item('Fondo de la página', 'fondo', () => abrirFondo()), item('Capas', 'capas', () => abrirCapas()),
       item('Páginas', 'pag', () => alternarPaginas(true)), item('Exportar / importar', 'bajar', () => abrirExportar()), item('Historial de versiones', 'historial', () => abrirVersiones()),
       item('Colaborar', 'usuarios', () => abrirColab()), item('Temporizador', 'timer', () => abrirTemporizador()), item('Pantalla completa', 'pantalla', () => alternarPantalla()),
+      item(window.Cuenta && window.Cuenta.usuario ? 'Cuenta: ' + window.Cuenta.usuario.nombre : 'Cuenta y nube', 'usuarios', () => abrirAjustes(app, U, 'Datos')),
       item('Ajustes', 'ajustes', () => abrirAjustes(app, U)), item('Volver al menú de juegos', 'izq', () => { location.href = '../../juego/'; }), item('Ayuda y atajos', 'ayuda', () => abrirAyuda())
     ]);
     document.body.append(menuEl);

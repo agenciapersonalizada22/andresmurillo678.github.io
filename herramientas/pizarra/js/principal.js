@@ -4,6 +4,7 @@ import { Vista } from './vista.js';
 import { crearHerramientas } from './herramientas.js';
 import { crearUI } from './ui.js';
 import { crearColab } from './colab.js';
+import { crearNube } from './nube.js';
 import { crearMando } from './entrada_mando.js';
 import * as Almacen from './almacen.js';
 import { cargarAjustes, guardarAjustes, aplicarAjustes } from './ajustes.js';
@@ -24,12 +25,14 @@ const vista = app.vista = new Vista(document.querySelector('#escena'), app);
 app.herr = crearHerramientas(app);
 app.ui = crearUI(app);
 app.colab = crearColab(app);
+app.nube = crearNube(app);
 app.pedirAsset = id => app.colab.pedirAsset(id);
 
 // ---------- persistencia ----------
 let pend = [], tPers = 0, cadena = Promise.resolve(), flushes = 0, sucioVersion = false, sucioMini = false, tMini = 0;
 app.persistir = ops => {
   pend.push(...ops); sucioVersion = sucioMini = true;
+  if (ops.some(o => o.k === 'o' && o.p && o.p.tipo === 'trazo')) app.nube.logro('primer_trazo');
   clearTimeout(tPers); tPers = setTimeout(vaciar, 350);
   clearTimeout(tMini); tMini = setTimeout(guardarMini, 4000);
 };
@@ -39,6 +42,7 @@ function vaciar() {
   cadena = cadena.then(async () => {
     await Almacen.anexar(id, ops);
     await Almacen.actualizarMeta(id, { mod: Date.now(), n: contarObjetos(), paginas: doc.paginas().length, titulo: doc.meta('titulo') || 'Tablero sin título' });
+    if (contarObjetos() >= 50) app.nube.logro('tablero_50');
     if (++flushes % 80 === 0 && id === app.tableroId) await Almacen.compactar(id, doc.aOps());
   }).catch(e => console.error('guardado', e));
   return cadena;
@@ -125,7 +129,7 @@ app.abrirCompartido = async (id, titulo) => {
   vista.redibujarTodo(); app.ui.refrescarTodo(); return false;
 };
 app.renombrarActual = async t => { doc.cambiar([{ k: 'm', id: 'm', p: { titulo: t } }], { sinHistorial: true }); document.title = 'Pizarra · ' + t; };
-app.renombrarTablero = async (id, t) => { if (id === app.tableroId) return app.renombrarActual(t); await Almacen.actualizarMeta(id, { titulo: t }); };
+app.renombrarTablero = async (id, t) => { if (id === app.tableroId) return app.renombrarActual(t); await Almacen.actualizarMeta(id, { titulo: t, mod: Date.now() }); };
 app.duplicarTablero = async id => { if (id === app.tableroId) await vaciar(); const m = await Almacen.meta(id); return Almacen.duplicar(id, nuevoId(10), 'Copia de ' + m.titulo); };
 app.papelera = async id => {
   await Almacen.aPapelera(id);
@@ -186,7 +190,7 @@ app.nuevaCapa = () => { const c = doc.capas(), id = 'c' + nuevoId(4), n = c.leng
 app.aplicarPlantilla = (pl, nueva) => {
   if (!app.puedeEditar()) return;
   if (nueva) app.nuevaPagina();
-  const ids = pl.crear(doc, vista.pg); vista.ajustar(true); app.herr.setHerr('sel'); app.herr.ponerSel(ids);
+  const ids = pl.crear(doc, vista.pg); app.nube.logro('plantilla'); app.nube.xp('plantilla', 5, 3); vista.ajustar(true); app.herr.setHerr('sel'); app.herr.ponerSel(ids);
 };
 const cacheMini = new Map();
 app.miniatura = pg => {
@@ -250,25 +254,27 @@ document.querySelector('#archivoImg').addEventListener('change', async e => { fo
 document.querySelector('#archivoJson').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (f) { app.ui.cerrar(); await app.importarJSON(f); } });
 
 // ---------- exportar ----------
+const exportado = () => { app.nube.logro('exportado'); app.nube.xp('exportar', 5, 3); };
 const nombreBase = () => nombreArchivo(doc.meta('titulo'));
 app.exportarPNG = async () => {
   await precargar();
   const c = lienzoPagina(doc, vista.pg, dibujarPagina, id => vista.imagen(id), 2);
   const blob = await new Promise(r => c.toBlob(r, 'image/png'));
-  descargar(`${nombreBase()}-pagina-${doc.paginas().findIndex(p => p.id === vista.pg) + 1}.png`, blob); app.aviso('PNG exportado');
+  descargar(`${nombreBase()}-pagina-${doc.paginas().findIndex(p => p.id === vista.pg) + 1}.png`, blob); app.aviso('PNG exportado'); exportado();
 };
-app.exportarSVG = () => { descargar(`${nombreBase()}-pagina-${doc.paginas().findIndex(p => p.id === vista.pg) + 1}.svg`, new Blob([aSVG(doc, vista.pg, app.assets)], { type: 'image/svg+xml' })); app.aviso('SVG exportado'); };
-app.exportarJSON = () => { descargar(`${nombreBase()}.pizarra.json`, new Blob([aJSON(doc, app.assets)], { type: 'application/json' })); app.aviso('Tablero exportado'); };
+app.exportarSVG = () => { descargar(`${nombreBase()}-pagina-${doc.paginas().findIndex(p => p.id === vista.pg) + 1}.svg`, new Blob([aSVG(doc, vista.pg, app.assets)], { type: 'image/svg+xml' })); app.aviso('SVG exportado'); exportado(); };
+app.exportarJSON = () => { descargar(`${nombreBase()}.pizarra.json`, new Blob([aJSON(doc, app.assets)], { type: 'application/json' })); app.aviso('Tablero exportado'); exportado(); };
 app.generarPDF = async () => {
   await precargar();
   const pgs = doc.paginas().map(p => { const c = lienzoPagina(doc, p.id, dibujarPagina, id => vista.imagen(id), 1.5, 2400); return { w: c.width / 1.5, h: c.height / 1.5, pw: c.width, ph: c.height, jpeg: dataURLaBytes(c.toDataURL('image/jpeg', 0.9)) }; });
   return crearPDF(pgs, doc.meta('titulo') || 'Pizarra');
 };
-app.exportarPDF = async () => { const pdf = await app.generarPDF(); descargar(`${nombreBase()}.pdf`, new Blob([pdf], { type: 'application/pdf' })); app.aviso('PDF exportado'); };
+app.exportarPDF = async () => { const pdf = await app.generarPDF(); descargar(`${nombreBase()}.pdf`, new Blob([pdf], { type: 'application/pdf' })); app.aviso('PDF exportado'); exportado(); };
 
 // ---------- colaboracion ----------
 const OPTS = { juego: 'Pizarra', maxJugadores: 4, modos: [{ id: 'col', nombre: 'Colaborar' }], alIniciar: () => app.colab.alIniciarLobby() };
 app.abrirLobby = () => window.Lobby && window.Lobby.abrir(OPTS);
+if (window.Lobby && window.Lobby.registrar) window.Lobby.registrar(OPTS);   // invitaciones directas de amigos (Lobby)
 app.colab.iniciar();
 
 // ---------- entrada global ----------
@@ -305,6 +311,7 @@ crearMando(app);
 
 // ---------- arranque ----------
 (async () => {
+  await app.nube.requerir();   // exige sesion (redirige al portal) y toma nombre/color de la cuenta
   await Almacen.purgarPapelera().catch(() => {});
   const ultimo = Almacen.ls.leer('ultimo', null);
   let ok = false;
@@ -312,6 +319,7 @@ crearMando(app);
   if (!ok) { const l = await Almacen.listar(); if (l.length) ok = await app.abrirTablero(l[0].id); }
   if (!ok) { await app.nuevoTablero(); app.ui.mostrarBienvenida(); }
   document.body.classList.add('listo');
+  app.nube.iniciar();
   if (window.Lobby && window.Lobby.hayEnlace()) window.Lobby.abrir(OPTS);
 })();
 window.__pizarra = app;

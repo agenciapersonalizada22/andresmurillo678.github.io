@@ -148,3 +148,6 @@ input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--acento); }
   body.pag-abierta #props { right: 8px; } #paginas { z-index: 7; }
 }
 @media (hover: none) { .btn:hover { filter: none; } }
+
+/* cuenta de la plataforma (Ajustes > Datos) */
+.bloque-cuenta { border: 1px solid var(--linea); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; background: var(--panel2); } .bloque-cuenta h4 { margin: 0 0 6px; } .bloque-cuenta .punto { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }

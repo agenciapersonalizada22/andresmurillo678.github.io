@@ -271,3 +271,6 @@ body.arrastre { user-select: none; cursor: grabbing; }
 }
 @media (min-width: 861px) { .solo-m { display: none !important; } .ed-area.dividida .ed-md, .ed-area.dividida .ed-prev { flex: 1 1 50%; } }
 @media print { #lateral, #pestanas, #fab, .ed-barra { display: none !important; } body { overflow: visible; } }
+
+/* cuenta de la plataforma (entrada lateral) */
+.cuenta-nav { margin-top: 4px; } .cuenta-nav .txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .cuenta-nav .cuenta-est { color: var(--suave); font-size: .72rem; margin-left: auto; }

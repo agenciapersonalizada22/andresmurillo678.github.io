@@ -33,7 +33,7 @@ export const PALETA_DALT = ['tinta', '#e69f00', '#56b4e9', '#009e73', '#f0e442',
 const NOMBRE_HERR = { pluma: 'Lápiz', resaltador: 'Resaltador', borrador: 'Borrador', sel: 'Seleccionar', mano: 'Mover lienzo', texto: 'Texto', nota: 'Nota', forma: 'Forma', conector: 'Conector', laser: 'Láser', comentario: 'Comentario', votos: 'Votos' };
 
 // Construye el contenido del dialogo de ajustes. u = {h, modal, aviso}
-export function abrirAjustes(app, u) {
+export function abrirAjustes(app, u, inicial = 'Gráficos') {
   const { h } = u, A = app.ajustes;
   const guardar = (k, v) => { A[k] = v; guardarAjustes(A); aplicarAjustes(A); app.vista.aplicarDpr(); app.ui.refrescar(); };
   const sel = (k, opciones, etq) => h('label', { cls: 'fila' }, [h('span', { txt: etq }), h('select', { 'data-f': 1, on: { change: e => guardar(k, e.target.value) } }, opciones.map(([v, t]) => h('option', { value: v, txt: t, ...(String(A[k]) === v ? { selected: '' } : {}) })))]);
@@ -75,7 +75,8 @@ export function abrirAjustes(app, u) {
       const ta = h('textarea', { cls: 'campo', rows: 5, 'aria-label': 'Ajustes en texto', 'data-f': 1 });
       ta.value = JSON.stringify(A);
       return [
-        h('p', { txt: 'Tus tableros se guardan solos en este navegador (IndexedDB). Exporta un tablero desde el menú Exportar para llevarlo a otro equipo.' }),
+        app.nube ? app.nube.bloque(h) : null,
+        h('p', { txt: 'Tus tableros se guardan solos en este navegador (IndexedDB). Con una cuenta se sincronizan entre dispositivos (bloque de arriba); también puedes exportar un tablero desde el menú Exportar.' }),
         h('label', { cls: 'col' }, [h('span', { txt: 'Ajustes como texto (copiar o pegar para importar)' }), ta]),
         h('div', { cls: 'fila-bot' }, [
           h('button', { type: 'button', cls: 'btn', 'data-f': 1, txt: 'Importar ajustes', on: { click: () => { try { const o = JSON.parse(ta.value); Object.assign(A, o); guardarAjustes(A); aplicarAjustes(A); app.vista.aplicarDpr(); u.aviso('Ajustes importados'); } catch (e) { u.aviso('Texto no válido'); } } } }),
@@ -90,6 +91,6 @@ export function abrirAjustes(app, u) {
     [...tabs.children].forEach(b => b.setAttribute('aria-selected', String(b.dataset.n === n)));
   };
   for (const n of Object.keys(paneles)) tabs.appendChild(h('button', { type: 'button', role: 'tab', cls: 'tab', 'data-n': n, 'data-f': 1, txt: n, on: { click: () => mostrar(n) } }));
-  cont.append(tabs, cuerpo); mostrar('Gráficos');
+  cont.append(tabs, cuerpo); mostrar(paneles[inicial] ? inicial : 'Gráficos');
   u.modal('Ajustes', cont, { ancho: 560 });
 }

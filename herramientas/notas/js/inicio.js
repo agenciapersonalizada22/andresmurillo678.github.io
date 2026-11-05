@@ -25,12 +25,14 @@
     Cfg.aplicar();
     if (G.matchMedia) { try { G.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', Cfg.aplicar); } catch (e) {} }
     var fab = doc.getElementById('fab'); fab.appendChild(UI.icono('plus')); fab.addEventListener('click', function () { G.Captura.abrir('tarea'); });
-    return respaldo().then(function (o) {
+    return (G.Nube ? G.Nube.requerir() : Promise.resolve()).then(respaldo).then(function (o) {
       App.store = G.Almacen.crear({ respaldo: o.r }); G.__notas = { App: App, store: App.store };
       return App.store.listo.then(function (S) { return { S: S, aviso: o.aviso }; });
     }).then(function (o) {
       var S = o.S; S.suscribir(App.alEvento);
       sembrar(S); G.VistaNotas.purgarPapelera(); S.copiaAuto();
+      if (G.Nube) G.Nube.iniciar(S);
+      if (G.Lobby && G.Lobby.registrar) G.Lobby.registrar(G.Colab.opts);
       if (o.aviso) UI.aviso(o.aviso, { tipo: 'error', fijo: true });
       var h = G.location.hash.replace(/^#/, ''), v = null;
       if (h) { var i = h.indexOf(':'); v = [decodeURIComponent(i < 0 ? h : h.slice(0, i)), decodeURIComponent(i < 0 ? '' : h.slice(i + 1))]; }

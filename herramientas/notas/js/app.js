@@ -144,6 +144,7 @@
     kids.push(h('div', { cls: 'lat-pie' }));
     if (G.Colab && G.Colab.activo()) kids.push(G.Colab.indicador());
     kids.push(ni('ajustes', '', 'Ajustes y datos', 'gear', ''));
+    if (G.Nube) { var ec = G.Nube.entradaLateral(); if (ec) kids.push(ec); }
     kids.forEach(function (k) { cont.appendChild(k); });
     if (enfocado) { var e = cont.querySelector('[data-k="' + enfocado.replace(/"/g, '\\"') + '"]'); if (e) e.focus(); }
   };
