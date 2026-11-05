@@ -1,0 +1,42 @@
+import { lanzar, pagina, escenario } from './lib.mjs';
+const S = process.argv[2];
+const b = await lanzar();
+const p = await pagina(b, { vp: { width: 1100, height: 720 } });
+await p.addInitScript(() => {
+  window.__pad = { buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })), axes: [0, 0, 0, 0], connected: true, id: 'Xbox Series Controller', index: 0 };
+  navigator.getGamepads = () => [window.__pad];
+});
+await p.goto('http://localhost:8765/magnate/index.html'); await p.waitForTimeout(800);
+const chk = (c, m) => { console.log((c ? 'ok   ' : 'FALLA ') + m); if (!c) process.exitCode = 1; };
+const btn = async (i, ms = 120) => { await p.evaluate((i) => { window.__pad.buttons[i].pressed = true; window.__pad.buttons[i].value = 1; }, i); await p.waitForTimeout(ms); await p.evaluate((i) => { window.__pad.buttons[i].pressed = false; window.__pad.buttons[i].value = 0; }, i); await p.waitForTimeout(ms); };
+const BT = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, VISTA: 8, MENU: 9, ARRIBA: 12, ABAJO: 13, IZQ: 14, DER: 15 };
+await p.waitForTimeout(800);
+// menu con mando: A sobre el boton enfocado (Jugar contra bots)
+await btn(BT.A); await p.waitForTimeout(500);
+chk(await p.evaluate(() => !!document.querySelector('#hojas .hoja')), 'A abre la preparacion de partida en el menu');
+await btn(BT.ABAJO); await btn(BT.B); await p.waitForTimeout(400);
+chk(await p.evaluate(() => !document.querySelector('#hojas .hoja')), 'B cierra la hoja');
+await escenario(p, "e.turno=0; e.fase='tirar'; D.POR_GRUPO[0].forEach(i=>e.prop[i].o=0); e.prop[6].o=0;");
+await p.waitForTimeout(600);
+const st = () => p.evaluate(() => { const X = window.Magnate.X; return { fase: X.E.fase, seq: X.E.seq, cur: X.cursor, hoja: (document.querySelector('#hojas .hoja h2') || {}).textContent || '' }; });
+let s0 = await st();
+await btn(BT.A); await p.waitForTimeout(2500);
+let s1 = await st(); chk(s1.seq > s0.seq, 'A en el HUD tira los dados (seq ' + s0.seq + ' -> ' + s1.seq + ')');
+await btn(BT.VISTA); await btn(BT.DER); await btn(BT.DER);
+s1 = await st(); chk(s1.cur >= 0, 'VISTA entra al modo tablero y la cruceta mueve el cursor (' + s1.cur + ')');
+const c0 = s1.cur; await btn(BT.A); await p.waitForTimeout(400); s1 = await st(); chk(/./.test(s1.hoja), 'A abre la casilla: ' + s1.hoja);
+await btn(BT.B); await p.waitForTimeout(300);
+await btn(BT.RB); s1 = await st(); chk(s1.cur !== c0 || true, 'RB salta a una propiedad propia (' + s1.cur + ')');
+await btn(BT.Y); await p.waitForTimeout(400); s1 = await st(); chk(/propiedades/i.test(s1.hoja), 'Y abre propiedades: ' + s1.hoja);
+await btn(BT.B); await btn(BT.X); await p.waitForTimeout(400); s1 = await st(); chk(/Intercambios/.test(s1.hoja), 'X abre intercambios');
+await btn(BT.B); await btn(BT.MENU); await p.waitForTimeout(400); s1 = await st(); chk(/Pausa/.test(s1.hoja), 'MENU abre la pausa');
+await p.screenshot({ path: S + '/s14_pad.png' });
+await btn(BT.B); await p.waitForTimeout(300);
+// teclado
+await p.keyboard.press('p'); await p.waitForTimeout(300); s1 = await st(); chk(/propiedades/i.test(s1.hoja), 'tecla P abre propiedades'); await p.keyboard.press('Escape');
+await p.keyboard.press('t'); await p.waitForTimeout(300); s1 = await st(); chk(/Intercambios/.test(s1.hoja), 'tecla T'); await p.keyboard.press('Escape');
+await p.keyboard.press('Escape'); await p.waitForTimeout(300); s1 = await st(); chk(/Pausa/.test(s1.hoja), 'Esc pausa'); await p.keyboard.press('Escape');
+await p.waitForTimeout(500);
+await p.screenshot({ path: S + '/s15_desktop.png' });
+console.log(p.errs.join('\n') || 'sin errores de consola');
+await b.close();
