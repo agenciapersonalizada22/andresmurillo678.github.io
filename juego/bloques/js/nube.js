@@ -1,6 +1,6 @@
 // =============================================================
 //  ☁️  NUBE (cuenta de la plataforma)
-//  Sincroniza con Cuenta.nube.autoSincronizar: ajustes, logros, la lista
+//  Sincroniza con Cuenta.nube.autoSincronizar: logros, la lista
 //  de mundos (sus datos básicos) y los mundos que quepan en el límite
 //  de la nube (se mandan comprimidos y en trozos: lo hace la plataforma).
 //
@@ -17,7 +17,8 @@
 import { Mundos } from './mundos.js';
 
 const JUEGO = 'bloques';
-const FIJAS = ['bloques_ajustes_v2', 'bloques_logros_v1', 'bloques_cuenta_v1'];
+// bloques_ajustes_v2 (gráficos, audio, controles) es por dispositivo: no se sincroniza.
+const FIJAS = ['bloques_logros_v1', 'bloques_cuenta_v1'];
 const IDX_NUBE = 'bloques_nube_indice';
 const ESTADO = 'bloques_nube_estado';       // solo de este dispositivo
 const PREF = 'bloques_mundo2_';

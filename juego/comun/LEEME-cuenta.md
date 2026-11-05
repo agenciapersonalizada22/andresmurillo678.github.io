@@ -31,6 +31,8 @@ Lobby.registrar(OPTS); if (Lobby.hayEnlace()) Lobby.abrir(OPTS);   // ?sala= (en
 ```
 Al cargar, la pagina del juego publica automaticamente la presencia `jugando` + id del juego (derivado de `/juego/<id>/`) y guarda el "ultimo juego". Ids validos: `nebula, ciudad, bloques, guerra, ajedrez, metropolis`. Para un modo de puntaje nuevo: anadelo en `juegos.js` **y** en `topes()` de `firestore.rules` y vuelve a publicar las reglas (`plataforma/pruebas/logica.test.mjs` comprueba que coincidan). Ajedrez tiene ademas los modos `elo` (contra el motor), `elo_online` y `elo_rompe` (tope 4000; el juego debe llamar `Cuenta.puntaje('ajedrez', 'elo', valor)`). Los logros se declaran todos en `juegos.js` con el id **exactamente** como lo reporta el juego (`[a-z0-9_]{1,40}`, tras la normalizacion de su `cuentaJuego`); uno no declarado igualmente se acepta y el portal lo muestra como «Logro especial». Tope de 100 logros por juego (`PlataformaJuegos.LOGROS_MAX`, igual que en `Cuenta.logro` y `firestore.rules`). Un modo desconocido se rechaza con `codigo: 'modo_desconocido'`.
 
+**Politica «ajustes por dispositivo»**: los ajustes graficos, de audio, controles y accesibilidad NO se sincronizan; cada juego los deja fuera de la lista de `autoSincronizar` (solo viaja progreso: guardados, ranuras, logros, estadisticas, records, perfil, mundos). Nota: `bajar()` escribe todas las claves que traiga la nube, asi que datos antiguos subidos antes de este cambio pueden sobrescribir una vez los ajustes locales.
+
 ## API
 Todo devuelve promesas y **no revienta sin red** (las escrituras se encolan en `localStorage` y se reintentan al volver la conexion o cada 30 s). Los errores traen `e.codigo` y un `e.message` en espanol (`Cuenta.mensajeError(e)`).
 

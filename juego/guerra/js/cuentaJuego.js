@@ -3,8 +3,9 @@
 //  Nada de aquí puede bloquear el juego: sin Cuenta, sin red o con errores todo sigue.
 // =============================================================
 export const JUEGO = 'guerra';
+// guerra_ajustes y guerra_opciones (gráficos, controles) son por dispositivo: no se sincronizan.
 // Claves de localStorage que representan el progreso (no se sincroniza la ranura elegida: es del dispositivo)
-export const CLAVES_NUBE = ['guerra_progreso', 'guerra_progreso_2', 'guerra_progreso_3', 'guerra_ajustes', 'guerra_opciones', 'guerra_partida'];
+export const CLAVES_NUBE = ['guerra_progreso', 'guerra_progreso_2', 'guerra_progreso_3', 'guerra_partida'];
 export const MODOS_PUNTAJE = [{ id: 'aire', nombre: 'CAZA' }, { id: 'tanque', nombre: 'TANQUE' }];
 const TOPE = 100000000;
 
@@ -221,5 +222,5 @@ export function bloqueAjustes(c) {
   const p = el('button', '', 'CUENTA'); p.type = 'button'; p.addEventListener('click', abrirCuenta);
   f.append(b, p);
   caja.appendChild(f);
-  caja.appendChild(el('p', 'info', 'Se guardan en la nube las ranuras, los ajustes y los récords. Si cambian en dos dispositivos a la vez, la plataforma te pregunta cuál conservar.'));
+  caja.appendChild(el('p', 'info', 'Se guardan en la nube las ranuras y los récords; los ajustes (gráficos, controles) son de cada dispositivo. Si cambian en dos dispositivos a la vez, la plataforma te pregunta cuál conservar.'));
 }

@@ -10,9 +10,10 @@
   const MODO = 'dinero';
   const C = window.Cuenta || null;
 
-  // Claves de localStorage que representan progreso (3 ranuras + ajustes). Se omiten las efímeras (radio, silencio, ranura activa).
+  // Claves de localStorage que representan progreso (3 ranuras). Se omiten las efímeras (radio, silencio, ranura activa).
   const BASES = ['dinero', 'stats', 'economia', 'historia', 'logros', 'armas'];
-  const CLAVES = ['ciudad_g_ajustes'];
+  // ciudad_g_ajustes (gráficos, audio, controles) es POR DISPOSITIVO: no se sincroniza.
+  const CLAVES = [];
   ['ciudad_', 'ciudad_s2_', 'ciudad_s3_'].forEach((p) => BASES.forEach((b) => CLAVES.push(p + b)));
 
   // Ids de logro de la plataforma (plataforma/juegos.js); el resto usa el id propio del juego.
