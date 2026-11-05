@@ -4,6 +4,7 @@ import { h, boton, abrirHoja, cerrarHojaId, refrescarHojas, hojaAbierta } from '
 import { CASILLAS, GRUPOS, POR_GRUPO } from './datos.js';
 import { propsDe, puedeConstruir, puedeVender, puedeHipotecar, puedeDeshipotecar, valorHipoteca, costoDeshipoteca, grupoCompleto } from './reglas.js';
 import { A } from './ajustes.js';
+import { usuario, panelRanking } from './nube.js';
 
 const col = (j) => (X.E.jug[j] ? X.E.jug[j].color : '#888');
 const nombre = (j) => (j === X.yo ? 'Tú' : X.E.jug[j].nombre);
@@ -225,6 +226,7 @@ export function abrirFin() {
     const ol = h('ol', { cls: 'ranking' });
     E.ranking.forEach((r) => ol.appendChild(h('li', {}, punto(col(r.id)), h('b', {}, E.jug[r.id].nombre), ' ', dinero(r.pat), r.quebrado ? ' · bancarrota' : '')));
     c.appendChild(ol);
-    c.appendChild(h('div', { cls: 'fila' }, boton('Volver al menú', () => X.alMenu(), 'prim'), X.modo === 'solo' ? boton('Revancha', () => X.revancha(), 'sec') : null));
+    c.appendChild(h('div', { cls: 'fila' }, boton('Volver al menú', () => X.alMenu(), 'prim', { 'data-pref': 1 }), X.modo === 'solo' ? boton('Revancha', () => X.revancha(), 'sec') : null));
+    if (usuario()) { c.appendChild(h('h3', {}, '🥇 Ranking')); panelRanking(c); }
   } });
 }

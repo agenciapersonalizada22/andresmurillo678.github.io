@@ -2,6 +2,7 @@
 import { h, boton, abrirHoja, refrescarHojas, confirmar, aviso } from './dom.js';
 import { A, D, PRESETS, TECLAS_BASE, aplicarPreset, guardarAjustes, restablecer } from './ajustes.js';
 import { exportarTodo, importarTodo, borrarTodo } from './almacen.js';
+import { bloqueNube } from './nube.js';
 
 let tab = 'gfx';
 const TABS = [['gfx', 'Gráficos'], ['aud', 'Audio'], ['ctl', 'Controles'], ['acc', 'Accesibilidad'], ['dat', 'Datos']];
@@ -74,6 +75,8 @@ function renderAcc(c) {
   c.appendChild(conmutar('Cámara automática', A, 'camaraAuto'));
 }
 function renderDat(c) {
+  bloqueNube(c);
+  c.appendChild(h('h3', {}, 'Copia manual'));
   const salida = h('textarea', { readonly: true, rows: 3, 'data-f': 1, 'aria-label': 'Datos exportados' }); salida.value = exportarTodo();
   c.appendChild(h('p', { cls: 'peq' }, 'Exporta tu progreso, logros, ajustes generales y la partida en curso como texto. Los ajustes de gráficos y controles son de este dispositivo y no se incluyen.'));
   c.appendChild(salida);

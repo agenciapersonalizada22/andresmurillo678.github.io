@@ -15,3 +15,6 @@ Juego de mesa de bienes raices (original) para 2-6 jugadores: humanos P2P (hasta
 
 ## Pruebas
 `node pruebas/reglas.mjs` (reglas, serializacion y 2500 partidas entre bots con invariantes: banco+bote+jugadores = 0, casas/hoteles, cartas, construccion pareja). `node pruebas/sim.mjs [partidas] [semilla]` estadisticas.
+
+## Cuenta (plataforma)
+`js/arranque.js` exige sesion (`Cuenta.requerir`), hace la primera sincronizacion y carga `principal.js`. `js/nube.js` concentra todo lo de `Cuenta`: nube (`magnate_progreso` y `magnate_setup`; ajustes y partida en curso son locales), puntajes (`patrimonio_final`, `turnos_victoria`, `victorias`, solo al ganar), logros (mismos ids que `juegos.js`), XP (10 al jugar, 35 al ganar), ranking Global/Amigos (menu, fin de partida) y hoja de cuenta. Las pruebas e2e antiguas necesitan sesion (o `Cuenta.CONFIG.permitirInvitado = true`).

@@ -7,6 +7,7 @@ import { LOGROS, progreso } from './logros.js';
 import { abrirAjustes } from './panel_ajustes.js';
 import { esTactil } from './ajustes.js';
 import { guardar, CLAVES } from './almacen.js';
+import { pastillaCuenta, abrirRanking, usuario } from './nube.js';
 
 const Lobby = window.Lobby, Red = window.Red;
 let setup = null;
@@ -23,8 +24,10 @@ export function pintarInicio() {
       boton('Jugar contra bots', () => preparar('solo'), guard ? 'sec grande' : 'prim grande', guard ? {} : { 'data-pref': 1 }),
       boton('Multijugador en línea', () => preparar('multi'), 'sec grande'),
       boton('🏆 Logros y estadísticas', () => abrirLogros(), 'sec'),
+      usuario() ? boton('🥇 Ranking', () => abrirRanking(), 'sec') : null,
       boton('⚙ Ajustes', () => abrirAjustes(), 'sec'),
       boton('? Cómo se juega', () => abrirAyuda(), 'sec')),
+    pastillaCuenta() || '',
     h('p', { cls: 'peq pie' }, esTactil() ? 'Toca una casilla para ver sus detalles. Pellizca para acercar.' : 'Teclado, ratón o mando Xbox. Pulsa ? para ver los controles.'));
 }
 
