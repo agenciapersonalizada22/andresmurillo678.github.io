@@ -109,3 +109,16 @@ body.reducir * { animation: none !important; transition: none !important; }
   #hBotones button { width: 38px; height: 38px; } #hFeed { bottom: 130px; }
   #tturbo { bottom: calc(max(24px, env(safe-area-inset-bottom)) + var(--sube) + 20px); }
 }
+/* cuenta y ranking */
+.cuenta-chip { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--linea); border-radius: 14px; padding: 6px 10px; margin: 4px 0; }
+.cuenta-chip .cc-d { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.cuenta-chip .cc-d b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cuenta-chip .cc-d span { font-size: .8em; color: var(--dim); }
+.cuenta-datos { border-bottom: 1px solid rgba(255, 255, 255, .1); padding-bottom: 10px; margin-bottom: 10px; }
+.rank { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.rank-l { display: flex; flex-direction: column; gap: 2px; min-height: 56px; }
+.rk { display: flex; gap: 8px; padding: 4px 8px; border-radius: 8px; background: rgba(255, 255, 255, .04); }
+.rk.yo { background: rgba(47, 211, 95, .2); outline: 1px solid #2fd35f88; }
+.rk .rp { width: 2.6em; color: var(--dim); }
+.rk .rn { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank-p { text-align: center; }

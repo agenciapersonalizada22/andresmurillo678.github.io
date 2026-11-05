@@ -36,6 +36,7 @@
   L.dar = function (id) {
     if (A.prog.logros[id]) return false;
     A.prog.logros[id] = Date.now(); A.guardarProg();
+    if (S.Cta) S.Cta.logro(id);
     var l = L.LISTA.filter(function (x) { return x.id === id; })[0];
     if (cb && l) cb(l); return true;
   };
