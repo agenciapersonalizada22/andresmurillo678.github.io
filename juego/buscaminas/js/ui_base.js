@@ -97,6 +97,7 @@
   function visible(e) { var r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden'; }
   function focuseables(raiz) { return Array.prototype.filter.call(raiz.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),a[href],[data-f]'), visible); }
   UI.raizNav = function () {
+    if (BM.cuenta && BM.cuenta.dialogoAbierto()) return BM.cuenta.dialogoRaiz();
     if (UI.pila.length) return UI.pila[UI.pila.length - 1].el;
     var ini = doc.getElementById('inicio'); return ini && !ini.hidden ? ini : null;
   };
@@ -145,7 +146,8 @@
       else if (cur.tagName === 'INPUT' && cur.type === 'text') cur.focus();
       else if (cur.tagName !== 'SELECT' && cur.tagName !== 'INPUT') cur.click();
     }
-    if (M.pulsado('B') && UI.pila.length) { var top = UI.pila[UI.pila.length - 1]; if (!top.opts.noCerrar) top.cerrar(); else if (top.opts.alB) top.opts.alB(); }
+    if (M.pulsado('B') && BM.cuenta && BM.cuenta.dialogoAbierto()) doc.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    else if (M.pulsado('B') && UI.pila.length) { var top = UI.pila[UI.pila.length - 1]; if (!top.opts.noCerrar) top.cerrar(); else if (top.opts.alB) top.opts.alB(); }
     if (M.pulsado('MENU') && UI.pila.length && UI.pila[UI.pila.length - 1].opts.alMenu) UI.pila[UI.pila.length - 1].opts.alMenu();
     var tabs = raiz.querySelectorAll('[role=tab]');
     if (tabs.length && (M.pulsado('LB') || M.pulsado('RB'))) {

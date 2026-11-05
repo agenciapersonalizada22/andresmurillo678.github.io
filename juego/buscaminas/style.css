@@ -119,3 +119,19 @@ input[type=range] { accent-color: var(--acento); height: 26px; }
 body.reducir * { animation-duration: .01s !important; transition-duration: .01s !important; }
 @media (max-width: 480px) { .led b { font-size: 22px; } .led { min-width: 74px; } .titulo { font-size: 14px; } .btn.icono { width: 36px; height: 36px; } .acciones { gap: 4px; } .resumen b { font-size: 15px; } }
 @media (max-height: 520px) { #hud { padding-bottom: 2px; } .led b { font-size: 18px; } .cara { height: 36px; } .info { display: none; } }
+
+/* ---- cuenta y nube ---- */
+.espera { position: fixed; inset: 0; z-index: 99; display: grid; place-items: center; background: var(--bg); color: var(--muted); font-size: 14px; }
+body.esperando #app, body.esperando #inicio { visibility: hidden; }
+.cuenta-barra { display: flex; justify-content: flex-end; margin-bottom: 4px; }
+.cuenta-chip { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px 4px 6px; border-radius: 99px; font-size: 13px; }
+.cuenta-chip .cc-nombre { font-weight: 600; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cuenta-chip small { color: var(--muted); font-size: 11px; }
+.cuenta-chip .cu-avatar { display: inline-flex; }
+.cuenta-ficha { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.bloque-cuenta { border: 1px solid var(--linea); border-radius: 12px; padding: 10px 12px; margin-bottom: 14px; }
+.bloque-cuenta h3 { margin: 0 0 6px; font-size: 14px; }
+.cn-linea { margin: 3px 0; font-size: 13px; }
+.rank-tipos { margin-bottom: 8px; }
+.tabla tr.yo td { color: var(--acento); font-weight: 700; }
+.pos-mundial { text-align: center; color: var(--acento); }

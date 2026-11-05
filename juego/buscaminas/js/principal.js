@@ -56,7 +56,7 @@
   function inicio() {
     A.cargar(); BM.progreso.cargar();
     UI.iniciar(); V.iniciar($('lienzo')); E.iniciar($('lienzo')); UI.enlazar();
-    E.bloqueada = function () { return UI.hayPanel() || !$('inicio').hidden || (G.Lobby && G.Lobby.abierto) || !P.T; };
+    E.bloqueada = function () { return UI.hayPanel() || (BM.cuenta && BM.cuenta.dialogoAbierto()) || !$('inicio').hidden || (G.Lobby && G.Lobby.abierto) || !P.T; };
     medida();
     if (G.ResizeObserver) new ResizeObserver(medida).observe($('escena')); G.addEventListener('resize', medida);
     aplicar(); A.alCambiar(function (grupo, k) { aplicar(); });
@@ -75,5 +75,6 @@
     ['pointerdown', 'keydown'].forEach(function (ev) { G.addEventListener(ev, primero, { once: false, passive: true }); });
     G.requestAnimationFrame(frame);
   }
-  if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', inicio); else inicio();
+  function arrancar() { if (BM.cuenta) BM.cuenta.arrancar(inicio); else inicio(); }
+  if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', arrancar); else arrancar();
 })(window);

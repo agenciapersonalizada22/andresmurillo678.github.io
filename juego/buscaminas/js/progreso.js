@@ -94,6 +94,7 @@
   };
   P.nombre = function () {
     if (P.d.nombre) return P.d.nombre;
+    try { var cn = BM.cuenta && BM.cuenta.nombre(); if (cn) return cn; } catch (e) {}
     try { return G.Red && G.Red.perfil.obtener().nombre || 'Jugador'; } catch (e) { return 'Jugador'; }
   };
   P.renombrarUltimo = function (n) {
