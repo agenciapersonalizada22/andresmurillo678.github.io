@@ -115,6 +115,7 @@
       var bo = h('button', 'btn peligro', 'Borrar progreso'); bo.onclick = function () { if (bo.dataset.ok) { Al.borrarTodo(); A.gen = Al.mezclar(GEN, null); A.aplicar(); delete bo.dataset.ok; bo.textContent = 'Borrar progreso'; msg.textContent = 'Progreso borrado.'; } else { bo.dataset.ok = 1; bo.textContent = '¿Seguro? Pulsa otra vez'; } };
       fila1.appendChild(ex); fila1.appendChild(im); fila1.appendChild(bo); p.appendChild(fila1); p.appendChild(msg);
       p.appendChild(h('p', 'suave', 'Incluye nombre, skin, logros, estadísticas y preferencias. La partida en curso no se exporta.'));
+      C.Cu.bloqueNube(p);
     }
     pintar();
   };

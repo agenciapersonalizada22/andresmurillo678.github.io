@@ -122,3 +122,24 @@ body.es-tactil #fps { top: auto; bottom: calc(var(--sa) + 70px); }
 body.es-tactil #hudInfo div { min-width: 54px; padding: 3px 6px; }
 @media (max-height: 460px) { #clasif { display: none; } }
 #pausa .btns .btn, #muerte .btns .btn, #sala .btns .btn { flex: 1 1 100%; }
+
+/* ---- cuenta, nube y ranking ---- */
+.cu-chip { display: inline-flex; align-items: center; gap: 8px; max-width: 42vw; min-height: 44px; padding: 4px 10px 4px 6px; border-radius: 22px; border: 1px solid var(--borde); background: rgba(12, 9, 34, .7); font-size: .78em; }
+.cu-chip:hover, .cu-chip:focus-visible, .cu-chip.nav-foco { border-color: var(--cian); outline: 2px solid var(--cian); outline-offset: 1px; }
+.cu-chip .cu-nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cu-chip .cu-avatar { flex: none; display: inline-flex; }
+.cu-bloque { margin-top: 16px; padding: 12px; border: 1px solid var(--borde); border-radius: 14px; background: rgba(0, 0, 0, .22); }
+.cu-bloque h3 { margin: 0 0 8px; font-size: .85em; letter-spacing: .12em; color: var(--suave); font-weight: 500; }
+.cu-bloque p { margin: 6px 0; font-size: .82em; line-height: 1.4; }
+.rk-lista { display: grid; gap: 6px; min-height: 120px; }
+.rk-fila { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: rgba(0, 0, 0, .3); border: 1px solid transparent; font-size: .9em; }
+.rk-fila.yo { border-color: var(--cian); background: rgba(61, 245, 255, .12); }
+.rk-pos { min-width: 2.6em; color: var(--suave); }
+.rk-pt { flex: none; width: 14px; height: 14px; border-radius: 50%; }
+.rk-nom { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rk-val { font-weight: 800; }
+.rk-msg { display: grid; gap: 10px; justify-items: center; text-align: center; padding: 28px 8px; color: var(--suave); }
+.rk-pie, .fin-pos { font-size: .8em; text-align: center; }
+.m-botones { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.m-botones .btn { min-width: 0; font-size: .85em; padding-left: .5em; padding-right: .5em; }
+.rk-lista { align-content: start; }
