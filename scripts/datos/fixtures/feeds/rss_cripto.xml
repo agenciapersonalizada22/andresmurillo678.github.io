@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:media="http://search.yahoo.com/mrss/" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Noticias Cripto Ejemplo</title>
+    <link>https://feeds.example/</link>
+    <atom:link href="https://feeds.example/cripto.xml" rel="self" type="application/rss+xml"/>
+    <description>Feed de prueba</description>
+    <item>
+      <title><![CDATA[Bitcoin surges to all-time high as ETH rallies]]></title>
+      <link>https://noticias.example/cripto/bitcoin-maximo?utm_source=rss&amp;utm_medium=feed</link>
+      <guid isPermaLink="false">abc-123</guid>
+      <pubDate>Wed, 04 Nov 2026 18:30:00 +0000</pubDate>
+      <dc:creator><![CDATA[Ana Perez]]></dc:creator>
+      <category><![CDATA[Markets]]></category>
+      <description><![CDATA[<p>Bitcoin reached a new record on Wednesday while <b>Ethereum</b> gained 5%. Analysts say institutional adoption is growing &amp; momentum is strong. This is a long description that would normally contain a much longer part of the original article text which we must never copy in full into our dataset because only a short excerpt is allowed.</p>]]></description>
+      <content:encoded><![CDATA[<p>FULL ARTICLE BODY that must never be copied. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p><img src="https://noticias.example/img/btc.jpg"/>]]></content:encoded>
+      <media:thumbnail url="https://noticias.example/img/btc-thumb.jpg" width="150" height="150"/>
+    </item>
+    <item>
+      <title>Exchange hacked: $40 million stolen, SOL plunges</title>
+      <link>https://noticias.example/cripto/hackeo-exchange</link>
+      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+      <description>Attackers exploited a vulnerability and drained funds. &lt;a href="x"&gt;Read more&lt;/a&gt;</description>
+    </item>
+    <item>
+      <title>Bitcoin surges to all-time high as ETH rallies</title>
+      <link>https://noticias.example/cripto/bitcoin-maximo-duplicado</link>
+      <pubDate>Wed, 04 Nov 2026 18:31:00 +0000</pubDate>
+      <description>Duplicate headline from the same feed with another URL.</description>
+    </item>
+    <item>
+      <title>Sin fecha: Dogecoin se mantiene estable</title>
+      <link>https://noticias.example/cripto/doge-estable</link>
+      <description>Texto breve.</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,14 @@
+var T = require('./util'); global.Apuestas = {}; require('../js/cuotas.js'); var AL = require('../js/alertas.js'), D = require('../js/demo.js');
+var ahora = Date.parse('2026-01-01T12:00:00Z'), d = D.generar(ahora, 3);
+var d2 = D.generar(ahora, 4);
+var snapA = AL.capturar(d), snapB = AL.capturar(d2);
+T.cierto(Object.keys(snapA.ev).length === 16, 'captura de 16 eventos');
+var mov = AL.movimiento(snapA, snapB); T.cierto(mov.length > 20 && Math.abs(mov[0].dProb) >= Math.abs(mov[mov.length - 1].dProb), 'movimiento ordenado');
+T.cierto(AL.movimiento(snapA, snapA).every(function (m) { return m.dProb === 0; }), 'sin cambios con la misma captura');
+var evs = AL.todosEventos(d), ev = evs[0].ev, mej = require('../js/cuotas.js').mejores(require('../js/cuotas.js').mercadosDeEvento(ev)[0]).local.cuota;
+var r = AL.evaluar([{ id: 'a', tipo: 'cuota', sel: 'local', umbral: mej - 0.001, texto: ev.local, activa: true }, { id: 'b', tipo: 'cuota', sel: 'local', umbral: 1000, activa: true }], d, { ahora: ahora });
+T.igual(r.length >= 1 && r.every(function (x) { return x.regla.id === 'a'; }), true, 'solo salta la alerta cuyo umbral se supera');
+T.cierto(AL.evaluar([{ id: 's', tipo: 'surebet', umbral: 0.5, activa: true }], d, { ahora: ahora }).length >= 1, 'surebet demo detectada');
+T.cierto(AL.evaluar([{ id: 'v', tipo: 'valor', umbral: 3, activa: true }], d, { ahora: ahora, referencia: 'Pinnacle' }).length >= 1, 'valor demo detectado');
+T.cierto(AL.evaluar([{ id: 'x', tipo: 'cuota', sel: 'local', umbral: 1.01, activa: false }], d, { ahora: ahora }).length === 0, 'alerta pausada');
+T.fin('alertas');

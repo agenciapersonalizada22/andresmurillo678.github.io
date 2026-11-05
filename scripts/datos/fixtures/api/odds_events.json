@@ -1,0 +1,726 @@
+[
+ {
+  "id": "e1",
+  "sport_key": "soccer_epl",
+  "sport_title": "EPL",
+  "commence_time": "2026-11-07T15:00:00Z",
+  "home_team": "Arsenal",
+  "away_team": "Chelsea",
+  "bookmakers": [
+   {
+    "key": "bet365",
+    "title": "Bet365",
+    "last_update": "2026-11-05T11:55:00Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Arsenal",
+        "price": 1.85
+       },
+       {
+        "name": "Chelsea",
+        "price": 3.4
+       },
+       {
+        "name": "Draw",
+        "price": 3.5
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.9,
+        "point": 2.5
+       },
+       {
+        "name": "Under",
+        "price": 1.95,
+        "point": 2.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Arsenal",
+        "price": 1.91,
+        "point": -1.5
+       },
+       {
+        "name": "Chelsea",
+        "price": 1.95,
+        "point": 1.5
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "williamhill",
+    "title": "William Hill",
+    "last_update": "2026-11-05T11:55:00Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Arsenal",
+        "price": 1.9
+       },
+       {
+        "name": "Chelsea",
+        "price": 3.4
+       },
+       {
+        "name": "Draw",
+        "price": 3.5
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.9,
+        "point": 2.5
+       },
+       {
+        "name": "Under",
+        "price": 1.95,
+        "point": 2.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Arsenal",
+        "price": 1.91,
+        "point": -1.5
+       },
+       {
+        "name": "Chelsea",
+        "price": 1.95,
+        "point": 1.5
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "pinnacle",
+    "title": "Pinnacle",
+    "last_update": "2026-11-05T11:55:00Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Arsenal",
+        "price": 1.95
+       },
+       {
+        "name": "Chelsea",
+        "price": 3.4
+       },
+       {
+        "name": "Draw",
+        "price": 3.5
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.9,
+        "point": 2.5
+       },
+       {
+        "name": "Under",
+        "price": 1.95,
+        "point": 2.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Arsenal",
+        "price": 1.91,
+        "point": -1.5
+       },
+       {
+        "name": "Chelsea",
+        "price": 1.95,
+        "point": 1.5
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "e2",
+  "sport_key": "soccer_epl",
+  "sport_title": "EPL",
+  "commence_time": "2026-11-08T14:00:00Z",
+  "home_team": "Liverpool",
+  "away_team": "Everton",
+  "bookmakers": [
+   {
+    "key": "bet365",
+    "title": "Bet365",
+    "last_update": "2026-11-05T11:55:00Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Liverpool",
+        "price": 1.6
+       },
+       {
+        "name": "Everton",
+        "price": 3.4
+       },
+       {
+        "name": "Draw",
+        "price": 3.5
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.9,
+        "point": 2.5
+       },
+       {
+        "name": "Under",
+        "price": 1.95,
+        "point": 2.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Liverpool",
+        "price": 1.91,
+        "point": -1.5
+       },
+       {
+        "name": "Everton",
+        "price": 1.95,
+        "point": 1.5
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "williamhill",
+    "title": "William Hill",
+    "last_update": "2026-11-05T11:55:00Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Liverpool",
+        "price": 1.65
+       },
+       {
+        "name": "Everton",
+        "price": 3.4
+       },
+       {
+        "name": "Draw",
+        "price": 3.5
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.9,
+        "point": 2.5
+       },
+       {
+        "name": "Under",
+        "price": 1.95,
+        "point": 2.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Liverpool",
+        "price": 1.91,
+        "point": -1.5
+       },
+       {
+        "name": "Everton",
+        "price": 1.95,
+        "point": 1.5
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "pinnacle",
+    "title": "Pinnacle",
+    "last_update": "2026-11-05T11:55:00Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Liverpool",
+        "price": 1.7
+       },
+       {
+        "name": "Everton",
+        "price": 3.4
+       },
+       {
+        "name": "Draw",
+        "price": 3.5
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.9,
+        "point": 2.5
+       },
+       {
+        "name": "Under",
+        "price": 1.95,
+        "point": 2.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Liverpool",
+        "price": 1.91,
+        "point": -1.5
+       },
+       {
+        "name": "Everton",
+        "price": 1.95,
+        "point": 1.5
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "e0",
+  "sport_key": "soccer_epl",
+  "sport_title": "EPL",
+  "commence_time": "2026-11-01T15:00:00Z",
+  "home_team": "Old Team",
+  "away_team": "Past FC",
+  "bookmakers": [
+   {
+    "key": "bet365",
+    "title": "Bet365",
+    "last_update": "2026-11-05T11:55:00Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Old Team",
+        "price": 2
+       },
+       {
+        "name": "Past FC",
+        "price": 3.4
+       },
+       {
+        "name": "Draw",
+        "price": 3.5
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.9,
+        "point": 2.5
+       },
+       {
+        "name": "Under",
+        "price": 1.95,
+        "point": 2.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Old Team",
+        "price": 1.91,
+        "point": -1.5
+       },
+       {
+        "name": "Past FC",
+        "price": 1.95,
+        "point": 1.5
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "williamhill",
+    "title": "William Hill",
+    "last_update": "2026-11-05T11:55:00Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Old Team",
+        "price": 2.05
+       },
+       {
+        "name": "Past FC",
+        "price": 3.4
+       },
+       {
+        "name": "Draw",
+        "price": 3.5
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.9,
+        "point": 2.5
+       },
+       {
+        "name": "Under",
+        "price": 1.95,
+        "point": 2.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Old Team",
+        "price": 1.91,
+        "point": -1.5
+       },
+       {
+        "name": "Past FC",
+        "price": 1.95,
+        "point": 1.5
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "pinnacle",
+    "title": "Pinnacle",
+    "last_update": "2026-11-05T11:55:00Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Old Team",
+        "price": 2.1
+       },
+       {
+        "name": "Past FC",
+        "price": 3.4
+       },
+       {
+        "name": "Draw",
+        "price": 3.5
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.9,
+        "point": 2.5
+       },
+       {
+        "name": "Under",
+        "price": 1.95,
+        "point": 2.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Old Team",
+        "price": 1.91,
+        "point": -1.5
+       },
+       {
+        "name": "Past FC",
+        "price": 1.95,
+        "point": 1.5
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "e9",
+  "sport_key": "soccer_epl",
+  "sport_title": "EPL",
+  "commence_time": "2026-12-25T15:00:00Z",
+  "home_team": "Far Away",
+  "away_team": "Future FC",
+  "bookmakers": [
+   {
+    "key": "bet365",
+    "title": "Bet365",
+    "last_update": "2026-11-05T11:55:00Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Far Away",
+        "price": 2
+       },
+       {
+        "name": "Future FC",
+        "price": 3.4
+       },
+       {
+        "name": "Draw",
+        "price": 3.5
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.9,
+        "point": 2.5
+       },
+       {
+        "name": "Under",
+        "price": 1.95,
+        "point": 2.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Far Away",
+        "price": 1.91,
+        "point": -1.5
+       },
+       {
+        "name": "Future FC",
+        "price": 1.95,
+        "point": 1.5
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "williamhill",
+    "title": "William Hill",
+    "last_update": "2026-11-05T11:55:00Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Far Away",
+        "price": 2.05
+       },
+       {
+        "name": "Future FC",
+        "price": 3.4
+       },
+       {
+        "name": "Draw",
+        "price": 3.5
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.9,
+        "point": 2.5
+       },
+       {
+        "name": "Under",
+        "price": 1.95,
+        "point": 2.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Far Away",
+        "price": 1.91,
+        "point": -1.5
+       },
+       {
+        "name": "Future FC",
+        "price": 1.95,
+        "point": 1.5
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "pinnacle",
+    "title": "Pinnacle",
+    "last_update": "2026-11-05T11:55:00Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Far Away",
+        "price": 2.1
+       },
+       {
+        "name": "Future FC",
+        "price": 3.4
+       },
+       {
+        "name": "Draw",
+        "price": 3.5
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.9,
+        "point": 2.5
+       },
+       {
+        "name": "Under",
+        "price": 1.95,
+        "point": 2.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-11-05T11:55:00Z",
+      "outcomes": [
+       {
+        "name": "Far Away",
+        "price": 1.91,
+        "point": -1.5
+       },
+       {
+        "name": "Future FC",
+        "price": 1.95,
+        "point": 1.5
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+]

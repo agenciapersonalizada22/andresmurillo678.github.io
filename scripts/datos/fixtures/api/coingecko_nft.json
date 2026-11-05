@@ -1,0 +1,32 @@
+{
+ "id": "__ID__",
+ "contract_address": "0xb47e3cd837ddf8e4c57f05d70ab865de6e193bbb",
+ "asset_platform_id": "ethereum",
+ "name": "__NAME__",
+ "symbol": "PUNK",
+ "image": {
+  "small": "https://assets.coingecko.com/nft_contracts/images/1/small/punk.png"
+ },
+ "description": "...",
+ "native_currency": "ethereum",
+ "native_currency_symbol": "ETH",
+ "floor_price": {
+  "native_currency": 41.5,
+  "usd": 141000
+ },
+ "market_cap": {
+  "native_currency": 415000,
+  "usd": 1410000000
+ },
+ "volume_24h": {
+  "native_currency": 233.1,
+  "usd": 792000
+ },
+ "floor_price_in_usd_24h_percentage_change": -2.3456,
+ "number_of_unique_addresses": 3500,
+ "total_supply": 10000,
+ "one_day_sales": 6,
+ "links": {
+  "homepage": "https://cryptopunks.app"
+ }
+}

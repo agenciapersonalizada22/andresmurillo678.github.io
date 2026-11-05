@@ -1,0 +1,10 @@
+# robots.txt de prueba
+User-agent: *
+Disallow: /privado/
+Disallow: /*?sesion=
+Allow: /privado/publico
+Crawl-delay: 2
+Sitemap: https://tienda.example/sitemap.xml
+
+User-agent: MalaBot
+Disallow: /

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://purl.org/rss/1.0/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel rdf:about="https://feeds.example/general.rdf">
+    <title>Mundo en espanol</title>
+    <link>https://noticias.example/mundo/</link>
+  </channel>
+  <item rdf:about="https://noticias.example/mundo/cumbre">
+    <title>La cumbre termina con un acuerdo hist&#243;rico y optimismo</title>
+    <link>https://noticias.example/mundo/cumbre</link>
+    <description>Los l&#237;deres aprobaron el pacto tras dos d&#237;as de negociaciones.</description>
+    <dc:date>2026-11-05T06:30:00Z</dc:date>
+  </item>
+  <item rdf:about="https://noticias.example/mundo/economia">
+    <title>La inflaci&oacute;n cae y la bolsa sube</title>
+    <link>https://noticias.example/mundo/economia</link>
+    <description>El IBEX avanza.</description>
+    <dc:date>2026-11-05T05:00:00Z</dc:date>
+  </item>
+</rdf:RDF>

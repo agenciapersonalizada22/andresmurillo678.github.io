@@ -1,0 +1,310 @@
+{
+  "version": 1,
+  "http": {
+    "userAgent": "datos-andresmurillo678/1.0 (+https://github.com/{repo}; recolector educativo sin fines de lucro)",
+    "timeoutMs": 15000,
+    "reintentos": 1,
+    "backoffMs": 800,
+    "msPorDominio": 600,
+    "retrasosPorDominio": {
+      "api.coingecko.com": 2500,
+      "finnhub.io": 1100,
+      "api.twelvedata.com": 8000,
+      "www.alphavantage.co": 12500,
+      "api.reservoir.tools": 1000,
+      "www.reddit.com": 2500,
+      "slickdeals.net": 2500,
+      "api.search.brave.com": 1200
+    }
+  },
+  "tiempoMaximoPorFuenteMs": 240000,
+  "cripto": {
+    "activo": true,
+    "top": 250,
+    "sparklinePuntos": 84,
+    "proveedores": [
+      "coingecko",
+      "binance",
+      "coincap"
+    ],
+    "coingecko": {
+      "base": "https://api.coingecko.com/api/v3",
+      "cabeceraClave": "x-cg-demo-api-key"
+    },
+    "binance": {
+      "base": "https://data-api.binance.vision/api/v3"
+    },
+    "coincap": {
+      "base": "https://api.coincap.io/v2"
+    },
+    "hist": {
+      "activo": true,
+      "top": 8,
+      "dias": 365,
+      "cadaHoras": 12,
+      "maxPorEjecucion": 10,
+      "maxCoingecko": 3
+    }
+  },
+  "divisas": {
+    "activo": true,
+    "monedas": [
+      "EUR",
+      "GBP",
+      "JPY",
+      "CHF",
+      "CAD",
+      "AUD",
+      "CNY",
+      "MXN",
+      "DOP",
+      "COP",
+      "ARS",
+      "BRL",
+      "CLP",
+      "PEN"
+    ],
+    "frankfurter": {
+      "base": "https://api.frankfurter.dev/v1"
+    },
+    "erapi": {
+      "base": "https://open.er-api.com/v6"
+    },
+    "histDias": 365
+  },
+  "acciones": {
+    "activo": true,
+    "proveedor": "auto",
+    "moneda": "USD",
+    "simbolos": [
+      {
+        "simbolo": "AAPL",
+        "nombre": "Apple",
+        "bolsa": "NASDAQ"
+      },
+      {
+        "simbolo": "MSFT",
+        "nombre": "Microsoft",
+        "bolsa": "NASDAQ"
+      },
+      {
+        "simbolo": "ZZZZ",
+        "nombre": "Simbolo inexistente",
+        "bolsa": "NASDAQ"
+      }
+    ],
+    "indices": [
+      {
+        "simbolo": "SPY",
+        "nombre": "S&P 500 (ETF SPY)",
+        "bolsa": "NYSE"
+      }
+    ],
+    "proveedores": {
+      "finnhub": {
+        "base": "https://finnhub.io/api/v1",
+        "porEjecucion": 30
+      },
+      "twelvedata": {
+        "base": "https://api.twelvedata.com",
+        "porEjecucion": 6
+      },
+      "alphavantage": {
+        "base": "https://www.alphavantage.co",
+        "porEjecucion": 2
+      }
+    },
+    "hist": {
+      "activo": true,
+      "proveedor": "auto",
+      "dias": 365,
+      "cadaHoras": 24,
+      "maxPorEjecucion": 3,
+      "simbolos": [
+        "AAPL",
+        "SPY"
+      ]
+    }
+  },
+  "nft": {
+    "activo": true,
+    "proveedor": "auto",
+    "maxColecciones": 3,
+    "reservoir": {
+      "cadenas": [
+        {
+          "nombre": "ethereum",
+          "base": "https://api.reservoir.tools"
+        }
+      ]
+    },
+    "coingecko": {
+      "base": "https://api.coingecko.com/api/v3",
+      "colecciones": [
+        "cryptopunks",
+        "azuki",
+        "doodles-official"
+      ]
+    }
+  },
+  "cuotas": {
+    "activo": true,
+    "base": "https://api.the-odds-api.com/v4",
+    "regiones": [
+      "eu"
+    ],
+    "mercados": [
+      "h2h",
+      "totals",
+      "spreads"
+    ],
+    "deportes": [
+      "soccer_epl",
+      "soccer_spain_la_liga",
+      "basketball_nba",
+      "americanfootball_nfl"
+    ],
+    "maxDeportesPorEjecucion": 2,
+    "minMinutosEntreActualizaciones": 240,
+    "maxCasas": 6,
+    "reservaCreditos": 30,
+    "diasAdelante": 7
+  },
+  "noticias": {
+    "activo": true,
+    "maxItems": 400,
+    "maxDias": 10,
+    "porFuente": 15,
+    "resumenMax": 220,
+    "tickersExtra": {},
+    "fuentes": [
+      {
+        "id": "cripto-a",
+        "nombre": "cripto-a",
+        "url": "https://feeds.example/cripto.xml",
+        "categoria": "cripto",
+        "idioma": "en"
+      },
+      {
+        "id": "bolsa-a",
+        "nombre": "bolsa-a",
+        "url": "https://feeds.example/bolsa.atom",
+        "categoria": "bolsa",
+        "idioma": "en"
+      },
+      {
+        "id": "general-a",
+        "nombre": "general-a",
+        "url": "https://feeds.example/general.rdf",
+        "categoria": "general",
+        "idioma": "es"
+      },
+      {
+        "id": "deportes-a",
+        "nombre": "deportes-a",
+        "url": "https://feeds.example/deportes.xml",
+        "categoria": "deportes",
+        "idioma": "es"
+      },
+      {
+        "id": "roto-404",
+        "nombre": "roto-404",
+        "url": "https://feeds.example/404.xml",
+        "categoria": "general",
+        "idioma": "en"
+      },
+      {
+        "id": "roto-html",
+        "nombre": "roto-html",
+        "url": "https://feeds.example/html.xml",
+        "categoria": "general",
+        "idioma": "en"
+      },
+      {
+        "id": "roto-red",
+        "nombre": "roto-red",
+        "url": "https://feeds.example/caido.xml",
+        "categoria": "general",
+        "idioma": "en"
+      }
+    ]
+  },
+  "ofertas": {
+    "activo": true,
+    "moneda": "USD",
+    "minDescuentoPct": 10,
+    "maxItems": 300,
+    "maxDias": 14,
+    "historialDias": 60,
+    "maxPuntosHistorial": 90,
+    "respetarRobots": true,
+    "bloqueados": [
+      "amazon.*",
+      "ebay.*",
+      "walmart.com",
+      "aliexpress.com",
+      "temu.com",
+      "shein.com",
+      "mercadolibre.*",
+      "mercadolivre.com.br",
+      "target.com",
+      "bestbuy.com",
+      "costco.com",
+      "alibaba.com",
+      "wish.com"
+    ],
+    "maxPaginasPorEjecucion": 20,
+    "fuentes": [
+      {
+        "id": "slick-a",
+        "tipo": "feed",
+        "nombre": "Slick prueba",
+        "url": "https://feeds.example/slickdeals.xml",
+        "moneda": "USD",
+        "idioma": "en",
+        "categoria": "otros"
+      },
+      {
+        "id": "pepper-a",
+        "tipo": "feed",
+        "nombre": "Chollos prueba",
+        "url": "https://feeds.example/pepper.xml",
+        "moneda": "EUR",
+        "idioma": "es",
+        "categoria": "otros"
+      },
+      {
+        "id": "tienda-jsonld",
+        "tipo": "jsonld",
+        "nombre": "Tienda Ejemplo (JSON-LD)",
+        "urls": [
+          "https://tienda.example/ofertas/listado",
+          "https://tienda.example/privado/panel",
+          "https://www.amazon.com/dp/B0EXAMPLE"
+        ],
+        "moneda": "EUR",
+        "tienda": "Tienda Ejemplo"
+      },
+      {
+        "id": "tienda-sitemap",
+        "tipo": "sitemap",
+        "nombre": "Tienda Ejemplo (sitemap)",
+        "url": "https://tienda.example/sitemap.xml",
+        "incluye": "/(producto|privado)/",
+        "moneda": "EUR",
+        "tienda": "Tienda Ejemplo",
+        "maxUrls": 5
+      }
+    ],
+    "busqueda": {
+      "activo": true,
+      "proveedor": "auto",
+      "palabras": [
+        "ssd 2tb oferta"
+      ],
+      "resultadosPorPalabra": 5,
+      "maxPaginas": 3,
+      "pais": "ES"
+    }
+  }
+}

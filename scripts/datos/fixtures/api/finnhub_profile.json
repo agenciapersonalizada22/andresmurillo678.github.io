@@ -1,0 +1,11 @@
+{
+ "country": "US",
+ "currency": "USD",
+ "exchange": "NASDAQ NMS - GLOBAL MARKET",
+ "finnhubIndustry": "Technology",
+ "ipo": "1980-12-12",
+ "marketCapitalization": 3512345.67,
+ "name": "Apple Inc",
+ "shareOutstanding": 15200,
+ "ticker": "AAPL"
+}

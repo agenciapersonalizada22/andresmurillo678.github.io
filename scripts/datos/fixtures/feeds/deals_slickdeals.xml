@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:media="http://search.yahoo.com/mrss/">
+<channel><title>Slickdeals Frontpage (prueba)</title><link>https://deals.example/</link>
+<item><title>Samsung 990 Pro 2TB NVMe SSD $109.99 (was $179.99) + Free Shipping at Newegg</title><link>https://deals.example/f/1001-samsung-990-pro?utm_source=rss</link><pubDate>Wed, 04 Nov 2026 20:00:00 GMT</pubDate><description>&lt;p&gt;Newegg has Samsung 990 Pro 2TB for $109.99. Use code SSD25 at checkout. Expires Nov 30.&lt;/p&gt;</description><media:thumbnail url="https://deals.example/img/ssd.jpg"/></item>
+<item><title>Sony WH-1000XM5 Wireless Headphones $279.99 at Amazon</title><link>https://deals.example/f/1002-sony</link><pubDate>Wed, 04 Nov 2026 19:00:00 GMT</pubDate><description>Great price for noise cancelling headphones.</description></item>
+<item><title>Nintendo Switch Game Bundle $1,299.50 (-25% off) @ GameStop</title><link>https://deals.example/f/1003-switch</link><pubDate>Wed, 04 Nov 2026 18:00:00 GMT</pubDate><description>Bundle deal.</description></item>
+<item><title>Free sample pack of coffee, no purchase necessary</title><link>https://deals.example/f/1004-free</link><pubDate>Wed, 04 Nov 2026 17:00:00 GMT</pubDate><description>No price here</description></item>
+<item><title>Samsung 990 Pro 2TB NVMe SSD $109.99 + Free Shipping at Newegg</title><link>https://deals.example/f/1005-samsung-dup</link><pubDate>Tue, 03 Nov 2026 20:00:00 GMT</pubDate><description>Duplicate posted again.</description></item>
+</channel></rss>

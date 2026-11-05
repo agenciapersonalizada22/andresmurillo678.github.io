@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:pepper="http://www.pepper.com/rss" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<channel><title>Chollos (prueba)</title><link>https://chollos.example/</link>
+<item><title>Auriculares Bluetooth JBL Tune 520BT</title><link>https://chollos.example/ofertas/jbl-tune-520bt-1234</link><pubDate>Wed, 04 Nov 2026 21:00:00 +0100</pubDate><pepper:merchant name="MediaMarkt" price="24,99 €"/><description>&lt;strong&gt;Precio antes: 49,99 €&lt;/strong&gt;. Código: JBL20. Válido hasta el 30/11/2026.</description></item>
+<item><title>Zapatillas Nike Revolution 7 por 39,95€ (-45%)</title><link>https://chollos.example/ofertas/nike-revolution-1235</link><pubDate>Wed, 04 Nov 2026 20:00:00 +0100</pubDate><description>Envío gratis.</description></item>
+<item><title>Debate: ¿merece la pena comprar ahora?</title><link>https://chollos.example/discusion/1236</link><pubDate>Wed, 04 Nov 2026 10:00:00 +0100</pubDate><description>Sin precio</description></item>
+</channel></rss>

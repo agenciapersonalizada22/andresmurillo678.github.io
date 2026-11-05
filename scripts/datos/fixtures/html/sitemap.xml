@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://tienda.example/producto/ssd-2tb</loc><lastmod>2026-11-04</lastmod></url>
+  <url><loc>https://tienda.example/ofertas/listado</loc><lastmod>2026-11-05T08:00:00+00:00</lastmod></url>
+  <url><loc>https://tienda.example/privado/panel</loc><lastmod>2026-11-05</lastmod></url>
+  <url><loc>https://tienda.example/blog/articulo</loc></url>
+</urlset>

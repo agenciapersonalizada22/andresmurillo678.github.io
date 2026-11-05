@@ -1,0 +1,12 @@
+{
+  "name": "datos-recolector",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Proceso programado de datos (sin dependencias). Node 20+.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "offline": "node ejecutar.js todos --offline",
+    "validar-config": "node ejecutar.js --validar-config"
+  }
+}
