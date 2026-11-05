@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Escritor con IA</title>
+<meta name="description" content="Guiones, publicaciones, hilos, carruseles, correos y anuncios con tu propia clave de IA o en modo plantillas sin clave.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Ctext y=%2713%27 font-size=%2714%27%3E✍️%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+<a class="salto" href="#app">Saltar al contenido</a>
+<header class="barra">
+  <h1>✍️ Escritor con IA</h1>
+  <nav class="tabs" aria-label="Secciones" id="tabs"></nav>
+  <span class="espacio"></span>
+  <span class="chip" id="chip-modo" role="status">Modo plantillas</span>
+  <a class="btn peq" href="../calendario/" title="Calendario y guion de contenido">📅<span class="txt-largo"> Calendario</span></a>
+  <button class="btn peq" id="btn-tema" aria-label="Cambiar tema claro u oscuro">🌓</button>
+  <button class="btn peq" id="btn-ayuda" aria-label="Ayuda y atajos">?</button>
+</header>
+<main id="app" tabindex="-1">
+  <section id="v-escribir" data-vista="escribir">
+    <div class="cols dos">
+      <form class="panel" id="form" autocomplete="off">
+        <h2>Qué escribir</h2>
+        <label for="f-tipo">Tipo de contenido</label>
+        <select id="f-tipo"></select>
+        <label for="f-tema" id="l-tema">Tema o idea</label>
+        <textarea id="f-tema" rows="4" placeholder="Ej.: cómo organizar mi semana de estudio"></textarea>
+        <div class="fila" id="grp-num">
+          <div class="grow" id="g-dur"><label for="f-dur">Duración</label><select id="f-dur"><option value="15">15 s</option><option value="30" selected>30 s</option><option value="45">45 s</option><option value="60">60 s</option><option value="90">90 s</option><option value="180">3 min</option></select></div>
+          <div class="grow" id="g-cant"><label for="f-cant" id="l-cant">Cantidad</label><input type="number" id="f-cant" min="1" max="30" value="7"></div>
+          <div class="grow" id="g-idioma"><label for="f-idioma">Idioma destino</label><input type="text" id="f-idioma" value="inglés" list="l-idiomas"><datalist id="l-idiomas"><option>inglés</option><option>español</option><option>portugués</option><option>francés</option><option>alemán</option><option>italiano</option></datalist></div>
+        </div>
+        <details id="mas"><summary>Más opciones</summary>
+          <label for="f-publico">Público</label><input type="text" id="f-publico" placeholder="Ej.: estudiantes universitarios">
+          <label for="f-cta">Llamada a la acción</label><input type="text" id="f-cta" placeholder="Ej.: Suscríbete para más">
+          <label for="f-extra">Indicaciones extra</label><textarea id="f-extra" rows="2"></textarea>
+        </details>
+        <label for="f-marca">Voz de marca</label>
+        <select id="f-marca"><option value="">Sin perfil de marca</option></select>
+        <fieldset class="modo"><legend class="suave">Cómo generar</legend>
+          <label class="chk"><input type="radio" name="modo" value="ia" id="m-ia"> Con IA (tu clave)</label>
+          <label class="chk"><input type="radio" name="modo" value="reglas" id="m-reglas" checked> Modo plantillas (sin IA)</label>
+        </fieldset>
+        <p class="suave" id="estimacion" aria-live="polite"></p>
+        <div class="fila">
+          <button type="submit" class="btn pri grow" id="b-generar">Generar</button>
+          <button type="button" class="btn oculto" id="b-cancelar">Cancelar (Esc)</button>
+        </div>
+        <p class="suave">Atajo: <kbd>Ctrl</kbd>+<kbd>Enter</kbd></p>
+        <div id="estado" role="alert"></div>
+      </form>
+      <div class="panel" id="resultado">
+        <div class="fila"><h2 class="grow">Resultado y editor</h2><span class="chip" id="chip-origen">Sin generar</span></div>
+        <div class="aviso" id="aviso-rev">Revisa y verifica el contenido generado antes de publicarlo: puede contener errores o datos inventados. No lo presentes como hechos sin comprobarlos.</div>
+        <div id="nota-modo" class="aviso oculto" style="margin-top:.5rem"></div>
+        <div class="fila" style="margin:.7rem 0">
+          <button class="btn peq" id="b-copiar">Copiar</button>
+          <button class="btn peq" id="b-guardar">Guardar cambios</button>
+          <button class="btn peq" id="b-comparar" title="Comparar con la versión anterior">Comparar</button>
+          <button class="btn peq" id="b-md">.md</button><button class="btn peq" id="b-txt">.txt</button><button class="btn peq" id="b-srt">.srt</button>
+          <button class="btn peq" id="b-cal">📅 Al calendario</button>
+        </div>
+        <label for="editor" class="solo-lectores">Editor de texto</label>
+        <textarea id="editor" rows="14" placeholder="Aquí aparecerá el resultado. Puedes escribir o pegar tu propio texto y ver contadores y vista previa." spellcheck="true"></textarea>
+        <h3 style="margin-top:1rem">Contadores por red</h3>
+        <div class="contadores" id="contadores" role="list"></div>
+        <div class="fila" style="margin-top:1rem"><h3 class="grow">Vista previa</h3><label for="p-red" class="solo-lectores">Red de la vista previa</label><select id="p-red" style="width:auto"></select></div>
+        <div id="previa" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+  <section id="v-marcas" data-vista="marcas" class="oculto"></section>
+  <section id="v-plantillas" data-vista="plantillas" class="oculto"></section>
+  <section id="v-historial" data-vista="historial" class="oculto"></section>
+  <section id="v-ajustes" data-vista="ajustes" class="oculto"></section>
+</main>
+<nav class="nav-inf" id="nav-inf" aria-label="Secciones"></nav>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<dialog id="dlg-ayuda" aria-labelledby="t-ayuda">
+  <h2 id="t-ayuda">Ayuda y atajos</h2>
+  <ul>
+    <li><kbd>Ctrl</kbd>+<kbd>Enter</kbd> generar · <kbd>Esc</kbd> cancelar · <kbd>Ctrl</kbd>+<kbd>S</kbd> guardar cambios</li>
+    <li><kbd>Alt</kbd>+<kbd>1</kbd>…<kbd>5</kbd> cambiar de sección · <kbd>?</kbd> esta ayuda</li>
+    <li>Mando Xbox: cruceta o stick mueve el foco, A pulsa, B cierra, LB/RB cambian de sección.</li>
+  </ul>
+  <p class="suave">Los límites de caracteres por red son orientativos y editables en Ajustes; confírmalos en cada plataforma. La estimación de costo usa la tarifa que escribas tú.</p>
+  <div class="fila fin"><button class="btn pri" id="c-ayuda">Cerrar</button></div>
+</dialog>
+<dialog id="dlg-pw" aria-labelledby="t-pw">
+  <form method="dialog" id="f-pw"><h2 id="t-pw">Contraseña de la clave</h2>
+  <p class="suave" id="pw-msg">Tu clave está cifrada en este dispositivo.</p>
+  <label for="pw-in">Contraseña</label><input type="password" id="pw-in" autocomplete="current-password">
+  <div class="fila fin" style="margin-top:1rem"><button value="cancel" class="btn" id="pw-no">Cancelar</button><button value="ok" class="btn pri" id="pw-ok">Desbloquear</button></div></form>
+</dialog>
+<dialog id="dlg-diff" aria-labelledby="t-diff"><h2 id="t-diff">Comparar versiones</h2><div id="diff-cont" class="diff"></div><div class="fila fin" style="margin-top:1rem"><button class="btn pri" id="c-diff">Cerrar</button></div></dialog>
+<script src="../../../juego/comun/mando.js"></script>
+<script src="js/util.js"></script>
+<script src="js/almacen.js"></script><script src="js/cifrado.js"></script><script src="js/claves.js"></script><script src="js/ia.js"></script>
+<script src="js/contadores.js"></script><script src="js/plantillas.js"></script><script src="js/exportar.js"></script><script src="js/diff.js"></script>
+<script src="js/estado.js"></script><script src="js/vista-escribir.js"></script><script src="js/vista-gestion.js"></script><script src="js/vista-ajustes.js"></script>
+<script src="js/app.js"></script><script src="js/mando-ui.js"></script>
+</body>
+</html>

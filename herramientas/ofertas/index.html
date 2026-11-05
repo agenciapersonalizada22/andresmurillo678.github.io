@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f5f6f8">
+  <title>Ofertas y promociones</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234f46e5'/%3E%3Ctext x='32' y='46' font-size='38' text-anchor='middle' fill='white'%3E%25%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<a class="saltar" href="#feed">Saltar a las ofertas</a>
+<div id="app">
+  <header id="barra">
+    <a class="btn-i volver" href="../../" aria-label="Volver al inicio" title="Inicio">&#8592;</a>
+    <h1>Ofertas<span class="sub"> y promociones</span></h1>
+    <form id="busqueda" role="search" autocomplete="off">
+      <input id="q" type="search" placeholder="Buscar: laptop precio&lt;500 tienda:amazon -usado" aria-label="Buscar ofertas" enterkeyhint="search" spellcheck="false">
+      <button type="button" id="btnAyudaBusq" class="btn-i chico" aria-label="Ayuda de la busqueda" title="Operadores de busqueda">?</button>
+    </form>
+    <div class="acc">
+      <button type="button" id="btnVista" class="btn-i" aria-label="Cambiar entre rejilla y lista" title="Rejilla / lista (G)"></button>
+      <button type="button" id="btnFiltros" class="btn" aria-haspopup="dialog" title="Filtros (F)">Filtros <span class="insignia" id="nFiltros" hidden>0</span></button>
+      <button type="button" id="btnTema" class="btn-i" aria-label="Cambiar tema" title="Tema (T)"></button>
+    </div>
+  </header>
+  <div id="avisos" role="status"></div>
+  <div id="cuerpo">
+    <nav id="nav" aria-label="Secciones"></nav>
+    <main id="principal">
+      <section id="v-ofertas" class="vista" aria-label="Ofertas">
+        <div id="fondoFiltros" hidden></div>
+        <aside id="filtros" aria-label="Filtros" role="dialog" aria-modal="false"></aside>
+        <div id="centro">
+          <div id="resumen"></div>
+          <div id="chips"></div>
+          <div id="feed" class="lista-scroll" tabindex="-1" role="list" aria-label="Lista de ofertas"></div>
+        </div>
+      </section>
+      <section id="v-nuevas" class="vista" hidden aria-label="Nuevas ofertas"></section>
+      <section id="v-guardadas" class="vista" hidden aria-label="Guardadas"></section>
+      <section id="v-alertas" class="vista" hidden aria-label="Alertas"></section>
+      <section id="v-ahorro" class="vista" hidden aria-label="Ahorro"></section>
+      <section id="v-fuentes" class="vista" hidden aria-label="Fuentes"></section>
+      <section id="v-ajustes" class="vista" hidden aria-label="Ajustes"></section>
+    </main>
+  </div>
+  <div id="legal"><span>Los precios y la disponibilidad pueden cambiar. Los enlaces llevan a sitios de terceros.</span> <button type="button" class="enlace" id="btnAvisos">Avisos y transparencia</button></div>
+</div>
+<div id="toasts" aria-live="polite" aria-atomic="false"></div>
+<dialog id="dlgDetalle" aria-labelledby="detTitulo"></dialog>
+<dialog id="dlgGeneral" aria-labelledby="genTitulo"></dialog>
+<script src="../../juego/comun/mando.js"></script>
+<script src="../comun/datos.js"></script>
+<script src="js/texto.js"></script>
+<script src="js/busqueda.js"></script>
+<script src="js/calor.js"></script>
+<script src="js/duplicados.js"></script>
+<script src="js/alertas.js"></script>
+<script src="js/moneda.js"></script>
+<script src="js/fuentes.js"></script>
+<script src="js/almacen.js"></script>
+<script src="js/demo.js"></script>
+<script src="js/grafica.js"></script>
+<script src="js/virtual.js"></script>
+<script src="js/app.js"></script>
+<script src="js/ui_feed.js"></script>
+<script src="js/ui_detalle.js"></script>
+<script src="js/ui_paneles.js"></script>
+<script src="js/ui_mando.js"></script>
+<script>Of.app.iniciar();</script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Calendario de contenido</title>
+<meta name="description" content="Planificador editorial: calendario, tablero por estado, banco de ideas, guiones por escenas con teleprompter y métricas manuales.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Ctext y=%2713%27 font-size=%2714%27%3E📅%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../escritor/css/base.css">
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+<a class="salto" href="#app">Saltar al contenido</a>
+<header class="barra">
+  <h1>📅 Calendario de contenido</h1>
+  <nav class="tabs" aria-label="Secciones" id="tabs"></nav>
+  <span class="espacio"></span>
+  <span class="chip oculto" id="chip-aviso" role="status"></span>
+  <a class="btn peq" href="../escritor/" title="Escritor con IA">✍️<span class="txt-largo"> Escritor</span></a>
+  <button class="btn peq" id="btn-tema" aria-label="Cambiar tema claro u oscuro">🌓</button>
+  <button class="btn peq" id="btn-ayuda" aria-label="Ayuda y atajos">?</button>
+</header>
+<main id="app" tabindex="-1">
+  <section id="v-calendario" class="vista"></section>
+  <section id="v-tablero" class="vista oculto"></section>
+  <section id="v-ideas" class="vista oculto"></section>
+  <section id="v-metricas" class="vista oculto"></section>
+  <section id="v-campanas" class="vista oculto"></section>
+  <section id="v-plan" class="vista oculto"></section>
+  <section id="v-horarios" class="vista oculto"></section>
+  <section id="v-datos" class="vista oculto"></section>
+  <section id="v-mas" class="vista oculto"></section>
+</main>
+<nav class="nav-inf" id="nav-inf" aria-label="Secciones"></nav>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<dialog id="dlg-pub" aria-labelledby="t-pub" class="grande"></dialog>
+<dialog id="dlg-ayuda" aria-labelledby="t-ayuda">
+  <h2 id="t-ayuda">Ayuda y atajos</h2>
+  <ul>
+    <li><kbd>N</kbd> nueva publicación · <kbd>T</kbd> ir a hoy · <kbd>←</kbd> <kbd>→</kbd> periodo anterior/siguiente</li>
+    <li><kbd>1</kbd>…<kbd>4</kbd> vista mes/semana/día/lista · <kbd>Alt</kbd>+<kbd>1</kbd>…<kbd>5</kbd> secciones · <kbd>?</kbd> esta ayuda</li>
+    <li>Sobre una publicación enfocada: <kbd>Alt</kbd>+<kbd>←/→</kbd> mueve un día, <kbd>Alt</kbd>+<kbd>↑/↓</kbd> una semana, <kbd>Enter</kbd> abre.</li>
+    <li>Arrastrar con el ratón reprograma; en pantalla táctil usa «Mover a…» o los botones de fecha del editor.</li>
+    <li>Teleprompter: <kbd>Espacio</kbd> iniciar/pausar, <kbd>↑</kbd><kbd>↓</kbd> velocidad, <kbd>+</kbd><kbd>-</kbd> tamaño, <kbd>Esc</kbd> salir. Mando Xbox: cruceta/stick para moverte, A pulsa, B cierra, LB/RB cambian de sección.</li>
+  </ul>
+  <p class="suave">Los recordatorios del navegador solo suenan mientras esta página esté abierta (no hay servidor que los envíe con la página cerrada). Los mejores horarios son puntos de partida editables, no datos de las plataformas.</p>
+  <div class="fila fin"><button class="btn pri" id="c-ayuda">Cerrar</button></div>
+</dialog>
+<dialog id="dlg-pw" aria-labelledby="t-pw">
+  <form method="dialog"><h2 id="t-pw">Contraseña de la clave</h2><p class="suave" id="pw-msg">Tu clave está cifrada en este dispositivo.</p>
+  <label for="pw-in">Contraseña</label><input type="password" id="pw-in" autocomplete="current-password">
+  <div class="fila fin" style="margin-top:1rem"><button value="cancel" class="btn">Cancelar</button><button value="ok" class="btn pri" id="pw-ok">Desbloquear</button></div></form>
+</dialog>
+<div id="teleprompter" class="tele oculto" role="dialog" aria-modal="true" aria-label="Teleprompter"></div>
+<script src="../../../juego/comun/mando.js"></script>
+<script src="../escritor/js/util.js"></script>
+<script src="../escritor/js/almacen.js"></script><script src="../escritor/js/cifrado.js"></script><script src="../escritor/js/claves.js"></script><script src="../escritor/js/ia.js"></script>
+<script src="../escritor/js/contadores.js"></script><script src="../escritor/js/plantillas.js"></script><script src="../escritor/js/exportar.js"></script>
+<script src="js/fechas.js"></script><script src="js/recurrencia.js"></script><script src="js/ics.js"></script><script src="js/csv.js"></script><script src="js/metricas.js"></script><script src="js/modelo.js"></script><script src="js/plan.js"></script>
+<script src="js/estado.js"></script><script src="js/editor-pub.js"></script><script src="js/teleprompter.js"></script>
+<script src="js/vista-calendario.js"></script><script src="js/vista-tablero.js"></script><script src="js/vista-metricas.js"></script><script src="js/vista-mas.js"></script>
+<script src="js/app.js"></script><script src="../escritor/js/mando-ui.js"></script>
+</body>
+</html>
