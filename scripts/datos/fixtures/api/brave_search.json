@@ -1,0 +1,19 @@
+{
+ "type": "search",
+ "web": {
+  "type": "search",
+  "results": [
+   {
+    "title": "SSD 2TB - Tienda Ejemplo",
+    "url": "https://tienda.example/producto/ssd-2tb",
+    "description": "SSD",
+    "page_age": "2026-11-04T10:00:00"
+   },
+   {
+    "title": "Amazon SSD",
+    "url": "https://www.amazon.com/dp/B0EXAMPLE",
+    "description": "bloqueado"
+   }
+  ]
+ }
+}

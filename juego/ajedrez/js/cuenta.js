@@ -11,7 +11,8 @@ import * as Guardado from './guardado.js';
 
 export const JUEGO = 'ajedrez';
 const C = () => (typeof window !== 'undefined' && window.Cuenta) || null;
-const CLAVES = Object.values(CONFIG.guardado); // partida, opciones, stats, perfil, biblioteca, rompe, lecciones
+// Se sincroniza el progreso; las opciones (ajedrez_opciones_v1: gráficos, sonido, controles) son por dispositivo.
+const CLAVES = Object.values(CONFIG.guardado).filter((k) => k !== CONFIG.guardado.opciones); // partida, stats, perfil, biblioteca, rompe, lecciones
 const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -131,7 +132,7 @@ export function bloqueAjustes() {
     <p class="info cuNombre"><i class="cuPunto" style="background:${esc(u.color || '#3df5ff')}"></i><b>${esc(u.nombre || u.usuario)}</b> · nivel ${u.nivel || 1}${c && c.demo ? ' · modo demo (solo este dispositivo)' : ''}</p>
     <p class="info" id="cuEstado" aria-live="polite">${esc(textoEstado())}</p>
     <div class="fichas"><button type="button" data-cu="sync" id="btnCuSync">SINCRONIZAR AHORA</button><button type="button" data-cu="portal">VOLVER AL PORTAL</button><button type="button" data-cu="salir">CERRAR SESIÓN</button></div>
-    <p class="info">Se guardan en tu cuenta los ajustes, el perfil, los rompecabezas, la biblioteca y la partida en curso. Si cambian a la vez en dos dispositivos, se te preguntará cuál conservar con el diálogo de la plataforma. Sin conexión el juego sigue igual y se sincroniza al volver.</p></div>`;
+    <p class="info">Se guardan en tu cuenta el perfil, los rompecabezas, la biblioteca y la partida en curso. Los ajustes (gráficos, sonido, controles) se quedan en cada dispositivo. Si cambian a la vez en dos dispositivos, se te preguntará cuál conservar con el diálogo de la plataforma. Sin conexión el juego sigue igual y se sincroniza al volver.</p></div>`;
 }
 export function refrescarBloque(raiz) {
   const e = raiz.querySelector('#cuEstado');

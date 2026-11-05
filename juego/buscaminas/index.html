@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#05030f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Buscaminas</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2305030f'/%3E%3Ccircle cx='32' cy='34' r='13' fill='%233df5ff'/%3E%3Cpath d='M32 10v10M32 48v10M8 34h10M46 34h10M15 17l7 7M42 44l7 7M49 17l-7 7M22 44l-7 7' stroke='%233df5ff' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../comun/lobby.css">
+</head>
+<body class="en-inicio">
+  <div id="app">
+    <header id="barra">
+      <a class="volver" href="../" aria-label="Volver al menú de juegos">←</a>
+      <h1 class="titulo">BUSCAMINAS</h1>
+      <div class="acciones">
+        <button type="button" class="btn icono" id="btnInicio" aria-label="Menú de partida" title="Menú de partida">☰</button>
+        <button type="button" class="btn icono" id="btnPista" aria-label="Pista" title="Pista (H)">💡</button>
+        <button type="button" class="btn icono" id="btnDeshacer" aria-label="Deshacer" title="Deshacer (U)" hidden>↶</button>
+        <button type="button" class="btn icono" id="btnAjustes" aria-label="Ajustes" title="Ajustes">⚙</button>
+        <button type="button" class="btn icono" id="btnPausa" aria-label="Pausa" title="Pausa (P)">⏸</button>
+      </div>
+    </header>
+    <section id="hud" aria-label="Estado de la partida">
+      <div class="led"><small>MINAS</small><b id="hudMinas">000</b></div>
+      <div class="centro"><button type="button" class="btn cara" id="btnCara" aria-label="Reiniciar partida">🙂</button><div id="hudInfo" class="info"></div></div>
+      <div class="led der"><small id="hudTiempoEtq">TIEMPO</small><b id="hudTiempo">000</b></div>
+    </section>
+    <section id="rivales" hidden aria-label="Jugadores"></section>
+    <main id="escena">
+      <canvas id="lienzo" aria-label="Tablero de buscaminas" tabindex="-1"></canvas>
+      <div id="banner" aria-live="polite"></div>
+      <div id="fps" hidden></div>
+    </main>
+    <div id="tactil" class="pos-derecha">
+      <button type="button" class="btn tb" id="tbBandera" aria-label="Alternar modo bandera" aria-pressed="false">⛏</button>
+      <button type="button" class="btn tb" id="tbMas" aria-label="Acercar">＋</button>
+      <button type="button" class="btn tb" id="tbMenos" aria-label="Alejar">－</button>
+      <button type="button" class="btn tb" id="tbAjustar" aria-label="Ajustar al tablero">⤢</button>
+      <button type="button" class="btn tb" id="tbPista" aria-label="Pista">💡</button>
+    </div>
+  </div>
+  <section id="inicio" class="pantalla"></section>
+  <div id="capas"></div>
+  <div id="avisos" aria-live="polite"></div>
+
+  <script src="../comun/mando.js"></script>
+  <script src="../comun/red.js"></script>
+  <script src="../comun/lobby.js"></script>
+  <script src="js/azar.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/motor.js"></script>
+  <script src="js/solucionador.js"></script>
+  <script src="js/generador.js"></script>
+  <script src="js/almacen.js"></script>
+  <script src="js/ajustes.js"></script>
+  <script src="js/logros.js"></script>
+  <script src="js/progreso.js"></script>
+  <script src="js/temas.js"></script>
+  <script src="js/sonido.js"></script>
+  <script src="js/vista.js"></script>
+  <script src="js/partida.js"></script>
+  <script src="js/entrada.js"></script>
+  <script src="js/ui_base.js"></script>
+  <script src="js/ui_ajustes.js"></script>
+  <script src="js/ui_info.js"></script>
+  <script src="js/ui_menu.js"></script>
+  <script src="js/multi.js"></script>
+  <script src="js/principal.js"></script>
+</body>
+</html>

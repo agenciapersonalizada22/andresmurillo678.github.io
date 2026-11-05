@@ -1,0 +1,86 @@
+[
+ {
+  "symbol": "BTCUSDT",
+  "priceChange": "0",
+  "priceChangePercent": "1.85",
+  "weightedAvgPrice": "97240.5",
+  "lastPrice": "97240.5",
+  "volume": "1000",
+  "quoteVolume": "6100000000",
+  "openTime": 1762300000000,
+  "closeTime": 1762386400000,
+  "count": 123456
+ },
+ {
+  "symbol": "ETHUSDT",
+  "priceChange": "0",
+  "priceChangePercent": "2.1",
+  "weightedAvgPrice": "3411.2",
+  "lastPrice": "3411.2",
+  "volume": "1000",
+  "quoteVolume": "3400000000",
+  "openTime": 1762300000000,
+  "closeTime": 1762386400000,
+  "count": 123456
+ },
+ {
+  "symbol": "SOLUSDT",
+  "priceChange": "0",
+  "priceChangePercent": "-0.8",
+  "weightedAvgPrice": "182.1",
+  "lastPrice": "182.1",
+  "volume": "1000",
+  "quoteVolume": "900000000",
+  "openTime": 1762300000000,
+  "closeTime": 1762386400000,
+  "count": 123456
+ },
+ {
+  "symbol": "USDCUSDT",
+  "priceChange": "0",
+  "priceChangePercent": "0",
+  "weightedAvgPrice": "1",
+  "lastPrice": "1",
+  "volume": "1000",
+  "quoteVolume": "800000000",
+  "openTime": 1762300000000,
+  "closeTime": 1762386400000,
+  "count": 123456
+ },
+ {
+  "symbol": "BTCUPUSDT",
+  "priceChange": "0",
+  "priceChangePercent": "5",
+  "weightedAvgPrice": "12",
+  "lastPrice": "12",
+  "volume": "1000",
+  "quoteVolume": "100000",
+  "openTime": 1762300000000,
+  "closeTime": 1762386400000,
+  "count": 123456
+ },
+ {
+  "symbol": "DOGEUSDT",
+  "priceChange": "0",
+  "priceChangePercent": "3.2",
+  "weightedAvgPrice": "0.1831",
+  "lastPrice": "0.1831",
+  "volume": "1000",
+  "quoteVolume": "400000000",
+  "openTime": 1762300000000,
+  "closeTime": 1762386400000,
+  "count": 123456
+ },
+ {
+  "symbol": "ETHBTC",
+  "priceChange": "0",
+  "priceChangePercent": "0.2",
+  "weightedAvgPrice": "0.035",
+  "lastPrice": "0.035",
+  "volume": "1000",
+  "quoteVolume": "1000000",
+  "openTime": 1762300000000,
+  "closeTime": 1762386400000,
+  "count": 123456
+ }
+]

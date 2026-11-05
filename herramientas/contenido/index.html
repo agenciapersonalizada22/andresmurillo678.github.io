@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Estudio de contenido</title>
+  <meta name="description" content="Imágenes, video, escritor y calendario para crear contenido, en tu navegador.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%233e63dd'/%3E%3Cpath d='M18 33l9 9 19-20' fill='none' stroke='%23fff' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../comun/hub.css">
+</head>
+<body>
+  <div class="h-cont">
+    <nav class="h-barra" aria-label="Navegación">
+      <a class="h-enlace" data-f="1" data-volver href="../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Herramientas</a>
+      <a class="h-enlace" data-f="1" data-volver href="../../juego/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Volver al portal</a>
+      <span class="h-sep"></span>
+      <span class="h-sesion" id="estadoSesion" role="status"></span>
+      <button type="button" class="h-btn" id="btnTema" data-f="1" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.800A9 9 0 1 1 11.200 3a7 7 0 0 0 9.800 9.800z"/></svg><span>Tema</span></button>
+    </nav>
+    <header>
+      <h1>Estudio de contenido</h1>
+      <p class="h-sub">Cuatro herramientas para crear, escribir, editar y planificar tu contenido.</p>
+    </header>
+    <main>
+      <ul class="h-rejilla">
+        <li><a class="h-tarjeta" data-f="1" href="imagenes/" style="--c:#9b5de5">
+          <span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg></span>
+          <span><h2>Editor de imágenes</h2><p>Capas, texto, formas, filtros, plantillas, QR y miniaturas.</p><span class="h-ir">Abrir →</span></span>
+        </a></li>
+        <li><a class="h-tarjeta" data-f="1" href="video/" style="--c:#e0457f">
+          <span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/></svg></span>
+          <span><h2>Editor de video</h2><p>Línea de tiempo multipista, subtítulos, croma y exportación MP4/WebM.</p><span class="h-ir">Abrir →</span></span>
+        </a></li>
+        <li><a class="h-tarjeta" data-f="1" href="escritor/" style="--c:#0ea5c6">
+          <span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/></svg></span>
+          <span><h2>Escritor</h2><p>Guiones, publicaciones, hilos y correos, con tu clave de IA o plantillas.</p><span class="h-ir">Abrir →</span></span>
+        </a></li>
+        <li><a class="h-tarjeta" data-f="1" href="calendario/" style="--c:#65a30d">
+          <span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>
+          <span><h2>Calendario de contenido</h2><p>Planificador editorial: tablero, ideas, guiones y teleprompter.</p><span class="h-ir">Abrir →</span></span>
+        </a></li>
+      </ul>
+    </main>
+    <div class="h-aviso" role="note"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><p><b>Privacidad.</b> Imágenes, video, textos y calendario se procesan en tu navegador y quedan solo en este dispositivo hasta que inicies sesión. Si usas el Escritor con tu propia clave de IA, esa clave y las peticiones son solo tuyas: no las compartas.</p></div>
+    <p class="h-pista" aria-hidden="true"><span><b>+</b>mover</span><span><b>A</b>abrir</span><span><b>B</b>volver</span></p>
+  </div>
+  <script src="../../juego/comun/firebase-config.js"></script>
+  <script src="../../juego/comun/mando.js"></script>
+  <script src="../../juego/plataforma/juegos.js"></script>
+  <script src="../../juego/comun/cuenta.js"></script>
+  <script src="../comun/hub.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+{
+ "meta": {
+  "symbol": "AAPL",
+  "interval": "1day",
+  "currency": "USD",
+  "exchange_timezone": "America/New_York",
+  "exchange": "NASDAQ",
+  "type": "Common Stock"
+ },
+ "values": [
+  {
+   "datetime": "2026-11-05",
+   "open": "230.10",
+   "high": "232.90",
+   "low": "229.80",
+   "close": "231.45",
+   "volume": "48123400"
+  },
+  {
+   "datetime": "2026-11-04",
+   "open": "229.0",
+   "high": "231.0",
+   "low": "228.5",
+   "close": "230.22",
+   "volume": "50111000"
+  },
+  {
+   "datetime": "2026-11-03",
+   "open": "228.0",
+   "high": "230.0",
+   "low": "227.1",
+   "close": "229.5",
+   "volume": "45000000"
+  }
+ ],
+ "status": "ok"
+}

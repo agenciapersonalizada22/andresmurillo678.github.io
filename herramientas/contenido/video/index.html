@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Editor de video corto en el navegador: línea de tiempo multipista, texto animado, filtros, croma, subtítulos y exportación MP4/WebM.">
+  <title>Editor de video</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%237c5cff'/%3E%3Cpath d='M24 18l22 14-22 14z' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+<a class="salto" href="#lienzo">Saltar al visor</a>
+<div id="app" data-panel="medios">
+  <header id="barra">
+    <a class="btn icono" href="../" id="btnVolver" aria-label="Volver a Contenido" title="Volver a Contenido">←</a>
+    <button class="btn" id="btnProyectos" aria-label="Proyectos" title="Proyectos">📁 <span id="nombreProy">Proyecto</span></button>
+    <span class="grupo">
+      <button class="btn icono" id="btnDeshacer" aria-label="Deshacer" title="Deshacer (Ctrl+Z)" disabled>↶</button>
+      <button class="btn icono" id="btnRehacer" aria-label="Rehacer" title="Rehacer (Ctrl+Y)" disabled>↷</button>
+    </span>
+    <label class="sel" title="Proporción para redes"><span class="ocultoMovil">Formato</span>
+      <select id="selAspecto" aria-label="Proporción"><option value="9:16">9:16 Reels</option><option value="1:1">1:1</option><option value="4:5">4:5</option><option value="16:9">16:9</option></select>
+    </label>
+    <span id="estado" role="status" aria-live="polite"></span>
+    <span class="relleno"></span>
+    <button class="btn icono" id="btnTema" aria-label="Cambiar tema" title="Tema claro/oscuro/auto">◐</button>
+    <button class="btn icono" id="btnAjustes" aria-label="Ajustes" title="Ajustes">⚙</button>
+    <button class="btn icono" id="btnAyuda" aria-label="Ayuda y atajos" title="Ayuda (?)">?</button>
+    <button class="btn prim" id="btnExportar">Exportar</button>
+  </header>
+
+  <aside id="izq" aria-label="Biblioteca y herramientas">
+    <div id="pestanas" role="tablist" aria-label="Herramientas"></div>
+    <div id="contenidoIzq"></div>
+  </aside>
+
+  <section id="centro" aria-label="Vista previa">
+    <div id="visor"><canvas id="lienzo" width="540" height="960" role="img" aria-label="Vista previa del video"></canvas><div id="avisoVacio">Importa un video, foto o audio para empezar,<br>o elige una plantilla.</div></div>
+    <div id="transporte">
+      <button class="btn icono" id="btnInicio" aria-label="Ir al inicio" title="Inicio (Inicio)">⏮</button>
+      <button class="btn icono" id="btnAtras" aria-label="Corte anterior" title="Corte anterior (↑ / LB)">⏪</button>
+      <button class="btn icono prim grande" id="btnPlay" aria-label="Reproducir" title="Reproducir / pausa (Espacio)">▶</button>
+      <button class="btn icono" id="btnAdelante" aria-label="Corte siguiente" title="Corte siguiente (↓ / RB)">⏩</button>
+      <button class="btn icono" id="btnBucle" aria-label="Repetir" aria-pressed="false" title="Repetir en bucle">🔁</button>
+      <span id="tiempo" aria-live="off">00:00.0 / 00:00.0</span>
+      <label class="vol" title="Volumen de la vista previa"><span class="oculto">Volumen</span><input type="range" id="volMaster" min="0" max="1" step="0.05" value="1" aria-label="Volumen de la vista previa"></label>
+    </div>
+  </section>
+
+  <aside id="der" aria-label="Propiedades"><div id="inspector"></div></aside>
+
+  <section id="linea" aria-label="Línea de tiempo">
+    <div id="lineaBarra" role="toolbar" aria-label="Herramientas de la línea de tiempo">
+      <button class="btn" id="tlDividir" title="Dividir en el cursor (S)">✂ <span class="ocultoMovil">Dividir</span></button>
+      <button class="btn" id="tlDuplicar" title="Duplicar (Ctrl+D)">⧉ <span class="ocultoMovil">Duplicar</span></button>
+      <button class="btn" id="tlEliminar" title="Eliminar (Supr)">🗑 <span class="ocultoMovil">Eliminar</span></button>
+      <label class="chk" title="Al eliminar, cierra el hueco que deja"><input type="checkbox" id="tlRipple"> <span>Cerrar hueco</span></label>
+      <label class="chk" title="Magnetismo a cortes, marcadores y cursor"><input type="checkbox" id="tlIman" checked> <span>Imán</span></label>
+      <button class="btn" id="tlMarcador" title="Añadir marcador (M)">⚑ <span class="ocultoMovil">Marcador</span></button>
+      <button class="btn" id="tlPista" title="Añadir pista">＋ <span class="ocultoMovil">Pista</span></button>
+      <span class="relleno"></span>
+      <button class="btn icono" id="tlZoomMenos" aria-label="Alejar" title="Alejar (-)">−</button>
+      <input type="range" id="tlZoom" min="0" max="100" value="40" aria-label="Zoom de la línea de tiempo">
+      <button class="btn icono" id="tlZoomMas" aria-label="Acercar" title="Acercar (+)">+</button>
+      <button class="btn icono" id="tlAjustar" aria-label="Ajustar a la ventana" title="Ajustar todo">⤢</button>
+    </div>
+    <div id="lineaV">
+      <div id="cabeceras"></div>
+      <div id="lineaH"><div id="lineaAncho"><div id="regla"></div><div id="pistas"></div><div id="cabezal" aria-hidden="true"></div></div></div>
+    </div>
+  </section>
+
+  <nav id="inferior" aria-label="Barra inferior">
+    <button data-ir="medios"><span>🎞</span>Medios</button>
+    <button data-ir="texto"><span>T</span>Texto</button>
+    <button data-ir="audio"><span>♫</span>Audio</button>
+    <button data-ir="efectos"><span>✨</span>Efectos</button>
+    <button data-ir="ajustes"><span>🎚</span>Ajustes</button>
+    <button data-ir="mas"><span>⋯</span>Más</button>
+  </nav>
+</div>
+
+<div id="dropZona" hidden>Suelta tus archivos de video, imagen o audio aquí</div>
+<div id="avisos" aria-live="polite"></div>
+<div id="dialogos"></div>
+<input type="file" id="archivos" aria-label="Importar archivos" multiple accept="video/*,image/*,audio/*,.srt,.vtt,.cvp" hidden>
+
+<script src="../../../juego/comun/mando.js"></script>
+<script src="js/modelo.js"></script>
+<script src="js/keyframes.js"></script>
+<script src="js/subtitulos.js"></script>
+<script src="js/mezcla.js"></script>
+<script src="js/sonidos.js"></script>
+<script src="js/muxer.js"></script>
+<script src="js/paquete.js"></script>
+<script src="js/filtros.js"></script>
+<script src="js/almacen.js"></script>
+<script src="js/capacidades.js"></script>
+<script src="js/fuentes.js"></script>
+<script src="js/efectos.js"></script>
+<script src="js/compositor.js"></script>
+<script src="js/motor.js"></script>
+<script src="js/exportador.js"></script>
+<script src="js/plantillas.js"></script>
+<script src="js/grabar.js"></script>
+<script src="js/util.js"></script>
+<script src="js/linea.js"></script>
+<script src="js/paneles.js"></script>
+<script src="js/inspector.js"></script>
+<script src="js/dialogos.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

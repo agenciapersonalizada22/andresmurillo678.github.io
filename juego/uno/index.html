@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0820">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>UNO</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230b0820'/%3E%3Crect x='14' y='10' width='36' height='44' rx='6' fill='%23e3353b' stroke='%23fff' stroke-width='3'/%3E%3Ctext x='32' y='42' font-size='22' font-weight='900' text-anchor='middle' fill='%23fff'%3E1%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../comun/lobby.css">
+</head>
+<body class="en-menu">
+<div id="app">
+  <header id="barra">
+    <a class="volver" href="../">← Menú</a>
+    <h1 class="titulo">UNO</h1>
+    <div class="acciones">
+      <button type="button" class="icono" id="bPantalla" aria-label="Pantalla completa" title="Pantalla completa">⛶</button>
+      <button type="button" class="icono" id="bSonido" aria-label="Sonido" title="Sonido">♪</button>
+      <button type="button" class="icono" id="bChat" aria-label="Chat y reacciones" title="Chat (T)" hidden>💬</button>
+      <button type="button" class="icono" id="bMenu" aria-label="Pausa y menú" title="Pausa (Esc)" hidden>⏸</button>
+      <button type="button" class="icono" id="bAjustes" aria-label="Ajustes" title="Ajustes">⚙</button>
+      <button type="button" class="icono" id="bAyuda" aria-label="Ayuda" title="Ayuda (?)">?</button>
+    </div>
+  </header>
+
+  <section id="menu" class="capa pantalla">
+    <div class="logo" aria-hidden="true"><i class="c0"></i><i class="c1"></i><i class="c2"></i><i class="c3"></i></div>
+    <h2 class="gran">UNO</h2>
+    <p class="lema">Cartas de colores, bots con carácter y mesas con amigos.</p>
+    <div class="lista-menu" id="listaMenu"></div>
+  </section>
+
+  <main id="mesa" hidden>
+    <div id="rivales" aria-label="Rivales"></div>
+    <div id="centro">
+      <button type="button" id="mazo" aria-label="Mazo de robo"></button>
+      <div id="zonaDescarte">
+        <div id="dirIcono" class="dir horario" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="10 9" opacity=".55"/><polygon points="44,-1 62,7 44,15" fill="currentColor"/><polygon points="56,115 38,107 56,99" fill="currentColor"/></svg></div>
+        <div id="descarte" role="img"></div>
+        <span id="pendTag" class="pend-tag" hidden></span>
+      </div>
+      <div id="colorTag" class="color-tag" aria-live="polite"></div>
+    </div>
+    <div id="tiempo" class="tiempo" hidden><i></i></div>
+    <div id="estado" role="status"></div>
+    <div id="zonaYo">
+      <div id="miInfo"></div>
+      <div id="mano" role="group" aria-label="Tu mano"></div>
+    </div>
+    <div id="acciones">
+      <button type="button" id="bRobar" class="btn acc">Robar</button>
+      <button type="button" id="bPasar" class="btn acc sec" hidden>Pasar</button>
+      <button type="button" id="bDesafiar" class="btn acc peligro" hidden>Desafiar +4</button>
+      <button type="button" id="bJugar" class="btn acc" hidden>Jugar</button>
+      <button type="button" id="bUno" class="uno-btn" data-modo="reposo" aria-label="Gritar UNO"><span>UNO</span></button>
+    </div>
+    <div id="chatPanel" class="panel-chat" hidden></div>
+    <div id="burbujas"></div>
+    <div id="finPanel" class="capa panel-fin" hidden></div>
+  </main>
+
+  <div id="modal" class="capa" hidden></div>
+  <div id="toasts" aria-hidden="true"></div>
+  <div id="aria" class="sr" aria-live="polite"></div>
+  <div id="fps" hidden></div>
+  <canvas id="confeti" aria-hidden="true"></canvas>
+</div>
+<script src="../comun/mando.js"></script>
+<script src="../comun/red.js"></script>
+<script src="../comun/lobby.js"></script>
+<script type="module" src="js/principal.js"></script>
+<noscript><p style="color:#fff;padding:1rem">Este juego necesita JavaScript.</p></noscript>
+</body>
+</html>

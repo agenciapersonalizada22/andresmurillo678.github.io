@@ -1,0 +1,1 @@
+# E2E con Playwright (Chromium): servir juego/ con `python3 -m http.server 8765` y ejecutar `node archivo.mjs <carpeta_capturas>`. Requiere el paquete playwright resoluble desde esta carpeta.

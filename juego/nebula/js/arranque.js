@@ -7,9 +7,10 @@
 (function () {
   'use strict';
   const ID = 'nebula';
-  // Progreso real: 3 ranuras + ajustes. (nebula_record es un derivado de la ranura 1; nebula_slot,
+  // Progreso real: 3 ranuras. (nebula_record es un derivado de la ranura 1; nebula_slot,
   // nebula_musica y nebula_silencio son preferencias del dispositivo: no se sincronizan.)
-  const CLAVES = ['nebula_save', 'nebula_save_1', 'nebula_save_2', 'nebula_ajustes'];
+  // Los ajustes (nebula_ajustes: gráficos, audio, controles) son POR DISPOSITIVO y no se sincronizan.
+  const CLAVES = ['nebula_save', 'nebula_save_1', 'nebula_save_2'];
   const SCRIPTS = ['js/config.js', 'js/datos.js', 'js/sonido.js', 'js/musica.js', 'js/contenido.js', 'js/entrada.js', 'js/sim.js',
     'js/dibujo.js', 'js/hud.js', 'js/ui.js', 'js/pantallas.js', 'js/juego.js', 'js/mp.js'];
   const C = () => window.Cuenta;

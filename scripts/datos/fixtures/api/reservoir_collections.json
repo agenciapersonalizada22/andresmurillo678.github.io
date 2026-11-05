@@ -1,0 +1,66 @@
+{
+ "collections": [
+  {
+   "id": "0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d",
+   "slug": "boredapeyachtclub",
+   "name": "Bored Ape Yacht Club",
+   "image": "https://img.reservoir.tools/images/v2/mainnet/bayc.png",
+   "floorAsk": {
+    "id": "0xabc",
+    "price": {
+     "currency": {
+      "contract": "0x0000000000000000000000000000000000000000",
+      "name": "Ether",
+      "symbol": "ETH",
+      "decimals": 18
+     },
+     "amount": {
+      "raw": "9120000000000000000",
+      "decimal": 9.12,
+      "usd": 31000,
+      "native": 9.12
+     }
+    }
+   },
+   "volume": {
+    "1day": 152.3456,
+    "7day": 800.1,
+    "30day": 3000
+   },
+   "volumeChange": {
+    "1day": 1.1,
+    "7day": 0.9,
+    "30day": 1
+   },
+   "floorSaleChange": {
+    "1day": 0.9731,
+    "7day": 1.01,
+    "30day": 1
+   },
+   "salesCount": {
+    "1day": 17,
+    "7day": 100,
+    "30day": 400
+   },
+   "ownerCount": 5987,
+   "tokenCount": "10000"
+  },
+  {
+   "id": "0x60e4d786628fea6478f785a6d7e704777c86a7c6",
+   "slug": "mutant-ape-yacht-club",
+   "name": "Mutant Ape Yacht Club",
+   "image": null,
+   "floorAsk": {
+    "price": null
+   },
+   "volume": {
+    "1day": 40.1
+   },
+   "floorSaleChange": {},
+   "salesCount": {
+    "1day": 9
+   },
+   "ownerCount": 11000
+  }
+ ]
+}

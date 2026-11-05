@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es" data-tema="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Editor de imágenes y miniaturas</title>
+<meta name="description" content="Editor de imágenes estilo Canva: capas, texto, formas, filtros, plantillas, QR y exportación. Funciona en el navegador, sin subir nada.">
+<meta name="theme-color" content="#4f46e5">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%234f46e5%27/%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%276%27 fill=%27%23fff%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+<a class="saltar" href="#area">Saltar al lienzo</a>
+<div id="app">
+  <header id="barra" role="banner">
+    <a class="logo" href="../index.html" title="Volver a Contenido" aria-label="Volver a herramientas de contenido"><span class="logo-mark" aria-hidden="true"></span><span class="logo-txt">Imágenes</span></a>
+    <input id="nombreProyecto" class="nombre" type="text" aria-label="Nombre del proyecto" value="Sin título" maxlength="80" spellcheck="false">
+    <span id="estadoGuardado" class="estado" role="status" aria-live="polite">Guardado</span>
+    <span class="espacio"></span>
+    <div class="grupo-b" id="gDeshacer"></div>
+    <div class="grupo-b" id="gZoom"></div>
+    <div class="grupo-b" id="gVarios"></div>
+    <button id="bExportar" class="primario" type="button">Exportar</button>
+  </header>
+  <div id="cuerpo">
+    <nav id="herramientas" aria-label="Herramientas"></nav>
+    <aside id="izq" class="panel" aria-label="Biblioteca">
+      <div class="pestanas" role="tablist" id="tabsIzq"></div>
+      <div class="contenido-panel" id="cIzq"></div>
+    </aside>
+    <main id="centro">
+      <div id="area" tabindex="-1" aria-label="Lienzo de diseño">
+        <canvas id="cv" aria-hidden="true"></canvas>
+        <canvas id="ov" aria-label="Superficie de edición" role="application" tabindex="0"></canvas>
+        <canvas id="reglaH" aria-hidden="true"></canvas>
+        <canvas id="reglaV" aria-hidden="true"></canvas>
+        <div id="cursorMando" hidden></div>
+        <div class="soltar-msg" aria-hidden="true">Suelta tus imágenes aquí</div>
+      </div>
+      <div id="paginas" aria-label="Páginas"></div>
+    </main>
+    <aside id="der" class="panel" aria-label="Propiedades">
+      <div class="pestanas" role="tablist" id="tabsDer"></div>
+      <div class="contenido-panel" id="cDer"></div>
+    </aside>
+  </div>
+  <nav id="inferior" aria-label="Menú móvil"></nav>
+  <div id="velo" hidden></div>
+</div>
+<div id="dialogos"></div>
+<div id="avisos" class="aviso" role="status" aria-live="polite" hidden></div>
+<div id="ocupado" class="ocupado" role="status" hidden><span class="rueda" aria-hidden="true"></span> Procesando…</div>
+<input id="inpArchivos" type="file" accept="image/*" multiple hidden>
+<input id="inpCamara" type="file" accept="image/*" capture="environment" hidden>
+<script src="../../../juego/comun/mando.js"></script>
+<script src="js/nucleo/matriz.js"></script>
+<script src="js/nucleo/color.js"></script>
+<script src="js/nucleo/mezcla.js"></script>
+<script src="js/nucleo/historial.js"></script>
+<script src="js/nucleo/rle.js"></script>
+<script src="js/nucleo/relleno.js"></script>
+<script src="js/nucleo/filtros.js"></script>
+<script src="js/nucleo/geometria.js"></script>
+<script src="js/nucleo/redes.js"></script>
+<script src="js/nucleo/zip.js"></script>
+<script src="js/nucleo/qr.js"></script>
+<script src="js/util.js"></script>
+<script src="js/almacen.js"></script>
+<script src="js/iconos.js"></script>
+<script src="js/doc.js"></script>
+<script src="js/render.js"></script>
+<script src="js/trabajo.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/vista.js"></script>
+<script src="js/pincel.js"></script>
+<script src="js/entrada.js"></script>
+<script src="js/plantillas.js"></script>
+<script src="js/paleta.js"></script>
+<script src="js/proyectos.js"></script>
+<script src="js/exportar.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/ui-props.js"></script>
+<script src="js/ui-capas.js"></script>
+<script src="js/ui-ajustes.js"></script>
+<script src="js/ui-agregar.js"></script>
+<script src="js/ui-dialogos.js"></script>
+<script src="js/mandocursor.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

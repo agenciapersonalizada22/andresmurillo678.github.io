@@ -1,0 +1,20 @@
+.modo{border:1px solid var(--borde);border-radius:8px;margin:.8rem 0 0;padding:.4rem .8rem}
+.contadores{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.5rem}
+.cont{border:1px solid var(--borde);border-radius:8px;padding:.4rem .6rem;background:var(--bg);font-size:.85rem}
+.cont b{display:block;font-size:.8rem;color:var(--suave)}.cont.sel{border-color:var(--acento)}
+.cont.cerca{border-color:var(--aviso)}.cont.excede{border-color:var(--mal)}.cont.excede .num{color:var(--mal);font-weight:700}
+.cont .barra-p{margin-top:4px}.cont.excede .barra-p i{background:var(--mal)}.cont.cerca .barra-p i{background:var(--aviso)}
+#editor{font-size:1.05rem;line-height:1.6;min-height:260px}
+.post{background:var(--bg);border:1px solid var(--borde);border-radius:12px;padding:.8rem;margin:.5rem 0;max-width:560px}
+.post .cab{display:flex;gap:.6rem;align-items:center;margin-bottom:.4rem}
+.post .av{width:38px;height:38px;border-radius:50%;background:var(--acento);color:var(--acento-t);display:grid;place-items:center;font-weight:700;flex:none}
+.post .cuerpo{white-space:pre-wrap;overflow-wrap:anywhere}.post .cuerpo .ht{color:var(--acento);font-weight:600}
+.post .pie{margin-top:.5rem;color:var(--suave);font-size:.82rem}
+.post.x{border-left:4px solid #1d9bf0}.post.instagram{border-left:4px solid #e1306c}.post.tiktok{border-left:4px solid #25f4ee}.post.linkedin{border-left:4px solid #0a66c2}.post.facebook{border-left:4px solid #1877f2}.post.shorts_titulo,.post.shorts_desc{border-left:4px solid #ff0033}
+.slides{display:flex;gap:.6rem;overflow-x:auto;padding-bottom:.5rem}
+.slide{flex:none;width:200px;aspect-ratio:4/5;border:1px solid var(--borde);border-radius:10px;padding:.8rem;background:var(--bg);display:flex;flex-direction:column;justify-content:center;font-weight:600;overflow:hidden;white-space:pre-wrap}
+.slide small{color:var(--suave);font-weight:400;position:absolute}
+.escenas td:first-child{white-space:nowrap}
+.diff{white-space:pre-wrap;max-height:60vh;overflow:auto;line-height:1.7}.diff ins{background:color-mix(in srgb,var(--ok) 28%,transparent);text-decoration:none}.diff del{background:color-mix(in srgb,var(--mal) 28%,transparent)}
+.item .grow b{display:block}.tarjeta-tipo{display:grid;gap:.5rem;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.clave-prov{border:1px solid var(--borde);border-radius:8px;padding:.8rem;margin:.6rem 0}

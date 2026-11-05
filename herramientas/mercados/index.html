@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es" data-tema="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<title>Terminal de Mercados</title>
+<meta name="description" content="Terminal de analisis de mercados: cripto, acciones, divisas, NFTs y noticias. Informacion educativa, no asesoria financiera.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b0e13'/%3E%3Cpath d='M7 22l6-8 5 4 7-10' stroke='%234c9aff' stroke-width='3' fill='none'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/mercados.css">
+</head>
+<body>
+<header class="cab">
+  <div class="marca">&#9638;<span class="txt"> Terminal <b>Mercados</b> <small class="muted">· educativo</small></span></div>
+  <button class="buscar-btn" id="btn-buscar" type="button" aria-label="Buscar simbolo (Ctrl+K)">Buscar activo… <kbd>Ctrl K</kbd></button>
+  <span class="espacio"></span>
+  <button class="chip" id="chip-datos" type="button" aria-label="Estado de los datos">Cargando…</button>
+  <button class="ib" id="btn-recargar" type="button" title="Recargar datos (R)" aria-label="Recargar datos">&#8635;</button>
+  <button class="ib" id="btn-tema" type="button" title="Tema" aria-label="Cambiar tema">Aa</button>
+  <button class="ib" id="btn-atajos" type="button" title="Atajos (?)" aria-label="Atajos de teclado">?</button>
+</header>
+<div class="cuerpo-app">
+  <nav class="nav" id="nav" aria-label="Secciones"></nav>
+  <main id="main" tabindex="-1"><div class="banners" id="banners"></div><div id="vista"><div class="cargando"><span class="gira"></span>Cargando mercados…</div></div></main>
+</div>
+<div id="toasts" aria-live="polite"></div>
+<script src="js/fmt.js"></script>
+<script src="../comun/datos.js"></script>
+<script src="../../juego/comun/mando.js"></script>
+<script src="js/indicadores.js"></script><script src="js/riesgo.js"></script><script src="js/patrones.js"></script><script src="js/backtest.js"></script>
+<script src="js/cartera.js"></script><script src="js/alertas.js"></script><script src="js/calculadoras.js"></script><script src="js/screener.js"></script>
+<script src="js/sentimiento.js"></script><script src="js/treemap.js"></script><script src="js/divisas.js"></script><script src="js/fixtures.js"></script>
+<script src="js/ops.js"></script><script src="js/calc.js"></script><script src="js/almacen.js"></script>
+<script src="js/ui.js"></script><script src="js/tabla.js"></script><script src="js/grafica.js"></script><script src="js/mercado.js"></script><script src="js/guia.js"></script>
+<script src="js/app.js"></script>
+<script src="js/v-resumen.js"></script><script src="js/v-mercados.js"></script><script src="js/v-activo.js"></script><script src="js/v-analisis.js"></script>
+<script src="js/v-cartera.js"></script><script src="js/v-noticias.js"></script><script src="js/v-mas.js"></script>
+<script>App.iniciar();</script>
+</body>
+</html>

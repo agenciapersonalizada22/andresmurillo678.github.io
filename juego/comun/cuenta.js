@@ -129,6 +129,24 @@
       if (n) r = r.slice(0, n);
       return r.map(function (e, i) { var o = {}; for (var k in e) o[k] = e[k]; o.pos = i + 1; return o; });
     },
+    /* Aplica al almacen una bajada de la nube: SOLO escribe las claves de la lista (nunca otras que traiga el documento, p. ej. ajustes por dispositivo
+       subidos antiguamente) y quita las de la lista que la nube no trae. */
+    aplicarBajada: function (datos, claves, almacen) {
+      datos = datos || {};
+      claves.forEach(function (k) { if (Object.prototype.hasOwnProperty.call(datos, k) && datos[k] != null) almacen.setItem(k, datos[k]); else almacen.removeItem(k); });
+    },
+    /* Id de juego o herramienta segun la ruta (/juego/<id>/, /herramientas/<carpeta>/, /herramientas/contenido/<sub>/), con o sin subdirectorio del sitio.
+       Respaldo sin la tabla cargada: debe coincidir con plataforma/juegos.js (lo comprueba logica.test.mjs). */
+    RUTAS_JUEGOS: ['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis', 'buscaminas', 'celulas', 'serpientes', 'uno', 'magnate', 'cartas'],
+    RUTAS_HERRAMIENTAS: { notas: 'notas', pizarra: 'pizarra', mercados: 'mercados', apuestas: 'apuestas', ofertas: 'ofertas', 'contenido/imagenes': 'contenido_imagenes', 'contenido/video': 'contenido_video', 'contenido/escritor': 'contenido_escritor', 'contenido/calendario': 'contenido_calendario' },
+    juegoDeRuta: function (ruta) {
+      ruta = String(ruta || '');
+      var m = /\/juego\/([a-z0-9_-]+)(?:\/|$)/.exec(ruta);
+      if (m && L.RUTAS_JUEGOS.indexOf(m[1]) >= 0) return m[1];
+      m = /\/herramientas\/([a-z0-9_-]+)(?:\/([a-z0-9_-]+))?(?:\/|$)/.exec(ruta);
+      if (m) { var c = m[1] === 'contenido' ? 'contenido/' + (m[2] || '') : m[1]; return L.RUTAS_HERRAMIENTAS[c] || ''; }
+      return '';
+    },
     mejor: function (nuevo, viejo, mayorEsMejor) { return viejo == null || (mayorEsMejor ? nuevo > viejo : nuevo < viejo); },
     ESTADO_PRESENCIA_MS: 150000,
     presenciaVigente: function (p, ahora) { return !!p && p.t && ((ahora == null ? Date.now() : ahora) - p.t) < L.ESTADO_PRESENCIA_MS; },
@@ -224,8 +242,7 @@
   Cuenta.tabla = tablaJuegos;
   function portalUrl() { return new URL('../', BASE || location.href).href; }
   Cuenta.portalUrl = portalUrl;
-  function juegoActual() { return (G.PlataformaJuegos ? G.PlataformaJuegos.juegoDeRuta(location.pathname) : (/\/juego\/([a-z0-9_-]+)\//.exec(location.pathname) || [])[1]) || ''; }
-  Cuenta.juegoActual = function () { var j = (/\/juego\/([a-z0-9_-]+)\//.exec(location.pathname) || [])[1] || ''; return ['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis'].indexOf(j) >= 0 ? j : ''; };
+  Cuenta.juegoActual = function () { return L.juegoDeRuta(location.pathname); };   // juego o herramienta de esta pagina ('' si ninguno)
 
   /* ---------- usuario ---------- */
   function armarUsuario(p) {
@@ -489,8 +506,7 @@
       }
       async function bajar() {
         var d = await desempaquetar(nube.trozos);
-        Object.keys(d).forEach(function (k) { localStorage.setItem(k, d[k]); });
-        claves.forEach(function (k) { if (!(k in d)) localStorage.removeItem(k); });
+        L.aplicarBajada(d, claves, localStorage);   // solo las claves de la lista (los ajustes por dispositivo nunca se pisan)
         localStorage.setItem(metaK, JSON.stringify({ hash: nube.hash, t: Date.now() }));
         return 'bajado';
       }
@@ -536,7 +552,7 @@
     await exigirIniciado(); if (!usr) throw L.error('sin_sesion');
     var m = await modoDe(juego, modo);
     valor = +valor;
-    if (!isFinite(valor) || valor < 0 || valor > m.tope) throw L.error('fuera_de_rango');
+    if (!isFinite(valor) || valor < (m.min || 0) || valor > m.tope) throw L.error('fuera_de_rango');
     valor = Math.round(valor * 100) / 100;
     var clave = juego + '__' + modo;
     var r = await conCola('puntaje', { clave: clave, valor: valor, mayor: m.mayorEsMejor, perfil: perfilPublico() }, null);

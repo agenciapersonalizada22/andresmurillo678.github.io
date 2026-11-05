@@ -102,7 +102,7 @@ export function bloqueCuenta(msg) {
   return `<h4>Cuenta y nube</h4>
     <div class="ajuste"><span>Usuario<small>${esc(u.nombre)}${c.demo ? ' · modo demo local' : ''}</small></span><button type="button" class="btn mini foco" data-acc="cuenta">Cuenta</button></div>
     <div class="ajuste"><span>Sincronización<small>${esc(msg || estadoNube())}</small></span><button type="button" class="btn mini foco" data-acc="sincronizar">Sincronizar ahora</button></div>
-    <p>Se sincronizan tus ciudades y ajustes. Si hay cambios distintos aquí y en la nube, la plataforma te preguntará con qué versión quedarte.</p>`;
+    <p>Se sincronizan tus ciudades; los ajustes (gráficos, sonido, controles) son de cada dispositivo. Si hay cambios distintos aquí y en la nube, la plataforma te preguntará con qué versión quedarte.</p>`;
 }
 export async function sincronizarAhora() {
   const c = C();

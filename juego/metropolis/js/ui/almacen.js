@@ -45,9 +45,9 @@ export function borrarRanura(n) { try { localStorage.removeItem(K + 'ranura' + n
 export function borrarTodo() {
   try { Object.keys(localStorage).filter((k) => k.startsWith(K)).forEach((k) => localStorage.removeItem(k)); } catch (e) { /* nada */ }
 }
-// Claves de localStorage que representan el progreso (para la nube): ajustes, ranuras y la ciudad compartida.
+// Claves de localStorage que representan el progreso (para la nube): ranuras y la ciudad compartida.
 export function clavesNube() {
-  const r = [K + 'ajustes'];
+  const r = []; // los ajustes (K + 'ajustes') son por dispositivo: no se sincronizan
   for (const n of [1, 2, 3, 'm']) r.push(K + 'ranura' + n, K + 'meta' + n);
   return r;
 }

@@ -1,0 +1,718 @@
+{
+  "version": 1,
+  "http": {
+    "userAgent": "datos-andresmurillo678/1.0 (+https://github.com/{repo}; recolector educativo sin fines de lucro)",
+    "timeoutMs": 15000,
+    "reintentos": 3,
+    "backoffMs": 800,
+    "msPorDominio": 600,
+    "retrasosPorDominio": {
+      "api.coingecko.com": 2500,
+      "finnhub.io": 1100,
+      "api.twelvedata.com": 8000,
+      "www.alphavantage.co": 12500,
+      "api.reservoir.tools": 1000,
+      "www.reddit.com": 2500,
+      "slickdeals.net": 2500,
+      "api.search.brave.com": 1200
+    }
+  },
+  "tiempoMaximoPorFuenteMs": 240000,
+  "cripto": {
+    "activo": true,
+    "top": 250,
+    "sparklinePuntos": 84,
+    "proveedores": [
+      "coingecko",
+      "binance",
+      "coincap"
+    ],
+    "coingecko": {
+      "base": "https://api.coingecko.com/api/v3",
+      "cabeceraClave": "x-cg-demo-api-key"
+    },
+    "binance": {
+      "base": "https://data-api.binance.vision/api/v3"
+    },
+    "coincap": {
+      "base": "https://api.coincap.io/v2"
+    },
+    "hist": {
+      "activo": true,
+      "top": 50,
+      "dias": 365,
+      "cadaHoras": 12,
+      "maxPorEjecucion": 12,
+      "maxCoingecko": 3
+    }
+  },
+  "divisas": {
+    "activo": true,
+    "monedas": [
+      "EUR",
+      "GBP",
+      "JPY",
+      "CHF",
+      "CAD",
+      "AUD",
+      "CNY",
+      "MXN",
+      "DOP",
+      "COP",
+      "ARS",
+      "BRL",
+      "CLP",
+      "PEN"
+    ],
+    "frankfurter": {
+      "base": "https://api.frankfurter.dev/v1"
+    },
+    "erapi": {
+      "base": "https://open.er-api.com/v6"
+    },
+    "histDias": 365
+  },
+  "acciones": {
+    "activo": true,
+    "proveedor": "auto",
+    "moneda": "USD",
+    "simbolos": [
+      {
+        "simbolo": "AAPL",
+        "nombre": "Apple",
+        "bolsa": "NASDAQ"
+      },
+      {
+        "simbolo": "MSFT",
+        "nombre": "Microsoft",
+        "bolsa": "NASDAQ"
+      },
+      {
+        "simbolo": "GOOGL",
+        "nombre": "Alphabet",
+        "bolsa": "NASDAQ"
+      },
+      {
+        "simbolo": "AMZN",
+        "nombre": "Amazon",
+        "bolsa": "NASDAQ"
+      },
+      {
+        "simbolo": "NVDA",
+        "nombre": "NVIDIA",
+        "bolsa": "NASDAQ"
+      },
+      {
+        "simbolo": "META",
+        "nombre": "Meta Platforms",
+        "bolsa": "NASDAQ"
+      },
+      {
+        "simbolo": "TSLA",
+        "nombre": "Tesla",
+        "bolsa": "NASDAQ"
+      },
+      {
+        "simbolo": "NFLX",
+        "nombre": "Netflix",
+        "bolsa": "NASDAQ"
+      },
+      {
+        "simbolo": "AMD",
+        "nombre": "AMD",
+        "bolsa": "NASDAQ"
+      },
+      {
+        "simbolo": "INTC",
+        "nombre": "Intel",
+        "bolsa": "NASDAQ"
+      },
+      {
+        "simbolo": "JPM",
+        "nombre": "JPMorgan Chase",
+        "bolsa": "NYSE"
+      },
+      {
+        "simbolo": "BAC",
+        "nombre": "Bank of America",
+        "bolsa": "NYSE"
+      },
+      {
+        "simbolo": "V",
+        "nombre": "Visa",
+        "bolsa": "NYSE"
+      },
+      {
+        "simbolo": "WMT",
+        "nombre": "Walmart",
+        "bolsa": "NYSE"
+      },
+      {
+        "simbolo": "KO",
+        "nombre": "Coca-Cola",
+        "bolsa": "NYSE"
+      },
+      {
+        "simbolo": "DIS",
+        "nombre": "Walt Disney",
+        "bolsa": "NYSE"
+      },
+      {
+        "simbolo": "XOM",
+        "nombre": "Exxon Mobil",
+        "bolsa": "NYSE"
+      },
+      {
+        "simbolo": "NKE",
+        "nombre": "Nike",
+        "bolsa": "NYSE"
+      },
+      {
+        "simbolo": "BA",
+        "nombre": "Boeing",
+        "bolsa": "NYSE"
+      },
+      {
+        "simbolo": "COIN",
+        "nombre": "Coinbase",
+        "bolsa": "NASDAQ"
+      }
+    ],
+    "indices": [
+      {
+        "simbolo": "SPY",
+        "nombre": "S&P 500 (ETF SPY)",
+        "bolsa": "NYSE"
+      },
+      {
+        "simbolo": "QQQ",
+        "nombre": "Nasdaq 100 (ETF QQQ)",
+        "bolsa": "NASDAQ"
+      },
+      {
+        "simbolo": "DIA",
+        "nombre": "Dow Jones (ETF DIA)",
+        "bolsa": "NYSE"
+      },
+      {
+        "simbolo": "IWM",
+        "nombre": "Russell 2000 (ETF IWM)",
+        "bolsa": "NYSE"
+      }
+    ],
+    "proveedores": {
+      "finnhub": {
+        "base": "https://finnhub.io/api/v1",
+        "porEjecucion": 30
+      },
+      "twelvedata": {
+        "base": "https://api.twelvedata.com",
+        "porEjecucion": 6
+      },
+      "alphavantage": {
+        "base": "https://www.alphavantage.co",
+        "porEjecucion": 2
+      }
+    },
+    "hist": {
+      "activo": true,
+      "proveedor": "auto",
+      "dias": 365,
+      "cadaHoras": 24,
+      "maxPorEjecucion": 3,
+      "simbolos": [
+        "AAPL",
+        "MSFT",
+        "NVDA",
+        "TSLA",
+        "SPY",
+        "QQQ"
+      ]
+    }
+  },
+  "nft": {
+    "activo": true,
+    "proveedor": "auto",
+    "maxColecciones": 20,
+    "reservoir": {
+      "cadenas": [
+        {
+          "nombre": "ethereum",
+          "base": "https://api.reservoir.tools"
+        }
+      ]
+    },
+    "coingecko": {
+      "base": "https://api.coingecko.com/api/v3",
+      "colecciones": [
+        "cryptopunks",
+        "bored-ape-yacht-club",
+        "mutant-ape-yacht-club",
+        "azuki",
+        "pudgy-penguins",
+        "doodles-official",
+        "clonex",
+        "moonbirds",
+        "milady-maker",
+        "otherdeed-for-otherside",
+        "meebits",
+        "cool-cats-nft",
+        "world-of-women-nft",
+        "degods",
+        "y00ts",
+        "art-blocks",
+        "autoglyphs",
+        "chromie-squiggle-by-snowfro",
+        "nouns",
+        "proof-moonbirds"
+      ]
+    }
+  },
+  "cuotas": {
+    "activo": true,
+    "base": "https://api.the-odds-api.com/v4",
+    "regiones": [
+      "eu"
+    ],
+    "mercados": [
+      "h2h",
+      "totals"
+    ],
+    "deportes": [
+      "soccer_epl",
+      "soccer_spain_la_liga",
+      "soccer_uefa_champs_league",
+      "soccer_mexico_ligamx",
+      "basketball_nba",
+      "americanfootball_nfl",
+      "baseball_mlb",
+      "icehockey_nhl",
+      "tennis_atp_us_open"
+    ],
+    "maxDeportesPorEjecucion": 2,
+    "minMinutosEntreActualizaciones": 240,
+    "maxCasas": 6,
+    "reservaCreditos": 30,
+    "diasAdelante": 7
+  },
+  "noticias": {
+    "activo": true,
+    "maxItems": 400,
+    "maxDias": 10,
+    "porFuente": 15,
+    "resumenMax": 220,
+    "tickersExtra": {},
+    "fuentes": [
+      {
+        "id": "cointelegraph",
+        "nombre": "Cointelegraph",
+        "url": "https://cointelegraph.com/rss",
+        "categoria": "cripto",
+        "idioma": "en"
+      },
+      {
+        "id": "coindesk",
+        "nombre": "CoinDesk",
+        "url": "https://www.coindesk.com/arc/outboundfeeds/rss/",
+        "categoria": "cripto",
+        "idioma": "en"
+      },
+      {
+        "id": "decrypt",
+        "nombre": "Decrypt",
+        "url": "https://decrypt.co/feed",
+        "categoria": "cripto",
+        "idioma": "en"
+      },
+      {
+        "id": "bitcoinmagazine",
+        "nombre": "Bitcoin Magazine",
+        "url": "https://bitcoinmagazine.com/feed",
+        "categoria": "cripto",
+        "idioma": "en"
+      },
+      {
+        "id": "theblock",
+        "nombre": "The Block",
+        "url": "https://www.theblock.co/rss.xml",
+        "categoria": "cripto",
+        "idioma": "en"
+      },
+      {
+        "id": "cryptoslate",
+        "nombre": "CryptoSlate",
+        "url": "https://cryptoslate.com/feed/",
+        "categoria": "cripto",
+        "idioma": "en"
+      },
+      {
+        "id": "utoday",
+        "nombre": "U.Today",
+        "url": "https://u.today/rss",
+        "categoria": "cripto",
+        "idioma": "en"
+      },
+      {
+        "id": "bitcoincom",
+        "nombre": "Bitcoin.com News",
+        "url": "https://news.bitcoin.com/feed/",
+        "categoria": "cripto",
+        "idioma": "en"
+      },
+      {
+        "id": "cointelegraph-es",
+        "nombre": "Cointelegraph en Español",
+        "url": "https://es.cointelegraph.com/rss",
+        "categoria": "cripto",
+        "idioma": "es"
+      },
+      {
+        "id": "criptonoticias",
+        "nombre": "CriptoNoticias",
+        "url": "https://www.criptonoticias.com/feed/",
+        "categoria": "cripto",
+        "idioma": "es"
+      },
+      {
+        "id": "beincrypto-es",
+        "nombre": "BeInCrypto en Español",
+        "url": "https://es.beincrypto.com/feed/",
+        "categoria": "cripto",
+        "idioma": "es"
+      },
+      {
+        "id": "yahoo-finance",
+        "nombre": "Yahoo Finance",
+        "url": "https://finance.yahoo.com/news/rssindex",
+        "categoria": "bolsa",
+        "idioma": "en"
+      },
+      {
+        "id": "marketwatch",
+        "nombre": "MarketWatch (titulares)",
+        "url": "https://feeds.content.dowjones.io/public/rss/mw_topstories",
+        "categoria": "bolsa",
+        "idioma": "en"
+      },
+      {
+        "id": "cnbc-finanzas",
+        "nombre": "CNBC Finance",
+        "url": "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664",
+        "categoria": "bolsa",
+        "idioma": "en"
+      },
+      {
+        "id": "cnbc-mercados",
+        "nombre": "CNBC Markets",
+        "url": "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258",
+        "categoria": "bolsa",
+        "idioma": "en"
+      },
+      {
+        "id": "investing-news",
+        "nombre": "Investing.com",
+        "url": "https://www.investing.com/rss/news.rss",
+        "categoria": "bolsa",
+        "idioma": "en"
+      },
+      {
+        "id": "seekingalpha",
+        "nombre": "Seeking Alpha Market Currents",
+        "url": "https://seekingalpha.com/market_currents.xml",
+        "categoria": "bolsa",
+        "idioma": "en"
+      },
+      {
+        "id": "cincodias",
+        "nombre": "Cinco Días",
+        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/cincodias.elpais.com/portada",
+        "categoria": "bolsa",
+        "idioma": "es"
+      },
+      {
+        "id": "expansion",
+        "nombre": "Expansión",
+        "url": "https://e00-expansion.uecdn.es/rss/portada.xml",
+        "categoria": "economia",
+        "idioma": "es"
+      },
+      {
+        "id": "bbc-business",
+        "nombre": "BBC Business",
+        "url": "https://feeds.bbci.co.uk/news/business/rss.xml",
+        "categoria": "economia",
+        "idioma": "en"
+      },
+      {
+        "id": "nyt-business",
+        "nombre": "NYT Business",
+        "url": "https://rss.nytimes.com/services/xml/rss/nyt/Business.xml",
+        "categoria": "economia",
+        "idioma": "en"
+      },
+      {
+        "id": "guardian-business",
+        "nombre": "The Guardian Business",
+        "url": "https://www.theguardian.com/uk/business/rss",
+        "categoria": "economia",
+        "idioma": "en"
+      },
+      {
+        "id": "elpais-economia",
+        "nombre": "El País Economía",
+        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/economia/portada",
+        "categoria": "economia",
+        "idioma": "es"
+      },
+      {
+        "id": "fxstreet",
+        "nombre": "FXStreet",
+        "url": "https://www.fxstreet.com/rss/news",
+        "categoria": "divisas",
+        "idioma": "en"
+      },
+      {
+        "id": "investing-forex",
+        "nombre": "Investing.com Forex",
+        "url": "https://www.investing.com/rss/news_1.rss",
+        "categoria": "divisas",
+        "idioma": "en"
+      },
+      {
+        "id": "ecb-press",
+        "nombre": "Banco Central Europeo (prensa)",
+        "url": "https://www.ecb.europa.eu/rss/press.html",
+        "categoria": "divisas",
+        "idioma": "en"
+      },
+      {
+        "id": "fed-press",
+        "nombre": "Reserva Federal (prensa)",
+        "url": "https://www.federalreserve.gov/feeds/press_all.xml",
+        "categoria": "divisas",
+        "idioma": "en"
+      },
+      {
+        "id": "nftnow",
+        "nombre": "NFT Now",
+        "url": "https://nftnow.com/feed/",
+        "categoria": "nft",
+        "idioma": "en"
+      },
+      {
+        "id": "nftevening",
+        "nombre": "NFT Evening",
+        "url": "https://nftevening.com/feed/",
+        "categoria": "nft",
+        "idioma": "en"
+      },
+      {
+        "id": "dappradar",
+        "nombre": "DappRadar Blog",
+        "url": "https://dappradar.com/blog/feed",
+        "categoria": "nft",
+        "idioma": "en"
+      },
+      {
+        "id": "espn",
+        "nombre": "ESPN",
+        "url": "https://www.espn.com/espn/rss/news",
+        "categoria": "deportes",
+        "idioma": "en"
+      },
+      {
+        "id": "espn-soccer",
+        "nombre": "ESPN Fútbol",
+        "url": "https://www.espn.com/espn/rss/soccer/news",
+        "categoria": "deportes",
+        "idioma": "en"
+      },
+      {
+        "id": "bbc-sport",
+        "nombre": "BBC Sport",
+        "url": "https://feeds.bbci.co.uk/sport/rss.xml",
+        "categoria": "deportes",
+        "idioma": "en"
+      },
+      {
+        "id": "skysports",
+        "nombre": "Sky Sports",
+        "url": "https://www.skysports.com/rss/12040",
+        "categoria": "deportes",
+        "idioma": "en"
+      },
+      {
+        "id": "marca",
+        "nombre": "Marca",
+        "url": "https://e00-marca.uecdn.es/rss/portada.xml",
+        "categoria": "deportes",
+        "idioma": "es"
+      },
+      {
+        "id": "as",
+        "nombre": "AS",
+        "url": "https://as.com/rss/tags/ultimas_noticias.xml",
+        "categoria": "deportes",
+        "idioma": "es"
+      },
+      {
+        "id": "mundodeportivo",
+        "nombre": "Mundo Deportivo",
+        "url": "https://www.mundodeportivo.com/feed/rss/home",
+        "categoria": "deportes",
+        "idioma": "es"
+      },
+      {
+        "id": "bbc-world",
+        "nombre": "BBC World",
+        "url": "https://feeds.bbci.co.uk/news/world/rss.xml",
+        "categoria": "general",
+        "idioma": "en"
+      },
+      {
+        "id": "npr",
+        "nombre": "NPR",
+        "url": "https://feeds.npr.org/1001/rss.xml",
+        "categoria": "general",
+        "idioma": "en"
+      },
+      {
+        "id": "bbc-mundo",
+        "nombre": "BBC Mundo",
+        "url": "https://feeds.bbci.co.uk/mundo/rss.xml",
+        "categoria": "general",
+        "idioma": "es"
+      },
+      {
+        "id": "elpais",
+        "nombre": "El País",
+        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada",
+        "categoria": "general",
+        "idioma": "es"
+      },
+      {
+        "id": "dw-es",
+        "nombre": "DW Español",
+        "url": "https://rss.dw.com/rdf/rss-sp-all",
+        "categoria": "general",
+        "idioma": "es"
+      },
+      {
+        "id": "france24-es",
+        "nombre": "France 24 Español",
+        "url": "https://www.france24.com/es/rss",
+        "categoria": "general",
+        "idioma": "es"
+      }
+    ]
+  },
+  "ofertas": {
+    "activo": true,
+    "moneda": "USD",
+    "minDescuentoPct": 10,
+    "maxItems": 300,
+    "maxDias": 14,
+    "historialDias": 60,
+    "maxPuntosHistorial": 90,
+    "respetarRobots": true,
+    "bloqueados": [
+      "amazon.*",
+      "ebay.*",
+      "walmart.com",
+      "aliexpress.com",
+      "temu.com",
+      "shein.com",
+      "mercadolibre.*",
+      "mercadolivre.com.br",
+      "target.com",
+      "bestbuy.com",
+      "costco.com",
+      "alibaba.com",
+      "wish.com"
+    ],
+    "maxPaginasPorEjecucion": 20,
+    "fuentes": [
+      {
+        "id": "slickdeals",
+        "tipo": "feed",
+        "nombre": "Slickdeals (portada)",
+        "url": "https://slickdeals.net/newsearch.php?mode=frontpage&searcharea=deals&searchin=first&rss=1",
+        "moneda": "USD",
+        "idioma": "en",
+        "categoria": "otros",
+        "activo": true
+      },
+      {
+        "id": "dealnews",
+        "tipo": "feed",
+        "nombre": "DealNews",
+        "url": "https://www.dealnews.com/?rss=1",
+        "moneda": "USD",
+        "idioma": "en",
+        "categoria": "otros",
+        "activo": true
+      },
+      {
+        "id": "reddit-deals",
+        "tipo": "feed",
+        "nombre": "Reddit r/deals",
+        "url": "https://www.reddit.com/r/deals/.rss",
+        "moneda": "USD",
+        "idioma": "en",
+        "categoria": "otros",
+        "activo": true
+      },
+      {
+        "id": "reddit-buildapcsales",
+        "tipo": "feed",
+        "nombre": "Reddit r/buildapcsales",
+        "url": "https://www.reddit.com/r/buildapcsales/.rss",
+        "moneda": "USD",
+        "idioma": "en",
+        "categoria": "tecnologia",
+        "activo": true
+      },
+      {
+        "id": "9to5toys",
+        "tipo": "feed",
+        "nombre": "9to5Toys",
+        "url": "https://9to5toys.com/feed/",
+        "moneda": "USD",
+        "idioma": "en",
+        "categoria": "tecnologia",
+        "activo": true
+      },
+      {
+        "id": "chollometro",
+        "tipo": "feed",
+        "nombre": "Chollometro",
+        "url": "https://www.chollometro.com/rss",
+        "moneda": "EUR",
+        "idioma": "es",
+        "categoria": "otros",
+        "activo": true
+      },
+      {
+        "id": "promodescuentos",
+        "tipo": "feed",
+        "nombre": "Promodescuentos",
+        "url": "https://www.promodescuentos.com/rss",
+        "moneda": "MXN",
+        "idioma": "es",
+        "categoria": "otros",
+        "activo": true
+      }
+    ],
+    "busqueda": {
+      "activo": false,
+      "proveedor": "auto",
+      "palabras": [
+        "oferta laptop",
+        "deal ssd 2tb"
+      ],
+      "resultadosPorPalabra": 5,
+      "maxPaginas": 6,
+      "pais": "ES"
+    }
+  }
+}

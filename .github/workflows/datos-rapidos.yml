@@ -1,0 +1,43 @@
+name: Datos rapidos (cripto, divisas, acciones, cuotas)
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Ambos workflows comparten grupo: nunca publican a la vez (la rama `datos` es un unico commit reemplazado).
+concurrency:
+  group: datos-publicacion
+  cancel-in-progress: false
+
+jobs:
+  recolectar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Traer datos previos (rama datos)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/datos/bin/traer-datos.sh datos-salida
+      - name: Recolectar
+        env:
+          COINGECKO_KEY: ${{ secrets.COINGECKO_KEY }}
+          FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
+          TWELVEDATA_KEY: ${{ secrets.TWELVEDATA_KEY }}
+          ALPHAVANTAGE_KEY: ${{ secrets.ALPHAVANTAGE_KEY }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: node scripts/datos/ejecutar.js rapidos --salida datos-salida
+      - name: Publicar en la rama datos
+        if: ${{ !cancelled() }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/datos/bin/publicar-datos.sh datos-salida

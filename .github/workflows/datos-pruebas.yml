@@ -1,0 +1,22 @@
+name: Datos - pruebas
+
+on:
+  pull_request:
+    paths: ['scripts/datos/**', '.github/workflows/datos-*.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node scripts/datos/ejecutar.js --validar-config
+      - run: node --test scripts/datos/test/*.test.js
+      - run: node scripts/datos/ejecutar.js todos --offline

@@ -113,27 +113,87 @@ await t('borrar cuenta limpia todo', async () => {
 });
 
 console.log('Tablas');
-await t('firestore.rules coincide con juegos.js', () => {
-  const r = fs.readFileSync(path.join(dir, '..', 'firestore.rules'), 'utf8'), mapa = {};
+const reglasTxt = () => fs.readFileSync(path.join(dir, '..', 'firestore.rules'), 'utf8');
+await t('firestore.rules coincide con juegos.js (topes, menor-es-mejor, minimos, ids)', () => {
+  const r = reglasTxt(), mapa = {};
   const bloque = /function topes\(\) \{\s*return \{([\s\S]*?)\};/.exec(r)[1]; for (const m of bloque.matchAll(/'([a-z]+__[a-z0-9_]+)':\s*(\d+)/g)) mapa[m[1]] = +m[2];
-  const esperado = {}; for (const j of Juegos.lista) for (const m of j.modos) { assert.ok(m.mayorEsMejor, 'las reglas asumen mayorEsMejor salvo menorEsMejor()'); esperado[Juegos.clave(j.id, m.id)] = m.tope; }
+  const esperado = {}, menor = [], mins = {};
+  for (const j of Juegos.lista) for (const m of j.modos) {
+    esperado[Juegos.clave(j.id, m.id)] = m.tope; assert.ok(m.tope > 0 && /^[a-z0-9_]{1,40}$/.test(m.id), j.id + m.id);
+    if (!m.mayorEsMejor) { menor.push(Juegos.clave(j.id, m.id)); mins[Juegos.clave(j.id, m.id)] = m.min; assert.ok(m.min > 0 && m.min < m.tope, 'min coherente ' + m.id); } else assert.equal(m.min, undefined, 'min solo en menor-es-mejor');
+  }
   assert.deepEqual(mapa, esperado);
-  const ids = Juegos.lista.map(j => j.id).sort(); const re = /\(([a-z|]+)\)\(~/.exec(r)[1].split('|').sort(); assert.deepEqual(re, ids);
-  assert.ok(r.includes("in ['" + Juegos.lista.map(j => j.id).join("', '") + "']"));
-  for (const j of Juegos.lista) assert.ok(r.includes("'" + j.id + "'"), j.id);
+  const bm = /function menorEsMejor\(\) \{\s*return \[([^\]]*)\]/.exec(r)[1]; assert.deepEqual([...bm.matchAll(/'([^']+)'/g)].map(x => x[1]).sort(), menor.sort());
+  const bn = /function minimos\(\) \{\s*return \{([^}]*)\}/.exec(r)[1], mapaMin = {}; for (const m of bn.matchAll(/'([a-z_0-9]+)':\s*([0-9.]+)/g)) mapaMin[m[1]] = +m[2]; assert.deepEqual(mapaMin, mins);
+  assert.ok(menor.length >= 6);
+  const todos = Juegos.todos.map(j => j.id).sort(); const re = /\(([a-z_|]+)\)\(~/.exec(r)[1].split('|').sort(); assert.deepEqual(re, todos);
+  assert.ok(r.includes("in ['" + Juegos.lista.map(j => j.id).join("', '") + "']"), 'invitaciones solo a juegos');
+  const keys = /request\.resource\.data\.keys\(\)\.hasOnly\(\[('nebula'[^\]]*)\]/.exec(r)[1].match(/'[a-z_]+'/g).map(x => x.slice(1, -1)); assert.deepEqual(keys.filter(k => k !== 'xpJuego' && k !== 'ultimo').sort(), todos);
+  for (const id of todos) assert.ok(r.includes("listaOk('" + id + "')"), 'listaOk ' + id);
+  assert.ok(+/xpJuego\.size\(\) <= (\d+)/.exec(r)[1] >= todos.length, 'xpJuego cubre todos los ids');
+});
+await t('juegos nuevos: modos, direccion y datos exactos de cada juego', () => {
+  const esp = { buscaminas: 6, celulas: 4, serpientes: 4, uno: 3, magnate: 3, cartas: 5 }; for (const k in esp) assert.equal(Juegos.juego(k).modos.length, esp[k], k);
+  for (const id of ['tiempo_principiante', 'tiempo_intermedio', 'tiempo_experto', 'diario']) { const m = Juegos.modo('buscaminas', id); assert.equal(m.mayorEsMejor, false); assert.equal(m.tope, 999); assert.equal(m.unidad, 's'); }
+  assert.equal(Juegos.modo('buscaminas', 'contrarreloj').tope, 100000); assert.equal(Juegos.modo('buscaminas', 'supervivencia').tope, 1000000);
+  for (const id of ['masa_ffa', 'masa_equipos', 'masa_superv', 'masa_batalla']) { const m = Juegos.modo('celulas', id); assert.equal(m.mayorEsMejor, true); assert.equal(m.tope, 100000000); }
+  assert.deepEqual(['ffa_longitud', 'equipos_longitud', 'superv_tiempo', 'rey_zona'].map(i => Juegos.modo('serpientes', i).tope), [100000, 100000, 7200, 7200]);
+  assert.deepEqual(['puntos', 'racha', 'victorias'].map(i => Juegos.modo('uno', i).tope), [1000000, 500, 100000]);
+  assert.equal(Juegos.modo('magnate', 'turnos_victoria').mayorEsMejor, false); assert.equal(Juegos.modo('magnate', 'turnos_victoria').tope, 100000);
+  assert.deepEqual(['patrimonio_final', 'victorias'].map(i => Juegos.modo('magnate', i).tope), [100000000, 100000]);
+  assert.deepEqual(['monedero', 'bote', 'dompe_racha', 'conq_turnos', 'pesc_libros'].map(i => Juegos.modo('cartas', i).tope), [1000000000, 1000000000, 1000, 200, 26]);
+  assert.equal(Juegos.modo('cartas', 'conq_turnos').mayorEsMejor, false);
+  assert.deepEqual(Juegos.lista.map(j => j.categoria).filter((c, i, a) => a.indexOf(c) === i).sort(), ['Acción', 'Estrategia', 'Mesa y cartas', 'Mundo abierto']);
+  for (const j of Juegos.lista) assert.ok(j.categoria && j.ruta === j.id + '/' && j.nombre && j.descripcion && /^#[0-9a-f]{6}$/.test(j.color), j.id);
+  assert.ok(Juegos.claves().includes('cartas__conq_turnos') && Juegos.claves().length === 37);
+});
+await t('direccion menor-es-mejor: mejor(), ranking y solo baja el valor (AdaptadorLocal)', async () => {
+  assert.ok(L.mejor(40, 50, false) && !L.mejor(50, 40, false) && !L.mejor(40, 40, false) && L.mejor(40, null, false));
+  const e = [{ uid: 'a', valor: 80, fecha: 1 }, { uid: 'b', valor: 30, fecha: 2 }, { uid: 'c', valor: 30, fecha: 1 }, { uid: 'd', valor: 55, fecha: 0 }];
+  assert.deepEqual(L.ordenarRanking(e, false).map(x => x.uid + x.pos), ['c1', 'b2', 'd3', 'a4']);
+  const al = new Mem(), x = Local.crear({ almacen: al, sesion: new Mem() }), y = Local.crear({ almacen: al, sesion: new Mem() });
+  await x.registrar('rapida_1', 'secreta123', true, { color: '#fff', avatar: 'a1' }); await y.registrar('lenta_2', 'secreta123', true, { color: '#000', avatar: 'a2' });
+  const k = 'buscaminas__tiempo_principiante', p = { nombre: 'rapida_1', color: '#fff' };
+  assert.equal((await x.puntajeSet(k, 90, false, p)).mejoro, true); assert.equal((await x.puntajeSet(k, 120, false, p)).mejoro, false); assert.equal((await x.puntajeSet(k, 45, false, p)).mejoro, true);
+  await y.puntajeSet(k, 60, false, { nombre: 'lenta_2', color: '#000' });
+  assert.deepEqual((await x.puntajeTop(k, 10, false)).map(r => r.valor), [45, 60]); assert.equal(await x.puntajeContarMejores(k, 60, false), 1);
+});
+await t('juegoDeRuta: juegos, herramientas, subdirectorio de GitHub Pages, raiz y localhost', () => {
+  for (const T of [Juegos, L]) {
+    const f = r => T.juegoDeRuta(r);
+    assert.equal(f('/juego/uno/'), 'uno'); assert.equal(f('/juego/uno/index.html'), 'uno'); assert.equal(f('/andresmurillo678.github.io/juego/cartas/'), 'cartas'); assert.equal(f('/juego/'), ''); assert.equal(f('/juego/index.html'), ''); assert.equal(f('/juego/hack/'), '');
+    assert.equal(f('/herramientas/notas/'), 'notas'); assert.equal(f('/andresmurillo678.github.io/herramientas/notas/index.html'), 'notas'); assert.equal(f('/herramientas/pizarra'), 'pizarra');
+    for (const s of ['imagenes', 'video', 'escritor', 'calendario']) { assert.equal(f('/herramientas/contenido/' + s + '/'), 'contenido_' + s); assert.equal(f('/x/herramientas/contenido/' + s + '/index.html'), 'contenido_' + s); }
+    assert.equal(f('/herramientas/'), ''); assert.equal(f('/herramientas/index.html'), ''); assert.equal(f('/herramientas/contenido/'), ''); assert.equal(f('/herramientas/contenido/index.html'), ''); assert.equal(f('/herramientas/contenido/otro/'), ''); assert.equal(f('/herramientas/datos/'), ''); assert.equal(f(''), '');
+  }
+  assert.deepEqual([...L.RUTAS_JUEGOS].sort(), Juegos.lista.map(j => j.id).sort()); const rutas = {}; for (const h of Juegos.herramientas) rutas[h.carpeta] = h.id; assert.deepEqual(L.RUTAS_HERRAMIENTAS, rutas);
+});
+await t('herramientas: tipo, rutas, ids, sin modos y logros de notas', () => {
+  assert.deepEqual(Juegos.herramientas.map(h => h.id), ['notas', 'pizarra', 'mercados', 'apuestas', 'ofertas', 'contenido_imagenes', 'contenido_video', 'contenido_escritor', 'contenido_calendario']);
+  for (const h of Juegos.herramientas) { assert.equal(h.tipo, 'herramienta'); assert.deepEqual(h.modos, []); assert.equal(h.ruta, '../herramientas/' + h.carpeta + '/'); assert.ok(fs.existsSync(path.join(dir, '..', '..', h.ruta, 'index.html')), h.id); assert.ok(Juegos.esHerramienta(h.id) && Juegos.juego(h.id) === h && h.id.length <= 24); }
+  assert.ok(!Juegos.esHerramienta('uno') && !Juegos.lista.some(j => j.tipo === 'herramienta'));
+  assert.deepEqual(Juegos.juego('notas').logros.map(l => l.id), ['primera_tarea', 'racha_7', 'enfoque_1h', 'nota_enlazada', 'colaborador', 'bloqueo']);
+  assert.equal(Juegos.modo('notas', 'puntos'), null); assert.ok(!Juegos.claves().some(k => /^(notas|pizarra|mercados|contenido)/.test(k)), 'fuera del ranking');
+  const ids = Juegos.todos.map(j => j.id); assert.equal(new Set(ids).size, ids.length, 'ids unicos entre juegos y herramientas');
+});
+await t('bajar() solo escribe las claves de la lista (ajustes por dispositivo no se pisan)', () => {
+  const m = new Mem(); m.setItem('juego_save', 'local'); m.setItem('juego_ajustes', 'MIOS'); m.setItem('juego_viejo', 'x');
+  L.aplicarBajada({ juego_save: 'nube', juego_ajustes: 'DE_OTRO_PC', otra: '1' }, ['juego_save', 'juego_viejo', 'juego_nuevo'], m);
+  assert.equal(m.getItem('juego_save'), 'nube'); assert.equal(m.getItem('juego_ajustes'), 'MIOS'); assert.equal(m.getItem('otra'), null); assert.equal(m.getItem('juego_viejo'), null);
+  const m2 = new Mem(); L.aplicarBajada({ a: '1', b: '2' }, ['a'], m2); assert.deepEqual(m2.d, { a: '1' }); L.aplicarBajada(null, ['a'], m2); assert.deepEqual(m2.d, {});
 });
 await t('modos de Elo de ajedrez (elo, elo_online, elo_rompe)', () => {
   for (const id of ['elo', 'elo_online', 'elo_rompe']) { const m = Juegos.modo('ajedrez', id); assert.ok(m, id); assert.equal(m.mayorEsMejor, true); assert.equal(m.tope, 4000); assert.ok(m.nombre && m.unidad === 'Elo'); }
   assert.ok(Juegos.claves().includes('ajedrez__elo_online'));
 });
 await t('logros: ids validos, sin repetidos, nombre y descripcion, dentro del tope', () => {
-  for (const j of Juegos.lista) {
+  for (const j of Juegos.todos) {
     const ids = j.logros.map(l => l.id); assert.equal(new Set(ids).size, ids.length, 'repetidos en ' + j.id); assert.ok(ids.length <= Juegos.LOGROS_MAX, j.id);
     for (const l of j.logros) { assert.ok(/^[a-z0-9_]{1,40}$/.test(l.id), j.id + ':' + l.id); assert.ok(l.nombre && l.desc, j.id + ':' + l.id); }
   }
 });
 await t('logros: cobertura de lo que reportan los juegos', () => {
-  const n = { nebula: 21, ciudad: 24, guerra: 17, ajedrez: 15 }; for (const k in n) assert.equal(Juegos.juego(k).logros.length, n[k], k);
+  const n = { nebula: 21, ciudad: 24, guerra: 17, ajedrez: 15, buscaminas: 24, celulas: 24, serpientes: 20, uno: 24, magnate: 15, cartas: 48 }; for (const k in n) assert.equal(Juegos.juego(k).logros.length, n[k], k);
   const tiene = (j, ids) => ids.forEach(i => assert.ok(Juegos.juego(j).logros.some(l => l.id === i), j + ':' + i));
   tiene('ciudad', ['primera_mision', 'millonario', 'escapar', 'hist22']); tiene('metropolis', ['airelimpio', 'primero', 'primera_casa', 'pueblo', 'metropoli', 'dias100']);
   tiene('ajedrez', ['primera_victoria', 'jaque_mate', 'mate_rapido', 'sin_red', 'gran_rival', 'rey_a_salvo', 'nueva_dama', 'estudiante', 'tactico', 'en_racha', 'aprendiz', 'analista', 'nivel_de_club', 'nivel5', 'online']);
@@ -141,7 +201,7 @@ await t('logros: cobertura de lo que reportan los juegos', () => {
   assert.ok(Juegos.lista.every(j => !/[A-Z]/.test(j.logros.map(l => l.id).join(''))), 'ids en minuscula');
 });
 await t('Cuenta.logro rechaza ids no validos y respeta el tope de 100 en las reglas', () => {
-  const r = fs.readFileSync(path.join(dir, '..', 'firestore.rules'), 'utf8'); assert.equal((r.match(/\.size\(\) <= 100\)/g) || []).length, 6);
+  const r = reglasTxt(); assert.equal((r.match(/\.size\(\) <= 100\)/g) || []).length, 1, 'un solo punto de control (listaOk)'); assert.ok(Juegos.todos.every(j => j.logros.length <= 100));
   assert.equal(Juegos.LOGROS_MAX, 100);
 });
 console.log(`\n${ok} pruebas correctas`);
