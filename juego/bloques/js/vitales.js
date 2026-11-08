@@ -66,7 +66,8 @@ export class Vitales {
     // ---- caídas
     if (j.enSuelo || j.enAgua || j.volando || c.enVehiculo) {
       if (j.enSuelo && !j.enAgua && !j.volando && !c.enVehiculo && this.cima !== null) {
-        const caida = this.cima - j.y;
+        const g = c.gravedad === undefined ? 1 : c.gravedad;
+        const caida = (this.cima - j.y) * Math.max(0.15, g);   // con poca gravedad se cae más suave
         if (caida > 3) this.daniar(c, Math.ceil(caida - 3), 'caida', { sinArmadura: true, sinInvulnerable: true });
       }
       this.cima = j.y;
@@ -82,7 +83,7 @@ export class Vitales {
     }
 
     // ---- curarse con la barriga llena
-    if (this.hambre >= 18 && this.vida < 20) {
+    if (this.hambre >= 18 && this.vida < 20 && !c.sinRegeneracion) {
       this.tCura += dt;
       const lleno = this.hambre >= 20 && this.saturacion > 0;
       if (this.tCura >= (lleno ? 0.5 : 4)) { this.tCura = 0; this.curar(1); this.cansancio += lleno ? 1.5 : 6; }

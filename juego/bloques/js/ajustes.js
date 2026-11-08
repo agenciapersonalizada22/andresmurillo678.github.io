@@ -15,6 +15,8 @@ export const DEFECTO = {
   // gráficos
   calidad: 'auto', distancia: 0, sombras: 'auto', resolucion: 'auto', limiteFps: 0, mostrarFps: false,
   autoCalidad: true, antialias: true, fov: 75, particulas: true, minimapa: true, minimapaZoom: 2,
+  // espacio y otras dimensiones
+  efectosEspacio: 'auto', eclipses: true, tierraVisible: true, vibracionCohete: true, distanciaDim: 0,
   // audio
   volMaestro: 80, volMusica: 60, volEfectos: 80, silencio: false, pausaOculto: true,
   // controles

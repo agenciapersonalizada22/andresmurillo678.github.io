@@ -22,6 +22,9 @@ export const TIPOS = {
   arana: { nombre: 'Araña', vida: 16, rad: 0.5, alto: 0.9, vel: 3.3, dano: 2, hostil: true, voz: 'arana', botin: [['hilo', 0, 2]] },
   creeper: { nombre: 'Creeper', vida: 20, rad: 0.3, alto: 1.7, vel: 2.3, dano: 0, hostil: true, voz: null, botin: [['polvora', 0, 2]] },
   aldeano: { nombre: 'Aldeano', vida: 20, rad: 0.3, alto: 1.9, vel: 1.0, dano: 0, hostil: false, voz: 'aldeano', botin: [] },
+  // del Abismo (al final: los números de tipo viajan en el multijugador)
+  diablillo: { nombre: 'Diablillo', vida: 16, rad: 0.3, alto: 1.7, vel: 3.5, dano: 3, hostil: true, voz: 'zombi', botin: [['carbon', 0, 2], ['oro_crudo', 0.12, 1]] },
+  ascua: { nombre: 'Ascua', vida: 14, rad: 0.3, alto: 1.9, vel: 2.1, dano: 3, hostil: true, voz: 'esqueleto', botin: [['carbon', 0, 2], ['hierro_crudo', 0.15, 1]] },
 };
 
 export const OFICIOS = {
@@ -123,6 +126,24 @@ const CONSTRUCTORES = {
     arco.rotation.x = 0;
     g.userData.brazoD.rotation.x = -1.3;
     g.userData.brazoI.rotation.x = -1.2;
+    return g;
+  },
+  diablillo() {
+    const g = crearHumanoide({ piel: '#b02a1c', camisa: '#6a1410', pantalon: '#3a0c0a', manga: '#b02a1c', ojos: '#ffd84a' });
+    for (const s of [-1, 1]) {
+      const cuerno = caja(g.userData.cabeza, 0.1, 0.22, 0.1, s * 0.17, 0.62, 0, '#16100e');
+      cuerno.rotation.z = -s * 0.35;
+    }
+    caja(g, 0.07, 0.55, 0.07, 0, 0.5, -0.2, '#8a1810').rotation.x = 0.5;
+    g.userData.brazoI.rotation.x = g.userData.brazoD.rotation.x = -1.3;
+    g.scale.setScalar(0.92);
+    return g;
+  },
+  ascua() {
+    const g = crearHumanoide({ piel: '#2c2a2e', camisa: '#3a383e', pantalon: '#26242a', fino: true, ojos: '#ff9a2a' });
+    for (let i = -1; i <= 1; i++) caja(g.userData.cabeza, 0.12, 0.2 + (i === 0 ? 0.14 : 0), 0.12, i * 0.15, 0.6 + (i === 0 ? 0.07 : 0), 0, i === 0 ? '#ffd24a' : '#ff7a1a');
+    caja(g, 0.3, 0.3, 0.2, 0, 1.15, 0.0, '#ff7a1a');
+    g.userData.brazoD.rotation.x = -1.3; g.userData.brazoI.rotation.x = -1.2;
     return g;
   },
   aldeano(oficio) {
@@ -341,6 +362,16 @@ export class Mobs {
   // ¿Es de noche o está bajo tierra? Dónde puede aparecer un malo
   intentarNacer(jugador, c) {
     const m = this.mundo;
+    if (c.mobsDim && c.mobsDim.length) {              // dimensión con bichos propios (Abismo)
+      const a = Math.random() * Math.PI * 2, d = azar(14, 30);
+      const x = Math.floor(jugador.x + Math.cos(a) * d), z = Math.floor(jugador.z + Math.sin(a) * d);
+      if (!m.estaListo(x, z)) return;
+      const y = m.alturaSuelo(x, z) + 1;
+      if (y < 2 || SOLIDO[m.obtener(x, y, z)] || SOLIDO[m.obtener(x, y + 1, z)] || m.obtener(x, y, z) === B.LAVA || m.obtener(x, y + 1, z) === B.LAVA) return;
+      if (Math.hypot(x + 0.5 - jugador.x, z + 0.5 - jugador.z) < 10) return;
+      this.crear(c.mobsDim[Math.random() < 0.62 ? 0 : c.mobsDim.length - 1], x + 0.5, y, z + 0.5);
+      return;
+    }
     const ang = Math.random() * Math.PI * 2, dist = azar(16, 32);
     const x = Math.floor(jugador.x + Math.cos(ang) * dist), z = Math.floor(jugador.z + Math.sin(ang) * dist);
     if (!m.estaListo(x, z)) return;
@@ -408,16 +439,18 @@ export class Mobs {
       let vagando = false;
       const T = e.T;
       switch (e.tipo) {
+        case 'diablillo':
         case 'zombi': {
           if (hostilActivo && dist < 30) {
             e.rumbo = Math.atan2(dx, dz); quiere = T.vel * (c.dificultad === 'dificil' ? 1.15 : 1);
             if (dist < 1.5 && Math.abs(j.y - e.y) < 1.6 && e.ataque <= 0) {
               e.ataque = 1.0;
-              c.herirJugador(T.dano, dx, dz, 'zombi', null, j);
+              c.herirJugador(T.dano, dx, dz, e.tipo === 'diablillo' ? 'diablillo' : 'zombi', null, j);
             }
           } else { this.vagar(e, dt); vagando = true; }
           break;
         }
+        case 'ascua':
         case 'esqueleto': {
           if (hostilActivo && dist < 28) {
             e.rumbo = Math.atan2(dx, dz);
@@ -463,6 +496,11 @@ export class Mobs {
       }
       if (vagando && e.estado === 'camina') quiere = e.tipo === 'aldeano' ? T.vel : T.vel * 0.45;
 
+      // ---- la lava quema (menos a los del Abismo)
+      if (e.tipo !== 'diablillo' && e.tipo !== 'ascua' && m.obtener(Math.floor(e.x), Math.floor(e.y + 0.2), Math.floor(e.z)) === B.LAVA) {
+        e.quema += dt;
+        if (e.quema >= 0.5) { e.quema = 0; this.herir(e, 3, e.x, e.z, 0); }
+      }
       // ---- sol: zombis y esqueletos se queman
       if ((e.tipo === 'zombi' || e.tipo === 'esqueleto') && c.dia > 0.55) {
         const techo = m.alturaSuelo(Math.floor(e.x), Math.floor(e.z));
@@ -583,7 +621,7 @@ export class Mobs {
     e.fase += v * dt * 5.5;
     const sw = Math.sin(e.fase) * Math.min(1, v / 1.6) * 0.8;
     if (u.piernaI) { u.piernaI.rotation.x = sw; u.piernaD.rotation.x = -sw; }
-    if (e.tipo === 'zombi') {
+    if (e.tipo === 'zombi' || e.tipo === 'diablillo') {
       u.brazoI.rotation.x = -1.45 + sw * 0.1; u.brazoD.rotation.x = -1.45 - sw * 0.1;
     } else if (e.tipo === 'aldeano') {
       const mirada = e.cabezaYaw != null ? Math.atan2(Math.sin(e.cabezaYaw - e.yaw), Math.cos(e.cabezaYaw - e.yaw)) : 0;

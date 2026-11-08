@@ -48,6 +48,8 @@ export class Multi {
     this.c = c;
     this.registrado = false;
     this.pos = {};              // id -> última posición cruda de cada amigo
+    this.dimDe = {};            // id -> dimensión donde está cada amigo
+    this._dimHost = 'superficie';
     this.tPos = 0;
     this.tSnap = 0;
     this.tHora = 0;
@@ -65,6 +67,8 @@ export class Multi {
 
   get activo() { return !!(R() && R().conectado); }
   get esAnfitrion() { return this.activo && R().esAnfitrion; }
+  // dimensión que simula el anfitrión (los bichos solo existen ahí)
+  get dimAnfitrion() { return this.activo && R().esAnfitrion ? this.c.espacio.dim : this._dimHost; }
   get esInvitado() { return this.activo && !R().esAnfitrion && this.partidaEmpezada; }
 
   // Al cargar el juego: el lobby (invitaciones directas, enlaces) necesita las opciones y los oyentes de la red
@@ -111,7 +115,7 @@ export class Multi {
     if (!this.activo) return r;
     for (const id of Object.keys(this.pos)) {
       const j = R().jugadores[id];
-      if (j) r.push({ x: this.pos[id].x, z: this.pos[id].z, color: j.color });
+      if (j && (this.dimDe[id] || 'superficie') === this.c.mundo.dimension) r.push({ x: this.pos[id].x, z: this.pos[id].z, color: j.color });
     }
     return r;
   }
@@ -119,7 +123,7 @@ export class Multi {
   // Los bichos persiguen al más cercano de todos los jugadores
   objetivos(local) {
     const l = [local];
-    if (this.esAnfitrion) for (const id of Object.keys(this.pos)) if (R().jugadores[id]) l.push({ x: this.pos[id].x, y: this.pos[id].y, z: this.pos[id].z, id: +id, remoto: true });
+    if (this.esAnfitrion) for (const id of Object.keys(this.pos)) if (R().jugadores[id] && (this.dimDe[id] || 'superficie') === this.c.mundo.dimension) l.push({ x: this.pos[id].x, y: this.pos[id].y, z: this.pos[id].z, id: +id, remoto: true });
     return l;
   }
 
@@ -132,7 +136,7 @@ export class Multi {
 
   alSalir(id, j) {
     this.c.remotos.quitar(id);
-    delete this.pos[id];
+    delete this.pos[id]; delete this.dimDe[id];
     this.c.hud.chat(null, null, (j && j.nombre ? j.nombre : 'Un jugador') + ' salió', true);
   }
 
@@ -189,6 +193,10 @@ export class Multi {
     const c = this.c, red = R();
     const datos = c.datosMundo();
     datos.jugador = { x: c.jugador.x + 1.5, y: c.jugador.y + 0.2, z: c.jugador.z, yaw: c.jugador.yaw, pitch: 0, volando: false };
+    // las otras dimensiones no viajan aquí: se piden por paquetes al viajar (dimPedir)
+    delete datos.dimensiones;
+    if (datos.espacio) datos.espacio = { ...datos.espacio, dim: 'superficie', veh: undefined, pad: undefined };
+    if (c.espacio && c.espacio.dim !== 'superficie') datos.jugador = c.spawn ? { x: c.spawn.x, y: c.spawn.y + 0.2, z: c.spawn.z, yaw: 0, pitch: 0, volando: false } : undefined;
     // lo personal de cada jugador no viaja
     delete datos.inventario; delete datos.vitales; delete datos.cama; delete datos.vehiculos; delete datos.vehiculosUsados;
     const { z, s } = await comprimir(JSON.stringify(datos));
@@ -247,16 +255,21 @@ export class Multi {
           if (this.recibiendo.vistos >= this.recibiendo.total) this.terminarRecepcion();
         }
         break;
-      case 'pos': c.remotos.recibir(de, d); if (d.p) this.pos[de] = d.p; break;
+      case 'pos': c.remotos.recibir(de, d); if (d.p) this.pos[de] = d.p; this.dimDe[de] = d.dm || 'superficie'; break;
       case 'bloqueReq': if (red.esAnfitrion) this.validarBloque(d, de); break;
-      case 'bloque': c.ponerBloqueRemoto(d.x, d.y, d.z, d.id); break;
-      case 'snap': if (!red.esAnfitrion) { c.animales.aplicarSnapshot(d.a || []); c.mobs.aplicarSnapshot(d.m || []); } break;
-      case 'hora': if (!red.esAnfitrion) { c.hora = d.h; c.dias = d.d; } break;
+      case 'bloque': c.ponerBloqueRemoto(d.x, d.y, d.z, d.id, d.dm); break;
+      case 'snap':
+        if (!red.esAnfitrion) {
+          this._dimHost = d.dm || 'superficie';
+          if (this._dimHost === c.mundo.dimension) { c.animales.aplicarSnapshot(d.a || []); c.mobs.aplicarSnapshot(d.m || []); }
+        }
+        break;
+      case 'hora': if (!red.esAnfitrion) { c.hora = d.h; c.dias = d.d; this._dimHost = d.dm || this._dimHost; } break;
       case 'golpe': if (red.esAnfitrion && d.d > 0 && d.d <= 25) c.aplicarGolpeRemoto(d.k, d.id, d.d, d.x, d.z); break;
       case 'botin': c.soltarBotin(d.x, d.y, d.z, d.l); break;
       case 'dano': c.herirJugador(d.n, d.dx, d.dz, d.causa, d.opc); break;
       case 'cofre': this.recibirCofre(d); break;
-      default: break;
+      default: if (c.espacio) c.espacio.alMensaje(t, d, de); break;
     }
   }
 
@@ -264,18 +277,20 @@ export class Multi {
   alCambiarBloque(ev) {
     if (!this.activo || ev.origen === 'remoto' || !ev.registrar) return;
     const d = { x: ev.x, y: ev.y, z: ev.z, id: ev.id };
+    if (this.c.mundo.dimension !== 'superficie') d.dm = this.c.mundo.dimension;
     if (R().esAnfitrion) R().difundir('bloque', d);
     else if (this.partidaEmpezada) R().enviar('bloqueReq', d);
   }
 
   validarBloque(d, de) {
     const p = this.pos[de];
+    const otraDim = p && (this.dimDe[de] || 'superficie') !== (d.dm || 'superficie');
     const ok = Number.isInteger(d.x) && Number.isInteger(d.y) && Number.isInteger(d.z) && d.y >= 0 && d.y < 128 && (d.id === 0 || esValido(d.id)) &&
-      (!p || Math.hypot(d.x - p.x, d.y - p.y, d.z - p.z) < 14);
+      (!p || otraDim || Math.hypot(d.x - p.x, d.y - p.y, d.z - p.z) < 14);
     if (ok) {
-      this.c.ponerBloqueRemoto(d.x, d.y, d.z, d.id);
+      this.c.ponerBloqueRemoto(d.x, d.y, d.z, d.id, d.dm);
       R().difundir('bloque', d);
-    } else R().enviar('bloque', { x: d.x, y: d.y, z: d.z, id: this.c.mundo.obtener(d.x, d.y, d.z) }, { a: de });
+    } else R().enviar('bloque', { x: d.x, y: d.y, z: d.z, id: this.c.mundo.obtener(d.x, d.y, d.z), dm: d.dm }, { a: de });
   }
 
   // ---------------------------------------------------------- bichos, botín, daño
@@ -311,16 +326,16 @@ export class Multi {
     if (this.tPos <= 0 && c.estado !== 'titulo') {
       this.tPos = 0.06;
       const j = c.jugador;
-      red.difundir('pos', { t: red.reloj(), p: red.compactar({ x: j.x, y: j.y, z: j.z, ry: j.yaw, pt: j.pitch }), sl: c.itemEnMano(), v: c.vehiculos.actual ? 1 : 0 }, { fiable: false });
+      red.difundir('pos', { t: red.reloj(), p: red.compactar({ x: j.x, y: j.y, z: j.z, ry: j.yaw, pt: j.pitch }), sl: c.itemEnMano(), v: c.vehiculos.actual || (c.espacio && c.espacio.enCohete) ? 1 : 0, dm: c.espacio ? c.espacio.dim : undefined }, { fiable: false });
     }
     if (red.esAnfitrion) {
       this.tSnap -= dt;
       if (this.tSnap <= 0) {
         this.tSnap = 0.1;
-        red.difundir('snap', { a: c.animales.exportarSnapshot().slice(0, 40), m: c.mobs.exportarSnapshot().slice(0, 50) }, { fiable: false });
+        red.difundir('snap', { a: c.animales.exportarSnapshot().slice(0, 40), m: c.mobs.exportarSnapshot().slice(0, 50), dm: c.espacio ? c.espacio.dim : undefined }, { fiable: false });
       }
       this.tHora -= dt;
-      if (this.tHora <= 0) { this.tHora = 2; red.difundir('hora', { h: +c.hora.toFixed(4), d: c.dias }); }
+      if (this.tHora <= 0) { this.tHora = 2; red.difundir('hora', { h: +c.hora.toFixed(4), d: c.dias, dm: c.espacio ? c.espacio.dim : undefined }); }
     }
   }
 }

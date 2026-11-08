@@ -25,6 +25,7 @@ export class Jugador {
     this.cabezaEnAgua = false;
     this.chocoLado = false;
     this.corriendo = false;
+    this.gravMul = 1;   // gravedad de la dimensión (Luna 0.165, órbita 0 = flotando)
     this.distanciaPasos = 0;
     this.eventos = [];  // 'salto', 'aterrizaje', 'paso', 'chapuzon' (para los sonidos)
   }
@@ -118,7 +119,8 @@ export class Jugador {
     else if (this.enAgua) rapidez = J.velocidadAgua;
     else rapidez = this.corriendo ? J.velocidadCorrer : J.velocidad;
 
-    const agarre = this.volando ? 8 : this.enSuelo ? 16 : this.enAgua ? 6 : 5;
+    const flota = this.gravMul === 0 && !this.enAgua;
+    const agarre = this.volando ? 8 : flota ? 1.8 : this.enSuelo ? 16 : this.enAgua ? 6 : this.gravMul < 1 ? 2.2 : 5;
     const f = 1 - Math.exp(-agarre * dt);
     this.vx += (mx * rapidez - this.vx) * f;
     this.vz += (mz * rapidez - this.vz) * f;
@@ -132,8 +134,11 @@ export class Jugador {
       this.vy += (objetivo - this.vy) * (1 - Math.exp(-(entrada.saltar ? 7 : 2.5) * dt));
       // salir del agua trepando por la orilla
       if (entrada.saltar && this.chocoLado) this.vy = Math.max(this.vy, 5.5);
+    } else if (flota) {
+      const objetivo = ((entrada.saltar ? 1 : 0) - (entrada.bajar ? 1 : 0)) * 3.4;
+      this.vy += (objetivo - this.vy) * (1 - Math.exp(-1.8 * dt));
     } else {
-      this.vy -= J.gravedad * dt;
+      this.vy -= J.gravedad * this.gravMul * dt;
       if (this.vy < -J.caidaMaxima) this.vy = -J.caidaMaxima;
       if (entrada.saltar && this.enSuelo) {
         this.vy = J.salto;

@@ -421,10 +421,11 @@ export class Controles {
     if (veh) {
       // vehículo: stick izq. dirige, RT acelera, LT frena / reversa
       const gatillos = rt - lt;
-      p.adelante = aire ? gatillos : (Math.abs(gatillos) > 0.02 ? gatillos : -izq.y);
+      const vol = veh.clase === 'volador' && veh.modo === 'vuelo';   // aeroauto en vuelo: stick adelante/giro, RT sube, LT baja
+      p.adelante = vol ? -izq.y : aire ? gatillos : (Math.abs(gatillos) > 0.02 ? gatillos : -izq.y);
       p.derecha = aire ? 0 : izq.x;
-      p.saltar = sost('B');           // freno de mano (en la avioneta: más motor)
-      p.bajar = false;
+      p.saltar = vol ? (rt > 0.15 || sost('B')) : sost('B');   // freno de mano (en la avioneta: más motor)
+      p.bajar = vol ? lt > 0.15 : false;
       p.correr = sost('L3');          // turbo
       this.padCarrera = false;
       if (aire) {

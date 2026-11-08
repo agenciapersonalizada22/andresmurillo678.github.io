@@ -77,6 +77,17 @@ for (const [m, A] of Object.entries(ARMADURAS)) {
   });
 }
 
+// ---- espacio: baterías, etapas de cohete y traje (al final: no cambian los números de los objetos de siempre)
+def('bateria', 'Batería de iones', { forma: 'bateria', color: '#3ad07a', pila: 16 });
+def('motor_electrico', 'Motor eléctrico', { forma: 'motor', color: '#9aa6b8', pila: 16 });
+def('rotor', 'Rotor de turbina', { forma: 'motor', color: '#6ab8ff', pila: 16 });
+def('kit_aeroauto', 'Kit de aeroauto Volta', { forma: 'kit', color: '#2f9bff', pila: 4 });
+def('cohete_estructura', 'Cohete: estructura', { forma: 'cohete', color: '#e8ecf2', pila: 1 });
+def('cohete_motores', 'Cohete: motores', { forma: 'cohete', color: '#ffa13a', pila: 1 });
+def('cohete_combustible', 'Cohete: combustible', { forma: 'cohete', color: '#e2483a', pila: 1 });
+def('cohete_cabina', 'Cohete: cabina', { forma: 'cohete', color: '#5ab6ff', pila: 1 });
+def('traje_espacial', 'Traje espacial', { forma: 'peto', color: '#f2f4f8', pila: 1 });
+
 // ---- consultas
 export const esObjeto = (id) => id >= ID_OBJETO;
 export const objetoPorId = (id) => OBJETOS_LISTA[id - ID_OBJETO] || null;
@@ -230,6 +241,25 @@ function pintar(x, o) {
     case 'trigo':
       trazo(x, () => { x.beginPath(); x.moveTo(8, 28); x.lineTo(22, 4); }, 2, '#9a8a3a');
       for (let i = 0; i < 4; i++) { x.fillStyle = c; x.beginPath(); x.ellipse(21 - i * 2.4 - 3, 8 + i * 4.6, 4, 2.2, -1, 0, 7); x.fill(); x.beginPath(); x.ellipse(21 - i * 2.4 + 3, 7 + i * 4.6, 4, 2.2, 1, 0, 7); x.fill(); }
+      break;
+    case 'bateria':
+      relleno(x, () => { x.beginPath(); x.rect(6, 10, 20, 16); }, c);
+      x.fillStyle = '#222'; x.fillRect(11, 6, 10, 4); x.fillStyle = 'rgba(255,255,255,0.7)';
+      x.beginPath(); x.moveTo(17, 12); x.lineTo(12, 19); x.lineTo(16, 19); x.lineTo(14, 25); x.lineTo(21, 17); x.lineTo(17, 17); x.closePath(); x.fill();
+      break;
+    case 'motor':
+      relleno(x, () => { x.beginPath(); x.arc(16, 17, 10, 0, 7); }, c);
+      x.fillStyle = '#2a2e36'; x.beginPath(); x.arc(16, 17, 4, 0, 7); x.fill();
+      for (let i = 0; i < 3; i++) { x.save(); x.translate(16, 17); x.rotate(i * 2.09); x.fillStyle = 'rgba(255,255,255,0.55)'; x.fillRect(-1.5, -9, 3, 7); x.restore(); }
+      break;
+    case 'kit':
+      relleno(x, () => { x.beginPath(); x.rect(5, 9, 22, 17); }, c);
+      x.fillStyle = 'rgba(255,255,255,0.8)'; x.fillRect(5, 15, 22, 3); x.fillRect(14, 9, 4, 17);
+      break;
+    case 'cohete':
+      relleno(x, () => { x.beginPath(); x.moveTo(16, 2); x.quadraticCurveTo(25, 10, 22, 24); x.lineTo(10, 24); x.quadraticCurveTo(7, 10, 16, 2); x.closePath(); }, c);
+      relleno(x, () => { x.beginPath(); x.moveTo(10, 18); x.lineTo(4, 27); x.lineTo(10, 25); x.closePath(); x.moveTo(22, 18); x.lineTo(28, 27); x.lineTo(22, 25); x.closePath(); }, '#d23b2a');
+      x.fillStyle = '#0b2540'; x.beginPath(); x.arc(16, 12, 3, 0, 7); x.fill();
       break;
     default:
       relleno(x, () => { x.beginPath(); x.arc(16, 16, 9, 0, 7); }, c);

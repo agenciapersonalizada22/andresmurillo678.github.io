@@ -17,6 +17,7 @@ import { B, DIBUJO, DIBUJO_AGUA } from './bloques.js';
 import { ALTO } from './medidas.js';
 import { crearJeep, crearBote, crearAvioneta, crearVagoneta } from './modelosVeh.js';
 import { Sonido } from './sonido.js';
+import { TIPO_AEROAUTO, pasoVolador, alternarModo, actualizarModeloVolador, efectosVolador } from './espacio/cocheVolador.js';
 
 const VC = CONFIG.vehiculos;
 const MAR = CONFIG.mundo.nivelMar;
@@ -43,6 +44,7 @@ export const TIPOS = {
     distCam: 5, altCam: 1.8, ancho: 0.5, largo: 0.65, vmax: 12,
   },
 };
+TIPOS.aeroauto = TIPO_AEROAUTO;
 export const NOMBRES_VEH = Object.keys(TIPOS);
 
 let contadorId = 1;
@@ -68,6 +70,7 @@ export class Vehiculos {
     this.avisos = [];            // textos para mostrar (los lee principal)
     this.tmp = new THREE.Vector3();
     this.particulas = null;      // se conecta desde principal
+    this.gravMul = 1;            // gravedad de la dimensión (Luna: 0.165)
   }
 
   // ----------------------------------------------------------- Crear y quitar
@@ -114,7 +117,7 @@ export class Vehiculos {
   }
 
   exportar() {
-    return this.lista.map((v) => ({ t: v.tipo, x: +v.x.toFixed(2), y: +v.y.toFixed(2), z: +v.z.toFixed(2), yaw: +v.yaw.toFixed(3), c: +v.combustible.toFixed(1), id: v.id }));
+    return this.lista.map((v) => ({ t: v.tipo, x: +v.x.toFixed(2), y: +v.y.toFixed(2), z: +v.z.toFixed(2), yaw: +v.yaw.toFixed(3), c: +v.combustible.toFixed(1), id: v.id, ...(v.modo ? { m: v.modo } : {}) }));
   }
 
   importar(datos) {
@@ -122,7 +125,8 @@ export class Vehiculos {
     if (!Array.isArray(datos)) return;
     for (const d of datos) {
       if (!d || !TIPOS[d.t] || ![d.x, d.y, d.z, d.yaw].every(Number.isFinite)) continue;
-      this.crear(d.t, d.x, d.y, d.z, d.yaw, Number.isFinite(d.c) ? d.c : null, typeof d.id === 'string' ? d.id : null);
+      const nv = this.crear(d.t, d.x, d.y, d.z, d.yaw, Number.isFinite(d.c) ? d.c : null, typeof d.id === 'string' ? d.id : null);
+      if (nv && d.m === 'vuelo') { nv.modo = 'vuelo'; nv.rotor = 1; }
     }
   }
 
@@ -240,7 +244,7 @@ export class Vehiculos {
       if (v.vy < 0) { v.choque = Math.max(v.choque, -v.vy * 0.5); v.vy = 0; }
       v.enSuelo = true;
     } else {
-      v.vy -= 30 * dt;
+      v.vy -= 30 * this.gravMul * dt;
       v.y += v.vy * dt;
       if (v.y <= yObj) { v.y = yObj; if (v.vy < -5) Sonido.aterrizaje('piedra'); v.vy = 0; v.enSuelo = true; } else v.enSuelo = false;
     }
@@ -319,7 +323,7 @@ export class Vehiculos {
       // varado: cae al suelo y se frena
       const h = this.suelo(v.x, v.z, v.y + 1);
       v.vx *= Math.exp(-3 * dt); v.vz *= Math.exp(-3 * dt);
-      v.vy -= 30 * dt; v.y = Math.max(h, v.y + v.vy * dt); if (v.y <= h) v.vy = 0;
+      v.vy -= 30 * this.gravMul * dt; v.y = Math.max(h, v.y + v.vy * dt); if (v.y <= h) v.vy = 0;
     } else {
       const yObj = sup - 0.3 + olas;
       v.vy += ((yObj - v.y) * 40 - v.vy * 6) * dt;
@@ -497,10 +501,10 @@ export class Vehiculos {
   asentar(v, dt) {
     const T = v.T;
     if (!this.mundo.estaListo(v.x, v.z)) return;
-    if (T.clase === 'tierra') {
+    if (T.clase === 'tierra' || (T.clase === 'volador' && v.modo !== 'vuelo')) {
       const hs = this.alturasRuedas(v, T);
       const yObj = (hs.fl + hs.fr + hs.rl + hs.rr) / 4;
-      if (v.y > yObj + 0.02) { v.vy -= 30 * dt; v.y = Math.max(yObj, v.y + v.vy * dt); } else { v.y = yObj; v.vy = 0; v.asentado = true; }
+      if (v.y > yObj + 0.02) { v.vy -= 30 * this.gravMul * dt; v.y = Math.max(yObj, v.y + v.vy * dt); } else { v.y = yObj; v.vy = 0; v.asentado = true; }
       v.pitch += (lim(Math.atan2((hs.fl + hs.fr) / 2 - (hs.rl + hs.rr) / 2, T.base), -0.45, 0.45) - v.pitch) * Math.min(1, 8 * dt);
       v.roll += (lim(Math.atan2((hs.fr + hs.rr) / 2 - (hs.fl + hs.rl) / 2, T.via), -0.45, 0.45) - v.roll) * Math.min(1, 8 * dt);
     } else if (T.clase === 'agua') {
@@ -538,7 +542,7 @@ export class Vehiculos {
     this.camListo = false;
     jugador.volando = false;
     jugador.vx = jugador.vy = jugador.vz = 0;
-    Sonido.motorIniciar(v.T.clase);
+    Sonido.motorIniciar(v.T.clase === 'volador' ? 'aire' : v.T.clase);
     Sonido.puerta();
     return true;
   }
@@ -550,6 +554,10 @@ export class Vehiculos {
     if (!forzar && v.T.clase === 'aire') {
       const h = this.suelo(v.x, v.z, v.y + 1.4);
       if (v.y - h > 2.5 || v.vel > 4) { this.avisos.push('Aterriza y detente para bajar'); return false; }
+    }
+    if (!forzar && v.T.clase === 'volador' && v.modo === 'vuelo') {
+      const h = this.suelo(v.x, v.z, v.y + 1.2);
+      if (v.y - h > 2.2) { this.avisos.push('Aterriza para bajar'); return false; }
     }
     if (!forzar && v.T.clase === 'riel') { /* siempre se puede */ }
     if (jugador) this.colocarJugador(v, jugador);
@@ -586,6 +594,8 @@ export class Vehiculos {
     jugador.yaw = v.yaw;
   }
 
+  alternarModo() { return this.actual ? alternarModo(this, this.actual) : false; }
+
   alternarCamara() {
     this.camaraTercera = !this.camaraTercera;
     this.camListo = false;
@@ -595,9 +605,10 @@ export class Vehiculos {
     const v = this.actual || null;
     if (!v) return false;
     if (v.combustible >= v.T.tanque - 1) { this.avisos.push('El tanque está lleno'); return false; }
-    if (!mochila.quitar('bidon', 1)) { this.avisos.push('No tienes bidones de combustible (búscalos en cofres)'); return false; }
-    v.combustible = Math.min(v.T.tanque, v.combustible + 55);
-    this.avisos.push('Combustible +55');
+    const bat = v.T.clase === 'volador';
+    if (!mochila.quitar(bat ? 'bateria' : 'bidon', 1)) { this.avisos.push(bat ? 'No tienes baterías de iones (fabrícalas o usa una estación de carga)' : 'No tienes bidones de combustible (búscalos en cofres)'); return false; }
+    v.combustible = Math.min(v.T.tanque, v.combustible + (bat ? 60 : 55));
+    this.avisos.push(bat ? 'Batería +60%' : 'Combustible +55');
     Sonido.clic();
     return true;
   }
@@ -656,6 +667,7 @@ export class Vehiculos {
           if (T.clase === 'tierra') this.pasoTierra(v, T, sdt, ent, true);
           else if (T.clase === 'agua') this.pasoAgua(v, T, sdt, ent, true);
           else if (T.clase === 'aire') this.pasoAire(v, T, sdt, ent, true);
+          else if (T.clase === 'volador') pasoVolador(this, v, T, sdt, ent, true);
           else this.pasoRiel(v, T, sdt, ent, true);
         }
         if (v.choque > 7) {
@@ -690,10 +702,11 @@ export class Vehiculos {
     v.fxT = 0.07;
     const s = Math.sin(v.yaw), c = Math.cos(v.yaw);
     const clase = v.T.clase;
-    if ((clase === 'tierra' || clase === 'aire') && v.enSuelo && Math.abs(v.vel) > 4) {
+    if ((clase === 'tierra' || clase === 'aire' || (clase === 'volador' && v.modo !== 'vuelo')) && v.enSuelo && Math.abs(v.vel) > 4) {
       const b = this.mundo.obtener(Math.floor(v.x), Math.floor(v.y - 0.1), Math.floor(v.z));
       if (b !== B.AIRE && DIBUJO[b] !== DIBUJO_AGUA && !v.enAgua) amb.polvo(v.x + s * (clase === 'aire' ? 0.3 : 1.4), v.y + 0.1, v.z + c * (clase === 'aire' ? 0.3 : 1.4), 1, v.vx, v.vz);
     }
+    if (clase === 'volador') efectosVolador(amb, this, v);
     if (clase === 'tierra' && v.motor && Math.random() < 0.5) {
       amb.humo(v.x + s * 2.1 - c * 0.6, v.y + 0.5, v.z + c * 2.1 + s * 0.6, 1, 0.25 + Math.abs(v.acelerador) * 0.3);
     }
@@ -723,6 +736,7 @@ export class Vehiculos {
     if (p.alerones) for (const a of p.alerones) a.grupo.rotation.x = lim(v.stick.x * a.lado * 0.5, -0.5, 0.5);
     if (p.elevadores) for (const e of p.elevadores) e.rotation.x = lim(v.stick.y * 0.5, -0.5, 0.5);
     if (p.timon) p.timon.rotation.y = lim(-v.stick.x * 0.4, -0.45, 0.45);
+    if (v.T.clase === 'volador') actualizarModeloVolador(v, this.tiempo);
     // luces
     for (const l of p.luces) { l.mat.emissiveIntensity = v.luces ? 3.2 : l.e0 * 0.3; if (l.mat.emissive) l.mat.emissive.setHex(v.luces ? 0xfff0b0 : 0x222010); }
     const frena = v.activo && v.ocupado && (v.freno > 0);
@@ -756,7 +770,7 @@ export class Vehiculos {
     if (!v) return;
     if (this.pausado) { Sonido.motorActualizar(0, 0, false, true, 0); return; }
     let carga = 0.3;
-    if (v.T.clase === 'aire') carga = v.throttle;
+    if (v.T.clase === 'aire' || v.T.clase === 'volador') carga = v.throttle;
     else carga = Math.min(1, Math.abs(v.acelerador));
     Sonido.motorActualizar(v.rpm, carga, v.motor, v.T.clase === 'agua' ? v.enAgua : true, v.slip || 0);
   }
@@ -768,7 +782,7 @@ export class Vehiculos {
     return {
       nombre: v.T.nombre, tipo: v.tipo, clase: v.T.clase,
       velocidad: Math.round(Math.abs(v.vel) * 3.6), combustible: v.combustible / v.T.tanque,
-      gas: v.throttle, altura: Math.round(v.y), luces: v.luces,
+      gas: v.throttle, altura: Math.round(v.y), luces: v.luces, modo: v.modo, bateria: v.T.clase === 'volador',
       sinCombustible: VC.combustible && v.combustible <= 0 && v.T.consumo > 0,
     };
   }

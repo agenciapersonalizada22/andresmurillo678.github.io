@@ -10,7 +10,7 @@
 import * as THREE from '../lib/three.module.min.js';
 
 const cacheMat = new Map();
-function mat(color, o = {}) {
+export function mat(color, o = {}) {
   const k = color + JSON.stringify(o);
   let m = cacheMat.get(k);
   if (!m) {
@@ -23,7 +23,7 @@ function mat(color, o = {}) {
   return m;
 }
 
-function caja(grupo, w, h, l, x, y, z, material, rx = 0, ry = 0, rz = 0) {
+export function caja(grupo, w, h, l, x, y, z, material, rx = 0, ry = 0, rz = 0) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, l), material);
   m.position.set(x, y, z);
   m.rotation.set(rx, ry, rz);
@@ -31,7 +31,7 @@ function caja(grupo, w, h, l, x, y, z, material, rx = 0, ry = 0, rz = 0) {
   return m;
 }
 
-function cilindro(grupo, rt, rb, h, x, y, z, material, rx = 0, ry = 0, rz = 0, seg = 16) {
+export function cilindro(grupo, rt, rb, h, x, y, z, material, rx = 0, ry = 0, rz = 0, seg = 16) {
   const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), material);
   m.position.set(x, y, z);
   m.rotation.set(rx, ry, rz);
@@ -72,7 +72,7 @@ function fusionar(grupo, excluir) {
   }
 }
 
-function terminar(resultado) {
+export function terminar(resultado) {
   const p = resultado.partes;
   const excluir = new Set();
   const poner = (o) => { if (o) excluir.add(o); };
@@ -86,7 +86,7 @@ function terminar(resultado) {
 }
 
 // Perfil de lado (z, y) que se "estira" a lo ancho (eje X) con bordes biselados
-function extruirPerfil(puntos, ancho, bisel, material) {
+export function extruirPerfil(puntos, ancho, bisel, material) {
   const sh = new THREE.Shape();
   puntos.forEach(([z, y], i) => (i ? sh.lineTo(z, y) : sh.moveTo(z, y)));
   sh.closePath();
@@ -99,7 +99,7 @@ function extruirPerfil(puntos, ancho, bisel, material) {
 }
 
 // Una rueda con llanta, rin y birlos. "giro" rota al avanzar y "pivote" se voltea al girar.
-function crearRueda(radio, ancho, colorRin = 0xb8bcc4) {
+export function crearRueda(radio, ancho, colorRin = 0xb8bcc4) {
   const pivote = new THREE.Group();
   const giro = new THREE.Group();
   pivote.add(giro);

@@ -48,6 +48,10 @@ export const B = {
   ESCALERA_TEJAS: 107, // 107..110
   LOSA_TEJAS: 111,
   MINERAL_DIAMANTE: 112, MINERAL_ESMERALDA: 113,
+  // ---- espacio y dimensiones
+  REGOLITO: 114, ROCA_LUNAR: 115, ROCA_ABISMO: 116, LAVA: 117, ROCA_BRASA: 118, PORTAL: 119,
+  HORMIGON: 120, METAL: 121, PLATAFORMA: 122, PANEL_CONTROL: 123, CARGADOR: 124, FABRICA: 125,
+  CONSOLA_NAV: 126, GENERADOR_O2: 127, TORRE_METAL: 128,
 };
 
 const solo = (t) => [t, t, t];
@@ -187,6 +191,23 @@ losa(B.LOSA_TEJAS, 'losa_tejas', 'Losa de tejas', 'tejas');
 cubo(B.MINERAL_DIAMANTE, 'mineral_diamante', 'Mineral de diamante', solo('diamante_mineral'), 'piedra');
 cubo(B.MINERAL_ESMERALDA, 'mineral_esmeralda', 'Mineral de esmeralda', solo('esmeralda_mineral'), 'piedra');
 
+// ---- espacio y dimensiones
+cubo(B.REGOLITO, 'regolito', 'Regolito lunar', solo('regolito'), 'arena');
+cubo(B.ROCA_LUNAR, 'roca_lunar', 'Roca lunar', solo('roca_lunar'), 'piedra');
+cubo(B.ROCA_ABISMO, 'roca_abismo', 'Roca del Abismo', solo('roca_abismo'), 'piedra');
+cubo(B.LAVA, 'lava', 'Lava', solo('lava'), 'piedra', { enMenu: true });
+cubo(B.ROCA_BRASA, 'roca_brasa', 'Roca ardiente', solo('roca_brasa'), 'piedra', { emision: 12 });
+def(B.PORTAL, { clave: 'portal', nombre: 'Portal del Abismo', dibujo: 'recorte', caras: solo('portal'), sonido: 'vidrio', emision: 11 });
+cubo(B.HORMIGON, 'hormigon', 'Hormigón', solo('hormigon'), 'piedra');
+cubo(B.METAL, 'metal', 'Panel metálico', solo('metal'), 'piedra');
+cubo(B.PLATAFORMA, 'plataforma', 'Plataforma de lanzamiento', ['plataforma_arriba', 'plataforma_lado', 'metal'], 'piedra', { usable: 'plataforma' });
+cubo(B.PANEL_CONTROL, 'panel_control', 'Panel de control', ['metal', 'metal', 'metal'], 'piedra', { usable: 'panel', frenteTodos: 'panel_frente' });
+cubo(B.CARGADOR, 'cargador', 'Estación de carga', ['metal', 'cargador_lado', 'metal'], 'piedra', { usable: 'cargador', emision: 7, frenteTodos: 'cargador_frente' });
+cubo(B.FABRICA, 'fabrica', 'Fábrica de vehículos', ['metal', 'fabrica_lado', 'metal'], 'piedra', { usable: 'fabrica', frenteTodos: 'fabrica_frente' });
+cubo(B.CONSOLA_NAV, 'consola_nav', 'Consola de navegación', ['metal', 'metal', 'metal'], 'piedra', { usable: 'consola', frenteTodos: 'nav_frente' });
+cubo(B.GENERADOR_O2, 'generador_o2', 'Generador de oxígeno', ['metal', 'metal', 'metal'], 'piedra', { usable: 'oxigeno', frenteTodos: 'o2_frente' });
+def(B.TORRE_METAL, { clave: 'torre_metal', nombre: 'Torre metálica', dibujo: 'recorte', caras: solo('torre_metal'), sonido: 'piedra', enMenu: true });
+
 // Los 4 lados de las mesas y hornos: el de enfrente es otro dibujo. Se resuelve en el mallador con "frenteTodos".
 
 // ----------------------------------------------------------- Tablas rápidas
@@ -238,6 +259,11 @@ for (const b of BLOQUES) {
 for (const [base, lista] of Object.entries(ORIENTADOS)) for (const id of lista) if (BLOQUES[id] && true) BASE[id] = Number(base);
 
 BASE[B.PUERTA_X_ABIERTA] = BASE[B.PUERTA_Z_ABIERTA] = B.PUERTA_X;
+
+// Lava y portal se atraviesan; el portal no se puede señalar ni rompe la luz
+SOLIDO[B.LAVA] = 0;
+SOLIDO[B.PORTAL] = 0; APUNTABLE[B.PORTAL] = 0;
+export const ES_FLUIDO_LAVA = B.LAVA;
 
 export const EN_MENU = BLOQUES.filter((b) => b.enMenu)
   .sort((a, b) => (a.orden ?? a.id) - (b.orden ?? b.id) || a.id - b.id)
