@@ -137,7 +137,7 @@
     },
     /* Id de juego o herramienta segun la ruta (/juego/<id>/, /herramientas/<carpeta>/, /herramientas/contenido/<sub>/), con o sin subdirectorio del sitio.
        Respaldo sin la tabla cargada: debe coincidir con plataforma/juegos.js (lo comprueba logica.test.mjs). */
-    RUTAS_JUEGOS: ['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis', 'buscaminas', 'celulas', 'serpientes', 'uno', 'magnate', 'cartas'],
+    RUTAS_JUEGOS: ['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis', 'buscaminas', 'celulas', 'serpientes', 'uno', 'magnate', 'cartas', 'gatos', 'colonos', 'conquista', 'turismo', 'domino', 'isla', 'hockey', 'pingpong', 'billar', 'bolos'],
     RUTAS_HERRAMIENTAS: { notas: 'notas', pizarra: 'pizarra', mercados: 'mercados', apuestas: 'apuestas', ofertas: 'ofertas', 'contenido/imagenes': 'contenido_imagenes', 'contenido/video': 'contenido_video', 'contenido/escritor': 'contenido_escritor', 'contenido/calendario': 'contenido_calendario' },
     juegoDeRuta: function (ruta) {
       ruta = String(ruta || '');
