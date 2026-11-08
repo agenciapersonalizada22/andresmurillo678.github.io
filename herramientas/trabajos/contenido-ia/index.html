@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Contenido de pura IA y canales · Trabajos</title>
+<meta name="description" content="Estudio para planear, producir y operar canales digitales con contenido generado con IA: estrategia, guiones, miniaturas, calendario, métricas y control de calidad, con divulgación honesta.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ae3ec9'/%3E%3Cpath d='M32 14l4 11 11 4-11 4-4 11-4-11-11-4 11-4z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../comun/trabajos.css">
+<link rel="stylesheet" href="../../../juego/comun/cuenta.css"><link rel="stylesheet" href="../comun/cuenta-trabajos.css">
+<link rel="stylesheet" href="css/ia.css">
+</head>
+<body>
+<a class="tr-solo-lector" href="#principal">Saltar al contenido</a>
+<div class="tr-cont">
+  <nav class="tr-barra" aria-label="Navegación">
+    <a class="tr-enlace" href="../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Trabajos</a>
+    <span class="tr-sep"></span>
+    <button type="button" class="tr-btn" id="btn-tema" aria-label="Cambiar tema"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span>Tema</span></button>
+  </nav>
+  <header><h1>Contenido de pura IA y canales</h1><p class="tr-sub">Planea, produce y opera tus canales (YouTube, TikTok, Instagram, X, Facebook, Twitch, podcast, blog, newsletter). La IA acelera el trabajo; la autenticidad, los derechos y las reglas de cada plataforma siguen siendo tuyos.</p></header>
+  <div class="cia-barra-proy"><label for="cia-proy">Proyecto</label><select id="cia-proy"></select><span id="cia-ia" class="tr-etiq" role="status">Cargando…</span></div>
+  <div class="tr-pestanas" role="tablist" aria-label="Secciones del estudio" id="pestanas">
+    <button role="tab" id="t-estrategia" data-vista="estrategia" aria-controls="v-estrategia" aria-selected="true">Estrategia</button>
+    <button role="tab" id="t-produccion" data-vista="produccion" aria-controls="v-produccion" aria-selected="false" tabindex="-1">Producción</button>
+    <button role="tab" id="t-operacion" data-vista="operacion" aria-controls="v-operacion" aria-selected="false" tabindex="-1">Operación</button>
+    <button role="tab" id="t-calidad" data-vista="calidad" aria-controls="v-calidad" aria-selected="false" tabindex="-1">Calidad</button>
+    <button role="tab" id="t-ajustes" data-vista="ajustes" aria-controls="v-ajustes" aria-selected="false" tabindex="-1">Ajustes</button>
+  </div>
+  <main id="principal">
+    <section id="v-estrategia" role="tabpanel" aria-labelledby="t-estrategia"></section>
+    <section id="v-produccion" role="tabpanel" aria-labelledby="t-produccion" hidden></section>
+    <section id="v-operacion" role="tabpanel" aria-labelledby="t-operacion" hidden></section>
+    <section id="v-calidad" role="tabpanel" aria-labelledby="t-calidad" hidden></section>
+    <section id="v-ajustes" role="tabpanel" aria-labelledby="t-ajustes" hidden></section>
+  </main>
+  <p class="tr-ayuda">Atajos: Alt+1…5 cambian de sección. Este estudio no publica por ti ni accede a las plataformas. Contenido generado con IA: revisa hechos, derechos y políticas vigentes antes de publicar.</p>
+</div>
+<script src="../../../juego/comun/firebase-config.js"></script><script src="../../../juego/plataforma/juegos.js"></script><script src="../../../juego/comun/cuenta.js"></script><script src="../../../juego/comun/amigos.js"></script>
+<script src="../comun/cuenta-trabajos.js"></script>
+<script src="../comun/util.js"></script><script src="../comun/almacen.js"></script>
+<script src="../../contenido/calendario/js/csv.js"></script>
+<script src="../automatizaciones/js/catalogo.js"></script><script src="../automatizaciones/js/motor.js"></script><script src="../automatizaciones/js/datos.js"></script>
+<script src="../video-ia/js/ia.js"></script>
+<script src="js/editorial.js"></script><script src="js/similitud.js"></script><script src="js/metricas.js"></script><script src="js/plantillas.js"></script><script src="js/marca.js"></script><script src="js/miniaturas.js"></script><script src="js/flujos.js"></script><script src="js/prompts.js"></script>
+<script src="js/datos.js"></script><script src="js/app.js"></script><script src="js/ui.js"></script><script src="js/graficas.js"></script>
+<script src="js/vista-estrategia.js"></script><script src="js/vista-produccion.js"></script><script src="js/vista-operacion.js"></script><script src="js/vista-calidad.js"></script><script src="js/vista-ajustes.js"></script>
+<script src="js/arranque.js"></script>
+</body>
+</html>

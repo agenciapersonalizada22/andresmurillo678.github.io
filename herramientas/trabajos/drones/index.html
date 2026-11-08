@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Drones y cámaras · Trabajos</title>
+<meta name="description" content="Planifica misiones de dron sin librerías externas: waypoints, patrones, GSD, exportación KML/GPX/QGC, seguridad, equipo de cámara, tomas y telemetría.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232b8a3e'/%3E%3Ccircle cx='32' cy='32' r='6' fill='none' stroke='%23fff' stroke-width='4'/%3E%3Cpath d='M18 18l9 9M46 18l-9 9M18 46l9-9M46 46l-9-9' stroke='%23fff' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../comun/trabajos.css">
+<link rel="stylesheet" href="../../../juego/comun/cuenta.css"><link rel="stylesheet" href="../comun/cuenta-trabajos.css">
+<link rel="stylesheet" href="css/drones.css">
+</head>
+<body>
+<a class="tr-solo-lector" href="#principal">Saltar al contenido</a>
+<div class="tr-cont">
+  <nav class="tr-barra" aria-label="Navegación">
+    <a class="tr-enlace" href="../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Trabajos</a>
+    <span class="tr-sep"></span>
+    <button type="button" class="tr-btn" id="btn-tema" aria-label="Cambiar tema"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span>Tema</span></button>
+  </nav>
+  <header><h1>Drones y cámaras</h1><p class="tr-sub">Planifica vuelos, calcula cámara y seguridad y revisa la telemetría. Esta web no controla drones DJI directamente: prepara el plan y lo exporta; Tello y MAVLink se conectan mediante un puente local.</p></header>
+  <details class="tr-panel dr-proy dr-det" id="det-proy">
+    <summary id="proy-res">Proyecto</summary>
+    <div class="dr-proy-fila" id="barra-proy"></div>
+  </details>
+  <div class="tr-pestanas" role="tablist" aria-label="Secciones del módulo Drones" id="pestanas">
+    <button role="tab" id="t-mision" data-vista="mision" aria-controls="v-mision" aria-selected="true">Misión</button>
+    <button role="tab" id="t-seguridad" data-vista="seguridad" aria-controls="v-seguridad" aria-selected="false" tabindex="-1">Seguridad</button>
+    <button role="tab" id="t-camara" data-vista="camara" aria-controls="v-camara" aria-selected="false" tabindex="-1">Cámara</button>
+    <button role="tab" id="t-tomas" data-vista="tomas" aria-controls="v-tomas" aria-selected="false" tabindex="-1">Tomas</button>
+    <button role="tab" id="t-telemetria" data-vista="telemetria" aria-controls="v-telemetria" aria-selected="false" tabindex="-1">Telemetría</button>
+    <button role="tab" id="t-cuenta" data-vista="cuenta" aria-controls="v-cuenta" aria-selected="false" tabindex="-1">Cuenta</button>
+  </div>
+  <main id="principal">
+    <section id="v-mision" role="tabpanel" aria-labelledby="t-mision"></section>
+    <section id="v-seguridad" role="tabpanel" aria-labelledby="t-seguridad" hidden></section>
+    <section id="v-camara" role="tabpanel" aria-labelledby="t-camara" hidden></section>
+    <section id="v-tomas" role="tabpanel" aria-labelledby="t-tomas" hidden></section>
+    <section id="v-telemetria" role="tabpanel" aria-labelledby="t-telemetria" hidden></section>
+    <section id="v-cuenta" role="tabpanel" aria-labelledby="t-cuenta" hidden></section>
+  </main>
+  <p class="tr-ayuda">Los cálculos son estimaciones orientativas. Verifica la normativa vigente de tu país, las zonas restringidas y las condiciones reales antes de cada vuelo: la responsabilidad es del piloto.</p>
+</div>
+<script src="../../../juego/comun/firebase-config.js"></script><script src="../../../juego/plataforma/juegos.js"></script><script src="../../../juego/comun/cuenta.js"></script><script src="../../../juego/comun/amigos.js"></script>
+<script src="../comun/cuenta-trabajos.js"></script>
+<script src="../comun/util.js"></script><script src="../comun/almacen.js"></script><script src="../comun/impresion.js"></script>
+<script src="../dispositivos/js/puro.js"></script><script src="../dispositivos/js/capacidades.js"></script><script src="../dispositivos/js/nucleo.js"></script><script src="../dispositivos/js/drv-serial.js"></script><script src="../dispositivos/js/drv-puente.js"></script>
+<script src="js/geo.js"></script><script src="js/calculos.js"></script><script src="js/patrones.js"></script><script src="js/mision.js"></script><script src="js/exportar.js"></script><script src="js/telemetria.js"></script><script src="js/catalogo.js"></script><script src="js/hojas.js"></script>
+<script src="js/datos.js"></script><script src="js/app.js"></script><script src="js/mapa.js"></script>
+<script src="js/vista-mision.js"></script><script src="js/vista-seguridad.js"></script><script src="js/vista-camara.js"></script><script src="js/vista-tomas.js"></script><script src="js/vista-telemetria.js"></script>
+<script src="js/arranque.js"></script>
+</body>
+</html>

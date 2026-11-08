@@ -212,7 +212,7 @@ const OK = (n, p) => t(n, p, false), NO = (n, p) => t(n, p, true);
   await NO('101 logros en notas', () => A.doc('logros/ana').set({ notas: ids(101, 'n') }));
   await OK('100 logros exactos en cartas', () => A.doc('logros/ana').set({ cartas: ids(100, 'c') }));
   await NO('logros de herramienta inventada', () => A.doc('logros/ana').set({ contenido: ['x'] }));
-  await NO('xpJuego con demasiadas entradas', () => A.doc('logros/ana').set({ xpJuego: Object.fromEntries(Array.from({ length: 26 }, (_, i) => ['j' + i, 1])) }));
+  await NO('xpJuego con demasiadas entradas', () => A.doc('logros/ana').set({ xpJuego: Object.fromEntries(Array.from({ length: 61 }, (_, i) => ['j' + i, 1])) }));
   await OK('presencia en una herramienta', () => pres(A, 'ana', { estado: 'jugando', juego: 'contenido_calendario' }));
   await NO('presencia con id demasiado largo', () => pres(A, 'ana', { estado: 'jugando', juego: 'x'.repeat(25) }));
   await OK('invitacion a un juego nuevo (uno)', async () => { await A.doc('invitaciones/beto/lista/i1').delete(); await inv(A, 'beto', { juego: 'uno' }); });

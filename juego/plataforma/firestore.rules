@@ -100,7 +100,7 @@ service cloud.firestore {
     match /guardados/{uid}/juegos/{docId} {
       allow read: if yo(uid);
       allow create, update: if yo(uid)
-        && docId.matches('^(nebula|ciudad|bloques|guerra|ajedrez|metropolis|buscaminas|celulas|serpientes|uno|magnate|cartas|gatos|colonos|conquista|turismo|domino|isla|hockey|pingpong|billar|bolos|notas|pizarra|mercados|apuestas|ofertas|contenido_imagenes|contenido_video|contenido_escritor|contenido_calendario)(~[a-z0-9]{1,12})?(_p[1-7])?$')
+        && docId.matches('^(nebula|ciudad|bloques|guerra|ajedrez|metropolis|buscaminas|celulas|serpientes|uno|magnate|cartas|gatos|colonos|conquista|turismo|domino|isla|hockey|pingpong|billar|bolos|notas|pizarra|mercados|apuestas|ofertas|contenido_imagenes|contenido_video|contenido_escritor|contenido_calendario|trabajos|trabajos_qr|trabajos_dispositivos|trabajos_drones|trabajos_automatizaciones|trabajos_video_ia|trabajos_reconstruccion_3d|trabajos_realidad_aumentada|trabajos_contenido_ia|trabajos_monetizacion|trabajos_analisis)(~[a-z0-9]{1,12})?(_p[1-7])?$')
         && (
           (docId.matches('.*_p[1-7]$')
             && request.resource.data.keys().hasOnly(['datos', 'actualizado'])
@@ -126,7 +126,7 @@ service cloud.firestore {
       allow get: if yo(uid) || esAmigo(uid);
       allow list: if false;
       allow create, update: if yo(uid)
-        && request.resource.data.keys().hasOnly(['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis', 'buscaminas', 'celulas', 'serpientes', 'uno', 'magnate', 'cartas', 'gatos', 'colonos', 'conquista', 'turismo', 'domino', 'isla', 'hockey', 'pingpong', 'billar', 'bolos', 'notas', 'pizarra', 'mercados', 'apuestas', 'ofertas', 'contenido_imagenes', 'contenido_video', 'contenido_escritor', 'contenido_calendario', 'xpJuego', 'ultimo'])
+        && request.resource.data.keys().hasOnly(['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis', 'buscaminas', 'celulas', 'serpientes', 'uno', 'magnate', 'cartas', 'gatos', 'colonos', 'conquista', 'turismo', 'domino', 'isla', 'hockey', 'pingpong', 'billar', 'bolos', 'notas', 'pizarra', 'mercados', 'apuestas', 'ofertas', 'contenido_imagenes', 'contenido_video', 'contenido_escritor', 'contenido_calendario', 'trabajos', 'trabajos_qr', 'trabajos_dispositivos', 'trabajos_drones', 'trabajos_automatizaciones', 'trabajos_video_ia', 'trabajos_reconstruccion_3d', 'trabajos_realidad_aumentada', 'trabajos_contenido_ia', 'trabajos_monetizacion', 'trabajos_analisis', 'xpJuego', 'ultimo'])
         && listaOk('nebula')
         && listaOk('ciudad')
         && listaOk('bloques')
@@ -158,7 +158,18 @@ service cloud.firestore {
         && listaOk('contenido_video')
         && listaOk('contenido_escritor')
         && listaOk('contenido_calendario')
-        && (!('xpJuego' in request.resource.data) || (request.resource.data.xpJuego is map && request.resource.data.xpJuego.size() <= 40))
+        && listaOk('trabajos')
+        && listaOk('trabajos_qr')
+        && listaOk('trabajos_dispositivos')
+        && listaOk('trabajos_drones')
+        && listaOk('trabajos_automatizaciones')
+        && listaOk('trabajos_video_ia')
+        && listaOk('trabajos_reconstruccion_3d')
+        && listaOk('trabajos_realidad_aumentada')
+        && listaOk('trabajos_contenido_ia')
+        && listaOk('trabajos_monetizacion')
+        && listaOk('trabajos_analisis')
+        && (!('xpJuego' in request.resource.data) || (request.resource.data.xpJuego is map && request.resource.data.xpJuego.size() <= 60))
         && (!('ultimo' in request.resource.data) || (request.resource.data.ultimo is map && request.resource.data.ultimo.size() <= 2));
       allow delete: if yo(uid);
     }

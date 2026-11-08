@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>QR y etiquetas · Trabajos</title>
+<meta name="description" content="Generador y lector de códigos QR sin librerías: URL, WiFi, vCard, lotes, historial en tu cuenta e impresión de hojas de etiquetas.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%235f3dc4'/%3E%3Cpath d='M14 14h14v14H14zM36 14h14v14H36zM14 36h14v14H14zM36 36h5v5h-5zM45 45h5v5h-5zM36 45h5v5h-5z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../comun/trabajos.css">
+<link rel="stylesheet" href="../../../juego/comun/cuenta.css"><link rel="stylesheet" href="../comun/cuenta-trabajos.css">
+<link rel="stylesheet" href="css/qr.css">
+</head>
+<body>
+<a class="tr-solo-lector" href="#principal">Saltar al contenido</a>
+<div class="tr-cont">
+  <nav class="tr-barra" aria-label="Navegación">
+    <a class="tr-enlace" href="../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Trabajos</a>
+    <span class="tr-sep"></span>
+    <button type="button" class="tr-btn" id="btn-tema" aria-label="Cambiar tema"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span>Tema</span></button>
+  </nav>
+  <header><h1>QR y etiquetas</h1><p class="tr-sub">Crea, lee e imprime códigos QR. El codificador está escrito a mano (sin librerías) y todo ocurre en tu dispositivo.</p></header>
+  <div class="tr-pestanas" role="tablist" aria-label="Secciones del módulo QR" id="pestanas">
+    <button role="tab" id="t-crear" data-vista="crear" aria-controls="v-crear" aria-selected="true">Crear</button>
+    <button role="tab" id="t-lote" data-vista="lote" aria-controls="v-lote" aria-selected="false" tabindex="-1">Lote</button>
+    <button role="tab" id="t-leer" data-vista="leer" aria-controls="v-leer" aria-selected="false" tabindex="-1">Leer</button>
+    <button role="tab" id="t-imprimir" data-vista="imprimir" aria-controls="v-imprimir" aria-selected="false" tabindex="-1">Imprimir</button>
+    <button role="tab" id="t-historial" data-vista="historial" aria-controls="v-historial" aria-selected="false" tabindex="-1">Historial</button>
+    <button role="tab" id="t-cuenta" data-vista="cuenta" aria-controls="v-cuenta" aria-selected="false" tabindex="-1">Cuenta</button>
+  </div>
+  <main id="principal">
+    <section id="v-crear" role="tabpanel" aria-labelledby="t-crear"></section>
+    <section id="v-lote" role="tabpanel" aria-labelledby="t-lote" hidden></section>
+    <section id="v-leer" role="tabpanel" aria-labelledby="t-leer" hidden></section>
+    <section id="v-imprimir" role="tabpanel" aria-labelledby="t-imprimir" hidden></section>
+    <section id="v-historial" role="tabpanel" aria-labelledby="t-historial" hidden></section>
+    <section id="v-cuenta" role="tabpanel" aria-labelledby="t-cuenta" hidden></section>
+  </main>
+  <p class="tr-ayuda">Un QR es una imagen: quien lo escanee verá su contenido (también una contraseña WiFi). Comprueba siempre con tu móvil antes de imprimir en cantidad.</p>
+</div>
+<script src="../../../juego/comun/firebase-config.js"></script><script src="../../../juego/plataforma/juegos.js"></script><script src="../../../juego/comun/cuenta.js"></script><script src="../../../juego/comun/amigos.js"></script>
+<script src="../comun/cuenta-trabajos.js"></script>
+<script src="../comun/util.js"></script><script src="../comun/almacen.js"></script><script src="../comun/impresion.js"></script>
+<script src="js/qrcodificador.js"></script><script src="js/qrdecodificador.js"></script><script src="js/qrtipos.js"></script><script src="js/qrrender.js"></script>
+<script src="js/qrdatos.js"></script><script src="js/qrlector.js"></script>
+<script src="js/app.js"></script><script src="js/vista-crear.js"></script><script src="js/vista-lote.js"></script><script src="js/vista-leer.js"></script><script src="js/vista-imprimir.js"></script><script src="js/vista-historial.js"></script>
+<script src="js/arranque.js"></script>
+</body>
+</html>

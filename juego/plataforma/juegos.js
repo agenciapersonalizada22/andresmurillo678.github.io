@@ -645,7 +645,139 @@
     { id: 'contenido_imagenes', tipo: 'herramienta', nombre: 'Estudio: Imágenes', ruta: '../herramientas/contenido/imagenes/', carpeta: 'contenido/imagenes', color: '#c77dff', categoria: 'Herramientas', descripcion: 'Editor de imágenes y miniaturas', modos: [], logros: [] },
     { id: 'contenido_video', tipo: 'herramienta', nombre: 'Estudio: Video', ruta: '../herramientas/contenido/video/', carpeta: 'contenido/video', color: '#ff7ac6', categoria: 'Herramientas', descripcion: 'Editor de video corto', modos: [], logros: [] },
     { id: 'contenido_escritor', tipo: 'herramienta', nombre: 'Estudio: Escritor', ruta: '../herramientas/contenido/escritor/', carpeta: 'contenido/escritor', color: '#7dd3fc', categoria: 'Herramientas', descripcion: 'Escritor con IA para guiones y publicaciones', modos: [], logros: [] },
-    { id: 'contenido_calendario', tipo: 'herramienta', nombre: 'Estudio: Calendario', ruta: '../herramientas/contenido/calendario/', carpeta: 'contenido/calendario', color: '#a3e635', categoria: 'Herramientas', descripcion: 'Calendario editorial de contenido', modos: [], logros: [] }
+    { id: 'contenido_calendario', tipo: 'herramienta', nombre: 'Estudio: Calendario', ruta: '../herramientas/contenido/calendario/', carpeta: 'contenido/calendario', color: '#a3e635', categoria: 'Herramientas', descripcion: 'Calendario editorial de contenido', modos: [], logros: [] },
+    { id: 'trabajos', tipo: 'herramienta', nombre: 'Trabajos', ruta: '../herramientas/trabajos/', carpeta: 'trabajos', color: '#5eead4', categoria: 'Herramientas', descripcion: 'Centro de herramientas de trabajo', modos: [], logros: [] },
+    { id: 'trabajos_qr', tipo: 'herramienta', nombre: 'Trabajos: QR', ruta: '../herramientas/trabajos/qr/', carpeta: 'trabajos/qr', color: '#38bdf8', categoria: 'Herramientas', descripcion: 'Crear, leer e imprimir códigos QR', modos: [], logros: [
+      { id: 'primer_qr', nombre: 'Primer QR', desc: 'Crea tu primer código QR.' },
+      { id: 'wifi', nombre: 'QR de Wi-Fi', desc: 'Crea un QR para conectar a una red Wi-Fi.' },
+      { id: 'logo_verificado', nombre: 'Logo legible', desc: 'Añade un logo y verifica que el QR sigue leyéndose.' },
+      { id: 'favorito', nombre: 'Favorito', desc: 'Marca un QR como favorito.' },
+      { id: 'hoja_etiquetas', nombre: 'Hoja de etiquetas', desc: 'Imprime una hoja de etiquetas con QR.' },
+      { id: 'lectura', nombre: 'Primera lectura', desc: 'Lee un código QR.' },
+      { id: 'lote_10', nombre: 'Lote de diez', desc: 'Genera un lote de 10 o más QR.' }
+    ] },
+    { id: 'trabajos_dispositivos', tipo: 'herramienta', nombre: 'Trabajos: Dispositivos', ruta: '../herramientas/trabajos/dispositivos/', carpeta: 'trabajos/dispositivos', color: '#fbbf24', categoria: 'Herramientas', descripcion: 'Conecta serial, USB, Bluetooth, sensores y más', modos: [], logros: [
+      { id: 'dispositivos_bluetooth', nombre: 'Bluetooth', desc: 'Conecta un dispositivo Bluetooth.' },
+      { id: 'dispositivos_camara', nombre: 'Cámara conectada', desc: 'Conecta una cámara.' },
+      { id: 'dispositivos_hid', nombre: 'Dispositivo HID', desc: 'Conecta un dispositivo HID.' },
+      { id: 'dispositivos_mando', nombre: 'Mando', desc: 'Conecta un mando de juego.' },
+      { id: 'dispositivos_microfono', nombre: 'Micrófono', desc: 'Conecta un micrófono.' },
+      { id: 'dispositivos_puente', nombre: 'Puente', desc: 'Conecta un puente de red.' },
+      { id: 'dispositivos_sensores', nombre: 'Sensores', desc: 'Conecta los sensores del dispositivo.' },
+      { id: 'dispositivos_serial', nombre: 'Puerto serie', desc: 'Conecta un dispositivo por puerto serie.' },
+      { id: 'dispositivos_usb', nombre: 'USB', desc: 'Conecta un dispositivo USB.' }
+    ] },
+    { id: 'trabajos_drones', tipo: 'herramienta', nombre: 'Trabajos: Drones', ruta: '../herramientas/trabajos/drones/', carpeta: 'trabajos/drones', color: '#a78bfa', categoria: 'Herramientas', descripcion: 'Planificación de misiones y bitácora de vuelo', modos: [], logros: [
+      { id: 'drones_primer_waypoint', nombre: 'Primer waypoint', desc: 'Añade tu primer waypoint a una misión.' },
+      { id: 'drones_patron_orbita', nombre: 'Patrón órbita', desc: 'Genera una misión con patrón de órbita.' },
+      { id: 'drones_patron_espiral', nombre: 'Patrón espiral', desc: 'Genera una misión con patrón de espiral.' },
+      { id: 'drones_patron_cuadricula', nombre: 'Patrón cuadrícula', desc: 'Genera una misión de mapeo en cuadrícula.' },
+      { id: 'drones_patron_lineal', nombre: 'Patrón lineal', desc: 'Genera una misión con patrón lineal.' },
+      { id: 'drones_patron_revelacion', nombre: 'Patrón revelación', desc: 'Genera una misión con patrón de revelación.' },
+      { id: 'drones_exporto_kml', nombre: 'Exporta KML', desc: 'Exporta una misión en KML.' },
+      { id: 'drones_exporto_gpx', nombre: 'Exporta GPX', desc: 'Exporta una misión en GPX.' },
+      { id: 'drones_exporto_json', nombre: 'Exporta JSON', desc: 'Exporta una misión en JSON.' },
+      { id: 'drones_exporto_csv', nombre: 'Exporta CSV', desc: 'Exporta una misión en CSV.' },
+      { id: 'drones_exporto_qgc', nombre: 'Exporta QGC', desc: 'Exporta una misión para QGroundControl.' },
+      { id: 'drones_hoja_impresa', nombre: 'Hoja impresa', desc: 'Imprime la hoja de una misión.' },
+      { id: 'drones_checklist_completo', nombre: 'Checklist completo', desc: 'Completa la lista de verificación previa al vuelo.' },
+      { id: 'drones_bitacora', nombre: 'Bitácora', desc: 'Guarda un vuelo en la bitácora.' },
+      { id: 'drones_telemetria_en_vivo', nombre: 'Telemetría en vivo', desc: 'Recibe telemetría en vivo.' },
+      { id: 'drones_log_cargado', nombre: 'Log cargado', desc: 'Carga un registro de vuelo.' },
+      { id: 'drones_simulo_mision', nombre: 'Misión simulada', desc: 'Simula una misión.' },
+      { id: 'drones_toma_a_mapa', nombre: 'Toma al mapa', desc: 'Lleva una toma al mapa.' },
+      { id: 'drones_shot_list', nombre: 'Lista de tomas', desc: 'Crea una lista de tomas.' }
+    ] },
+    { id: 'trabajos_automatizaciones', tipo: 'herramienta', nombre: 'Trabajos: Automatizaciones', ruta: '../herramientas/trabajos/automatizaciones/', carpeta: 'trabajos/automatizaciones', color: '#fb923c', categoria: 'Herramientas', descripcion: 'Flujos automáticos y almacén de datos', modos: [], logros: [] },
+    { id: 'trabajos_video_ia', tipo: 'herramienta', nombre: 'Trabajos: Video con IA', ruta: '../herramientas/trabajos/video-ia/', carpeta: 'trabajos/video-ia', color: '#f472b6', categoria: 'Herramientas', descripcion: 'Análisis de video con zonas, líneas y reglas', modos: [], logros: [
+      { id: 'primer_proyecto_video', nombre: 'Primer proyecto de video', desc: 'Guarda tu primer proyecto de video.' }
+    ] },
+    { id: 'trabajos_reconstruccion_3d', tipo: 'herramienta', nombre: 'Trabajos: Reconstrucción 3D', ruta: '../herramientas/trabajos/reconstruccion-3d/', carpeta: 'trabajos/reconstruccion-3d', color: '#34d399', categoria: 'Herramientas', descripcion: 'Modelos 3D a partir de fotos y medidas', modos: [], logros: [
+      { id: 'r3d_importo_malla', nombre: 'Malla importada', desc: 'Importa una malla 3D.' },
+      { id: 'r3d_exporto_obj', nombre: 'Exporta OBJ', desc: 'Exporta un modelo en OBJ.' },
+      { id: 'r3d_exporto_ply', nombre: 'Exporta PLY', desc: 'Exporta un modelo en PLY.' },
+      { id: 'r3d_exporto_stl', nombre: 'Exporta STL', desc: 'Exporta un modelo en STL.' },
+      { id: 'r3d_exporto_glb', nombre: 'Exporta GLB', desc: 'Exporta un modelo en GLB.' },
+      { id: 'r3d_exporto_csv', nombre: 'Exporta CSV', desc: 'Exporta una nube de puntos en CSV.' },
+      { id: 'r3d_guardo_proyecto', nombre: 'Proyecto guardado', desc: 'Guarda un proyecto 3D.' },
+      { id: 'r3d_dron_poses', nombre: 'Poses de dron', desc: 'Importa las poses de un vuelo de dron.' },
+      { id: 'r3d_abrio_camara', nombre: 'Cámara abierta', desc: 'Abre la cámara para capturar.' },
+      { id: 'r3d_par_capturado', nombre: 'Par estéreo', desc: 'Captura un par de fotos estéreo.' },
+      { id: 'r3d_primera_captura', nombre: 'Primera captura', desc: 'Haz tu primera captura.' },
+      { id: 'r3d_video_cuadros', nombre: 'Cuadros de video', desc: 'Extrae cuadros de un video.' },
+      { id: 'r3d_importo_fotos', nombre: 'Fotos importadas', desc: 'Importa fotos para reconstruir.' },
+      { id: 'r3d_plano_3d', nombre: 'Plano en 3D', desc: 'Genera un plano en 3D.' },
+      { id: 'r3d_foto_medida', nombre: 'Foto medida', desc: 'Mide sobre una foto.' },
+      { id: 'r3d_plano_pared', nombre: 'Plano de pared', desc: 'Dibuja el plano de una pared.' },
+      { id: 'r3d_estereo', nombre: 'Reconstrucción estéreo', desc: 'Reconstruye un modelo con un par estéreo.' },
+      { id: 'r3d_primer_modelo', nombre: 'Primer modelo', desc: 'Genera tu primer modelo 3D.' },
+      { id: 'r3d_segmento', nombre: 'Segmentación', desc: 'Segmenta un objeto de una foto.' },
+      { id: 'r3d_visual_hull', nombre: 'Envolvente visual', desc: 'Reconstruye con envolvente visual.' },
+      { id: 'r3d_simplifico', nombre: 'Malla simplificada', desc: 'Simplifica una malla.' },
+      { id: 'r3d_medicion', nombre: 'Medición', desc: 'Mide sobre un modelo.' },
+      { id: 'r3d_nota', nombre: 'Nota en el modelo', desc: 'Añade una nota a un modelo.' },
+      { id: 'r3d_captura', nombre: 'Captura del visor', desc: 'Captura una imagen del visor.' },
+      { id: 'r3d_video_giro', nombre: 'Video giratorio', desc: 'Graba un video girando el modelo.' },
+      { id: 'r3d_comparo', nombre: 'Comparación', desc: 'Compara dos modelos.' },
+      { id: 'r3d_corte', nombre: 'Plano de corte', desc: 'Usa un plano de corte.' },
+      { id: 'r3d_anaglifo', nombre: 'Anaglifo', desc: 'Activa la vista anaglifo.' },
+      { id: 'r3d_lado_a_lado', nombre: 'Lado a lado', desc: 'Activa la vista estéreo lado a lado.' },
+      { id: 'r3d_webxr', nombre: 'Realidad virtual', desc: 'Entra en realidad virtual con WebXR.' },
+      { id: 'r3d_comparador', nombre: 'Comparador', desc: 'Usa el comparador de modelos.' }
+    ] },
+    { id: 'trabajos_realidad_aumentada', tipo: 'herramienta', nombre: 'Trabajos: Realidad aumentada', ruta: '../herramientas/trabajos/realidad-aumentada/', carpeta: 'trabajos/realidad-aumentada', color: '#22d3ee', categoria: 'Herramientas', descripcion: 'Capas, marcadores y objetos en foto y cámara', modos: [], logros: [
+      { id: 'ra_captura_guiada', nombre: 'Captura guiada', desc: 'Completa una captura guiada.' },
+      { id: 'ra_png_propio', nombre: 'PNG propio', desc: 'Usa tu propio PNG como capa.' },
+      { id: 'ra_marcador_en_foto', nombre: 'Marcador en foto', desc: 'Coloca un marcador en una foto.' },
+      { id: 'ra_primera_capa', nombre: 'Primera capa', desc: 'Añade tu primera capa.' },
+      { id: 'ra_capa_carro', nombre: 'Capa de carro', desc: 'Añade una capa de carros.' },
+      { id: 'ra_capa_persona', nombre: 'Capa de persona', desc: 'Añade una capa de personas.' },
+      { id: 'ra_capa_ropa', nombre: 'Capa de ropa', desc: 'Añade una capa de ropa o accesorios.' },
+      { id: 'ra_capa_pantalla', nombre: 'Capa de pantalla', desc: 'Añade una capa de pantallas.' },
+      { id: 'ra_capa_juego', nombre: 'Capa de juego', desc: 'Añade una capa de juegos.' },
+      { id: 'ra_capa_forma', nombre: 'Capa de forma', desc: 'Añade una capa de formas o texto.' },
+      { id: 'ra_abrio_foto', nombre: 'Foto abierta', desc: 'Abre una foto para trabajar.' },
+      { id: 'ra_exporto_foto', nombre: 'Foto exportada', desc: 'Exporta una foto.' },
+      { id: 'ra_modelo_en_escena', nombre: 'Modelo en escena', desc: 'Coloca un modelo 3D en la escena.' },
+      { id: 'ra_importo_modelo', nombre: 'Modelo importado', desc: 'Importa un modelo 3D.' },
+      { id: 'ra_modelo_de_reconstruccion', nombre: 'Modelo reconstruido', desc: 'Usa un modelo de Reconstrucción 3D.' },
+      { id: 'ra_escala_real', nombre: 'Escala real', desc: 'Ajusta un objeto a escala real.' },
+      { id: 'ra_objeto_de_juego', nombre: 'Objeto de juego', desc: 'Añade un objeto de juego.' },
+      { id: 'ra_primer_objeto', nombre: 'Primer objeto', desc: 'Añade tu primer objeto.' },
+      { id: 'ra_marcadores_imprimidos', nombre: 'Marcadores impresos', desc: 'Imprime marcadores.' },
+      { id: 'ra_guardo_proyecto', nombre: 'Proyecto guardado', desc: 'Guarda un proyecto de realidad aumentada.' },
+      { id: 'ra_visor_mono', nombre: 'Visor normal', desc: 'Usa el visor en modo normal.' },
+      { id: 'ra_visor_sbs', nombre: 'Visor lado a lado', desc: 'Usa el visor lado a lado.' },
+      { id: 'ra_visor_cardboard', nombre: 'Visor Cardboard', desc: 'Usa el visor Cardboard.' },
+      { id: 'ra_visor_anaglifo', nombre: 'Visor anaglifo', desc: 'Usa el visor anaglifo.' },
+      { id: 'ra_visor_giroscopio', nombre: 'Giroscopio', desc: 'Mira con el giroscopio del dispositivo.' },
+      { id: 'ra_visor_webxr_vr', nombre: 'Realidad virtual', desc: 'Entra en realidad virtual con WebXR.' },
+      { id: 'ra_grabo_clip', nombre: 'Clip grabado', desc: 'Graba un clip.' },
+      { id: 'ra_captura_en_vivo', nombre: 'Captura en vivo', desc: 'Captura una imagen en vivo.' },
+      { id: 'ra_movio_objeto', nombre: 'Objeto movido', desc: 'Mueve un objeto en escena.' },
+      { id: 'ra_midio_marcador', nombre: 'Marcador medido', desc: 'Mide con un marcador.' },
+      { id: 'ra_envio_reconstruccion', nombre: 'Envío a reconstrucción', desc: 'Envía fotos a Reconstrucción 3D.' },
+      { id: 'ra_xr_ar', nombre: 'Realidad aumentada', desc: 'Entra en realidad aumentada con WebXR.' },
+      { id: 'ra_xr_coloco', nombre: 'Objeto colocado', desc: 'Coloca un objeto en el mundo real.' },
+      { id: 'ra_abrio_camara', nombre: 'Cámara abierta', desc: 'Abre la cámara en vivo.' }
+    ] },
+    { id: 'trabajos_contenido_ia', tipo: 'herramienta', nombre: 'Trabajos: Contenido con IA', ruta: '../herramientas/trabajos/contenido-ia/', carpeta: 'trabajos/contenido-ia', color: '#e879f9', categoria: 'Herramientas', descripcion: 'Producción y calendario de contenido', modos: [], logros: [
+      { id: 'primera_pieza', nombre: 'Primera pieza', desc: 'Crea tu primera pieza de contenido.' },
+      { id: 'calendario_planificado', nombre: 'Calendario planificado', desc: 'Programa piezas con el planificador.' },
+      { id: 'metricas_registradas', nombre: 'Métricas registradas', desc: 'Registra métricas de tus canales.' },
+      { id: 'flujo_exportado', nombre: 'Flujo exportado', desc: 'Envía un flujo a Automatizaciones.' }
+    ] },
+    { id: 'trabajos_monetizacion', tipo: 'herramienta', nombre: 'Trabajos: Monetización', ruta: '../herramientas/trabajos/monetizacion/', carpeta: 'trabajos/monetizacion', color: '#4ade80', categoria: 'Herramientas', descripcion: 'Finanzas y monetización', modos: [], logros: [] },
+    { id: 'trabajos_analisis', tipo: 'herramienta', nombre: 'Trabajos: Análisis', ruta: '../herramientas/trabajos/analisis/', carpeta: 'trabajos/analisis', color: '#60a5fa', categoria: 'Herramientas', descripcion: 'Análisis de datos, metas e informes', modos: [], logros: [
+      { id: 'analisis_informe', nombre: 'Informe', desc: 'Genera un informe.' },
+      { id: 'analisis_exporto_tablero', nombre: 'Tablero exportado', desc: 'Exporta un tablero.' },
+      { id: 'analisis_resumen_ia', nombre: 'Resumen con IA', desc: 'Genera un resumen con IA.' },
+      { id: 'analisis_flujo_sugerido', nombre: 'Flujo sugerido', desc: 'Crea un flujo sugerido.' },
+      { id: 'analisis_metas', nombre: 'Metas', desc: 'Define metas o KPIs.' },
+      { id: 'analisis_limpieza', nombre: 'Limpieza de datos', desc: 'Limpia un conjunto de datos.' },
+      { id: 'analisis_respaldo', nombre: 'Respaldo', desc: 'Crea un respaldo.' },
+      { id: 'analisis_restauro', nombre: 'Restauración', desc: 'Restaura un respaldo.' }
+    ] }
   ];
   var TODO = J.concat(H);
   var T = {
@@ -658,7 +790,7 @@
     clave: function (juego, modo) { return juego + '__' + modo; },
     claves: function () { var r = []; J.forEach(function (j) { j.modos.forEach(function (m) { r.push(j.id + '__' + m.id); }); }); return r; },
     categorias: ['Acción', 'Mundo abierto', 'Mesa y cartas', 'Estrategia', 'Herramientas'],
-    /* id de juego/herramienta de una ruta (location.pathname): /juego/<id>/ o /herramientas/<carpeta>/ (contenido/<sub> -> contenido_<sub>),
+    /* id de juego/herramienta de una ruta (location.pathname): /juego/<id>/ o /herramientas/<carpeta>/ (contenido/<sub> -> contenido_<sub>; trabajos/<modulo> -> trabajos_<modulo> con _ en vez de -; trabajos -> trabajos),
        en la raiz, en un subdirectorio (GitHub Pages) o en localhost. Devuelve '' si no es ninguno. */
     juegoDeRuta: function (ruta) {
       ruta = String(ruta || '');
@@ -666,7 +798,7 @@
       if (m) { for (var i = 0; i < J.length; i++) if (J[i].id === m[1]) return m[1]; }
       m = /\/herramientas\/([a-z0-9_-]+)(?:\/([a-z0-9_-]+))?(?:\/|$)/.exec(ruta);
       if (m) {
-        var c = m[1] === 'contenido' ? 'contenido/' + (m[2] || '') : m[1];
+        var c = m[1] === 'contenido' ? 'contenido/' + (m[2] || '') : m[1] === 'trabajos' && m[2] ? 'trabajos/' + m[2] : m[1];
         for (var k = 0; k < H.length; k++) if (H[k].carpeta === c) return H[k].id;
       }
       return '';

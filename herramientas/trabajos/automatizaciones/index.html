@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Automatizaciones · Trabajos</title>
+<meta name="description" content="Constructor visual de flujos de automatización en tu navegador: disparadores, acciones, lógica, simulación, registro y exportación a GitHub Actions. Sin librerías ni servidor.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23e8590c'/%3E%3Cpath d='M36 10L18 36h13l-3 18 18-26H33z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../comun/trabajos.css">
+<link rel="stylesheet" href="../../../juego/comun/cuenta.css"><link rel="stylesheet" href="../comun/cuenta-trabajos.css">
+<link rel="stylesheet" href="../qr/css/qr.css">
+<link rel="stylesheet" href="css/auto.css">
+</head>
+<body>
+<a class="tr-solo-lector" href="#principal">Saltar al contenido</a>
+<div class="tr-cont">
+  <nav class="tr-barra" aria-label="Navegación">
+    <a class="tr-enlace" href="../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Trabajos</a>
+    <span class="tr-sep"></span>
+    <button type="button" class="tr-btn" id="btn-tema" aria-label="Cambiar tema"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span>Tema</span></button>
+  </nav>
+  <header><h1>Automatizaciones</h1><p class="tr-sub">Construye flujos «cuando pase X, haz Y» con un editor visual. Todo corre en tu navegador, mientras esta página esté abierta; si quieres que corra sin ti, genera un workflow de GitHub Actions.</p></header>
+  <div class="tr-pestanas" role="tablist" aria-label="Secciones de Automatizaciones" id="pestanas">
+    <button role="tab" id="t-flujos" data-vista="flujos" aria-controls="v-flujos" aria-selected="true">Flujos</button>
+    <button role="tab" id="t-editor" data-vista="editor" aria-controls="v-editor" aria-selected="false" tabindex="-1">Editor</button>
+    <button role="tab" id="t-plantillas" data-vista="plantillas" aria-controls="v-plantillas" aria-selected="false" tabindex="-1">Plantillas</button>
+    <button role="tab" id="t-registro" data-vista="registro" aria-controls="v-registro" aria-selected="false" tabindex="-1">Registro</button>
+    <button role="tab" id="t-seguridad" data-vista="seguridad" aria-controls="v-seguridad" aria-selected="false" tabindex="-1">Seguridad</button>
+    <button role="tab" id="t-fondo" data-vista="fondo" aria-controls="v-fondo" aria-selected="false" tabindex="-1">Fondo y nube</button>
+    <button role="tab" id="t-cuenta" data-vista="cuenta" aria-controls="v-cuenta" aria-selected="false" tabindex="-1">Cuenta</button>
+  </div>
+  <main id="principal">
+    <section id="v-flujos" role="tabpanel" aria-labelledby="t-flujos"></section>
+    <section id="v-editor" role="tabpanel" aria-labelledby="t-editor" hidden></section>
+    <section id="v-plantillas" role="tabpanel" aria-labelledby="t-plantillas" hidden></section>
+    <section id="v-registro" role="tabpanel" aria-labelledby="t-registro" hidden></section>
+    <section id="v-seguridad" role="tabpanel" aria-labelledby="t-seguridad" hidden></section>
+    <section id="v-fondo" role="tabpanel" aria-labelledby="t-fondo" hidden></section>
+    <section id="v-cuenta" role="tabpanel" aria-labelledby="t-cuenta" hidden></section>
+  </main>
+  <p class="tr-ayuda">Las acciones externas (peticiones, enlaces, IA, dispositivos) piden confirmación la primera vez y respetan tu lista de dominios. Las claves se guardan solo en este dispositivo y nunca se sincronizan ni se exportan.</p>
+</div>
+<script src="../../../juego/comun/firebase-config.js"></script><script src="../../../juego/plataforma/juegos.js"></script><script src="../../../juego/comun/cuenta.js"></script><script src="../../../juego/comun/amigos.js"></script>
+<script src="../comun/cuenta-trabajos.js"></script>
+<script src="../comun/util.js"></script><script src="../comun/almacen.js"></script>
+<script src="../../comun/datos.js"></script>
+<script src="../dispositivos/js/puro.js"></script><script src="../dispositivos/js/capacidades.js"></script><script src="../dispositivos/js/nucleo.js"></script><script src="../dispositivos/js/drv-puente.js"></script>
+<script src="../qr/js/qrcodificador.js"></script><script src="../qr/js/qrdecodificador.js"></script><script src="../qr/js/qrrender.js"></script><script src="../qr/js/qrlector.js"></script>
+<script src="js/catalogo.js"></script><script src="js/motor.js"></script><script src="js/githubaction.js"></script>
+<script src="js/datos.js"></script><script src="js/app.js"></script><script src="js/acciones.js"></script><script src="js/ejecutor.js"></script>
+<script src="js/editor.js"></script><script src="js/plantillas.js"></script><script src="js/vistas.js"></script>
+<script src="js/arranque.js"></script>
+</body>
+</html>

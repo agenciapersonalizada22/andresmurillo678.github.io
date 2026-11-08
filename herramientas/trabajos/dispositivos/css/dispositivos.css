@@ -1,0 +1,49 @@
+/* Panel de dispositivos (prefijo dp-). Usa las variables de ../comun/trabajos.css */
+.dp-matriz,.dp-diag,.dp-lista,.dp-autoriz{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:10px}
+.dp-matriz{grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr))}
+.dp-cap{padding:12px;border:1px solid var(--borde);border-radius:12px;background:var(--panel);display:flex;flex-direction:column;gap:6px;border-left:5px solid var(--borde)}
+.dp-cap-t{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dp-cap-i{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:800;background:var(--panel2)}
+.dp-cap-d{font-size:13px;font-weight:600}.dp-cap-n{margin:0;font-size:13px;color:var(--suave)}
+.dp-cap .tr-btn{align-self:flex-start;margin-top:auto}
+.dp-badge{margin-left:auto;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:800;border:1px solid currentColor}
+.dp-c-ok{border-left-color:var(--ok)}.dp-b-ok{color:var(--ok)}
+.dp-c-permiso{border-left-color:var(--acento)}.dp-b-permiso{color:var(--acento)}
+.dp-c-https,.dp-c-denegado{border-left-color:var(--aviso)}.dp-b-https,.dp-b-denegado{color:var(--aviso)}
+.dp-c-no{border-left-color:var(--mal)}.dp-b-no{color:var(--mal)}
+.dp-dg{padding:10px 12px;border-radius:10px;background:var(--panel2);border-left:5px solid var(--borde)}.dp-dg p{margin:4px 0 0;font-size:14px}
+.dp-dg-error{border-left-color:var(--mal)}.dp-dg-aviso{border-left-color:var(--aviso)}.dp-dg-ok{border-left-color:var(--ok)}.dp-dg-info{border-left-color:var(--acento)}
+.dp-det{border:1px solid var(--borde);border-radius:12px;padding:4px 12px;margin:8px 0;background:var(--panel)}
+.dp-det summary{min-height:44px;display:flex;align-items:center;font-weight:700;cursor:pointer}.dp-det p{margin:0 0 10px;font-size:14px;color:var(--suave)}
+/* conexion */
+.dp-acc{align-items:center}
+.dp-estado{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:700;padding:4px 10px;border-radius:99px;background:var(--panel2);max-width:100%;overflow-wrap:anywhere}
+.dp-estado::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--suave);flex:none}
+.dp-e-conectado::before{background:var(--ok)}.dp-e-conectando::before{background:var(--aviso)}
+.dp-err{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--panel2);border-left:4px solid var(--mal)}.dp-err p{margin:4px 0;font-size:14px}.dp-err ul{margin:4px 0 0;padding-left:20px;font-size:14px}
+.dp-perfil{margin-top:14px;padding-top:6px;border-top:1px dashed var(--borde)}
+.dp-perfil-f{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}.dp-perfil-f>input,.dp-perfil-f>select{flex:1 1 160px;width:auto}
+/* registro */
+.dp-regbarra{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 6px}.dp-regbarra select{width:auto;min-height:36px;padding:2px 8px;font-size:14px}.dp-chk{min-height:36px;font-size:14px;margin:0}
+.dp-reg{height:min(42vh,340px);min-height:180px;overflow:auto;border:1px solid var(--borde);border-radius:12px;background:var(--panel2);font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:6px}
+.dp-lin{display:grid;grid-template-columns:auto 14px 1fr;gap:6px;padding:1px 2px;border-radius:4px}.dp-lin .dp-x{white-space:pre-wrap;word-break:break-all}
+.dp-t{color:var(--suave)}.dp-l-rx .dp-d{color:var(--ok)}.dp-l-tx .dp-d{color:var(--acento)}.dp-l-err{color:var(--mal);background:color-mix(in srgb,var(--mal) 10%,transparent)}.dp-l-sys .dp-x{color:var(--suave);font-style:italic}
+.dp-envio{display:flex;gap:8px;margin-top:10px}.dp-envio input{flex:1}
+.dp-pre{margin:10px 0;padding:10px;border-radius:12px;background:var(--panel2);border:1px solid var(--borde);font:13px/1.45 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word;max-height:300px;overflow:auto}
+/* bluetooth */
+.dp-car{padding:8px 0;border-top:1px solid var(--borde)}.dp-car .tr-etiq{margin-left:8px}.dp-car .tr-acciones{margin-top:6px;align-items:center}.dp-car input[type=text]{width:auto;flex:1 1 130px;min-height:36px}
+.dp-bat{margin-top:10px;font-weight:700}
+.dp-item{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;padding:10px;border:1px solid var(--borde);border-radius:12px;background:var(--panel)}.dp-item>div:first-child{flex:1 1 220px;min-width:0}
+.dp-code{display:block;margin-top:4px;font-size:12px;color:var(--suave);word-break:break-all}
+.dp-autoriz li{padding:8px 10px;border:1px solid var(--borde);border-radius:10px;background:var(--panel);font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+/* camara y medios */
+.dp-video{margin:12px 0;border-radius:12px;overflow:hidden;background:#000;min-height:0}.dp-video video{width:100%;display:block;max-height:420px;object-fit:contain}
+.dp-info{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:10px 0;font-size:14px}.dp-info dt{font-weight:700;color:var(--suave)}.dp-info dd{margin:0;word-break:break-word}
+.dp-salidas{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:10px}.dp-fig{margin:0;font-size:12px;color:var(--suave)}.dp-thumb{width:100%;border-radius:8px;display:block}.dp-fig audio{width:100%}
+.dp-nivel{height:12px;border-radius:99px;background:var(--panel2);overflow:hidden;margin:8px 0}.dp-nivel>i{display:block;height:100%;width:0;background:var(--ok);transition:width .08s}
+/* mandos y sensores */
+.dp-botones{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px}.dp-btnpad{padding:6px 4px;border-radius:8px;border:2px solid var(--borde);text-align:center;font-size:12px;font-weight:800;background:var(--panel2)}.dp-btnpad.on{background:var(--acento);color:var(--acento-txt);border-color:var(--acento)}
+.dp-palos{display:flex;gap:16px;justify-content:center;margin:12px 0}.dp-palos canvas{width:120px;height:120px;max-width:40vw;height:auto;aspect-ratio:1}
+.dp-graf{margin:0 0 14px}.dp-graf canvas{width:100%;height:auto;aspect-ratio:4/1;border-radius:10px;background:var(--panel2);display:block}.dp-graf figcaption{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:14px;margin-bottom:4px}
+.dp-leyenda{font-size:12px;font-weight:700}.dp-leyenda::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--c);margin-right:4px}.dp-vals{font-size:12px;color:var(--suave);margin-top:4px;overflow-wrap:anywhere}
+@media(max-width:480px){.dp-lin{grid-template-columns:14px 1fr}.dp-lin .dp-t{grid-column:1/-1;font-size:11px}.dp-reg{font-size:12px}}

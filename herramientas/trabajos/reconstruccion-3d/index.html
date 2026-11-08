@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Reconstrucción 3D y visor · Trabajos</title>
+<meta name="description" content="Siluetas, estéreo, planos por medidas, importación de mallas y nubes, y un visor con medición, cortes, anaglifo, VR y comparador. Todo en tu navegador.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23364fc7'/%3E%3Cpath d='M32 12l18 10v20L32 52 14 42V22zM32 32l18-10M32 32v20M32 32L14 22' fill='none' stroke='%23fff' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../comun/trabajos.css">
+<link rel="stylesheet" href="../../../juego/comun/cuenta.css"><link rel="stylesheet" href="../comun/cuenta-trabajos.css">
+<link rel="stylesheet" href="css/r3d.css">
+</head>
+<body>
+<a class="tr-solo-lector" href="#principal">Saltar al contenido</a>
+<div class="tr-cont">
+  <nav class="tr-barra" aria-label="Navegación">
+    <a class="tr-enlace" href="../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Trabajos</a>
+    <span class="tr-sep"></span>
+    <button type="button" class="tr-btn" id="btn-tema" aria-label="Cambiar tema"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span>Tema</span></button>
+  </nav>
+  <header><h1>Reconstrucción 3D y visor</h1>
+    <p class="tr-sub">Captura guiada, siluetas, estéreo, planos por medidas e importación de modelos, con un visor para medir, cortar y comparar. Todo corre en tu navegador; nada se sube sin que lo guardes en tu cuenta.</p></header>
+  <details class="tr-nota tr-av r3d-honesto" id="honesto"><summary>Qué hace este módulo y qué no (leer una vez)</summary>
+    <ul>
+      <li><b>Siluetas (visual hull):</b> bueno para objetos pequeños sobre una mesa giratoria. Solo recupera la «envolvente» de las siluetas: <b>no ve huecos ni concavidades</b> (el interior de una taza sale macizo). El tamaño depende de la distancia y el FOV que indiques.</li>
+      <li><b>Estéreo de dos fotos o video lateral:</b> da un mapa de profundidad y una nube de <b>una sola cara</b> de la escena. Exige cámaras paralelas con una base conocida; es aproximado y falla en superficies lisas, brillantes o repetitivas.</li>
+      <li><b>Plano por medidas y foto con referencia:</b> las medidas son tan exactas como las que tomes. La foto solo mide sobre el plano del objeto de referencia.</li>
+      <li><b>No es fotogrametría completa</b> (tipo COLMAP/Metashape): no estima posiciones de cámara de muchas fotos, ni textura. Para eso usa una app externa e <b>importa</b> el resultado (OBJ, PLY, STL, glTF/GLB, CSV de puntos, incluidos los de LiDAR).</li>
+    </ul></details>
+  <div class="tr-pestanas" role="tablist" aria-label="Secciones del módulo" id="pestanas">
+    <button role="tab" id="t-captura" data-vista="captura" aria-controls="v-captura" aria-selected="true">Captura</button>
+    <button role="tab" id="t-recon" data-vista="recon" aria-controls="v-recon" aria-selected="false" tabindex="-1">Reconstruir</button>
+    <button role="tab" id="t-espacio" data-vista="espacio" aria-controls="v-espacio" aria-selected="false" tabindex="-1">Espacio</button>
+    <button role="tab" id="t-visor" data-vista="visor" aria-controls="v-visor" aria-selected="false" tabindex="-1">Visor</button>
+    <button role="tab" id="t-archivos" data-vista="archivos" aria-controls="v-archivos" aria-selected="false" tabindex="-1">Archivos</button>
+  </div>
+  <main id="principal">
+    <section id="v-captura" role="tabpanel" aria-labelledby="t-captura"></section>
+    <section id="v-recon" role="tabpanel" aria-labelledby="t-recon" hidden></section>
+    <section id="v-espacio" role="tabpanel" aria-labelledby="t-espacio" hidden></section>
+    <section id="v-visor" role="tabpanel" aria-labelledby="t-visor" hidden></section>
+    <section id="v-archivos" role="tabpanel" aria-labelledby="t-archivos" hidden></section>
+  </main>
+  <p class="tr-ayuda" id="ayuda-global">Atajos: Alt+1…5 cambian de pestaña. En el visor: flechas orbitan, +/− zoom, F encuadra, 1…6 vistas, Entrar cierra una medida, Supr deshace. Con mando: sticks y gatillos mueven la vista, A marca un punto, RB/LB cambia de herramienta.</p>
+</div>
+<script src="../../../juego/comun/firebase-config.js"></script><script src="../../../juego/plataforma/juegos.js"></script><script src="../../../juego/comun/cuenta.js"></script><script src="../../../juego/comun/amigos.js"></script>
+<script src="../../../juego/comun/mando.js"></script>
+<script src="../comun/cuenta-trabajos.js"></script>
+<script src="../comun/util.js"></script><script src="../comun/almacen.js"></script>
+<script src="js/malla.js"></script><script src="js/mc.js"></script><script src="js/segmentar.js"></script><script src="js/hull.js"></script><script src="js/estereo.js"></script><script src="js/formatos.js"></script><script src="js/medir.js"></script><script src="js/plano.js"></script><script src="js/foto-medidas.js"></script><script src="js/nitidez.js"></script><script src="js/poses.js"></script><script src="js/ejemplos.js"></script><script src="js/ops.js"></script>
+<script src="js/datos.js"></script><script src="js/app.js"></script>
+<script src="js/vista-captura.js"></script><script src="js/vista-recon.js"></script><script src="js/vista-plano.js"></script><script src="js/vista-visor.js"></script><script src="js/vista-archivos.js"></script>
+<script type="module" src="js/visor.js"></script>
+<script src="js/arranque.js"></script>
+</body>
+</html>
