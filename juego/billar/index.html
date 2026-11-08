@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#06140f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Billar</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2306140f'/%3E%3Ccircle cx='32' cy='32' r='22' fill='%23111' stroke='%23fff' stroke-width='3'/%3E%3Ccircle cx='32' cy='32' r='10' fill='%23fff'/%3E%3Ctext x='32' y='37' font-size='14' font-weight='900' text-anchor='middle' fill='%23111'%3E8%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../comun/lobby.css">
+  <link rel="stylesheet" href="../comun/cuenta.css">
+</head>
+<body class="en-menu">
+<div id="app">
+  <header id="barra">
+    <a class="volver" href="../">← Menú</a>
+    <h1 class="titulo">BILLAR</h1>
+    <div class="acciones">
+      <button type="button" class="icono" id="bVista" aria-label="Cambiar vista" title="Vista 3D / cenital (V)" hidden>◎</button>
+      <button type="button" class="icono" id="bPantalla" aria-label="Pantalla completa" title="Pantalla completa">⛶</button>
+      <button type="button" class="icono" id="bSonido" aria-label="Sonido" title="Sonido">♪</button>
+      <button type="button" class="icono" id="bMenu" aria-label="Pausa y menú" title="Pausa (Esc)" hidden>⏸</button>
+      <button type="button" class="icono" id="bAjustes" aria-label="Ajustes" title="Ajustes">⚙</button>
+      <button type="button" class="icono" id="bAyuda" aria-label="Ayuda" title="Ayuda (?)">?</button>
+    </div>
+  </header>
+
+  <section id="menu" class="capa pantalla">
+    <div class="logo" aria-hidden="true"><i class="b0"></i><i class="b1"></i><i class="b2"></i></div>
+    <h2 class="gran">BILLAR</h2>
+    <p class="lema">Bola 8, bola 9 y carambola con física real, bots y amigos.</p>
+    <div id="cuentaLinea" class="cuenta-linea" hidden></div>
+    <div class="monedas" id="monedasMenu" aria-label="Monedas"></div>
+    <div class="lista-menu" id="listaMenu"></div>
+  </section>
+
+  <main id="juego" hidden>
+    <div id="jugadores" aria-label="Jugadores"></div>
+    <div id="bandeja" aria-label="Bolas embolsadas"></div>
+    <div id="escena">
+      <div id="lienzo"></div>
+      <div id="mensaje" role="status" aria-live="polite"></div>
+      <div id="potencia" aria-label="Fuerza del golpe"><div class="pot-cuerpo"><i></i></div><output>50%</output></div>
+      <div id="infoGolpe"></div>
+    </div>
+    <div id="mando">
+      <div id="efecto" aria-label="Punto de golpe (efecto)"><div class="bola-efecto"><i></i></div></div>
+      <div id="centro-botones">
+        <button type="button" class="btn fino" id="bFinoIzq" data-f="1" aria-label="Girar un poco a la izquierda">◀</button>
+        <button type="button" class="btn tirar" id="bTirar" data-f="1">TIRAR</button>
+        <button type="button" class="btn fino" id="bFinoDer" data-f="1" aria-label="Girar un poco a la derecha">▶</button>
+      </div>
+      <div id="extras">
+        <button type="button" class="btn peq sec" id="bConfirmar" data-f="1" hidden>Colocar aquí</button>
+        <button type="button" class="btn peq sec" id="bCentrar" data-f="1">Efecto: centro</button>
+      </div>
+    </div>
+    <div id="finPanel" class="capa panel-fin" hidden></div>
+  </main>
+
+  <div id="modal" class="capa" hidden></div>
+  <div id="toasts" aria-hidden="true"></div>
+  <div id="aria" class="sr" aria-live="polite"></div>
+  <div id="fps" hidden></div>
+</div>
+<script src="../comun/firebase-config.js"></script>
+<script src="../comun/mando.js"></script>
+<script src="../comun/red.js"></script>
+<script src="../comun/lobby.js"></script>
+<script src="../plataforma/juegos.js"></script>
+<script src="../comun/cuenta.js"></script>
+<script src="../comun/amigos.js"></script>
+<script type="module" src="js/arranque.js"></script>
+<noscript><p style="color:#fff;padding:1rem">Este juego necesita JavaScript.</p></noscript>
+</body>
+</html>
