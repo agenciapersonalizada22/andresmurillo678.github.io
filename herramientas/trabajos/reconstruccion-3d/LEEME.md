@@ -1,0 +1,5 @@
+# Reconstrucción 3D y visor (`trabajos_reconstruccion_3d`)
+100 % en el navegador. Three.js local en `lib/` (copia de juego/ajedrez/lib). Puro y probado en Node (`node pruebas/r3d.test.js`): `malla`, `mc` (isosuperficie por tetraedros), `segmentar`, `hull` (visual hull con SDF por vista), `estereo` (block matching + rectificación dy/giro), `formatos` (OBJ/PLY/STL/glTF-GLB/CSV), `medir`, `plano`, `foto-medidas` (homografía), `nitidez`, `poses` (plan/log de drones), `ops` + `trabajador.js` (Worker con respaldo en hilo principal).
+UI: `app.js` (estado, capas, memoria), `vista-*.js`, `visor.js` (módulo ES). Almacén IndexedDB: `proyectos` se sincroniza (mallas ≤150 KB cuantizadas); `mallas` y fotos solo locales.
+Límites: visual hull sin concavidades; estéreo solo cámaras paralelas y una cara; sin texturas UV ni Draco; WebXR y lado a lado sin probar en hardware; sin fotogrametría completa.
+Logros sugeridos: r3d_primer_modelo, r3d_visual_hull, r3d_estereo, r3d_plano_3d, r3d_foto_medida, r3d_importo_malla, r3d_exporto_obj|ply|stl|glb|csv, r3d_medicion, r3d_corte, r3d_anaglifo, r3d_comparador, r3d_captura, r3d_video_giro, r3d_dron_poses, r3d_guardo_proyecto.
