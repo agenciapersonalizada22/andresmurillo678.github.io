@@ -1,0 +1,25 @@
+// Partida completa en solo: el humano pulsa el boton principal; comprueba recarga a mitad (Continuar) y cero errores.
+import { lanzar, pagina, estado, humano } from './lib.mjs';
+const S = process.argv[2];
+const b = await lanzar();
+const ctx = await b.newContext({ viewport: { width: 390, height: 780 }, hasTouch: true, isMobile: true, deviceScaleFactor: 1 });
+const p = await pagina(b, { ctx, touch: true, nombre: 'Tester' });
+const chk = (c, m) => { console.log((c ? 'ok   ' : 'FALLA ') + m); if (!c) process.exitCode = 1; };
+await p.waitForTimeout(1500);
+await p.click('text=Jugar contra bots'); await p.waitForTimeout(400);
+await p.click('text=Rápido'); await p.waitForTimeout(300);
+await p.screenshot({ path: S + '/p0_preparar.png', fullPage: false });
+await p.click('text=▶ Empezar'); await p.waitForTimeout(1500);
+await humano(p, 70, async () => { await p.evaluate(() => { const X = window.Turismo.X; if (X.E.fase === 'viaje' && X.E.turno === X.yo) X.accion({ t: 'noViajar' }); if (X.E.fase === 'subasta' && X.E.subasta.turnoPuja === X.yo) X.accion({ t: 'pasarPuja' }); }); });
+const s1 = await estado(p); chk(s1 && s1.turnoN > 3, 'la partida avanza: turno ' + (s1 && s1.turnoN));
+await p.screenshot({ path: S + '/p1_media.png' });
+await p.reload(); await p.waitForTimeout(1500);
+chk(await p.evaluate(() => !!document.body.textContent.match(/Continuar partida/)), 'tras recargar se ofrece Continuar');
+await p.click('text=Continuar partida'); await p.waitForTimeout(1200);
+const s2 = await estado(p); chk(s2 && s2.id === s1.id && s2.turnoN >= s1.turnoN, 'se restaura la misma partida');
+await humano(p, 900, async () => { await p.evaluate(() => { const X = window.Turismo.X; if (X.E.fase === 'viaje' && X.E.turno === X.yo) X.accion({ t: 'noViajar' }); if (X.E.fase === 'subasta' && X.E.subasta.turnoPuja === X.yo) X.accion({ t: 'pasarPuja' }); }); });
+await p.waitForTimeout(1500);
+const s3 = await estado(p); console.log(JSON.stringify(s3));
+await p.screenshot({ path: S + '/p2_fin.png' });
+console.log('errs', p.errs.slice(0, 3).map((x) => x.slice(0, 300))); chk(p.errs.length === 0, 'cero errores de consola');
+await b.close();
