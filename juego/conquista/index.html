@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#071a2e">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Conquista Mundial</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23071a2e'/%3E%3Ccircle cx='32' cy='32' r='22' fill='%231d4f7a' stroke='%23fff' stroke-width='3'/%3E%3Cpath d='M18 26l8-6 8 4 6 8-6 10-8-2-6-6z' fill='%236ccf72'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../comun/lobby.css">
+  <link rel="stylesheet" href="../comun/cuenta.css">
+</head>
+<body class="en-menu">
+<div id="app">
+  <header id="barra">
+    <a class="volver" href="../">← Menú</a>
+    <h1 class="titulo">CONQUISTA</h1>
+    <div class="acciones">
+      <button type="button" class="icono" id="bPantalla" aria-label="Pantalla completa" title="Pantalla completa">⛶</button>
+      <button type="button" class="icono" id="bSonido" aria-label="Sonido" title="Sonido">♪</button>
+      <button type="button" class="icono" id="bMenu" aria-label="Pausa y menú" title="Pausa (Esc)" hidden>⏸</button>
+      <button type="button" class="icono" id="bAjustes" aria-label="Ajustes" title="Ajustes">⚙</button>
+      <button type="button" class="icono" id="bAyuda" aria-label="Ayuda" title="Ayuda (?)">?</button>
+    </div>
+  </header>
+
+  <section id="menu" class="capa pantalla">
+    <div class="globo" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#14507f" stroke="#9fd6ff" stroke-width="3"/><path d="M20 38l10-12 14 4 8 10-6 12-12-2-8 8-8-8z" fill="#6ccf72"/><path d="M58 20l14 4 8 14-8 10-10-4-4-14z" fill="#c27bff"/><path d="M52 62l12 2 6 14-10 8-10-8z" fill="#e0a04a"/></svg></div>
+    <h2 class="gran">CONQUISTA<br>MUNDIAL</h2>
+    <p class="lema">Refuerza, ataca con dados y domina el mapa. Bots, amigos y misiones secretas.</p>
+    <div id="cuentaLinea" class="cuenta-linea" hidden></div>
+    <div class="lista-menu" id="listaMenu"></div>
+  </section>
+
+  <main id="mesa" hidden>
+    <div id="jugadores" aria-label="Jugadores"></div>
+    <div id="mapaWrap">
+      <svg id="mapa" viewBox="0 0 1000 545" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Mapa del mundo"></svg>
+      <div id="infoT" class="info-t" aria-live="polite"></div>
+      <div id="zoomBtns">
+        <button type="button" class="icono" id="bZoomMas" aria-label="Acercar" data-f="1">+</button>
+        <button type="button" class="icono" id="bZoomMenos" aria-label="Alejar" data-f="1">−</button>
+        <button type="button" class="icono" id="bZoomTodo" aria-label="Ver todo el mundo" data-f="1">◎</button>
+      </div>
+      <div id="dados" class="dados" hidden></div>
+      <div id="pista" class="pista" hidden></div>
+    </div>
+    <div id="hud">
+      <div id="estado" role="status"></div>
+      <div id="tiempo" class="tiempo" hidden><i></i></div>
+      <div id="acciones">
+        <button type="button" id="bCartas" class="btn acc sec" data-f="1">Cartas</button>
+        <button type="button" id="bObjetivo" class="btn acc sec" data-f="1">Misión</button>
+        <button type="button" id="bMundo" class="btn acc sec" data-f="1">Mundo</button>
+        <button type="button" id="bCant" class="btn acc sec" data-f="1" hidden>×1</button>
+        <button type="button" id="bFort" class="btn acc sec" data-f="1" hidden>Fortificar</button>
+        <button type="button" id="bFase" class="btn acc grande" data-f="1">Atacar</button>
+      </div>
+    </div>
+    <div id="hoja" class="hoja" hidden></div>
+    <div id="finPanel" class="capa panel-fin" hidden></div>
+  </main>
+
+  <div id="modal" class="capa" hidden></div>
+  <div id="toasts" aria-hidden="true"></div>
+  <div id="aria" class="sr" aria-live="polite"></div>
+  <div id="fps" hidden></div>
+</div>
+<script src="../comun/firebase-config.js"></script>
+<script src="../comun/mando.js"></script>
+<script src="../comun/red.js"></script>
+<script src="../comun/lobby.js"></script>
+<script src="../plataforma/juegos.js"></script>
+<script src="../comun/cuenta.js"></script>
+<script src="../comun/amigos.js"></script>
+<script type="module" src="js/arranque.js"></script>
+<noscript><p style="color:#fff;padding:1rem">Este juego necesita JavaScript.</p></noscript>
+</body>
+</html>
