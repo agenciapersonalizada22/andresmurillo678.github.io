@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Ping Pong 3D</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230b1020'/%3E%3Ccircle cx='28' cy='30' r='16' fill='%23c3202b'/%3E%3Crect x='36' y='40' width='8' height='18' rx='3' transform='rotate(-35 40 49)' fill='%23c89a5b'/%3E%3Ccircle cx='46' cy='18' r='6' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../comun/lobby.css">
+  <link rel="stylesheet" href="../comun/cuenta.css">
+</head>
+<body class="en-menu">
+<div id="app">
+  <div id="escena"></div>
+  <div id="gesto" aria-label="Zona de golpe: desliza hacia arriba"><canvas id="trazo"></canvas></div>
+  <div id="hud" hidden></div>
+  <div id="fps" hidden></div>
+  <section id="menu" class="pantalla">
+    <header class="menu-cab">
+      <a class="volver" href="../" data-f="1">← Menú</a>
+      <div class="menu-der"><b id="monedas" class="saldo"></b><div id="cuentaLinea" class="cuenta-linea" hidden></div></div>
+    </header>
+    <h1 class="gran">PING PONG 3D</h1>
+    <p class="lema">Efectos, rebotes reales y rivales con estilo.</p>
+    <div class="lista-menu" id="listaMenu"></div>
+  </section>
+  <div id="modales"></div>
+  <div id="toasts" aria-live="polite"></div>
+  <p id="error3d" class="error3d" hidden>Tu navegador no pudo iniciar WebGL. Prueba otro navegador o activa la aceleración por hardware.</p>
+</div>
+<script src="../comun/firebase-config.js"></script>
+<script src="../comun/mando.js"></script>
+<script src="../comun/red.js"></script>
+<script src="../comun/lobby.js"></script>
+<script src="../plataforma/juegos.js"></script>
+<script src="../comun/cuenta.js"></script>
+<script src="../comun/amigos.js"></script>
+<script type="module" src="js/arranque.js"></script>
+</body>
+</html>
