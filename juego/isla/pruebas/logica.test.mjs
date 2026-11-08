@@ -1,0 +1,30 @@
+// Pruebas de logica pura (sin DOM): node juego/isla/pruebas/logica.test.mjs
+import assert from 'node:assert/strict';
+import { crearTerreno, bloqueaEst, sueloEst, golpeEst, contenidoCofre } from '../js/terreno.js';
+import { crearTormenta, FASES, T_INI } from '../js/tormenta.js';
+import { generarItem, ARMAS, RAREZAS, falloff } from '../js/armas.js';
+import { rng } from '../js/util.js';
+import { crearConstruccion, baldosa } from '../js/construccion.js';
+import { DIFICULTADES } from '../js/bots.js';
+let n = 0; const ok = (nombre, f) => { f(); n++; console.log('ok  ' + nombre); };
+const A = crearTerreno(777), B = crearTerreno(777), C = crearTerreno(778);
+ok('terreno determinista por semilla', () => { assert.equal(A.objetos.length, B.objetos.length); assert.equal(A.altura(10, 20), B.altura(10, 20)); assert.notEqual(A.altura(100, 50), C.altura(100, 50)); });
+ok('8 puntos de interes con edificios, botin y cofres', () => { assert.equal(A.pois.length, 8); assert.ok(A.cajas.length > 200 && A.loot.length > 100 && A.cofres.length >= 8); });
+ok('edificios bloquean, suelo y golpe', () => { const c = A.cajas.find((b) => b.y1 - b.y0 > 2.5 && b.x1 - b.x0 > 3); const x = (c.x0 + c.x1) / 2, z = (c.z0 + c.z1) / 2; assert.ok(bloqueaEst(A, x, c.y0 + 0.1, z, 0.4, 1.8)); assert.ok(golpeEst(A, x, (c.y0 + c.y1) / 2, z)); assert.ok(sueloEst(A, x, z, c.y1 + 0.2) >= c.y1 - 1e-6); });
+ok('contenido de cofre determinista con un arma', () => { const a = contenidoCofre(A, A.cofres[0]), b = contenidoCofre(B, B.cofres[0]); assert.deepEqual(a, b); assert.equal(a[0].k, 'arma'); });
+ok('tormenta: radios decrecientes y fases', () => { const t = crearTormenta(5); let r = 1e9; for (let s = 0; s < t.total + 30; s += 5) { const e = t.estado(s); assert.ok(e.r <= r + 1e-6); r = e.r; } assert.equal(t.estado(T_INI + 1).fase, 0); assert.equal(t.estado(t.total + 10).r, 0); assert.equal(t.estado(10).dano, 0); assert.ok(FASES.every((f, i) => i === 0 || f.d >= FASES[i - 1].d)); });
+ok('tormenta determinista', () => { assert.deepEqual(crearTormenta(9).estado(100), crearTormenta(9).estado(100)); });
+ok('armas: rarezas, balistica y botin', () => { const R = rng(3); for (let i = 0; i < 300; i++) { const it = generarItem(R, i % 2); if (it.k === 'arma') { assert.ok(ARMAS[it.w]); assert.ok(it.r >= 0 && it.r < RAREZAS.length); } } assert.ok(falloff('rifle', 400) < falloff('rifle', 10)); assert.ok(ARMAS.francotirador.dano > 100 && ARMAS.escopeta.pel === 8 && ARMAS.cohete.expl > 0); });
+ok('dificultades ordenadas', () => { assert.ok(DIFICULTADES.facil.err > DIFICULTADES.normal.err && DIFICULTADES.normal.err > DIFICULTADES.dificil.err); assert.ok(DIFICULTADES.facil.reac > DIFICULTADES.dificil.reac); });
+const escena = { add() {}, remove() {} }; const K = crearConstruccion(escena);
+ok('construccion: poner, colisiones, rampa, danos y edicion', () => {
+  const w = K.poner('p', 0, 0, 0, 0, 'madera', 'h0'); assert.ok(w); assert.equal(K.poner('p', 0, 0, 0, 0, 'madera', 'h0'), null);
+  assert.ok(K.bloquea(2, 0, 0, 0.4, 1.8)); assert.ok(!K.bloquea(2, 0, 2, 0.4, 1.8)); assert.ok(K.golpe(2, 1.2, 0));
+  K.editar(w, 511 & ~(1 << 1 | 1 << 4)); assert.ok(!K.bloquea(2, 0, 0, 0.1, 1.8)); assert.ok(K.bloquea(0.6, 0, 0, 0.1, 1.8)); assert.equal(K.golpe(2, 1.2, 0), null);
+  const s = K.poner('s', 5, 2, 5, 0, 'metal', 'h0'); assert.equal(K.suelo(22, 22, 6.5), 6); assert.equal(K.suelo(22, 22, 4), -1e9);
+  const r = K.poner('r', 10, 0, 10, 0, 'piedra', 'h0'); const t0 = K.suelo(42, 40.2, 5), t1 = K.suelo(42, 43.8, 5); assert.ok(t1 > t0 && t1 <= 3.01);
+  const d = K.danar(s.k, 100); assert.equal(d.destruida, false); assert.equal(K.danar(s.k, 400).destruida, true); assert.equal(K.suelo(22, 22, 6.5), -1e9);
+  const c = K.colocacion('r', { x: 2, y: 0.2, z: 2 }, 0); assert.equal(c.t, 'r'); assert.equal(c.gz, 1);
+  const b = baldosa(r, 1, 1); assert.ok(Math.abs(b.pit) > 0.5); assert.equal(K.lista().length, 2); K.limpiar(); assert.equal(K.cantidad, 0);
+});
+console.log(n + ' pruebas pasadas');
