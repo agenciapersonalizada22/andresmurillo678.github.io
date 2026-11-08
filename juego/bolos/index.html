@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a24">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Rey de los Bolos</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230a0a24'/%3E%3Ccircle cx='32' cy='44' r='13' fill='%23ff7a1a'/%3E%3Crect x='28' y='8' width='8' height='22' rx='4' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../comun/lobby.css">
+  <link rel="stylesheet" href="../comun/cuenta.css">
+</head>
+<body class="en-menu">
+<div id="app">
+  <div id="escena"></div>
+  <header id="barra">
+    <a class="volver" href="../">← Menú</a>
+    <h1 class="titulo">REY DE LOS BOLOS</h1>
+    <div class="acciones">
+      <span id="monedas" class="monedas" title="Monedas virtuales" aria-label="Monedas">🪙 <b>0</b></span>
+      <button type="button" class="icono" id="bPantalla" aria-label="Pantalla completa" title="Pantalla completa">⛶</button>
+      <button type="button" class="icono" id="bTabla" aria-label="Tabla de puntos" title="Tabla (T)" hidden>▦</button>
+      <button type="button" class="icono" id="bMenu" aria-label="Pausa y menú" title="Pausa (Esc)" hidden>⏸</button>
+      <button type="button" class="icono" id="bAjustes" aria-label="Ajustes" title="Ajustes">⚙</button>
+      <button type="button" class="icono" id="bAyuda" aria-label="Ayuda" title="Ayuda">?</button>
+    </div>
+  </header>
+
+  <section id="hud" hidden>
+    <div id="hudTurno"><i id="hudDot"></i><b id="hudNombre"></b><span id="hudInfo"></span><span id="pinosMini" aria-label="Pinos en pie"></span></div>
+    <div id="hudPuntos" role="button" tabindex="0" aria-label="Abrir tabla de puntos"></div>
+    <div id="mensaje" role="status" aria-live="polite"></div>
+    <div id="medidor" hidden><span>FUERZA</span><div><i></i></div></div>
+    <div id="pista"></div>
+  </section>
+
+  <div id="cluster" hidden>
+    <div class="cl-fila">
+      <button type="button" class="cl-b" data-b="izq" aria-label="Mover a la izquierda">◀</button>
+      <input id="clPos" type="range" min="-42" max="42" step="1" value="0" aria-label="Posición de la bola" data-f="1">
+      <button type="button" class="cl-b" data-b="der" aria-label="Mover a la derecha">▶</button>
+    </div>
+    <div class="cl-fila">
+      <button type="button" class="cl-b" data-b="apIzq" aria-label="Apuntar a la izquierda">⤺</button>
+      <button type="button" class="cl-b" data-b="apDer" aria-label="Apuntar a la derecha">⤻</button>
+      <button type="button" class="cl-b cl-lanzar" id="clLanzar" aria-label="Lanzar: mantén y suelta">LANZAR</button>
+      <button type="button" class="cl-b" data-b="efIzq" aria-label="Efecto a la izquierda">↺</button>
+      <button type="button" class="cl-b" data-b="efDer" aria-label="Efecto a la derecha">↻</button>
+      <button type="button" class="cl-b" id="clRapido" aria-label="Acelerar la jugada">⏩</button>
+    </div>
+  </div>
+
+  <section id="menu" class="capa pantalla">
+    <div class="logo" aria-hidden="true"><i></i><i></i><i></i><b></b></div>
+    <h2 class="gran">REY DE<br>LOS BOLOS</h2>
+    <p class="lema">Strikes, ligas, desafíos y partidas con amigos.</p>
+    <div id="cuentaLinea" class="cuenta-linea" hidden></div>
+    <div class="lista-menu" id="listaMenu"></div>
+  </section>
+
+  <div id="capas"></div>
+  <div id="toasts" aria-live="polite"></div>
+  <div id="fps" hidden></div>
+</div>
+<script src="../comun/firebase-config.js"></script>
+<script src="../comun/mando.js"></script>
+<script src="../comun/red.js"></script>
+<script src="../comun/lobby.js"></script>
+<script src="../plataforma/juegos.js"></script>
+<script src="../comun/cuenta.js"></script>
+<script src="../comun/amigos.js"></script>
+<script type="module" src="js/arranque.js"></script>
+</body>
+</html>
