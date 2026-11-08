@@ -138,13 +138,13 @@
     /* Id de juego o herramienta segun la ruta (/juego/<id>/, /herramientas/<carpeta>/, /herramientas/contenido/<sub>/), con o sin subdirectorio del sitio.
        Respaldo sin la tabla cargada: debe coincidir con plataforma/juegos.js (lo comprueba logica.test.mjs). */
     RUTAS_JUEGOS: ['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis', 'buscaminas', 'celulas', 'serpientes', 'uno', 'magnate', 'cartas', 'gatos', 'colonos', 'conquista', 'turismo', 'domino', 'isla', 'hockey', 'pingpong', 'billar', 'bolos'],
-    RUTAS_HERRAMIENTAS: { notas: 'notas', pizarra: 'pizarra', mercados: 'mercados', apuestas: 'apuestas', ofertas: 'ofertas', 'contenido/imagenes': 'contenido_imagenes', 'contenido/video': 'contenido_video', 'contenido/escritor': 'contenido_escritor', 'contenido/calendario': 'contenido_calendario' },
+    RUTAS_HERRAMIENTAS: { notas: 'notas', pizarra: 'pizarra', mercados: 'mercados', apuestas: 'apuestas', ofertas: 'ofertas', 'contenido/imagenes': 'contenido_imagenes', 'contenido/video': 'contenido_video', 'contenido/escritor': 'contenido_escritor', 'contenido/calendario': 'contenido_calendario', 'trabajos': 'trabajos', 'trabajos/qr': 'trabajos_qr', 'trabajos/dispositivos': 'trabajos_dispositivos', 'trabajos/drones': 'trabajos_drones', 'trabajos/automatizaciones': 'trabajos_automatizaciones', 'trabajos/video-ia': 'trabajos_video_ia', 'trabajos/reconstruccion-3d': 'trabajos_reconstruccion_3d', 'trabajos/realidad-aumentada': 'trabajos_realidad_aumentada', 'trabajos/contenido-ia': 'trabajos_contenido_ia', 'trabajos/monetizacion': 'trabajos_monetizacion', 'trabajos/analisis': 'trabajos_analisis' },
     juegoDeRuta: function (ruta) {
       ruta = String(ruta || '');
       var m = /\/juego\/([a-z0-9_-]+)(?:\/|$)/.exec(ruta);
       if (m && L.RUTAS_JUEGOS.indexOf(m[1]) >= 0) return m[1];
       m = /\/herramientas\/([a-z0-9_-]+)(?:\/([a-z0-9_-]+))?(?:\/|$)/.exec(ruta);
-      if (m) { var c = m[1] === 'contenido' ? 'contenido/' + (m[2] || '') : m[1]; return L.RUTAS_HERRAMIENTAS[c] || ''; }
+      if (m) { var c = m[1] === 'contenido' ? 'contenido/' + (m[2] || '') : m[1] === 'trabajos' && m[2] ? 'trabajos/' + m[2] : m[1]; return L.RUTAS_HERRAMIENTAS[c] || ''; }
       return '';
     },
     mejor: function (nuevo, viejo, mayorEsMejor) { return viejo == null || (mayorEsMejor ? nuevo > viejo : nuevo < viejo); },

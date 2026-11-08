@@ -126,9 +126,9 @@ await t('firestore.rules coincide con juegos.js (topes, menor-es-mejor, minimos,
   const bm = /function menorEsMejor\(\) \{\s*return \[([^\]]*)\]/.exec(r)[1]; assert.deepEqual([...bm.matchAll(/'([^']+)'/g)].map(x => x[1]).sort(), menor.sort());
   const bn = /function minimos\(\) \{\s*return \{([^}]*)\}/.exec(r)[1], mapaMin = {}; for (const m of bn.matchAll(/'([a-z_0-9]+)':\s*([0-9.]+)/g)) mapaMin[m[1]] = +m[2]; assert.deepEqual(mapaMin, mins);
   assert.ok(menor.length >= 6);
-  const todos = Juegos.todos.map(j => j.id).sort(); const re = /\(([a-z_|]+)\)\(~/.exec(r)[1].split('|').sort(); assert.deepEqual(re, todos);
+  const todos = Juegos.todos.map(j => j.id).sort(); const re = /\(([a-z0-9_|]+)\)\(~/.exec(r)[1].split('|').sort(); assert.deepEqual(re, todos);
   assert.ok(r.includes("in ['" + Juegos.lista.map(j => j.id).join("', '") + "']"), 'invitaciones solo a juegos');
-  const keys = /request\.resource\.data\.keys\(\)\.hasOnly\(\[('nebula'[^\]]*)\]/.exec(r)[1].match(/'[a-z_]+'/g).map(x => x.slice(1, -1)); assert.deepEqual(keys.filter(k => k !== 'xpJuego' && k !== 'ultimo').sort(), todos);
+  const keys = /request\.resource\.data\.keys\(\)\.hasOnly\(\[('nebula'[^\]]*)\]/.exec(r)[1].match(/'[a-z0-9_]+'/g).map(x => x.slice(1, -1)); assert.deepEqual(keys.filter(k => k !== 'xpJuego' && k !== 'ultimo').sort(), todos);
   for (const id of todos) assert.ok(r.includes("listaOk('" + id + "')"), 'listaOk ' + id);
   assert.ok(+/xpJuego\.size\(\) <= (\d+)/.exec(r)[1] >= todos.length, 'xpJuego cubre todos los ids');
 });
@@ -164,16 +164,19 @@ await t('juegoDeRuta: juegos, herramientas, subdirectorio de GitHub Pages, raiz 
     assert.equal(f('/juego/uno/'), 'uno'); assert.equal(f('/juego/uno/index.html'), 'uno'); assert.equal(f('/andresmurillo678.github.io/juego/cartas/'), 'cartas'); assert.equal(f('/juego/'), ''); assert.equal(f('/juego/index.html'), ''); assert.equal(f('/juego/hack/'), '');
     assert.equal(f('/herramientas/notas/'), 'notas'); assert.equal(f('/andresmurillo678.github.io/herramientas/notas/index.html'), 'notas'); assert.equal(f('/herramientas/pizarra'), 'pizarra');
     for (const s of ['imagenes', 'video', 'escritor', 'calendario']) { assert.equal(f('/herramientas/contenido/' + s + '/'), 'contenido_' + s); assert.equal(f('/x/herramientas/contenido/' + s + '/index.html'), 'contenido_' + s); }
+    const TR = { trabajos: 'trabajos', qr: 'trabajos_qr', dispositivos: 'trabajos_dispositivos', drones: 'trabajos_drones', automatizaciones: 'trabajos_automatizaciones', 'video-ia': 'trabajos_video_ia', 'reconstruccion-3d': 'trabajos_reconstruccion_3d', 'realidad-aumentada': 'trabajos_realidad_aumentada', 'contenido-ia': 'trabajos_contenido_ia', monetizacion: 'trabajos_monetizacion', analisis: 'trabajos_analisis' };
+    for (const k in TR) { const p = k === 'trabajos' ? '/herramientas/trabajos/' : '/herramientas/trabajos/' + k + '/'; assert.equal(f(p), TR[k]); assert.equal(f('/x' + p + 'index.html'), TR[k]); }
+    assert.equal(f('/herramientas/trabajos/otro/'), '');
     assert.equal(f('/herramientas/'), ''); assert.equal(f('/herramientas/index.html'), ''); assert.equal(f('/herramientas/contenido/'), ''); assert.equal(f('/herramientas/contenido/index.html'), ''); assert.equal(f('/herramientas/contenido/otro/'), ''); assert.equal(f('/herramientas/datos/'), ''); assert.equal(f(''), '');
   }
   assert.deepEqual([...L.RUTAS_JUEGOS].sort(), Juegos.lista.map(j => j.id).sort()); const rutas = {}; for (const h of Juegos.herramientas) rutas[h.carpeta] = h.id; assert.deepEqual(L.RUTAS_HERRAMIENTAS, rutas);
 });
 await t('herramientas: tipo, rutas, ids, sin modos y logros de notas', () => {
-  assert.deepEqual(Juegos.herramientas.map(h => h.id), ['notas', 'pizarra', 'mercados', 'apuestas', 'ofertas', 'contenido_imagenes', 'contenido_video', 'contenido_escritor', 'contenido_calendario']);
-  for (const h of Juegos.herramientas) { assert.equal(h.tipo, 'herramienta'); assert.deepEqual(h.modos, []); assert.equal(h.ruta, '../herramientas/' + h.carpeta + '/'); assert.ok(fs.existsSync(path.join(dir, '..', '..', h.ruta, 'index.html')), h.id); assert.ok(Juegos.esHerramienta(h.id) && Juegos.juego(h.id) === h && h.id.length <= 24); }
+  assert.deepEqual(Juegos.herramientas.map(h => h.id), ['notas', 'pizarra', 'mercados', 'apuestas', 'ofertas', 'contenido_imagenes', 'contenido_video', 'contenido_escritor', 'contenido_calendario', 'trabajos', 'trabajos_qr', 'trabajos_dispositivos', 'trabajos_drones', 'trabajos_automatizaciones', 'trabajos_video_ia', 'trabajos_reconstruccion_3d', 'trabajos_realidad_aumentada', 'trabajos_contenido_ia', 'trabajos_monetizacion', 'trabajos_analisis']);
+  for (const h of Juegos.herramientas) { assert.equal(h.tipo, 'herramienta'); assert.deepEqual(h.modos, []); assert.equal(h.ruta, '../herramientas/' + h.carpeta + '/'); assert.ok(fs.existsSync(path.join(dir, '..', '..', h.ruta, 'index.html')), h.id); assert.ok(Juegos.esHerramienta(h.id) && Juegos.juego(h.id) === h && h.id.length <= 32); }
   assert.ok(!Juegos.esHerramienta('uno') && !Juegos.lista.some(j => j.tipo === 'herramienta'));
-  assert.deepEqual(Juegos.juego('notas').logros.map(l => l.id), ['primera_tarea', 'racha_7', 'enfoque_1h', 'nota_enlazada', 'colaborador', 'bloqueo']);
-  assert.equal(Juegos.modo('notas', 'puntos'), null); assert.ok(!Juegos.claves().some(k => /^(notas|pizarra|mercados|contenido)/.test(k)), 'fuera del ranking');
+  assert.deepEqual(Juegos.juego('notas').logros.map(l => l.id), ['primera_tarea', 'racha_7', 'enfoque_1h', 'nota_enlazada', 'colaborador', 'bloqueo', 'primera_nota', 'tareas_25', 'en_la_nube']);
+  assert.equal(Juegos.modo('notas', 'puntos'), null); assert.ok(!Juegos.claves().some(k => /^(notas|pizarra|mercados|contenido|trabajos)/.test(k)), 'fuera del ranking');
   const ids = Juegos.todos.map(j => j.id); assert.equal(new Set(ids).size, ids.length, 'ids unicos entre juegos y herramientas');
 });
 await t('bajar() solo escribe las claves de la lista (ajustes por dispositivo no se pisan)', () => {
