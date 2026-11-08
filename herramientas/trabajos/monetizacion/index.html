@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Monetización y finanzas · Trabajos</title>
+<meta name="description" content="Fuentes de ingreso, libro de ingresos y gastos, facturas y cotizaciones, tarificador, planeación y tablero financiero para tu negocio de contenido y servicios. Informativo, no es asesoría.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f08c00'/%3E%3Ccircle cx='32' cy='32' r='17' fill='none' stroke='%23fff' stroke-width='5'/%3E%3Cpath d='M32 21v22M27 27c0-3 10-3 10 1s-10 3-10 8 10 4 10 1' fill='none' stroke='%23fff' stroke-width='3.500'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../comun/trabajos.css">
+<link rel="stylesheet" href="../../../juego/comun/cuenta.css"><link rel="stylesheet" href="../comun/cuenta-trabajos.css">
+<link rel="stylesheet" href="css/mon.css">
+</head>
+<body>
+<a class="tr-solo-lector" href="#principal">Saltar al contenido</a>
+<div class="tr-cont">
+  <nav class="tr-barra" aria-label="Navegación">
+    <a class="tr-enlace" href="../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Trabajos</a>
+    <span class="tr-sep"></span>
+    <button type="button" class="tr-btn" id="btn-tema" aria-label="Cambiar tema"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span>Tema</span></button>
+  </nav>
+  <header><h1>Monetización y finanzas</h1><p class="tr-sub">Las cuentas de tu negocio de contenido y servicios (drones, vídeo, canales, QR y etiquetas): de dónde viene el dinero, cuánto cobrar, qué te queda y qué viene.</p></header>
+  <p class="tr-nota tr-av" id="aviso-legal" role="note"><strong>Información educativa, no asesoría fiscal, legal ni financiera.</strong> Los impuestos y obligaciones varían por país: confirma con un contador. Aquí el dinero es solo un <em>registro tuyo</em>: no hay pagos, cobros ni pasarelas, y las proyecciones no garantizan resultados.</p>
+  <p class="mon-estado" id="mon-estado" role="status"></p>
+  <div class="tr-pestanas" role="tablist" aria-label="Secciones" id="pestanas">
+    <button role="tab" id="t-tablero" data-vista="tablero" aria-controls="v-tablero" aria-selected="true">Tablero</button>
+    <button role="tab" id="t-ingresos" data-vista="ingresos" aria-controls="v-ingresos" aria-selected="false" tabindex="-1">Ingresos</button>
+    <button role="tab" id="t-libro" data-vista="libro" aria-controls="v-libro" aria-selected="false" tabindex="-1">Libro</button>
+    <button role="tab" id="t-facturas" data-vista="facturas" aria-controls="v-facturas" aria-selected="false" tabindex="-1">Facturas</button>
+    <button role="tab" id="t-tarifas" data-vista="tarifas" aria-controls="v-tarifas" aria-selected="false" tabindex="-1">Tarifas</button>
+    <button role="tab" id="t-plan" data-vista="plan" aria-controls="v-plan" aria-selected="false" tabindex="-1">Planeación</button>
+    <button role="tab" id="t-ajustes" data-vista="ajustes" aria-controls="v-ajustes" aria-selected="false" tabindex="-1">Ajustes</button>
+  </div>
+  <main id="principal">
+    <section id="v-tablero" role="tabpanel" aria-labelledby="t-tablero"></section>
+    <section id="v-ingresos" role="tabpanel" aria-labelledby="t-ingresos" hidden></section>
+    <section id="v-libro" role="tabpanel" aria-labelledby="t-libro" hidden></section>
+    <section id="v-facturas" role="tabpanel" aria-labelledby="t-facturas" hidden></section>
+    <section id="v-tarifas" role="tabpanel" aria-labelledby="t-tarifas" hidden></section>
+    <section id="v-plan" role="tabpanel" aria-labelledby="t-plan" hidden></section>
+    <section id="v-ajustes" role="tabpanel" aria-labelledby="t-ajustes" hidden></section>
+  </main>
+  <p class="tr-ayuda">Atajos: Alt+1…7 cambian de sección. Tus cifras se guardan en este dispositivo; solo se sincronizan con tu Cuenta si activas el cifrado con tu propia frase. Información educativa: no es asesoría fiscal, legal ni financiera.</p>
+</div>
+<script src="../../../juego/comun/firebase-config.js"></script><script src="../../../juego/plataforma/juegos.js"></script><script src="../../../juego/comun/cuenta.js"></script><script src="../../../juego/comun/amigos.js"></script>
+<script src="../comun/cuenta-trabajos.js"></script>
+<script src="../comun/util.js"></script><script src="../comun/almacen.js"></script><script src="../comun/impresion.js"></script>
+<script src="../qr/js/qrcodificador.js"></script><script src="../qr/js/qrrender.js"></script>
+<script src="../../comun/datos.js"></script>
+<script src="js/calculos.js"></script><script src="js/cripto.js"></script><script src="js/catalogo.js"></script><script src="js/ui.js"></script><script src="js/datos.js"></script><script src="js/graficas.js"></script><script src="js/factura.js"></script>
+<script src="js/vista-tablero.js"></script><script src="js/vista-ingresos.js"></script><script src="js/vista-libro.js"></script><script src="js/vista-facturas.js"></script><script src="js/vista-tarifas.js"></script><script src="js/vista-plan.js"></script><script src="js/vista-ajustes.js"></script>
+<script src="js/arranque.js"></script>
+</body>
+</html>
