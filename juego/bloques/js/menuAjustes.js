@@ -25,6 +25,12 @@ const SECCIONES = [
     { t: 'bool', k: 'particulas', n: 'Partículas y ambiente' },
     { t: 'bool', k: 'minimapa', n: 'Minimapa' },
     { t: 'op', k: 'minimapaZoom', n: 'Zoom del minimapa', v: [[1, 'CERCA'], [2, 'NORMAL'], [4, 'LEJOS']] },
+    { t: 'titulo', n: 'Espacio y otras dimensiones' },
+    { t: 'op', k: 'efectosEspacio', n: 'Humo y chispas de cohetes y Abismo', v: [['auto', 'AUTO'], ['bajo', 'BAJO'], ['medio', 'MEDIO'], ['alto', 'ALTO']] },
+    { t: 'num', k: 'distanciaDim', n: 'Distancia de dibujo en Luna, órbita y Abismo', min: 0, max: 12, paso: 1, fmt: (v) => (v ? v + ' chunks' : 'AUTO') },
+    { t: 'bool', k: 'tierraVisible', n: 'Mostrar la Tierra en el cielo de la Luna y la órbita' },
+    { t: 'bool', k: 'eclipses', n: 'Eclipses de Sol y de Luna' },
+    { t: 'bool', k: 'vibracionCohete', n: 'Sacudida de cámara en el cohete' },
   ] },
   { id: 'audio', nombre: 'AUDIO', filas: [
     { t: 'num', k: 'volMaestro', n: 'Volumen general', min: 0, max: 100, paso: 10, fmt: (v) => v + '%' },

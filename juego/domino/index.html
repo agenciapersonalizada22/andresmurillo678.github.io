@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#07140e">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Dominó</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23123a2a'/%3E%3Crect x='20' y='8' width='24' height='48' rx='5' fill='%23fbf7ea' stroke='%23b9ae8c' stroke-width='2'/%3E%3Cpath d='M23 32h18' stroke='%238b8160' stroke-width='2'/%3E%3Ccircle cx='32' cy='19' r='3.2' fill='%2317171a'/%3E%3Ccircle cx='27' cy='43' r='3.2' fill='%2317171a'/%3E%3Ccircle cx='37' cy='49' r='3.2' fill='%2317171a'/%3E%3Ccircle cx='37' cy='43' r='3.2' fill='%2317171a'/%3E%3Ccircle cx='27' cy='49' r='3.2' fill='%2317171a'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../comun/lobby.css">
+  <link rel="stylesheet" href="../comun/cuenta.css">
+</head>
+<body class="en-menu">
+<div id="app">
+  <header id="barra">
+    <a class="volver" href="../">← Menú</a>
+    <h1 class="titulo">DOMINÓ</h1>
+    <div class="acciones">
+      <button type="button" class="icono" id="bPantalla" aria-label="Pantalla completa" title="Pantalla completa">⛶</button>
+      <button type="button" class="icono" id="bSonido" aria-label="Sonido" title="Sonido">♪</button>
+      <button type="button" class="icono" id="bChat" aria-label="Chat y reacciones" title="Chat (T)" hidden>💬</button>
+      <button type="button" class="icono" id="bMenu" aria-label="Pausa y menú" title="Pausa (Esc)" hidden>⏸</button>
+      <button type="button" class="icono" id="bAjustes" aria-label="Ajustes" title="Ajustes">⚙</button>
+      <button type="button" class="icono" id="bAyuda" aria-label="Ayuda" title="Ayuda (?)">?</button>
+    </div>
+  </header>
+
+  <section id="menu" class="capa pantalla">
+    <div class="logo" aria-hidden="true"><i></i><i></i><i></i></div>
+    <h2 class="gran">DOMINÓ</h2>
+    <p class="lema">Doble 6, 9 y 12 · parejas, todos contra todos y duelo · bots que recuerdan y deducen.</p>
+    <div id="cuentaLinea" class="cuenta-linea" hidden></div>
+    <div class="lista-menu" id="listaMenu"></div>
+  </section>
+
+  <main id="mesa" hidden>
+    <div id="lienzo">
+      <canvas id="tablero" aria-label="Mesa de dominó"></canvas>
+      <div id="marcador" aria-hidden="true"></div>
+      <div id="tiempo" class="tiempo" hidden><i></i></div>
+      <div id="pista" hidden></div>
+      <div id="estado" role="status"></div>
+      <div id="zoomCtl">
+        <button type="button" class="icono" id="zMas" aria-label="Acercar tablero" title="Acercar (+)">+</button>
+        <button type="button" class="icono" id="zMenos" aria-label="Alejar tablero" title="Alejar (-)">−</button>
+        <button type="button" class="icono" id="zAjustar" aria-label="Ajustar vista" title="Ajustar vista (0)">⤢</button>
+      </div>
+      <div id="chatPanel" class="panel-chat" hidden></div>
+    </div>
+    <div id="acciones">
+      <button type="button" id="bPasar" class="btn acc">Pasar</button>
+      <button type="button" id="bRobar" class="btn acc sec" hidden>Robar</button>
+    </div>
+    <div id="finPanel" class="capa panel-fin" hidden></div>
+  </main>
+
+  <div id="modal" class="capa" hidden></div>
+  <div id="toasts" aria-hidden="true"></div>
+  <div id="aria" class="sr" aria-live="polite"></div>
+  <div id="fps" hidden></div>
+</div>
+<script src="../comun/firebase-config.js"></script>
+<script src="../comun/mando.js"></script>
+<script src="../comun/red.js"></script>
+<script src="../comun/lobby.js"></script>
+<script src="../plataforma/juegos.js"></script>
+<script src="../comun/cuenta.js"></script>
+<script src="../comun/amigos.js"></script>
+<script type="module" src="js/arranque.js"></script>
+<noscript><p style="color:#fff;padding:1rem">Este juego necesita JavaScript.</p></noscript>
+</body>
+</html>

@@ -29,7 +29,7 @@ export function nombreEspec(espec) {
 
 export const RECETAS = [];
 
-function R(salida, n, filas, leyenda) {
+export function R(salida, n, filas, leyenda) {
   const ing = new Map();
   for (const f of filas) for (const ch of f) if (ch !== '.') ing.set(ch, (ing.get(ch) || 0) + 1);
   const lista = [...ing].map(([ch, c]) => [leyenda[ch], c]);

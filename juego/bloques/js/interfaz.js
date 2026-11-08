@@ -75,6 +75,13 @@ function iconoVehiculo(tipo) {
     x.fillStyle = 'rgba(140,200,230,0.8)'; x.beginPath(); x.ellipse(72, 52, 18, 10, 0, Math.PI, 0); x.fill(); x.stroke();
     x.strokeStyle = '#2a2c30'; x.lineWidth = 5; x.beginPath(); x.moveTo(16, 42); x.lineTo(16, 84); x.stroke(); x.lineWidth = 3; x.strokeStyle = 'rgba(0,0,0,0.65)';
     rueda(60, 88, 9); rueda(104, 88, 9);
+  } else if (tipo === 'aeroauto') {
+    x.fillStyle = '#f4f6fa';
+    x.beginPath(); x.moveTo(12, 76); x.lineTo(12, 62); x.lineTo(40, 54); x.lineTo(78, 40); x.lineTo(118, 40); x.lineTo(150, 58); x.lineTo(158, 66); x.lineTo(158, 76); x.closePath(); x.fill(); x.stroke();
+    x.fillStyle = 'rgba(111,182,230,0.75)'; x.beginPath(); x.moveTo(52, 54); x.lineTo(80, 40); x.lineTo(116, 40); x.lineTo(140, 56); x.closePath(); x.fill(); x.stroke();
+    x.fillStyle = '#2f9bff'; x.fillRect(20, 62, 134, 4);
+    rueda(44, 80, 12); rueda(128, 80, 12);
+    x.strokeStyle = '#6ab8ff'; x.lineWidth = 4; for (const px of [22, 146]) { x.beginPath(); x.ellipse(px, 34, 14, 4, 0, 0, 7); x.stroke(); }
   } else {
     x.fillStyle = '#6e7278';
     x.beginPath(); x.moveTo(30, 40); x.lineTo(138, 40); x.lineTo(126, 80); x.lineTo(42, 80); x.closePath(); x.fill(); x.stroke();
@@ -289,15 +296,23 @@ export class Interfaz {
     this.el.tabVel.textContent = String(info.velocidad);
     this.el.tabComb.style.width = Math.round(Math.max(0, Math.min(1, info.combustible)) * 100) + '%';
     this.el.tabGasCaja.classList.toggle('oculto', info.clase !== 'aire');
+    document.body.classList.toggle('vehVolador', info.clase === 'volador');
+    document.body.classList.toggle('vueloVolador', info.clase === 'volador' && info.modo === 'vuelo');
+    const rotulo = this.el.tabComb.parentNode.querySelector('em');
+    if (rotulo) rotulo.textContent = info.bateria ? 'BATERÍA' : 'COMBUSTIBLE';
     this.el.tabGas.style.width = Math.round(info.gas * 100) + '%';
     let texto = '';
     const mando = document.body.classList.contains('conMando');
-    if (mando) {
+    if (info.clase === 'volador') {
+      const modo = info.modo === 'vuelo' ? 'VUELO · alt ' + info.altura : 'CARRETERA';
+      texto = mando ? modo + ' · Y modo · RT sube · LT baja · A bajar' : modo + ' · F modo · Espacio sube · Mayús baja · G batería';
+      if (info.sinCombustible) texto = 'Batería agotada · ' + (mando ? 'Y' : 'G') + ' usa una batería de iones';
+    } else if (mando) {
       if (info.sinCombustible) texto = 'Sin combustible: Y usa un bidón';
       else if (info.clase === 'aire') texto = 'Alt ' + info.altura + ' · RT/LT motor · stick izq. nariz y giro · R3 vista';
       else if (info.clase === 'riel') texto = 'RT/LT mover · stick izq. girar en cruces · A bajar';
       else texto = 'A bajar · R3 vista · X luces · B freno';
-    } else if (info.sinCombustible) texto = 'Sin combustible: T usa un bidón';
+    } else if (info.clase === 'volador') { /* ya puesto arriba */ } else if (info.sinCombustible) texto = 'Sin combustible: T usa un bidón';
     else if (info.clase === 'aire') texto = 'Alt ' + info.altura + ' · W/S motor · ratón nariz y giro · C vista';
     else if (info.clase === 'riel') texto = 'W/S mover · A/D girar en cruces · E bajar';
     else texto = 'E bajar · C vista · L luces · Espacio freno';
@@ -399,9 +414,15 @@ export class Interfaz {
     this.el.agua.classList.toggle('visible', si);
   }
 
-  carga(visible, progreso = 0) {
+  carga(visible, progreso = 0, texto = null) {
     this.el.carga.classList.toggle('oculto', !visible);
-    if (visible) this.el.cargaBarra.style.width = Math.round(progreso * 100) + '%';
+    if (visible) {
+      this.el.cargaBarra.style.width = Math.round(progreso * 100) + '%';
+      const p = this.el.carga.querySelector('p');
+      const t = texto || 'Creando el mundo…';
+      if (p && p.textContent !== t) p.textContent = t;
+      document.body.classList.toggle('cargandoDim', !!texto);
+    } else document.body.classList.remove('cargandoDim');
   }
 
   // Muestra una pantalla por su nombre ('titulo', 'pausa', 'inventario', 'mundos', 'ajustes', 'logros', 'contenedor', 'muerte') o ninguna (null)

@@ -1,0 +1,26 @@
+import { lanzar, pagina, escenario } from './lib.mjs';
+const S = process.argv[2];
+const b = await lanzar();
+const ctx = await b.newContext({ viewport: { width: 390, height: 780 }, hasTouch: true, isMobile: true, deviceScaleFactor: 1 });
+const p = await pagina(b, { ctx, touch: true, nombre: 'Tester' });
+const chk = (c, m) => { console.log((c ? 'ok   ' : 'FALLA ') + m); if (!c) process.exitCode = 1; };
+await p.waitForTimeout(1200);
+await escenario(p, "e.turno=0; e.fase='tirar'; e.jug[0].pos=3; e.jug[0].sellos=[1,3]; e.prop[1].o=0; e.prop[9].o=1; e.eventos=[{tipo:'alta',cont:1,hasta:5}];");
+await p.waitForTimeout(800);
+// toque sobre una casilla del tablero
+const caja = await p.evaluate(() => { const T = window.Turismo.X.tablero; return T.proyectar(9); });
+await p.touchscreen.tap(caja.x, caja.y); await p.waitForTimeout(600);
+chk(/Marrakech/.test(await p.evaluate(() => (document.querySelector('#hojas .hoja h2') || {}).textContent || '')), 'tocar una casilla abre su ficha');
+await p.screenshot({ path: S + '/v1_casilla.png' }); await p.keyboard.press('Escape'); await p.evaluate(() => document.querySelector('#hojas .cerrar') && document.querySelector('#hojas .cerrar').click());
+await p.waitForTimeout(300);
+await p.click('text=Pasaporte'); await p.waitForTimeout(500); await p.screenshot({ path: S + '/v2_pasaporte.png' });
+await p.evaluate(() => document.querySelector('#hojas .cerrar').click()); await p.waitForTimeout(300);
+await p.click('#btnAjustes'); await p.waitForTimeout(500); await p.screenshot({ path: S + '/v3_ajustes.png' });
+await p.evaluate(() => document.querySelector('#hojas .cerrar').click()); await p.waitForTimeout(300);
+await p.evaluate(() => { const X = window.Turismo.X; X.E.jug[0].pos = 12; X.E.fase = 'viaje'; X.E.prop[12].o = 0; X.tablero.poner(X.E); });
+await p.evaluate(async () => (await import('/turismo/js/hud.js')).pintarHud()); await p.waitForTimeout(800); await p.screenshot({ path: S + '/v4_rutas.png' });
+await p.evaluate(() => document.querySelector('#hojas .cerrar') && document.querySelector('#hojas .cerrar').click()); await p.waitForTimeout(300);
+await p.evaluate(async () => (await import('/turismo/js/menu.js')).abrirTutorial(3)); await p.waitForTimeout(500); await p.screenshot({ path: S + '/v5_tutorial.png' });
+console.log('errs', p.errs.slice(0, 3).map((x) => x.slice(0, 250)));
+chk(p.errs.length === 0, 'cero errores de consola');
+await b.close();

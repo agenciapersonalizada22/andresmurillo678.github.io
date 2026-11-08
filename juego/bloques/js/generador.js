@@ -91,7 +91,7 @@ export function crearGenerador(semilla, version = 1, opciones = {}) {
     return B.PASTO;
   }
 
-  const est = crearEstructuras(s, { alturaEn, biomaEn }, { bloqueados: opciones.bloqueados });
+  const est = crearEstructuras(s, { alturaEn, biomaEn }, { bloqueados: opciones.bloqueados, centro: !!opciones.centroEspacial });
 
   const EXT = 3;                 // miramos 3 bloques más allá del chunk (para árboles y pendientes)
   const AN = LADO + EXT * 2;

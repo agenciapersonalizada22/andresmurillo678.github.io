@@ -50,6 +50,8 @@ import { Remotos } from './remotos.js';
 import { Multi } from './multi.js';
 import { Cta, pintarFilas, textoMiPosicion } from './cuentaJuego.js';
 import * as Nube from './nube.js';
+import { Espacio } from './espacio/espacio.js';
+import './espacio/recetasEspacio.js';
 
 const V = CONFIG.vista;
 const J = CONFIG.jugador;
@@ -134,6 +136,7 @@ escena.add(contorno);
 
 // ----------------------------------------------------------- Estado del juego
 // 'titulo' | 'mundos' | 'jugando' | 'pausa' | 'inventario' | 'ajustes' | 'logros' | 'cuenta' | 'ranking' | 'contenedor' | 'muerte' | 'foto'
+let espacio = null;           // dimensiones, cohetes y portal (se crea más abajo)
 let estado = 'titulo';
 let esperandoMundo = false;   // se está creando el terreno bajo tus pies
 let buscarSuelo = false;      // mundo nuevo: hay que pararte sobre el suelo
@@ -172,8 +175,10 @@ const enMulti = () => !!(window.Red && window.Red.conectado);
 const hayVida = () => !esCreativo();
 
 function aplicarRadio() {
-  mundo.ponerRadio(radio);
-  lejos = Math.max(220, (radio + 2) * 16 * 1.7);
+  const dd = Aj.get('distanciaDim');
+  const rEf = espacio && espacio.dim !== 'superficie' && dd > 0 ? lim(dd, DIST_MIN, DIST_MAX) : Math.max(DIST_MIN, Math.round(radio * (espacio ? espacio.factorRadio() : 1)));
+  mundo.ponerRadio(rEf);
+  lejos = Math.max(220, (rEf + 2) * 16 * 1.7);
   camara.far = lejos;
   camara.updateProjectionMatrix();
 }
@@ -243,6 +248,7 @@ interfaz.crearTarjetasVehiculos([
   { tipo: 'bote', nombre: 'Bote', nota: 'Solo sobre el agua' },
   { tipo: 'avioneta', nombre: 'Avioneta', nota: 'Acelera, mueve el ratón arriba y despega' },
   { tipo: 'vagoneta', nombre: 'Vagoneta', nota: 'Solo sobre rieles (las minas tienen)' },
+  { tipo: 'aeroauto', nombre: 'Aeroauto Volta', nota: 'Eléctrico: carretera y despegue vertical (F)' },
 ]);
 
 // Lo que hay en las 9 ranuras de la barra (en creativo, bloques sin cantidad)
@@ -319,7 +325,7 @@ const controles = new Controles({
         else if (objetivo && USABLE[objetivo.id] && usarBloque(objetivo)) { /* cofre, puerta, cama, horno… */ }
         else tecleoVehiculo();
         break;
-      case 'volar': if (estado === 'jugando' && !vehiculos.actual) alternarVuelo(); break;
+      case 'volar': if (estado === 'jugando') { if (vehiculos.actual) vehiculos.alternarModo(); else alternarVuelo(); } break;
       case 'teclaE':
         if (estado === 'jugando') { if (!tecleoVehiculo()) abrirInventario(); }
         else if (estado === 'inventario') cerrarInventario();
@@ -327,7 +333,12 @@ const controles = new Controles({
       case 'vehiculo': if (estado === 'jugando') tecleoVehiculo(); break;
       case 'camara': if (estado === 'jugando' && vehiculos.actual) vehiculos.alternarCamara(); break;
       case 'luces': if (estado === 'jugando' && vehiculos.actual) { vehiculos.actual.lucesManual = true; vehiculos.alternarLuces(); } break;
-      case 'repostar': if (estado === 'jugando') vehiculos.repostar(inv); break;
+      case 'repostar':
+        if (estado === 'jugando') {
+          const va = vehiculos.actual;
+          if (va && va.T.clase === 'volador' && controles.usandoMando) vehiculos.alternarModo(); else vehiculos.repostar(inv);
+        }
+        break;
       case 'inventario':
         if (estado === 'jugando') abrirInventario();
         else if (estado === 'inventario') cerrarInventario();
@@ -416,7 +427,7 @@ function aplicarAjustes() {
 }
 Aj.bus.en('cambio', ({ clave }) => {
   aplicarAjustes();
-  if (['calidad', 'distancia', 'sombras', 'resolucion', 'reducirMov'].includes(clave) || clave === '*') {
+  if (['calidad', 'distancia', 'sombras', 'resolucion', 'reducirMov', 'distanciaDim'].includes(clave) || clave === '*') {
     const n = NIVELES.includes(Aj.get('calidad')) ? Aj.get('calidad') : (calidadElegida ? nivelCalidad : nivelRecomendado(renderer, tactil));
     aplicarCalidad(n);
   }
@@ -527,7 +538,7 @@ function atacar(e) {
 // ----------------------------------------------------------- Dañar al jugador y morir
 const ctxVitales = {
   get jugador() { return jugador; }, get modo() { return modo; }, get dificultad() { return dificultad; },
-  get enVehiculo() { return !!vehiculos.actual; }, get armadura() { return inv.puntosArmadura(); },
+  get enVehiculo() { return !!vehiculos.actual; }, get armadura() { return inv.puntosArmadura(); }, get gravedad() { return jugador.gravMul; }, get sinRegeneracion() { return !!(espacio && espacio.asfixiando); },
   alDano: (n, causa) => {
     Sonido.dano();
     vibrar(0.6, 0.6, 160);
@@ -541,7 +552,7 @@ function herirJugador(n, dx, dz, causa, opc, tgt) {
   if (tgt && tgt.remoto) { multi.enviarDano(tgt.id, n, dx, dz, causa, opc); return; }
   if (esCreativo() || vitales.muerto || estado === 'muerte') return;
   const esc = ESCALA_DANO[dificultad] ?? 1;
-  if (causa === 'zombi' || causa === 'arana' || causa === 'flecha' || causa === 'creeper') n *= esc;
+  if (causa === 'zombi' || causa === 'arana' || causa === 'flecha' || causa === 'creeper' || causa === 'diablillo') n *= esc;
   if (n <= 0) return;
   const hecho = vitales.daniar(ctxVitales, n, causa);
   if (hecho <= 0) return;
@@ -550,14 +561,14 @@ function herirJugador(n, dx, dz, causa, opc, tgt) {
   jugador.vx += (dx / d) * e; jugador.vz += (dz / d) * e; if (jugador.enSuelo) jugador.vy = 4.5;
   // la armadura se gasta
   const piezas = inv.armadura.map((a, i) => (a ? i : -1)).filter((i) => i >= 0);
-  if (piezas.length && causa !== 'caida' && causa !== 'ahogado' && causa !== 'hambre') {
+  if (piezas.length && causa !== 'caida' && causa !== 'ahogado' && causa !== 'hambre' && causa !== 'lava' && causa !== 'asfixia') {
     const i = piezas[Math.floor(Math.random() * piezas.length)];
     if (inv.gastar(inv.armadura[i], 1)) interfaz.aviso('Se rompió una pieza de tu armadura');
   }
   if (causa === 'creeper') logros.sumar('explosiones');
 }
 
-const CAUSAS = { caida: 'Te caíste desde muy alto', ahogado: 'Te ahogaste', hambre: 'Te moriste de hambre', zombi: 'Te mató un zombi', arana: 'Te mató una araña', flecha: 'Te mató un esqueleto', creeper: 'Un creeper explotó cerca de ti', pvp: 'Te derrotó otro jugador' };
+const CAUSAS = { lava: 'Te quemaste en la lava', asfixia: 'Te quedaste sin oxígeno', diablillo: 'Te mató un diablillo del Abismo', caida: 'Te caíste desde muy alto', ahogado: 'Te ahogaste', hambre: 'Te moriste de hambre', zombi: 'Te mató un zombi', arana: 'Te mató una araña', flecha: 'Te mató un esqueleto', creeper: 'Un creeper explotó cerca de ti', pvp: 'Te derrotó otro jugador' };
 function morir(causa) {
   if (estado === 'muerte') return;
   logros.sumar('muertes');
@@ -578,6 +589,7 @@ function morir(causa) {
 }
 
 function reaparecer() {
+  espacio.alReaparecer();
   vitales.reiniciar();
   jugador.vx = jugador.vy = jugador.vz = 0;
   let p = spawn;
@@ -715,6 +727,7 @@ function cofreDe(x, y, z) {
 
 // Clic derecho sobre cofres, puertas, camas, mesas y hornos
 function usarBloque(o) {
+  if (espacio.usarBloque(o)) return true;
   const { x, y, z, id } = o;
   const tipo = USABLE[id] ? (id >= B.COFRE && id < B.COFRE + 4 ? 'cofre' : id === B.MESA_TRABAJO ? 'mesa' : id === B.HORNO ? 'horno' : BASE[id] === B.PUERTA_X ? 'puerta' : 'cama') : null;
   if (!tipo) return false;
@@ -826,6 +839,7 @@ function ponerBloqueEnMundo(id) {
   if ((id === B.ANTORCHA || BASE[id] === B.RIEL_X) && !SOLIDO[mundo.obtener(x, y - 1, z)]) return false; // antorchas y rieles sobre el suelo
   if (!mundo.poner(x, y, z, id)) return false;
   Sonido.poner(sonidoBloque(id));
+  if (id === B.ANTORCHA) espacio.alPonerBloque(x, y, z, id);
   return true;
 }
 
@@ -839,6 +853,7 @@ function poner() {
   if (!r) return false;
   if (esObjeto(r.id)) {
     const o = objetoPorId(r.id);
+    if (espacio.usarObjeto(o, objetivo)) return true;
     if (o.tipo === 'comida') return comer();
     if (o.tipo === 'arco') return disparar();
     if (o.tipo === 'armadura') { inv.equipar(seleccion); logros.puso(); refrescarBarra(); Sonido.clic(); return true; }
@@ -855,6 +870,7 @@ function poner() {
 
 // ----------------------------------------------------------- Vehículos
 function tecleoVehiculo() {
+  if (espacio.enCuenta()) { espacio.abortar(); return true; }
   if (vehiculos.actual) {
     if (vehiculos.bajar(false, jugador)) {
       jugador.desatorar(mundo);
@@ -871,7 +887,9 @@ function tecleoVehiculo() {
   vehiculos.subir(v, jugador);
   interfaz.volando(false);
   interfaz.ocultarAyuda();
-  if (controles.usandoMando) {
+  if (v.T.clase === 'volador') {
+    interfaz.aviso(v.T.nombre + (controles.usandoMando ? ' · Y despegar/aterrizar · RT sube · LT baja' : ' · WASD · F despegar en vertical · Espacio sube · Mayús baja') + ' · batería ' + Math.round(v.combustible) + '%', 4);
+  } else if (controles.usandoMando) {
     interfaz.aviso(v.T.nombre + (v.T.clase === 'aire' ? ' · RT/LT motor · stick izq. cabecear y girar' : v.T.clase === 'riel' ? ' · RT/LT mover' : ' · RT acelerar · LT frenar · stick izq. girar') + ' · A bajar', 3.4);
   } else interfaz.aviso(v.T.nombre + (v.T.clase === 'aire' ? ' · W/S motor · mueve el ratón para subir y girar' : v.T.clase === 'agua' ? ' · WASD navegar' : v.T.clase === 'riel' ? ' · W/S mover' : ' · WASD manejar'), 3);
   mundo.hayCambiosSinGuardar = true;
@@ -885,7 +903,7 @@ function mostrarAvisosVehiculo() {
 // Pone un vehículo nuevo frente al jugador
 function colocarVehiculo(tipo) {
   cerrarInventario();
-  if (vehiculos.actual) return;
+  if (vehiculos.actual) return false;
   const fx = -Math.sin(jugador.yaw), fz = -Math.cos(jugador.yaw);
   const largo = tipo === 'avioneta' ? 5 : 3;
   let lugar = null;
@@ -919,7 +937,7 @@ function colocarVehiculo(tipo) {
   }
   if (!lugar) {
     interfaz.aviso(tipo === 'bote' ? 'El bote va en el agua: acércate a un lago o al mar' : tipo === 'vagoneta' ? 'La vagoneta va sobre rieles: ponlos con el bloque Riel' : 'No hay espacio libre aquí');
-    return;
+    return false;
   }
   // no pasa de 12 vehículos: se quita el más viejo que nadie esté usando
   if (vehiculos.lista.length >= 12) {
@@ -930,6 +948,7 @@ function colocarVehiculo(tipo) {
   interfaz.aviso(TIPOS_VEH[tipo].nombre + ' listo: acércate y pulsa E');
   Sonido.poner('madera');
   mundo.hayCambiosSinGuardar = true;
+  return true;
 }
 
 function actualizarObjetivo() {
@@ -954,7 +973,8 @@ function hayMesaCerca() {
   if (mesaForzada) return true;
   const bx = Math.floor(jugador.x), by = Math.floor(jugador.y), bz = Math.floor(jugador.z);
   for (let y = by - 2; y <= by + 3; y++) for (let z = bz - 4; z <= bz + 4; z++) for (let x = bx - 4; x <= bx + 4; x++) {
-    if (mundo.obtener(x, y, z) === B.MESA_TRABAJO) return true;
+    const bq = mundo.obtener(x, y, z);
+    if (bq === B.MESA_TRABAJO || bq === B.FABRICA) return true;
   }
   return false;
 }
@@ -1066,6 +1086,8 @@ function pintarContenedor() {
         refrescar();
       },
     });
+  } else if (c.tipo === 'espacio') {
+    c.pintar(cuerpo, () => { refrescarBarra(); pintarContenedor(); }, $('avisoContenedor'));
   } else if (c.tipo === 'comercio') {
     pintarComercio(cuerpo, c.oficio, c.ofertas, inv, interfaz, {
       cambiar: (i) => {
@@ -1111,6 +1133,8 @@ function opcionesDePartida(p) {
     abiertos: p && Array.isArray(p.abiertos) ? p.abiertos : [],
     vehiculosUsados: p && Array.isArray(p.vehiculosUsados) ? p.vehiculosUsados : [],
     cofres: p && p.cofres, hornos: p && p.hornos,
+    dimension: p && p.espacio && p.espacio.dim, dimensiones: p && p.dimensiones,
+    centroEspacial: !p || !!(p.espacio && p.espacio.centro),   // mundos nuevos: sí; los guardados antes: no cambian
   };
 }
 
@@ -1145,7 +1169,9 @@ function datosGuardado() {
     semilla: mundo.semilla,
     tipo: mundo.tipo,
     modo, dificultad,
-    cambios: mundo.exportarCambios(),
+    cambios: mundo.exportarCambiosDe('superficie'),
+    dimensiones: mundo.exportarDimensiones(),
+    espacio: espacio ? espacio.exportar() : undefined,
     bloqueados: mundo.bloqueados ? [...mundo.bloqueados] : undefined, // chunks de mundos viejos donde no hay estructuras
     abiertos: [...mundo.abiertos],
     cofres: cont.cofres, hornos: cont.hornos,
@@ -1219,6 +1245,7 @@ function mostrarTitulo() {
   estado = 'titulo';
   if (vehiculos.actual) { vehiculos.bajar(true); interfaz.tablero(null); }
   animales.limpiar(); mobs.limpiar(); drops.limpiar(); ambiente.limpiar();
+  espacio.alSalir();
   multi.salir();
   limpiarMineria();
   esperandoMundo = false;
@@ -1572,7 +1599,8 @@ function comenzar(meta, datos, invitado = null) {
   mobs.limpiar(); drops.limpiar(); animales.limpiar();
   if (nuevo) {
     modo = meta.modo; dificultad = meta.dificultad;
-    mundo.reiniciar(meta.semilla, null, { version: 3, tipo: meta.tipo });
+    mundo.reiniciar(meta.semilla, null, { version: 3, tipo: meta.tipo, centroEspacial: true });
+    espacio.reiniciar();
     vehiculos.importar(null);
     inv.vaciar();
     vitales.reiniciar();
@@ -1591,6 +1619,7 @@ function comenzar(meta, datos, invitado = null) {
     const opc = opcionesDePartida(datos);
     if (fondoId === meta.id && !invitado) fondoId = null;       // ya está cargado de fondo en el título
     else { fondoId = null; mundo.reiniciar(datos.semilla, datos.cambios, opc); convertirContenedores(); }
+    espacio.importar(datos.espacio);
     vehiculos.importar(datos.vehiculos);
     inv.vaciar();
     if (datos.inventario) inv.importar(datos.inventario);
@@ -2070,16 +2099,19 @@ function cuadro(ahora) {
   lobbyPrevio = enLobby;
 
   const enVeh = !!vehiculos.actual;
-  if (!enLobby) controles.leerMando(dt, { estado, esperando: esperandoMundo, vehiculo: enVeh ? { clase: vehiculos.actual.T.clase } : null });
-  controles.actualizar(jugador.volando, enVeh);
+  if (!enLobby) controles.leerMando(dt, { estado, esperando: esperandoMundo, vehiculo: enVeh ? { clase: vehiculos.actual.T.clase, modo: vehiculos.actual.modo } : null });
+  const va0 = vehiculos.actual;      // (el mando pudo bajarte del vehículo justo ahora)
+  const volVeh = !!(va0 && va0.T.clase === 'volador' && va0.modo === 'vuelo');
+  controles.actualizar(jugador.volando || jugador.gravMul === 0 || volVeh, !!va0);
 
   // ¿ya está el terreno bajo tus pies?
   if (estado !== 'titulo' && esperandoMundo) {
-    const p = mundo.progreso(jugador.x, jugador.z, 1);
-    interfaz.carga(true, p);
-    if (p >= 1) {
+    const p = espacio.progreso();
+    interfaz.carga(true, p, espacio.textoCarga());
+    if (p >= 1 && !espacio.esperandoRed()) {
       esperandoMundo = false;
       if (buscarSuelo) { pararseEnSuelo(); spawn = { x: jugador.x, y: jugador.y, z: jugador.z }; }
+      espacio.alTerminarCarga();
       jugador.desatorar(mundo);
       if (!spawn) spawn = { x: jugador.x, y: jugador.y, z: jugador.z };
       interfaz.carga(false);
@@ -2090,7 +2122,7 @@ function cuadro(ahora) {
   const multiViva = multi.activo && estado !== 'titulo' && estado !== 'mundos';
   const simula = (jugandoYa || (multiViva && !esperandoMundo)) && !chatAbiertoBloquea();
 
-  if (jugandoYa && !enVeh && !vitales.muerto) {
+  if (jugandoYa && !enVeh && !vitales.muerto && !espacio.bloqueaJuego()) {
     jugador.actualizar(dt, controles.entrada, mundo, controles.tactil && Aj.get('saltoAuto'));
     if (!jugador.volando) interfaz.volando(false);
     sonidosDelJugador();
@@ -2115,12 +2147,15 @@ function cuadro(ahora) {
     vehiculos.actualizar(dt, controles.entrada, jugador, camara, esperandoMundo || !jugandoYa || vitales.muerto);
     mostrarAvisosVehiculo();
     actualizarTableroVehiculo(dt);
+    espacio.actualizar(dt, controles.entrada);
   }
 
   // Cámara
   const fovBase = Aj.get('fov');
   if (estado === 'titulo' || estado === 'mundos') {
     moverCamaraTitulo(dt);
+  } else if (espacio.enCohete) {
+    espacio.camara(camara, dt);
   } else if (vehiculos.actual) {
     const fovObjetivo = fovBase + (Aj.get('reducirMov') ? 0 : Math.min(16, Math.abs(vehiculos.actual.vel) * 0.4));
     if (Math.abs(camara.fov - fovObjetivo) > 0.05) {
@@ -2148,6 +2183,8 @@ function cuadro(ahora) {
 
   // Cielo, luz y niebla
   tiempoTotal += dt;
+  espacio.preCielo(hora, dias);
+  remotos.dimension = mundo.dimension;
   const luz = cielo.actualizar(hora, camara, lejos, dt, tiempoTotal);
   const dia = cielo.factorDia;
   const r = luz * (0.86 + 0.14 * dia), g = luz * (0.9 + 0.1 * dia), b = luz;
@@ -2163,9 +2200,11 @@ function cuadro(ahora) {
     escena.fog.near = 0.5;
     escena.fog.far = 18;
   } else {
+    const aj = espacio.nieblaAjuste();
+    const rEf = radio * espacio.factorRadio();
     escena.fog.color.copy(cielo.colorNiebla);
-    escena.fog.near = radio * 16 * 0.45;
-    escena.fog.far = radio * 16 * 0.92;
+    escena.fog.near = rEf * 16 * 0.45 * (aj ? aj.cerca : 1);
+    escena.fog.far = rEf * 16 * 0.92 * (aj ? aj.lejos : 1);
   }
   renderer.setClearColor(escena.fog.color);
   actualizarUniformes(bajoAgua);
@@ -2175,7 +2214,7 @@ function cuadro(ahora) {
 
   // Música según lo que pasa: monstruos cerca, bajo tierra, día o noche
   subterraneo = estado !== 'titulo' && !esperandoMundo && mundo.alturaSuelo(Math.floor(jugador.x), Math.floor(jugador.z)) > jugador.y + 4;
-  Musica.ponerAnimo(mobs.peligro > 0.15 ? 'peligro' : subterraneo ? 'cueva' : dia > 0.4 ? 'dia' : 'noche');
+  Musica.ponerAnimo(mobs.peligro > 0.15 ? 'peligro' : espacio.animoMusica() || (subterraneo ? 'cueva' : dia > 0.4 ? 'dia' : 'noche'));
   if (subterraneo && estado === 'jugando') { tiempoGota -= dt; if (tiempoGota <= 0) { tiempoGota = 6 + Math.random() * 14; Sonido.gota(); } }
 
   // Crear/dibujar chunks cerca de donde está la cámara
@@ -2183,24 +2222,26 @@ function cuadro(ahora) {
   // al manejar, los chunks se crean un poco más adelante de hacia donde vas
   const va = vehiculos.actual;
   const centro = (estado === 'titulo' || estado === 'mundos') ? centroTitulo : va ? { x: jugador.x + lim(va.vx * 0.9, -45, 45), z: jugador.z + lim(va.vz * 0.9, -45, 45) } : jugador;
-  mundo.actualizar(centro.x, centro.z, presupuesto);
+  if (!espacio.esperandoRed()) mundo.actualizar(centro.x, centro.z, presupuesto);
 
   actualizarObjetivo();
   if (estado === 'foto') {
     if (controles.pulsos.romper || controles.pulsos.poner) { controles.pulsos.romper = controles.pulsos.poner = false; capturarFoto(); }
-  } else if (estado === 'jugando' && !esperandoMundo && !vitales.muerto && !chatAbierto) accionesRepetidas(dt);
+  } else if (estado === 'jugando' && !esperandoMundo && !vitales.muerto && !chatAbierto && !espacio.bloqueaJuego()) accionesRepetidas(dt);
   particulas.actualizar(dt, mundo);
 
   // El mundo vivo: animales, bichos, objetos sueltos y hornos
   if (simula) {
-    if (CONFIG.animales.activos) {
+    if (CONFIG.animales.activos && espacio.dim === 'superficie') {
       animales.tintar(Math.max(r, 0.42), Math.max(g, 0.44), Math.max(b, 0.5));
       animales.actualizar(dt, jugador, dia, tactil ? CONFIG.animales.maximoMovil : CONFIG.animales.maximo);
     }
     const objetivosMobs = multi.objetivos(jugador);
-    const activos = !esCreativo() && dificultad !== 'pacifico' && !multi.esInvitado;
+    const mc = espacio.mobsConfig();
+    mobs.espejo = animales.espejo = multi.esInvitado && !espacio.dimPropia();
+    const activos = !esCreativo() && dificultad !== 'pacifico' && (!multi.esInvitado || espacio.dimPropia()) && !mc.sinMobs;
     mobs.actualizar(dt, {
-      jugador, objetivos: objetivosMobs, dia, activos, dificultad, max: tactil ? 5 : 8, jugadorVivo: !vitales.muerto && !esCreativo(),
+      jugador, objetivos: objetivosMobs, dia: mc.mobsDim ? 0 : dia, mobsDim: mc.mobsDim, activos, dificultad, max: tactil ? 5 : 8, jugadorVivo: !vitales.muerto && !esCreativo(),
       herirJugador,
       explotar: (x, y, z) => explosion(x, y, z, 3, {
         mundo, particulas, jugador, objetivos: objetivosMobs, jugadorVivo: !vitales.muerto && !esCreativo(), herirJugador,
@@ -2292,6 +2333,7 @@ const multi = new Multi({
   set hora(h) { hora = h; },
   get dias() { return dias; },
   set dias(v) { dias = v; },
+  get espacio() { return espacio; },
   get seleccion() { return seleccion; },
   get mundoMeta() { return mundoMeta; },
   itemEnMano: () => { const r = ranuraActual(); return r ? r.id : 0; },
@@ -2305,10 +2347,20 @@ const multi = new Multi({
   herirJugador: (n, dx, dz, causa, opc) => herirJugador(n, dx, dz, causa, opc, null),
   soltarBotin: (x, y, z, lista) => { for (const [k, n] of lista) drops.soltar(resolverId(k), n, x, y + 0.5, z); },
   aplicarGolpeRemoto: (kind, id, dano, x, z) => { const e = (kind === 'a' ? animales.lista : mobs.lista).find((q) => q.id === id); if (e) aplicarGolpe(e, dano, x, z); },
-  ponerBloqueRemoto: (x, y, z, id) => mundo.ponerRemoto(x, y, z, id),
+  ponerBloqueRemoto: (x, y, z, id, dm) => mundo.ponerRemoto(x, y, z, id, dm),
   logroMulti: () => { logros.sumar('multi'); logros.revisar(); },
   guardarCopia: (datos, nombre) => { const m = Mundos.crear({ nombre, semilla: datos.semilla, tipo: datos.tipo, modo: datos.modo, dificultad: datos.dificultad }); Mundos.guardar(m.id, datos, 0); return m; },
   teclaChat: () => abrirChat(),
+});
+
+espacio = new Espacio({
+  escena, camara, mundo, jugador, cielo, interfaz, vehiculos, mobs, animales, drops, ambiente, remotos, multi, Aj, inv, vitales, logros, hud, Sonido, uniformes,
+  get estado() { return estado; }, get hora() { return hora; }, get dias() { return dias; }, get spawn() { return spawn; },
+  tactil: () => tactil, esCreativo, esperando: () => esperandoMundo,
+  setEsperando: (v) => { esperandoMundo = v; buscarSuelo = false; },
+  guardar, abrirContenedor, cerrarContenedor: (esc) => cerrarContenedor(esc), abrirInventario,
+  danio: (n, causa) => { if (!esCreativo() && !vitales.muerto && estado === 'jugando') vitales.daniar(ctxVitales, n, causa, { sinArmadura: true, sinInvulnerable: true }); },
+  vibrar, refrescarBarra, colocarVehiculo, aplicarRadio, nombreObjeto: (k) => POR_CLAVE_OBJ[k].nombre, resolverId,
 });
 
 function iniciarJuego() {
@@ -2318,12 +2370,16 @@ function iniciarJuego() {
   const u = Mundos.ultimo();
   const d = u ? Mundos.cargar(u.id) : null;
   if (d) {
-    mundo.reiniciar(d.semilla, d.cambios, opcionesDePartida(d));
+    const enOtra = !!(d.espacio && d.espacio.dim && d.espacio.dim !== 'superficie');
+    const opc = opcionesDePartida(d);
+    if (enOtra) { delete opc.dimension; }
+    mundo.reiniciar(d.semilla, d.cambios, opc);
     convertirContenedores();
-    restaurarJugador(d);
-    fondoId = u.id;
+    espacio.importar(enOtra ? null : d.espacio);
+    if (enOtra) { const i = mundo.gen.buscarInicio(); jugador.ponerEn(i.x, i.y + 1, i.z); } else restaurarJugador(d);
+    fondoId = enOtra ? null : u.id;
   } else {
-    mundo.reiniciar(semillaVistaPrevia, null, { version: 3 });
+    mundo.reiniciar(semillaVistaPrevia, null, { version: 3, centroEspacial: true });
     const inicio = mundo.gen.buscarInicio();
     jugador.ponerEn(inicio.x, inicio.y + 1, inicio.z);
   }
@@ -2343,6 +2399,8 @@ iniciarJuego();
 // Para hacer pruebas desde la consola del navegador
 window.BLOQUES = {
   mundo, jugador, camara, renderer, animales, mobs, vehiculos, ambiente, inv, vitales, drops, sombras, uniformes, cielo, remotos, multi, logros, Aj, Mundos,
+  get espacio() { return espacio; },
+  viajar: (d, o) => espacio.viajar(d, o),
   get calidad() { return nivelCalidad; },
   ponerCalidad: (n) => aplicarCalidad(n),
   colocarVehiculo, usarBloque, tecleoVehiculo,
@@ -2356,6 +2414,7 @@ window.BLOQUES = {
   get hora() { return hora; },
   set hora(h) { hora = ((h % 1) + 1) % 1; },
   get dias() { return dias; },
+  set dias(v) { dias = v; },
   get musica() { return { activa: Musica.activa, animo: Musica.animo, notas: Musica.notasTocadas }; },
   get entrada() { return { ...controles.entrada }; },
   controles,

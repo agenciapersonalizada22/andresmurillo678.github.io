@@ -22,10 +22,21 @@ export const LOGROS = [
   { id: 'explorador', nombre: 'Explorador', desc: 'Camina 1 000 bloques', cond: (s) => s.distancia >= 1000 },
   { id: 'foto', nombre: 'Fotógrafo', desc: 'Toma una foto', cond: (s) => s.fotos >= 1 },
   { id: 'amigos', nombre: 'Mejor con amigos', desc: 'Juega con otra persona', cond: (s) => s.multi >= 1 },
+  // ---- espacio y dimensiones
+  { id: 'aeroauto_despega', nombre: 'Despegue vertical', desc: 'Vuela unos segundos en un aeroauto', cond: (s) => s.vuelosAuto >= 1 },
+  { id: 'centro_de_mando', nombre: 'Centro de mando', desc: 'Usa un panel de control del centro espacial', cond: (s) => s.centroMando >= 1 },
+  { id: 'ingeniero_espacial', nombre: 'Ingeniero espacial', desc: 'Ensambla un cohete completo', cond: (s) => s.cohetes >= 1 },
+  { id: 'llegada_orbita', nombre: 'Llegué al espacio', desc: 'Llega a la órbita en un cohete', cond: (s) => s.orbitas >= 1 },
+  { id: 'paso_lunar', nombre: 'Un pequeño paso', desc: 'Pisa la Luna', cond: (s) => s.visitaLuna >= 1 },
+  { id: 'ida_y_vuelta', nombre: 'Ida y vuelta', desc: 'Regresa a la Superficie desde el espacio', cond: (s) => s.idaVuelta >= 1 },
+  { id: 'portal_abismo', nombre: 'Constructor de portales', desc: 'Enciende un portal con un marco de obsidiana', cond: (s) => s.portales >= 1 },
+  { id: 'al_abismo', nombre: 'Al otro lado', desc: 'Entra en el Abismo', cond: (s) => s.visitaAbismo >= 1 },
+  { id: 'eclipse_total', nombre: 'Sombra en pleno día', desc: 'Mira un eclipse solar total', cond: (s) => s.eclipses >= 1 },
 ];
 
 const NUMEROS = ['bloquesRotos', 'bloquesPuestos', 'distancia', 'segundos', 'malosMatados', 'animalesMatados', 'muertes', 'fundidos',
-  'comidas', 'dormidas', 'tratos', 'explosiones', 'flechasAcertadas', 'diasMax', 'fotos', 'multi', 'crafteos'];
+  'comidas', 'dormidas', 'tratos', 'explosiones', 'flechasAcertadas', 'diasMax', 'fotos', 'multi', 'crafteos',
+  'vuelosAuto', 'centroMando', 'cohetes', 'orbitas', 'visitaLuna', 'idaVuelta', 'portales', 'visitaAbismo', 'eclipses', 'lanzamientos'];
 
 export class Logros {
   constructor() {

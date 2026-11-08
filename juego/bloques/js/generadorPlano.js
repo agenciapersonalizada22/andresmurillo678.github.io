@@ -15,7 +15,7 @@ export function crearGeneradorPlano(semilla, opciones = {}) {
   const s = semilla | 0;
   const alturaEn = () => SUELO;
   const biomaEn = () => 'llanura';
-  const est = crearEstructuras(s, { alturaEn, biomaEn }, { bloqueados: opciones.bloqueados });
+  const est = crearEstructuras(s, { alturaEn, biomaEn }, { bloqueados: opciones.bloqueados, centro: !!opciones.centroEspacial });
 
   function generarChunk(cx, cz) {
     const datos = new Uint8Array(CAPA * ALTO);

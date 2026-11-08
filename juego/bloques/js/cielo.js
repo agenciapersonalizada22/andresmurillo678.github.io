@@ -12,6 +12,8 @@
 // =============================================================
 import * as THREE from '../lib/three.module.min.js';
 import { CONFIG } from './config.js';
+import { estadoCielo, RADIO_SOL, RADIO_LUNA } from './espacio/astronomia.js';
+import { FRAG_ASTROS } from './espacio/shaderAstros.js';
 
 const suave = (a, b, x) => {
   const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
@@ -44,6 +46,18 @@ const FRAG_DOMO = /* glsl */`
   uniform float noche;
   uniform float tiempo;
   uniform float estrellas;
+  uniform vec3 lunaDir;
+  uniform float lunaOn;
+  uniform float faseLuna;
+  uniform float eclipseSol;
+  uniform float eclipseLuna;
+  uniform float vacio;
+  uniform float cieloOff;
+  uniform vec3 tierraDir;
+  uniform float tierraR;
+  uniform float tierraFase;
+  uniform float solR;
+  uniform float lunaR;
   varying vec3 vDir;
   float hash(vec3 p) {
     p = fract(p * 0.3183099 + vec3(0.1, 0.2, 0.3));
@@ -66,31 +80,49 @@ const FRAG_DOMO = /* glsl */`
     float banda = smoothstep(-0.05, 0.16, h) * (1.0 - clamp(h * 2.2, 0.0, 1.0));
     c += colorAtardecer * fuerzaAtardecer * (0.28 * banda + 0.95 * pow(max(sd, 0.0), 6.0) * banda);
     float dia = 1.0 - noche;
-    // sol: disco con halo
-    float disco = smoothstep(0.99935, 0.99965, sd);
-    float halo = pow(max(sd, 0.0), 90.0) * 0.55 + pow(max(sd, 0.0), 10.0) * 0.16;
-    c += vec3(1.0, 0.94, 0.78) * (disco * 1.6 + halo) * smoothstep(-0.12, 0.04, solDir.y);
-    // luna (enfrente del sol) con cráteres y halo
-    vec3 ld = -solDir;
+    // sol: disco con halo (el halo se apaga sin atmósfera y en un eclipse)
+    float cubierto = 1.0 - 0.96 * eclipseSol;
+    float sepSol = length(d - solDir);
+    float disco = smoothstep(solR + 0.0007, solR - 0.0007, sepSol);
+    float halo = (pow(max(sd, 0.0), 90.0) * 0.55 + pow(max(sd, 0.0), 10.0) * 0.16) * (1.0 - 0.85 * vacio);
+    float visSol = smoothstep(-0.12, 0.04, solDir.y) * (1.0 - cieloOff);
+    c += vec3(1.0, 0.94, 0.78) * (disco * 1.6 * cubierto + halo * cubierto) * visSol;
+    // corona del eclipse total
+    float corona = exp(-max(sepSol - solR, 0.0) * 22.0) * smoothstep(0.5, 1.0, eclipseSol);
+    c += vec3(0.9, 0.93, 1.0) * corona * 0.85 * visSol;
+    // luna con fases, cráteres, eclipse lunar y luz cenicienta
+    vec3 ld = lunaDir;
+    float sepLuna = length(d - ld);
     float md = dot(d, ld);
-    float disL = smoothstep(0.99955, 0.99975, md);
-    float crateres = 0.9;
-    if (disL > 0.001) crateres = 0.82 + 0.18 * ruido(d * 120.0) + 0.1 * ruido(d * 300.0);
-    c += vec3(0.86, 0.9, 1.0) * (disL * crateres + pow(max(md, 0.0), 110.0) * 0.32 + pow(max(md, 0.0), 14.0) * 0.07) * noche * smoothstep(-0.12, 0.04, ld.y);
+    float discoL = smoothstep(lunaR + 0.0007, lunaR - 0.0007, sepLuna) * lunaOn * (1.0 - cieloOff);
+    if (discoL > 0.001) {
+      float p = clamp(sepLuna / lunaR, 0.0, 1.0);
+      vec3 e = normalize(d - ld * md + vec3(0.00001));
+      vec3 n = normalize(e * p - ld * sqrt(1.0 - p * p));
+      float luzSolar = smoothstep(-0.04, 0.22, dot(n, solDir));
+      float crateres = 0.82 + 0.18 * ruido(n * 9.0) + 0.1 * ruido(n * 22.0) - 0.22 * smoothstep(0.55, 0.7, ruido(n * 4.0 + 5.0));
+      vec3 colLuna = vec3(0.88, 0.9, 0.98) * crateres * (0.05 + 0.95 * luzSolar);
+      colLuna = mix(colLuna, vec3(0.5, 0.12, 0.05) * crateres * 0.9, eclipseLuna * 0.92);
+      float op = mix(0.55, 1.0, noche);
+      op = max(op, smoothstep(0.0, 0.2, eclipseSol));
+      c = mix(c, colLuna, discoL * op);
+    }
+    c += vec3(0.8, 0.86, 1.0) * (pow(max(md, 0.0), 120.0) * 0.28 + pow(max(md, 0.0), 14.0) * 0.06) * noche * lunaOn * (0.2 + 0.8 * faseLuna) * (1.0 - eclipseLuna * 0.7) * (1.0 - cieloOff) * (1.0 - 0.9 * vacio);
+    FRAG_ASTROS_TIERRA
     // estrellas que titilan
     if (estrellas > 0.5 && noche > 0.02 && h > -0.08) {
       vec3 g = d * 190.0;
       vec3 id = floor(g);
       float r = hash(id);
       float tam = smoothstep(0.45, 0.0, length(fract(g) - 0.5));
-      float brillo = step(0.982, r) * tam * (0.55 + 0.45 * sin(tiempo * 2.3 + r * 60.0));
+      float brillo = step(0.982 - 0.011 * vacio, r) * tam * (0.55 + 0.45 * sin(tiempo * 2.3 + r * 60.0));
       c += mix(vec3(0.8, 0.9, 1.0), vec3(1.0, 0.9, 0.75), fract(r * 7.0)) * brillo * noche * smoothstep(-0.05, 0.25, h);
       // neblina de la vía láctea muy tenue
       float vl = ruido(d * 4.0 + vec3(3.0)) * smoothstep(0.35, 0.0, abs(d.x * 0.6 + d.y - d.z * 0.3));
-      c += vec3(0.05, 0.06, 0.1) * vl * noche;
+      c += vec3(0.05, 0.06, 0.1) * vl * noche * (1.0 + vacio * 2.5);
     }
     gl_FragColor = vec4(c, 1.0);
-  }`;
+  }`.replace('FRAG_ASTROS_TIERRA', FRAG_ASTROS);
 
 const FRAG_NUBES = /* glsl */`
   uniform vec3 camara;
@@ -161,6 +193,18 @@ export class Cielo {
       noche: { value: 0 },
       tiempo: { value: 0 },
       estrellas: { value: 1 },
+      lunaDir: { value: new THREE.Vector3(0, -1, 0) },
+      lunaOn: { value: 1 },
+      faseLuna: { value: 1 },
+      eclipseSol: { value: 0 },
+      eclipseLuna: { value: 0 },
+      vacio: { value: 0 },
+      cieloOff: { value: 0 },
+      tierraDir: { value: new THREE.Vector3(0, -1, 0) },
+      tierraR: { value: 0 },
+      tierraFase: { value: 1 },
+      solR: { value: RADIO_SOL },
+      lunaR: { value: RADIO_LUNA },
     };
     const domo = new THREE.Mesh(
       new THREE.SphereGeometry(1, 40, 20),
@@ -233,6 +277,22 @@ export class Cielo {
     this.arriba = this.uniformes.arriba.value;
     this.tmp = new THREE.Vector3();
     this.viento = 0;
+    // dimensiones: null = Superficie. espacial = { sol, tierraDir, tierraR, tierraFase } lo pone el juego cada cuadro
+    this.dim = null;
+    this.espacial = { sol: new THREE.Vector3(0.5, 0.8, 0.3).normalize(), tierraDir: new THREE.Vector3(0, -1, 0), tierraR: 0, tierraFase: 1 };
+    this.dias = 0;            // días enteros (para estaciones y fases)
+    this.eclipses = true;
+    this.oscuridad = 0;       // 0 a 1: cuánto se oscurece el cielo al subir en cohete
+    this.sinNubes = false;
+    this.astro = null;        // último estado astronómico (fase, eclipse…) para mostrar en paneles
+    this.lunaDir = this.uniformes.lunaDir.value;
+  }
+
+  // dim: datos de la dimensión (cuerpos.js) o null para la Superficie
+  ponerDimension(dim) {
+    this.dim = dim && dim.cielo !== 'atmosfera' ? dim : null;
+    this.sinNubes = !!this.dim;
+    if (this.nubesActivas) this.capasNubes.forEach((m, i) => { m.visible = !this.sinNubes && i < (this.nCapas || 1); });
   }
 
   ponerCalidadNubes(capas, octavas) {
@@ -251,16 +311,36 @@ export class Cielo {
     this.escondido = si;
     this.domo.visible = !si;
     if (si) for (const m of this.capasNubes) m.visible = false;
-    else for (let i = 0; i < this.capasNubes.length; i++) this.capasNubes[i].visible = i < (this.nCapas || 1);
+    else for (let i = 0; i < this.capasNubes.length; i++) this.capasNubes[i].visible = !this.sinNubes && i < (this.nCapas || 1);
   }
 
   // Devuelve cuánta luz hay (0 a 1) y deja listo el color de la niebla
   actualizar(hora, camara, lejos, dt, tiempo = 0) {
-    const ang = hora * Math.PI * 2;
-    const solDir = this.solDir.set(Math.cos(ang), Math.sin(ang), 0.25).normalize();
-    this.uniformes.solDir.value.copy(solDir);
+    if (this.dim) return this.actualizarEspacial(hora, camara, lejos, dt, tiempo);
+    // Sol de estación y Luna con fases (astronomia.js)
+    const est = estadoCielo(hora, this.dias + hora);
+    this.astro = est;
+    const solDir = this.solDir.copy(est.sol);
+    const luna = est.luna;
+    let lunaY = luna.y;
+    let cov = est.eclipseSolar, cobLuna = est.eclipseLunar;
+    if (!this.eclipses) {
+      cov = 0; cobLuna = 0;
+      const sep = Math.acos(Math.max(-1, Math.min(1, solDir.x * luna.x + solDir.y * luna.y + solDir.z * luna.z)));
+      if (sep < 0.1) { this.lunaDir.set(luna.x, luna.y + 0.1, luna.z).normalize(); lunaY = this.lunaDir.y; } else this.lunaDir.set(luna.x, luna.y, luna.z);
+    } else this.lunaDir.set(luna.x, luna.y, luna.z);
+    const u = this.uniformes;
+    u.solDir.value.copy(solDir);
+    u.lunaOn.value = suave(-0.12, 0.04, lunaY);
+    u.faseLuna.value = est.iluminacion;
+    u.eclipseSol.value = cov;
+    u.eclipseLuna.value = cobLuna;
+    u.vacio.value = this.oscuridad;
+    u.cieloOff.value = 0;
+    u.tierraR.value = 0;
+    const apagon = suave(0.25, 1.0, cov);
     const altura = solDir.y;
-    const dia = suave(-0.18, 0.2, altura);
+    let dia = suave(-0.18, 0.2, altura) * (1 - 0.93 * apagon) * (1 - this.oscuridad);
     const atardecer = Math.exp(-Math.pow(altura / 0.2, 2)) * (hora < 0.12 || (hora > 0.38 && hora < 0.62) ? 1 : 0.4);
     this.factorDia = dia;
 
@@ -278,10 +358,10 @@ export class Cielo {
     this.domo.scale.setScalar(lejos * 0.9);
 
     // luz principal: el sol de día y la luna (más débil y azulada) de noche
-    const intSol = suave(-0.05, 0.28, altura);
-    const intLuna = suave(-0.05, 0.28, -altura) * 0.26;
-    const sol = altura > 0.0;
-    const dirBase = sol ? solDir : this.tmp.copy(solDir).multiplyScalar(-1);
+    const intSol = suave(-0.05, 0.28, altura) * (1 - 0.94 * Math.pow(cov, 1.2));
+    const intLuna = suave(-0.05, 0.28, lunaY) * 0.28 * (0.1 + 0.9 * est.iluminacion) * (1 - 0.75 * cobLuna);
+    const sol = altura > -0.04;
+    const dirBase = sol ? solDir : (lunaY > 0 ? this.tmp.copy(this.lunaDir) : this.tmp.copy(solDir).multiplyScalar(-1));
     this.luzDir.copy(dirBase);
     if (this.luzDir.y < 0.2) { this.luzDir.y = 0.2; this.luzDir.normalize(); }
     const calido = suave(0.0, 0.5, altura);
@@ -306,9 +386,50 @@ export class Cielo {
       this.capasNubes.forEach((m, i) => {
         m.position.copy(p);
         m.scale.setScalar(lejos * 0.88);
-        m.visible = i < (this.nCapas || 1) && !this.escondido;
+        m.visible = i < (this.nCapas || 1) && !this.escondido && !this.sinNubes && this.oscuridad < 0.97;
+        m.material.uniforms.opacidad.value = (0.9 - i * 0.12) * (1 - this.oscuridad);
       });
     }
+    return this.luz;
+  }
+
+  // Cielo sin atmósfera (Luna, órbita) o sin cielo (Abismo)
+  actualizarEspacial(hora, camara, lejos, dt, tiempo) {
+    const D = this.dim, u = this.uniformes, E = this.espacial;
+    const p = camara.position;
+    this.domo.position.copy(p);
+    this.domo.scale.setScalar(lejos * 0.9);
+    u.tiempo.value = tiempo;
+    u.eclipseSol.value = 0; u.eclipseLuna.value = 0; u.lunaOn.value = 0;
+    u.fuerzaAtardecer.value = 0;
+    if (D.cielo === 'cueva') {
+      // Abismo: cielo rojo oscuro, sin Sol ni estrellas
+      u.cieloOff.value = 1; u.vacio.value = 0; u.noche.value = 0; u.tierraR.value = 0;
+      this.arriba.set(D.arribaColor || '#1c0605'); this.horizonte.set(D.niebla || '#5a1409');
+      this.solDir.set(0.3, 0.85, 0.2).normalize(); u.solDir.value.copy(this.solDir);
+      this.luzDir.copy(this.solDir);
+      this.luzColor.setRGB(0.6, 0.26, 0.13).multiplyScalar(0.7);
+      this.ambCielo.setRGB(0.78, 0.38, 0.26); this.ambSuelo.setRGB(0.5, 0.2, 0.12);
+      this.colorNiebla.set(D.niebla || '#4a1208');
+      this.factorDia = 0.15; this.luz = 0.62;
+      return this.luz;
+    }
+    // vacío: negro con estrellas, Sol duro y la Tierra a la vista
+    this.solDir.copy(E.sol);
+    u.solDir.value.copy(E.sol);
+    u.cieloOff.value = 0; u.vacio.value = 1; u.noche.value = 1;
+    this.arriba.setRGB(0, 0, 0); this.horizonte.setRGB(0, 0, 0);
+    u.tierraDir.value.copy(E.tierraDir); u.tierraR.value = E.tierraR; u.tierraFase.value = E.tierraFase;
+    const intSol = suave(-0.04, 0.12, E.sol.y);
+    this.luzDir.copy(E.sol);
+    if (this.luzDir.y < 0.12) { this.luzDir.y = 0.12; this.luzDir.normalize(); }
+    this.luzColor.setRGB(1.0, 0.97, 0.9).multiplyScalar(0.78 * intSol);
+    const tierra = E.tierraR > 0 ? 0.035 + 0.05 * E.tierraFase : 0.02;
+    this.ambCielo.setRGB(0.05 + tierra * 0.5 + 0.1 * intSol, 0.055 + tierra * 0.6 + 0.1 * intSol, 0.08 + tierra + 0.12 * intSol);
+    this.ambSuelo.setRGB(0.035 + 0.06 * intSol, 0.035 + 0.06 * intSol, 0.045 + 0.07 * intSol);
+    this.colorNiebla.setRGB(0, 0, 0);
+    this.factorDia = intSol;
+    this.luz = 0.5 + 0.5 * intSol;
     return this.luz;
   }
 }

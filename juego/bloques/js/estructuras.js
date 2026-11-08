@@ -15,6 +15,7 @@ import { CONFIG } from './config.js';
 import { planAldea } from './aldea.js';
 import { planTemplo, planTorre, planRuinas, planPozo, planFortaleza, planNaufragio, planRuinasMar } from './varios.js';
 import { planMazmorra, planMina } from './subterraneo.js';
+import { planCentroEspacial, elegirSitio, RADIO_CENTRO } from './espacio/centroEspacial.js';
 
 const MAR = CONFIG.mundo.nivelMar;
 
@@ -86,6 +87,11 @@ const TIPOS = {
       return Math.max(...m) <= MAR - 3 && rango(m) <= 3;
     },
   },
+  // El centro espacial: uno solo por mundo, cerca de la aldea inicial (celda única)
+  centroEspacial: {
+    celda: 1 << 20, prob: 1, radio: RADIO_CENTRO, prio: -1, sal: 21, grupo: 'tierra', plan: planCentroEspacial, nombre: 'Centro espacial', unica: true,
+    valida() { return true; },
+  },
   mazmorra: {
     celda: 56, prob: 0.6, radio: 7, prio: 8, sal: 19, grupo: 'bajo', plan: planMazmorra, nombre: 'Mazmorra',
     valida(i, gen) { return gen.alturaEn(i.x, i.z) >= 26; },
@@ -102,9 +108,31 @@ export const NOMBRES_ESTRUCTURAS = NOMBRES;
 export function crearEstructuras(semilla, gen, opciones = {}) {
   const s = semilla | 0;
   const bloqueados = opciones.bloqueados || null; // chunks ("cx,cz") donde no se puede construir
+  const conCentro = !!opciones.centro;             // el centro espacial solo está en mundos nuevos (los viejos no cambian)
   const cache = new Map();
 
+  function instanciaUnica(tipo) {
+    const k = tipo + ':unica';
+    if (cache.has(k)) return cache.get(k);
+    cache.set(k, null);
+    if (!conCentro) return null;
+    const T = TIPOS[tipo];
+    // las aldeas de las 4 celdas alrededor del origen
+    const aldeas = [];
+    for (const ix of [-1, 0]) for (const iz of [-1, 0]) { const a = instancia('aldea', ix, iz); if (a) aldeas.push(a); }
+    const sitio = elegirSitio(s, gen, aldeas);
+    if (!sitio) return null;
+    const inst = { tipo, x: sitio.x, z: sitio.z, sal: (hash2(7, 7, s + T.sal * 109) * 4294967296) | 0, plan: null };
+    if (bloqueados && bloqueados.size) {
+      const R = T.radio + 2;
+      for (let cx = (sitio.x - R) >> 4; cx <= (sitio.x + R) >> 4; cx++) for (let cz = (sitio.z - R) >> 4; cz <= (sitio.z + R) >> 4; cz++) if (bloqueados.has(cx + ',' + cz)) return null;
+    }
+    cache.set(k, inst);
+    return inst;
+  }
+
   function instancia(tipo, ix, iz) {
+    if (TIPOS[tipo].unica) return instanciaUnica(tipo);
     const k = tipo + ':' + ix + ':' + iz;
     if (cache.has(k)) return cache.get(k);
     cache.set(k, null);
@@ -145,6 +173,11 @@ export function crearEstructuras(semilla, gen, opciones = {}) {
     const T = TIPOS[tipo];
     const R = T.radio + 4;
     const lista = [];
+    if (T.unica) {
+      const inst = instanciaUnica(tipo);
+      if (inst && inst.x + R >= x0 && inst.x - R <= x1 && inst.z + R >= z0 && inst.z - R <= z1) lista.push(inst);
+      return lista;
+    }
     for (let ix = Math.floor((x0 - R) / T.celda); ix <= Math.floor((x1 + R) / T.celda); ix++) {
       for (let iz = Math.floor((z0 - R) / T.celda); iz <= Math.floor((z1 + R) / T.celda); iz++) {
         const inst = instancia(tipo, ix, iz);
@@ -186,7 +219,8 @@ export function crearEstructuras(semilla, gen, opciones = {}) {
     if (!T) return null;
     const cx = Math.floor(x / T.celda), cz = Math.floor(z / T.celda);
     let mejor = null, md = Infinity;
-    for (let r = 0; r <= anillos; r++) {
+    if (T.unica) { mejor = instanciaUnica(tipo); if (mejor) md = Math.hypot(mejor.x - x, mejor.z - z); }
+    for (let r = 0; r <= (T.unica ? -1 : anillos); r++) {
       for (let iz = cz - r; iz <= cz + r; iz++) {
         for (let ix = cx - r; ix <= cx + r; ix++) {
           if (Math.max(Math.abs(ix - cx), Math.abs(iz - cz)) !== r) continue;

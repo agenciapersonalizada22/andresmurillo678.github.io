@@ -31,6 +31,7 @@ export class Remotos {
     this.grupo = new THREE.Group();
     escena.add(this.grupo);
     this.mapa = new Map();
+    this.dimension = 'superficie';   // la dimensión donde estoy: solo se ven los que están conmigo
   }
 
   agregar(id, nombre, color) {
@@ -69,6 +70,7 @@ export class Remotos {
       if (d.sl > 0) { r.mano.material.color.set(this.colorDe(d.sl)); r.mano.visible = true; } else r.mano.visible = false;
     }
     r.enVehiculo = !!d.v;
+    r.dim = d.dm || 'superficie';
   }
 
   posicion(id) {
@@ -82,7 +84,7 @@ export class Remotos {
       if (!s) { r.malla.visible = false; continue; }
       const px = r.ultimo ? r.ultimo.x : s.x, pz = r.ultimo ? r.ultimo.z : s.z;
       r.ultimo = s;
-      r.malla.visible = !r.enVehiculo;
+      r.malla.visible = !r.enVehiculo && (r.dim || 'superficie') === this.dimension;
       r.malla.position.set(s.x, s.y, s.z);
       r.malla.rotation.y = s.ry;
       const v = Math.hypot(s.x - px, s.z - pz) / Math.max(dt, 0.001);

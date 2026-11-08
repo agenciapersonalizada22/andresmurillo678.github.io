@@ -1,0 +1,6 @@
+# Hockey de mesa (air hockey)
+Modos: 1 vs bot (4 dificultades), 1 vs 1 en linea (Red/Lobby), 2 jugadores en un telefono, torneo (8 jugadores), reto (8 niveles con obstaculos y power-ups). Tienda con monedas virtuales (mesas y discos).
+Controles: tactil (arrastrar en tu mitad; multitouch en 2P), raton, WASD/flechas (remapeables), mando Xbox (stick izq. = jugador 1, stick der. = jugador 2 en pantalla dividida; Menu = pausa).
+Estructura: `js/fisica.js` y `js/bot.js` (UMD, sin DOM, probados con `node pruebas/fisica.test.mjs`), `datos.js`, `almacen.js` (claves `hockey_ajustes_dispositivo`, `hockey_progreso`, `hockey_sala`, `hockey_partida`), `partida.js` (bucle y red), `render.js`, `entrada.js`, `ui.js`, `ajustes.js`, `cuenta-hockey.js`.
+En linea: el anfitrion simula todo y difunde instantaneas a ~30 Hz (`hk_s`, no fiable) y eventos fiables (`hk_ev`); el invitado predice su propio mazo y interpola disco y mazo rival (Red.Interpolador). La sala del anfitrion guarda el marcador (`hockey_sala`) y se reanuda desde el menu; el invitado vuelve con un enlace nuevo. Partidas contra bot se guardan en `hockey_partida` y se ofrece Continuar.
+Nube: solo `hockey_progreso` (ajustes por dispositivo nunca). Ranking: `victorias` y `goles` (acumulados, bot y en linea; 2P local no cuenta).

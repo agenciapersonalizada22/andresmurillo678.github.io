@@ -1,0 +1,126 @@
+// Entrada: teclado y mando Xbox. En partida recorre la mano; en menus/modales hace navegacion espacial sobre [data-f].
+import { $$ } from './dom.js';
+import { D } from './ajustes.js';
+import { T, moverCursor, confirmarCursor, accion, alternarChat, chatAbierto, jugarSeleccion, cancelarSel } from './ui.js';
+
+export const E = { alMenu: null, alAyuda: null, alAtras: null, alPestana: null, bloqueado: () => false, vibrar: null };
+let repetir = { dir: '', t: 0, n: 0 };
+
+export function capaActiva() {
+  const capas = $$('.capa, .cu-fondo').filter((c) => !c.hidden && c.getClientRects().length > 0);
+  return capas.length ? capas[capas.length - 1] : null;
+}
+function candidatos(capa) { return $$('[data-f]', capa).filter((e) => !e.disabled && e.getClientRects().length > 0); }
+
+function mover(capa, dx, dy) {
+  const lista = candidatos(capa);
+  if (!lista.length) return;
+  const act = lista.includes(document.activeElement) ? document.activeElement : null;
+  if (!act) { lista[0].focus(); return; }
+  if (act.type === 'range' && dx) { if (dx > 0) act.stepUp(); else act.stepDown(); act.dispatchEvent(new Event('input', { bubbles: true })); return; }
+  const r0 = act.getBoundingClientRect(), cx = r0.left + r0.width / 2, cy = r0.top + r0.height / 2;
+  let mejor = null, md = 1e9;
+  for (const cono of [true, false]) {
+    for (const e of lista) {
+      if (e === act) continue;
+      const r = e.getBoundingClientRect(), x = r.left + r.width / 2 - cx, y = r.top + r.height / 2 - cy;
+      const avance = dx * x + dy * y, lateral = Math.abs(dx ? y : x);
+      if (avance <= 2 || (cono && avance < lateral * 0.7)) continue;
+      const d = avance + lateral * 2.2;
+      if (d < md) { md = d; mejor = e; }
+    }
+    if (mejor) break;
+  }
+  if (mejor) { mejor.focus(); mejor.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
+}
+function atras(capa) {
+  // .cu-fondo = dialogo de la plataforma (conflicto de guardado): se cierra con su propio atajo de Escape
+  if (capa && capa.classList.contains('cu-fondo')) { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })); return true; }
+  const b = capa && capa.querySelector('[data-cerrar]');
+  if (b) { b.click(); return true; }
+  if (E.alAtras) return E.alAtras();
+  return false;
+}
+
+/* ---------- teclado ---------- */
+export function iniciarTeclado() {
+  window.addEventListener('keydown', (e) => {
+    if (E.bloqueado()) return;
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'textarea' || (tag === 'input' && e.target.type !== 'range')) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key.toLowerCase(), t = D.teclas;
+    document.body.classList.add('usando-teclado'); document.body.classList.remove('usando-mando');
+    const capa = capaActiva();
+    if (capa) {
+      const dir = { arrowleft: [-1, 0], arrowright: [1, 0], arrowup: [0, -1], arrowdown: [0, 1] }[k];
+      if (dir && tag !== 'select') { e.preventDefault(); mover(capa, dir[0], dir[1]); return; }
+      if (k === 'escape') { if (atras(capa)) e.preventDefault(); return; }
+      if (capa.id === 'modal' && /^[1-9]$/.test(k)) { const bs = $$('[data-n]', capa); if (bs[+k - 1]) bs[+k - 1].click(); }
+      return;
+    }
+    if (!T.v) return;
+    if (chatAbierto() && k === 'escape') { alternarChat(false); e.preventDefault(); return; }
+    if (k === 'escape' && T.sel.length) { e.preventDefault(); cancelarSel(); }
+    else if (k === t.menu) { e.preventDefault(); E.alMenu && E.alMenu(); }
+    else if (k === t.izq) { e.preventDefault(); moverCursor(-1); }
+    else if (k === t.der) { e.preventDefault(); moverCursor(1); }
+    else if (k === t.sel || k === ' ') { e.preventDefault(); confirmarCursor(); }
+    else if (k === t.jugar) { e.preventDefault(); jugarSeleccion(); }
+    else if (k === t.robar) { e.preventDefault(); accion('robar'); }
+    else if (k === t.nope) { e.preventDefault(); accion('nope'); }
+    else if (k === t.chat) { e.preventDefault(); alternarChat(); }
+    else if (k === 'f1' || k === '?') { e.preventDefault(); E.alAyuda && E.alAyuda(); }
+  });
+  window.addEventListener('pointerdown', () => document.body.classList.remove('usando-teclado', 'usando-mando'));
+}
+
+/* ---------- mando ---------- */
+export function cuadroMando(Mando, t) {
+  if (!Mando || E.bloqueado()) return;
+  Mando.leer();
+  if (!Mando.conectado) return;
+  const usa = Mando.activo && (Object.keys(Mando._ahora).some((k) => Mando._ahora[k]) || Math.hypot(Mando.ejes.izq.x, Mando.ejes.izq.y) > 0.3);
+  if (usa) { document.body.classList.add('usando-mando'); document.body.classList.remove('usando-teclado'); }
+  const capa = capaActiva();
+  const zm = D.zonaMuerta, ex = Mando.ejes.izq.x, ey = Mando.ejes.izq.y;
+  let dx = 0, dy = 0;
+  if (Mando.sostenido('IZQ') || ex < -zm) dx = -1; else if (Mando.sostenido('DER') || ex > zm) dx = 1;
+  if (Mando.sostenido('ARRIBA') || ey < -zm * 1.2) dy = -1; else if (Mando.sostenido('ABAJO') || ey > zm * 1.2) dy = 1;
+  if (Math.abs(ex) > Math.abs(ey) * 1.3 && !Mando.sostenido('ARRIBA') && !Mando.sostenido('ABAJO')) dy = 0;
+  const clave = dx + ',' + dy;
+  let paso = false;
+  if (dx || dy) {
+    if (repetir.dir !== clave) { repetir = { dir: clave, t: t + 380, n: 0 }; paso = true; }
+    else if (t >= repetir.t) { repetir.t = t + (repetir.n > 3 ? 70 : 130); repetir.n++; paso = true; }
+  } else repetir.dir = '';
+  if (capa) {
+    if (paso) mover(capa, dx, dy);
+    if (Mando.pulsado('A') && document.activeElement && capa.contains(document.activeElement)) document.activeElement.click();
+    else if (Mando.pulsado('A')) { const l = candidatos(capa); if (l[0]) l[0].focus(); }
+    if (Mando.pulsado('B')) atras(capa);
+    if (E.alPestana) { if (Mando.pulsado('LB')) E.alPestana(-1); if (Mando.pulsado('RB')) E.alPestana(1); }
+    if (Mando.pulsado('MENU') && capa.id !== 'modal') atras(capa);
+    return;
+  }
+  if (!T.v) {
+    if (Mando.pulsado('MENU')) E.alMenu && E.alMenu();
+    return;
+  }
+  if (chatAbierto()) {
+    const capaChat = document.getElementById('chatPanel');
+    if (paso) mover(capaChat, dx, dy);
+    if (Mando.pulsado('A') && document.activeElement && capaChat.contains(document.activeElement)) document.activeElement.click();
+    if (Mando.pulsado('B') || Mando.pulsado('LB') || Mando.pulsado('RB')) alternarChat(false);
+    return;
+  }
+  if (paso && dx) moverCursor(dx);
+  if (Mando.pulsado('A')) confirmarCursor();
+  if (Mando.pulsado('X')) accion('robar');
+  if (Mando.pulsado('Y')) jugarSeleccion();
+  if (Mando.pulsado('B')) cancelarSel();
+  if (Mando.pulsado('RT') || Mando.pulsado('LT')) accion('nope');
+  if (Mando.pulsado('LB') || Mando.pulsado('RB')) alternarChat(true);
+  if (Mando.pulsado('VISTA')) E.alAyuda && E.alAyuda();
+  if (Mando.pulsado('MENU')) E.alMenu && E.alMenu();
+}

@@ -18,7 +18,8 @@ import { Mundos } from './mundos.js';
 
 const JUEGO = 'bloques';
 // bloques_ajustes_v2 (gráficos, audio, controles) es por dispositivo: no se sincroniza.
-const FIJAS = ['bloques_logros_v1', 'bloques_cuenta_v1'];
+// bloques_espacio_v1: a dónde has llegado (dimensiones, lanzamientos…). Es progreso, no ajuste.
+const FIJAS = ['bloques_logros_v1', 'bloques_cuenta_v1', 'bloques_espacio_v1'];
 const IDX_NUBE = 'bloques_nube_indice';
 const ESTADO = 'bloques_nube_estado';       // solo de este dispositivo
 const PREF = 'bloques_mundo2_';

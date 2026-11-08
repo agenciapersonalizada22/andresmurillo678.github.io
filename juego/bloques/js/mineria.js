@@ -51,6 +51,11 @@ fijar(B.HORNO, 3.5, PICO, 0, true);
 fijar(B.MESA_TRABAJO, 2.5, HACHA);
 fijar(B.ARENISCA, 0.8, PICO, 0, true);
 fijar(B.LECHO, 1e9, NINGUNA);
+fijar(B.REGOLITO, 0.6, PALA);
+fijar([B.ROCA_LUNAR, B.ROCA_ABISMO, B.ROCA_BRASA], 1.8, PICO, 0, true);
+fijar([B.HORMIGON, B.METAL, B.PLATAFORMA, B.TORRE_METAL], 2.5, PICO, 0, true);
+fijar([B.PANEL_CONTROL, B.CARGADOR, B.FABRICA, B.CONSOLA_NAV, B.GENERADOR_O2], 2.5, PICO, 0, false);
+fijar([B.LAVA, B.PORTAL], 0, NINGUNA);
 
 export function propsBloque(id) {
   return { dureza: dureza[id], herr: NOMBRE_HERR[herr[id]], tier: tierMin[id], requiere: !!requiere[id] };
@@ -90,7 +95,7 @@ export function botinDeBloque(id, o, azar = Math.random) {
   if (id === B.HOJAS) return azar() < 0.06 ? [['manzana', 1]] : azar() < 0.12 ? [['palo', 1]] : [];
   if (id === B.HOJAS_ABETO || id === B.HOJAS_ABEDUL) return azar() < 0.12 ? [['palo', 1]] : [];
   if (c.startsWith('vidrio') || c.startsWith('cristal') || id === B.HIELO || id === B.PIEDRA_LUMINOSA || id === B.NIEVE) return [];
-  if (id === B.AGUA || id === B.AGUA_PUESTA || id === B.LECHO) return [];
+  if (id === B.AGUA || id === B.AGUA_PUESTA || id === B.LECHO || id === B.LAVA || id === B.PORTAL) return [];
   if (id >= B.CAMA_CABEZA && id < B.CAMA_CABEZA + 4) return [];
   if (DIBUJO[id] === DIBUJO_PLANTA) return [[id, 1]];
   return [[idInventario(id), 1]];

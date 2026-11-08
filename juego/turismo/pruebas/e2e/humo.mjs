@@ -1,0 +1,13 @@
+import { lanzar, pagina } from './lib.mjs';
+const S = process.argv[2];
+const b = await lanzar();
+const p = await pagina(b, { vp: { width: 390, height: 780 }, touch: true, nombre: 'Tester' });
+await p.waitForTimeout(2500);
+await p.screenshot({ path: S + '/h1_menu.png' });
+console.log('errs', p.errs.slice(0, 3).map((x) => x.slice(0, 300)));
+await p.click('text=Jugar contra bots'); await p.waitForTimeout(600);
+await p.screenshot({ path: S + '/h2_preparar.png' });
+await p.click('text=▶ Empezar'); await p.waitForTimeout(2500);
+await p.screenshot({ path: S + '/h3_partida.png' });
+console.log('errs', p.errs.slice(0, 3).map((x) => x.slice(0, 300)));
+await b.close();

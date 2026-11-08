@@ -10,7 +10,9 @@
 // =============================================================
 import * as THREE from '../lib/three.module.min.js';
 import { CONFIG } from './config.js';
-import { crearGenerador, LADO, ALTO, CAPA } from './generador.js';
+import { LADO, ALTO, CAPA } from './generador.js';
+import { crearGeneradorDim } from './espacio/generadoresDim.js';
+import { esDimension, DIM_DEFECTO } from './espacio/cuerpos.js';
 import { mallar, P, PCAPA } from './mallador.js';
 import { B, SOLIDO, SOMBREA, EMISION } from './bloques.js';
 import { buscarEmisores, calcularLuz } from './luz.js';
@@ -52,6 +54,9 @@ export class Mundo {
     this.cofres = new Map();        // "x,y,z" -> ranuras guardadas en el cofre
     this.hornos = new Map();        // "x,y,z" -> estado del horno
     this.escuchas = [];             // quien quiera enterarse de cada cambio de bloque (multijugador, logros…)
+    this.dimension = DIM_DEFECTO;   // 'superficie' | 'luna' | 'orbita' | 'abismo'
+    this.almacen = new Map();       // dimensión -> { cambios, originales } de las que no se están viendo
+    this.opcionesGen = {};
   }
 
   // Cada vez que cambia un bloque (venga de quien venga) se avisa a estas funciones:
@@ -78,27 +83,112 @@ export class Mundo {
     this.tipo = opciones.tipo === 'plano' ? 'plano' : 'normal';
     this.cofres = new Map(Object.entries(opciones.cofres || {}));
     this.hornos = new Map(Object.entries(opciones.hornos || {}));
-    this.gen = crearGenerador(this.semilla, this.versionGen, { bloqueados: this.bloqueados, estructuras: CONFIG.estructuras.activas, tipo: this.tipo });
-    if (cambiosGuardados && typeof cambiosGuardados === 'object') {
-      for (const texto of Object.keys(cambiosGuardados)) {
-        const [cx, cz] = texto.split(',').map(Number);
-        const lista = cambiosGuardados[texto];
-        if (!Number.isFinite(cx) || !Number.isFinite(cz) || !Array.isArray(lista)) continue;
-        const m = new Map();
-        for (let i = 0; i + 1 < lista.length; i += 2) {
-          const idx = lista[i] | 0, id = lista[i + 1] | 0;
-          if (idx >= 0 && idx < CAPA * ALTO && id >= 0 && id < 256) m.set(idx, id);
-        }
-        if (m.size) this.cambios.set(clave(cx, cz), m);
-      }
+    this.opcionesGen = { bloqueados: this.bloqueados, estructuras: CONFIG.estructuras.activas, tipo: this.tipo, centroEspacial: !!opciones.centroEspacial };
+    const sup = this.leerCambios(cambiosGuardados);
+    // otras dimensiones guardadas y la dimensión en la que se estaba
+    this.almacen = new Map();
+    for (const [id, obj] of Object.entries(opciones.dimensiones || {})) {
+      if (esDimension(id) && id !== DIM_DEFECTO) this.almacen.set(id, { cambios: this.leerCambios(obj), originales: new Map() });
     }
+    const dim = esDimension(opciones.dimension) ? opciones.dimension : DIM_DEFECTO;
+    this.dimension = dim;
+    if (dim === DIM_DEFECTO) this.cambios = sup;
+    else {
+      this.almacen.set(DIM_DEFECTO, { cambios: sup, originales: new Map() });
+      const a = this.almacen.get(dim) || { cambios: new Map(), originales: new Map() };
+      this.almacen.delete(dim);
+      this.cambios = a.cambios;
+    }
+    this.gen = this.crearGen(dim);
     this.hayCambiosSinGuardar = false;
   }
 
-  // Lista de cambios lista para guardarse como texto
-  exportarCambios() {
+  crearGen(dim) {
+    return crearGeneradorDim(dim, this.semilla, this.versionGen, this.opcionesGen);
+  }
+
+  // Convierte {"cx,cz": [idx, id, ...]} en mapas de cambios
+  leerCambios(cambiosGuardados) {
+    const res = new Map();
+    if (!cambiosGuardados || typeof cambiosGuardados !== 'object') return res;
+    for (const texto of Object.keys(cambiosGuardados)) {
+      const [cx, cz] = texto.split(',').map(Number);
+      const lista = cambiosGuardados[texto];
+      if (!Number.isFinite(cx) || !Number.isFinite(cz) || !Array.isArray(lista)) continue;
+      const m = new Map();
+      for (let i = 0; i + 1 < lista.length; i += 2) {
+        const idx = lista[i] | 0, id = lista[i + 1] | 0;
+        if (idx >= 0 && idx < CAPA * ALTO && id >= 0 && id < 256) m.set(idx, id);
+      }
+      if (m.size) res.set(clave(cx, cz), m);
+    }
+    return res;
+  }
+
+  // Cambia de dimensión: se descarga todo lo que se veía y se vuelve a generar por chunks, bajo demanda
+  cambiarDimension(id) {
+    if (!esDimension(id) || id === this.dimension) return false;
+    this.almacen.set(this.dimension, { cambios: this.cambios, originales: this.originales });
+    for (const ch of this.chunks.values()) this.quitarMallas(ch);
+    this.chunks.clear();
+    this.sucios.clear();
+    const a = this.almacen.get(id) || { cambios: new Map(), originales: new Map() };
+    this.almacen.delete(id);
+    this.cambios = a.cambios;
+    this.originales = a.originales || new Map();
+    this.dimension = id;
+    this.gen = this.crearGen(id);
+    this.puntosNuevos = [];
+    this.version++;
+    return true;
+  }
+
+  // Recibe de un anfitrión los cambios de un chunk de una dimensión: "cx,cz" y [idx, id, idx, id…]
+  aplicarPaquete(dim, texto, lista) {
+    if (!esDimension(dim) || !Array.isArray(lista)) return;
+    const [cx, cz] = String(texto).split(',').map(Number);
+    if (!Number.isFinite(cx) || !Number.isFinite(cz)) return;
+    const k = clave(cx, cz);
+    let mapa;
+    if (dim === this.dimension) mapa = this.cambios;
+    else { let a = this.almacen.get(dim); if (!a) { a = { cambios: new Map(), originales: new Map() }; this.almacen.set(dim, a); } mapa = a.cambios; }
+    let m = mapa.get(k);
+    if (!m) { m = new Map(); mapa.set(k, m); }
+    const ch = dim === this.dimension ? this.chunks.get(k) : null;
+    for (let i = 0; i + 1 < lista.length; i += 2) {
+      const idx = lista[i] | 0, id = lista[i + 1] | 0;
+      if (idx < 0 || idx >= CAPA * ALTO || id < 0 || id > 255) continue;
+      m.set(idx, id);
+      if (ch) { ch.datos[idx] = id; this.sucios.add(k); }
+    }
+    this.hayCambiosSinGuardar = true;
+  }
+
+  // Cambios de una dimensión (la que se ve o una guardada) como texto
+  exportarCambiosDe(dim) {
+    if (dim === this.dimension) return this.exportarCambios();
+    const a = this.almacen.get(dim);
+    return a ? this.exportarMapa(a.cambios) : {};
+  }
+
+  // Todo lo que no es la Superficie, para guardar
+  exportarDimensiones() {
     const res = {};
-    for (const [k, m] of this.cambios) {
+    const ids = new Set([...this.almacen.keys(), this.dimension]);
+    for (const id of ids) {
+      if (id === DIM_DEFECTO) continue;
+      const c = this.exportarCambiosDe(id);
+      if (Object.keys(c).length) res[id] = c;
+    }
+    return res;
+  }
+
+  // Lista de cambios de la dimensión que se ve, lista para guardarse como texto
+  exportarCambios() { return this.exportarMapa(this.cambios); }
+
+  exportarMapa(mapa) {
+    const res = {};
+    for (const [k, m] of mapa) {
       if (!m.size) continue;
       const lista = [];
       for (const [idx, id] of m) lista.push(idx, id);
@@ -110,6 +200,7 @@ export class Mundo {
   cuantosCambios() {
     let n = 0;
     for (const m of this.cambios.values()) n += m.size;
+    for (const a of this.almacen.values()) for (const m of a.cambios.values()) n += m.size;
     return n;
   }
 
@@ -215,9 +306,19 @@ export class Mundo {
   }
 
   // Cambio que viene de otro jugador: si ese pedazo de mundo todavía no existe aquí, se anota para cuando se cree
-  ponerRemoto(x, y, z, id) {
+  ponerRemoto(x, y, z, id, dim = null) {
     if (y < 0 || y >= ALTO) return false;
     const k = clave(x >> 4, z >> 4);
+    // el cambio es de otra dimensión (otro jugador está allá): se anota en su almacén
+    if (dim && dim !== this.dimension && esDimension(dim)) {
+      let a = this.almacen.get(dim);
+      if (!a) { a = { cambios: new Map(), originales: new Map() }; this.almacen.set(dim, a); }
+      let mm = a.cambios.get(k);
+      if (!mm) { mm = new Map(); a.cambios.set(k, mm); }
+      mm.set(y * CAPA + (z & 15) * LADO + (x & 15), id);
+      this.hayCambiosSinGuardar = true;
+      return true;
+    }
     if (this.chunks.has(k)) return this.poner(x, y, z, id, true, 'remoto');
     let m = this.cambios.get(k);
     if (!m) { m = new Map(); this.cambios.set(k, m); }
