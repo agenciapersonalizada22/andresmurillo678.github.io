@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Panel de dispositivos · Trabajos</title>
+<meta name="description" content="Conecta y prueba dispositivos desde el navegador: serie, Bluetooth, USB/HID, cámaras, mandos, sensores y un puente WebSocket para drones, impresoras y domótica.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b7285'/%3E%3Crect x='12' y='16' width='40' height='26' rx='4' fill='none' stroke='%23fff' stroke-width='4'/%3E%3Cpath d='M22 50h20M32 42v8' stroke='%23fff' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../comun/trabajos.css">
+<link rel="stylesheet" href="../../../juego/comun/cuenta.css"><link rel="stylesheet" href="../comun/cuenta-trabajos.css">
+<link rel="stylesheet" href="css/dispositivos.css">
+</head>
+<body>
+<a class="tr-solo-lector" href="#principal">Saltar al contenido</a>
+<div class="tr-cont">
+  <nav class="tr-barra" aria-label="Navegación">
+    <a class="tr-enlace" href="../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Trabajos</a>
+    <span class="tr-sep"></span>
+    <button type="button" class="tr-btn" id="btn-tema" aria-label="Cambiar tema"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span>Tema</span></button>
+  </nav>
+  <header><h1>Panel de dispositivos</h1><p class="tr-sub">Detecta qué puede hacer tu navegador y prueba dispositivos reales: puerto serie, Bluetooth, USB/HID, cámaras, mandos, sensores y un puente para lo que la web no alcanza. Todo ocurre en tu equipo.</p></header>
+  <div class="tr-pestanas" role="tablist" aria-label="Secciones del panel de dispositivos" id="pestanas">
+    <button role="tab" id="t-panel" data-vista="panel" aria-controls="v-panel" aria-selected="true">Panel</button>
+    <button role="tab" id="t-serial" data-vista="serial" aria-controls="v-serial" aria-selected="false" tabindex="-1">Serial</button>
+    <button role="tab" id="t-bluetooth" data-vista="bluetooth" aria-controls="v-bluetooth" aria-selected="false" tabindex="-1">Bluetooth</button>
+    <button role="tab" id="t-usb" data-vista="usb" aria-controls="v-usb" aria-selected="false" tabindex="-1">USB y HID</button>
+    <button role="tab" id="t-camaras" data-vista="camaras" aria-controls="v-camaras" aria-selected="false" tabindex="-1">Cámaras</button>
+    <button role="tab" id="t-mandos" data-vista="mandos" aria-controls="v-mandos" aria-selected="false" tabindex="-1">Mandos</button>
+    <button role="tab" id="t-sensores" data-vista="sensores" aria-controls="v-sensores" aria-selected="false" tabindex="-1">Sensores</button>
+    <button role="tab" id="t-puente" data-vista="puente" aria-controls="v-puente" aria-selected="false" tabindex="-1">Puente</button>
+    <button role="tab" id="t-perfiles" data-vista="perfiles" aria-controls="v-perfiles" aria-selected="false" tabindex="-1">Perfiles</button>
+    <button role="tab" id="t-historial" data-vista="historial" aria-controls="v-historial" aria-selected="false" tabindex="-1">Historial</button>
+    <button role="tab" id="t-cuenta" data-vista="cuenta" aria-controls="v-cuenta" aria-selected="false" tabindex="-1">Cuenta</button>
+  </div>
+  <main id="principal">
+    <section id="v-panel" role="tabpanel" aria-labelledby="t-panel"></section>
+    <section id="v-serial" role="tabpanel" aria-labelledby="t-serial" hidden></section>
+    <section id="v-bluetooth" role="tabpanel" aria-labelledby="t-bluetooth" hidden></section>
+    <section id="v-usb" role="tabpanel" aria-labelledby="t-usb" hidden></section>
+    <section id="v-camaras" role="tabpanel" aria-labelledby="t-camaras" hidden></section>
+    <section id="v-mandos" role="tabpanel" aria-labelledby="t-mandos" hidden></section>
+    <section id="v-sensores" role="tabpanel" aria-labelledby="t-sensores" hidden></section>
+    <section id="v-puente" role="tabpanel" aria-labelledby="t-puente" hidden></section>
+    <section id="v-perfiles" role="tabpanel" aria-labelledby="t-perfiles" hidden></section>
+    <section id="v-historial" role="tabpanel" aria-labelledby="t-historial" hidden></section>
+    <section id="v-cuenta" role="tabpanel" aria-labelledby="t-cuenta" hidden></section>
+  </main>
+  <p class="tr-ayuda">Los navegadores piden permiso para cada dispositivo y solo funcionan por HTTPS. Los datos que lees no se envían a ningún servidor; en tu cuenta solo se sincronizan perfiles (sin claves) y contadores de sesiones.</p>
+</div>
+<script src="../../../juego/comun/firebase-config.js"></script>
+<script src="../../../juego/plataforma/juegos.js"></script>
+<script src="../../../juego/comun/cuenta.js"></script>
+<script src="../../../juego/comun/amigos.js"></script>
+<script src="../comun/cuenta-trabajos.js"></script>
+<script src="../comun/util.js"></script>
+<script src="../comun/almacen.js"></script>
+<script src="../../../juego/comun/mando.js"></script>
+<script src="js/puro.js"></script>
+<script src="js/capacidades.js"></script>
+<script src="js/nucleo.js"></script>
+<script src="js/drv-serial.js"></script>
+<script src="js/drv-bluetooth.js"></script>
+<script src="js/drv-usb.js"></script>
+<script src="js/drv-camara.js"></script>
+<script src="js/drv-mando.js"></script>
+<script src="js/drv-sensores.js"></script>
+<script src="js/drv-puente.js"></script>
+<script src="js/datos.js"></script>
+<script src="js/vista-comun.js"></script>
+<script src="js/vista-panel.js"></script>
+<script src="js/vista-serial.js"></script>
+<script src="js/vista-bluetooth.js"></script>
+<script src="js/vista-usb.js"></script>
+<script src="js/vista-camara.js"></script>
+<script src="js/vista-mando.js"></script>
+<script src="js/vista-sensores.js"></script>
+<script src="js/vista-puente.js"></script>
+<script src="js/vista-datos.js"></script>
+<script src="js/arranque.js"></script>
+</body>
+</html>
