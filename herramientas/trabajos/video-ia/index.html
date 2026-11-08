@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Video inteligente con IA · Trabajos</title>
+<meta name="description" content="Análisis de video en tu navegador: movimiento, líneas virtuales, escenas, calidad, color, QR, reglas, cortes automáticos, formato vertical y resumen con tu propia clave de IA.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23c2255c'/%3E%3Crect x='12' y='18' width='40' height='28' rx='5' fill='none' stroke='%23fff' stroke-width='4'/%3E%3Cpath d='M28 26v12l11-6z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../comun/trabajos.css">
+<link rel="stylesheet" href="../../../juego/comun/cuenta.css"><link rel="stylesheet" href="../comun/cuenta-trabajos.css">
+<link rel="stylesheet" href="css/video.css">
+</head>
+<body>
+<a class="tr-solo-lector" href="#principal">Saltar al contenido</a>
+<div class="tr-cont">
+  <nav class="tr-barra" aria-label="Navegación">
+    <a class="tr-enlace" href="../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Trabajos</a>
+    <span class="tr-sep"></span>
+    <button type="button" class="tr-btn" id="btn-tema" aria-label="Cambiar tema"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span>Tema</span></button>
+  </nav>
+  <header><h1>Video inteligente con IA</h1><p class="tr-sub">Análisis clásico en tu navegador (movimiento, líneas, escenas, calidad, color, QR) y, si quieres, IA con tu propia clave. Nada se sube sin tu permiso.</p></header>
+  <div class="tr-pestanas" role="tablist" aria-label="Secciones del módulo de video" id="pestanas">
+    <button role="tab" id="t-vivo" data-vista="vivo" aria-controls="v-vivo" aria-selected="true">En vivo</button>
+    <button role="tab" id="t-reglas" data-vista="reglas" aria-controls="v-reglas" aria-selected="false" tabindex="-1">Reglas</button>
+    <button role="tab" id="t-ia" data-vista="ia" aria-controls="v-ia" aria-selected="false" tabindex="-1">IA</button>
+    <button role="tab" id="t-edicion" data-vista="edicion" aria-controls="v-edicion" aria-selected="false" tabindex="-1">Edición</button>
+    <button role="tab" id="t-analisis" data-vista="analisis" aria-controls="v-analisis" aria-selected="false" tabindex="-1">Análisis</button>
+    <button role="tab" id="t-ajustes" data-vista="ajustes" aria-controls="v-ajustes" aria-selected="false" tabindex="-1">Ajustes</button>
+  </div>
+  <main id="principal">
+    <section id="v-vivo" role="tabpanel" aria-labelledby="t-vivo"></section>
+    <section id="v-reglas" role="tabpanel" aria-labelledby="t-reglas" hidden></section>
+    <section id="v-ia" role="tabpanel" aria-labelledby="t-ia" hidden></section>
+    <section id="v-edicion" role="tabpanel" aria-labelledby="t-edicion" hidden></section>
+    <section id="v-analisis" role="tabpanel" aria-labelledby="t-analisis" hidden></section>
+    <section id="v-ajustes" role="tabpanel" aria-labelledby="t-ajustes" hidden></section>
+  </main>
+  <p class="tr-ayuda">Atajos: Alt+1…6 cambian de pestaña · F guarda una captura. Grabar o analizar personas puede estar regulado por la ley: avisa y respeta la normativa local.</p>
+</div>
+<script src="../../../juego/comun/firebase-config.js"></script><script src="../../../juego/plataforma/juegos.js"></script><script src="../../../juego/comun/cuenta.js"></script><script src="../../../juego/comun/amigos.js"></script>
+<script src="../comun/cuenta-trabajos.js"></script>
+<script src="../comun/util.js"></script><script src="../comun/almacen.js"></script><script src="../comun/impresion.js"></script>
+<script src="../dispositivos/js/puro.js"></script><script src="../dispositivos/js/capacidades.js"></script><script src="../dispositivos/js/nucleo.js"></script><script src="../dispositivos/js/drv-camara.js"></script><script src="../dispositivos/js/drv-puente.js"></script>
+<script src="../qr/js/qrcodificador.js"></script><script src="../qr/js/qrdecodificador.js"></script><script src="../qr/js/qrlector.js"></script>
+<script src="js/analisis.js"></script><script src="js/tuberia.js"></script><script src="js/reglas.js"></script><script src="js/ia.js"></script><script src="js/graficas.js"></script>
+<script src="js/datos.js"></script><script src="js/app.js"></script><script src="js/fuentes.js"></script><script src="js/motor.js"></script><script src="js/captura.js"></script><script src="js/acciones.js"></script><script src="js/edicion.js"></script>
+<script src="js/vista-vivo.js"></script><script src="js/vista-reglas.js"></script><script src="js/vista-ia.js"></script><script src="js/vista-edicion.js"></script><script src="js/vista-analisis.js"></script><script src="js/vista-ajustes.js"></script>
+<script src="js/arranque.js"></script>
+</body>
+</html>
