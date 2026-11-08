@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Análisis · Trabajos</title>
+<meta name="description" content="Tablero y análisis de todo el sistema de Trabajos: actividad, almacenamiento, rentabilidad, informes, metas y salud de los datos. Todo se calcula en tu dispositivo.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%235c7cfa'/%3E%3Cpath d='M14 50V14M14 50h36' fill='none' stroke='%23fff' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M24 42V32M34 42V22M44 42V28' stroke='%23fff' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../comun/trabajos.css">
+<link rel="stylesheet" href="../../../juego/comun/cuenta.css"><link rel="stylesheet" href="../comun/cuenta-trabajos.css">
+<link rel="stylesheet" href="css/analisis.css">
+</head>
+<body>
+<a class="tr-solo-lector" href="#principal">Saltar al contenido</a>
+<div class="tr-cont">
+  <nav class="tr-barra" aria-label="Navegación">
+    <a class="tr-enlace" href="../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Trabajos</a>
+    <span class="tr-sep"></span>
+    <button type="button" class="tr-btn" id="btn-tema" aria-label="Cambiar tema"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span>Tema</span></button>
+  </nav>
+  <header><h1>Análisis</h1><p class="tr-sub">Entiende cómo va todo tu trabajo: actividad, almacenamiento, rentabilidad, informes y salud de los datos. Lee solo los datos de este navegador y no envía nada a ningún sitio (salvo el resumen con IA que tú apruebes).</p></header>
+  <div id="puerta" hidden></div>
+  <div id="app" hidden>
+    <div class="tr-pestanas" role="tablist" aria-label="Secciones de Análisis" id="pestanas">
+      <button role="tab" id="t-tablero" data-vista="tablero" aria-controls="v-tablero" aria-selected="true">Tablero</button>
+      <button role="tab" id="t-dominios" data-vista="dominios" aria-controls="v-dominios" aria-selected="false" tabindex="-1">Dominios</button>
+      <button role="tab" id="t-cruces" data-vista="cruces" aria-controls="v-cruces" aria-selected="false" tabindex="-1">Cruces</button>
+      <button role="tab" id="t-informes" data-vista="informes" aria-controls="v-informes" aria-selected="false" tabindex="-1">Informes</button>
+      <button role="tab" id="t-metas" data-vista="metas" aria-controls="v-metas" aria-selected="false" tabindex="-1">Metas</button>
+      <button role="tab" id="t-salud" data-vista="salud" aria-controls="v-salud" aria-selected="false" tabindex="-1">Salud</button>
+      <button role="tab" id="t-cuenta" data-vista="cuenta" aria-controls="v-cuenta" aria-selected="false" tabindex="-1">Cuenta</button>
+    </div>
+    <main id="principal">
+      <section id="v-tablero" role="tabpanel" aria-labelledby="t-tablero"></section>
+      <section id="v-dominios" role="tabpanel" aria-labelledby="t-dominios" hidden></section>
+      <section id="v-cruces" role="tabpanel" aria-labelledby="t-cruces" hidden></section>
+      <section id="v-informes" role="tabpanel" aria-labelledby="t-informes" hidden></section>
+      <section id="v-metas" role="tabpanel" aria-labelledby="t-metas" hidden></section>
+      <section id="v-salud" role="tabpanel" aria-labelledby="t-salud" hidden></section>
+      <section id="v-cuenta" role="tabpanel" aria-labelledby="t-cuenta" hidden></section>
+    </main>
+  </div>
+  <p class="tr-ayuda">Los cálculos son orientativos y salen solo de lo que has guardado en cada módulo. Las finanzas son informativas, no son asesoría.</p>
+</div>
+<script src="../../../juego/comun/firebase-config.js"></script><script src="../../../juego/plataforma/juegos.js"></script><script src="../../../juego/comun/cuenta.js"></script><script src="../../../juego/comun/amigos.js"></script>
+<script src="../comun/cuenta-trabajos.js"></script>
+<script src="../comun/util.js"></script><script src="../comun/almacen.js"></script><script src="../comun/impresion.js"></script>
+<script src="../video-ia/js/ia.js"></script>
+<script src="js/agregar.js"></script><script src="js/cruces.js"></script><script src="js/integridad.js"></script><script src="js/respaldo.js"></script><script src="js/informe.js"></script><script src="js/ia.js"></script><script src="js/flujos.js"></script>
+<script src="js/lector.js"></script><script src="js/graficas.js"></script><script src="js/datos.js"></script><script src="js/app.js"></script>
+<script src="js/vista-tablero.js"></script><script src="js/vista-dominios.js"></script><script src="js/vista-cruces.js"></script><script src="js/vista-informes.js"></script><script src="js/vista-metas.js"></script><script src="js/vista-salud.js"></script>
+<script src="js/arranque.js"></script>
+</body>
+</html>

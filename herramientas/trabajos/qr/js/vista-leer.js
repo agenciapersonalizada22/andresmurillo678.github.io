@@ -5,6 +5,7 @@
   function parar() { if (cam) { cam.parar(); cam = null; } ui.caja.classList.remove('on'); ui.btnCam.textContent = 'Abrir cámara'; ui.btnCam.setAttribute('aria-pressed', 'false'); ui.cambiar.hidden = true; }
   function mostrar(r) {
     ultimoRes = r; var an = g.QRTipos.analizar(r.texto), res = ui.res; res.textContent = ''; res.hidden = false;
+    try { if (g.BroadcastChannel && r.texto) { var bc = new BroadcastChannel('trabajos_qr_leido'); bc.postMessage({ texto: r.texto, origen: 'qr' }); setTimeout(function () { bc.close(); }, 500); } } catch (e) {}
     var dl = h('dl'); an.campos.forEach(function (c) { dl.appendChild(h('dt', { txt: c[0] })); dl.appendChild(h('dd', { txt: c[1] })); });
     res.appendChild(h('h2', { txt: 'Leído: ' + an.etiqueta })); res.appendChild(dl);
     var acc = h('div', { cls: 'tr-acciones' });
