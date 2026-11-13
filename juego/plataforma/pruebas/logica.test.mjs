@@ -145,7 +145,7 @@ await t('juegos nuevos: modos, direccion y datos exactos de cada juego', () => {
   assert.equal(Juegos.modo('cartas', 'conq_turnos').mayorEsMejor, false);
   assert.deepEqual(Juegos.lista.map(j => j.categoria).filter((c, i, a) => a.indexOf(c) === i).sort(), ['Acción', 'Estrategia', 'Mesa y cartas', 'Mundo abierto']);
   for (const j of Juegos.lista) assert.ok(j.categoria && j.ruta === j.id + '/' && j.nombre && j.descripcion && /^#[0-9a-f]{6}$/.test(j.color), j.id);
-  assert.ok(Juegos.claves().includes('cartas__conq_turnos') && Juegos.claves().length === 68);
+  assert.ok(Juegos.claves().includes('cartas__conq_turnos') && Juegos.claves().length === 79);
 });
 await t('direccion menor-es-mejor: mejor(), ranking y solo baja el valor (AdaptadorLocal)', async () => {
   assert.ok(L.mejor(40, 50, false) && !L.mejor(50, 40, false) && !L.mejor(40, 40, false) && L.mejor(40, null, false));
