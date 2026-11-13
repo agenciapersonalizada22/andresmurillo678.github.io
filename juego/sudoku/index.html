@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0f1424">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Sudoku</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f1424'/%3E%3Cpath d='M8 8h48v48H8zM24 8v48M40 8v48M8 24h48M8 40h48' fill='none' stroke='%236cc4ff' stroke-width='2'/%3E%3Ctext x='32' y='38' font-size='24' font-weight='900' text-anchor='middle' fill='%23fff'%3E9%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../comun/cuenta.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-tema="oscuro" class="en-menu">
+<div id="app">
+  <header id="barra">
+    <a class="volver" href="../">← Menú</a>
+    <h1 class="titulo">Sudoku</h1>
+    <span id="chipCuenta" class="chip-cuenta" hidden></span>
+    <div class="acciones">
+      <button type="button" class="icono" id="bPantalla" aria-label="Pantalla completa" title="Pantalla completa" data-f>⛶</button>
+      <button type="button" class="icono" id="bSonido" aria-label="Sonido" title="Sonido" data-f>♪</button>
+      <button type="button" class="icono" id="bAjustes" aria-label="Ajustes" title="Ajustes" data-f>⚙</button>
+      <button type="button" class="icono" id="bAyuda" aria-label="Ayuda" title="Ayuda (?)" data-f>?</button>
+    </div>
+  </header>
+  <main id="pantallas">
+    <section id="menu" class="pantalla"></section>
+    <section id="juego" class="pantalla" hidden>
+      <div id="info">
+        <button type="button" class="icono" id="bPausa" aria-label="Pausa y menú" title="Pausa (Esc)" data-f>☰</button>
+        <div id="infoTxt"><b id="iModo"></b><span id="iNivel"></span></div>
+        <div id="iEstado"><span id="iVidas" hidden></span><span id="iErr" hidden></span><span id="iTiempo" aria-label="Tiempo">0:00</span></div>
+      </div>
+      <div id="zona">
+        <div id="marco">
+          <div id="tablero" tabindex="0"></div>
+          <div id="radial" hidden></div>
+        </div>
+        <div id="lateral">
+          <div id="aviso" hidden aria-live="polite"></div>
+          <div id="teclado"></div>
+          <div id="acciones"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div id="capas"></div>
+  <div id="toasts" aria-live="polite"></div>
+  <div id="cargando" hidden><div class="rueda"></div><p id="cargandoTxt">Generando puzzle…</p></div>
+</div>
+<script src="../comun/firebase-config.js"></script>
+<script src="../comun/mando.js"></script>
+<script src="../plataforma/juegos.js"></script>
+<script src="../comun/cuenta.js"></script>
+<script src="../comun/amigos.js"></script>
+<script type="module" src="js/arranque.js"></script>
+<noscript><p style="padding:1rem">Este juego necesita JavaScript.</p></noscript>
+</body>
+</html>

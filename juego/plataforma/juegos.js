@@ -616,10 +616,7 @@
         { id: 'primera_victoria', nombre: 'Primera victoria', desc: 'Gana una partida contra otros jugadores o bots.' },
         { id: 'ganar_online', nombre: 'Rey de la sala', desc: 'Gana una partida online con amigos.' },
         { id: 'explosivo', nombre: '¡Bum!', desc: 'Haz estallar un pino explosivo.' }
-      ] }
-  ];
-  /* Herramientas: apps del sitio (no son juegos: sin modos de puntaje, fuera de los rankings). ruta es relativa a juego/; carpeta, relativa a herramientas/. */
-  var H = [
+      ] },
     { id: 'minijuegos', nombre: 'Mesa de Minijuegos', ruta: 'minijuegos/', color: '#8a6cff', categoria: 'Mesa y cartas', descripcion: '24 minijuegos de 1 a 4 jugadores en un mismo teléfono, con bots y torneo.',
       modos: [{ id: 'victorias', nombre: 'Rondas ganadas', mayorEsMejor: true, tope: 5000, unidad: 'victorias' }, { id: 'puntos', nombre: 'Puntos de torneo', mayorEsMejor: true, tope: 100000, unidad: 'pts' }],
       logros: [
@@ -644,6 +641,46 @@
         { id: 'practicante', nombre: 'Practicante', desc: 'Juega 5 rondas en modo práctica.' },
         { id: 'tableros', nombre: 'Estratega', desc: 'Gana Tres en raya, 4 en raya y Puntos y cajas.' }
       ] },
+    { id: 'sudoku', nombre: 'Sudoku', ruta: 'sudoku/', color: '#6cc4ff', categoria: 'Estrategia', descripcion: '7 variantes, 6 dificultades, pistas que explican la técnica, diario y ranking.',
+      modos: [{ id: 'tiempo_principiante', nombre: 'Principiante (tiempo)', mayorEsMejor: false, tope: 36000, min: 15, unidad: 's' }, { id: 'tiempo_facil', nombre: 'Fácil (tiempo)', mayorEsMejor: false, tope: 36000, min: 15, unidad: 's' }, { id: 'tiempo_medio', nombre: 'Medio (tiempo)', mayorEsMejor: false, tope: 36000, min: 15, unidad: 's' }, { id: 'tiempo_dificil', nombre: 'Difícil (tiempo)', mayorEsMejor: false, tope: 36000, min: 15, unidad: 's' }, { id: 'tiempo_experto', nombre: 'Experto (tiempo)', mayorEsMejor: false, tope: 36000, min: 15, unidad: 's' }, { id: 'tiempo_demonio', nombre: 'Demonio (tiempo)', mayorEsMejor: false, tope: 36000, min: 15, unidad: 's' }, { id: 'diario', nombre: 'Reto diario (tiempo)', mayorEsMejor: false, tope: 36000, min: 15, unidad: 's' }, { id: 'racha_diaria', nombre: 'Racha diaria', mayorEsMejor: true, tope: 3650, unidad: 'días' }, { id: 'victorias', nombre: 'Victorias', mayorEsMejor: true, tope: 100000, unidad: '' }, { id: 'contrarreloj', nombre: 'Contrarreloj', mayorEsMejor: true, tope: 100000, unidad: 'pts' }, { id: 'maraton', nombre: 'Maratón', mayorEsMejor: true, tope: 100000, unidad: 'pts' }],
+      logros: [
+        { id: 'primera_victoria', nombre: 'Primera victoria', desc: 'Resuelve tu primer Sudoku.' },
+        { id: 'victorias_10', nombre: 'Aficionado', desc: 'Gana 10 partidas.' },
+        { id: 'victorias_50', nombre: 'Veterano', desc: 'Gana 50 partidas.' },
+        { id: 'victorias_200', nombre: 'Maestro del Sudoku', desc: 'Gana 200 partidas.' },
+        { id: 'sin_ayudas', nombre: 'Por mi cuenta', desc: 'Gana sin pistas, sin autocomprobación y sin resolver.' },
+        { id: 'sin_errores', nombre: 'Impecable', desc: 'Gana Medio o más difícil sin errores ni ayudas.' },
+        { id: 'relampago', nombre: 'Relámpago', desc: 'Gana Principiante (clásico) en menos de 2:00 sin ayudas.' },
+        { id: 'veloz', nombre: 'Veloz', desc: 'Gana Fácil (clásico) en menos de 4:00 sin ayudas.' },
+        { id: 'buen_ritmo', nombre: 'A buen ritmo', desc: 'Gana Medio (clásico) en menos de 8:00 sin ayudas.' },
+        { id: 'dificil_ok', nombre: 'Duro de pelar', desc: 'Gana un Sudoku Difícil.' },
+        { id: 'experto_ok', nombre: 'Experto', desc: 'Gana un Sudoku Experto.' },
+        { id: 'demonio_ok', nombre: 'Domador de demonios', desc: 'Gana un Sudoku Demonio.' },
+        { id: 'demonio_limpio', nombre: 'Demonio sin trampa', desc: 'Gana un Demonio sin errores ni ayudas.' },
+        { id: 'var_cuatro', nombre: 'Peque genio', desc: 'Gana un 4×4.' },
+        { id: 'var_seis', nombre: 'Seis y listo', desc: 'Gana un 6×6.' },
+        { id: 'var_diagonal', nombre: 'En diagonal', desc: 'Gana un Sudoku Diagonal.' },
+        { id: 'var_killer', nombre: 'Cazador de jaulas', desc: 'Gana un Sudoku Killer.' },
+        { id: 'var_irregular', nombre: 'Piezas irregulares', desc: 'Gana un Sudoku Irregular.' },
+        { id: 'var_hipercubo', nombre: 'Hipercubo', desc: 'Gana un Sudoku Hipercubo.' },
+        { id: 'todas_variantes', nombre: 'Políglota', desc: 'Gana al menos una vez en cada variante.' },
+        { id: 'diario_ok', nombre: 'Reto cumplido', desc: 'Completa un Reto diario.' },
+        { id: 'diario_7', nombre: 'Constancia', desc: 'Racha de 7 días en el Reto diario.' },
+        { id: 'diario_30', nombre: 'Hábito', desc: 'Racha de 30 días en el Reto diario.' },
+        { id: 'semanal_1', nombre: 'Desafío superado', desc: 'Completa un desafío semanal.' },
+        { id: 'semanal_3', nombre: 'Semana perfecta', desc: 'Completa los 3 desafíos de una semana.' },
+        { id: 'contrarreloj_ok', nombre: 'Contra el reloj', desc: 'Resuelve un Sudoku en modo Contrarreloj.' },
+        { id: 'sin_vidas_perdidas', nombre: 'Sin fallar', desc: 'Gana en modo Sin errores sin perder ninguna vida.' },
+        { id: 'maraton_5', nombre: 'Corredor', desc: 'Resuelve 5 puzzles en una Maratón.' },
+        { id: 'maraton_12', nombre: 'Maratonista', desc: 'Completa los 12 puzzles de la Maratón.' },
+        { id: 'racha_5', nombre: 'En racha', desc: 'Encadena 5 victorias seguidas.' },
+        { id: 'racha_15', nombre: 'Imparable', desc: 'Encadena 15 victorias seguidas.' },
+        { id: 'pegado_ok', nombre: 'Del papel a la pantalla', desc: 'Resuelve un puzzle pegado desde texto.' },
+        { id: 'aprendiz', nombre: 'Alumno aplicado', desc: 'Mira un puzzle resuelto paso a paso.' }
+      ] }
+  ];
+  /* Herramientas: apps del sitio (no son juegos: sin modos de puntaje, fuera de los rankings). ruta es relativa a juego/; carpeta, relativa a herramientas/. */
+  var H = [
     { id: 'notas', tipo: 'herramienta', nombre: 'Notas y Tareas', ruta: '../herramientas/notas/', carpeta: 'notas', color: '#ffd23d', categoria: 'Herramientas', descripcion: 'Notas, tareas y hábitos; funciona sin conexión', modos: [], logros: [
       { id: 'primera_tarea', nombre: 'Primera tarea', desc: 'Completa tu primera tarea.' },
       { id: 'racha_7', nombre: 'Constancia', desc: 'Mantén un hábito 7 días seguidos.' },

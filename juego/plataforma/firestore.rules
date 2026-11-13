@@ -42,6 +42,7 @@ service cloud.firestore {
         'conquista__victorias': 100000, 'conquista__territorios': 100000,
         'turismo__patrimonio_final': 30000, 'turismo__sellos_partida': 24, 'turismo__victorias': 2000,
         'domino__victorias': 100000, 'domino__puntos': 1000000, 'domino__capicuas': 100000,
+        'sudoku__tiempo_principiante': 36000, 'sudoku__tiempo_facil': 36000, 'sudoku__tiempo_medio': 36000, 'sudoku__tiempo_dificil': 36000, 'sudoku__tiempo_experto': 36000, 'sudoku__tiempo_demonio': 36000, 'sudoku__diario': 36000, 'sudoku__racha_diaria': 3650, 'sudoku__victorias': 100000, 'sudoku__contrarreloj': 100000, 'sudoku__maraton': 100000,
         'minijuegos__victorias': 5000, 'minijuegos__puntos': 100000,
         'isla__victorias': 5000, 'isla__eliminaciones': 50000, 'isla__mejor_partida': 30,
         'hockey__victorias': 100000, 'hockey__goles': 1000000,
@@ -52,11 +53,11 @@ service cloud.firestore {
     }
     // Modos donde MENOR es mejor (en juegos.js: mayorEsMejor:false). Solo se actualiza si el valor BAJA y debe ser >= su minimo.
     function menorEsMejor() {
-      return ['buscaminas__tiempo_principiante', 'buscaminas__tiempo_intermedio', 'buscaminas__tiempo_experto', 'buscaminas__diario', 'magnate__turnos_victoria', 'cartas__conq_turnos'];
+      return ['buscaminas__tiempo_principiante', 'buscaminas__tiempo_intermedio', 'buscaminas__tiempo_experto', 'buscaminas__diario', 'magnate__turnos_victoria', 'cartas__conq_turnos', 'sudoku__tiempo_principiante', 'sudoku__tiempo_facil', 'sudoku__tiempo_medio', 'sudoku__tiempo_dificil', 'sudoku__tiempo_experto', 'sudoku__tiempo_demonio', 'sudoku__diario'];
     }
     // Valor minimo aceptado en los modos de «menor es mejor» (un 0 seria una trampa evidente). Coincide con el campo min de juegos.js
     function minimos() {
-      return {'buscaminas__tiempo_principiante': 0.5, 'buscaminas__tiempo_intermedio': 0.5, 'buscaminas__tiempo_experto': 0.5, 'buscaminas__diario': 0.5, 'magnate__turnos_victoria': 1, 'cartas__conq_turnos': 1};
+      return {'buscaminas__tiempo_principiante': 0.5, 'buscaminas__tiempo_intermedio': 0.5, 'buscaminas__tiempo_experto': 0.5, 'buscaminas__diario': 0.5, 'magnate__turnos_victoria': 1, 'cartas__conq_turnos': 1, 'sudoku__tiempo_principiante': 15, 'sudoku__tiempo_facil': 15, 'sudoku__tiempo_medio': 15, 'sudoku__tiempo_dificil': 15, 'sudoku__tiempo_experto': 15, 'sudoku__tiempo_demonio': 15, 'sudoku__diario': 15};
     }
 
     // ---------- nombres: nombres/{nombreLower} -> {uid}. Lectura publica (para comprobar disponibilidad al registrarse) ----------
@@ -101,7 +102,7 @@ service cloud.firestore {
     match /guardados/{uid}/juegos/{docId} {
       allow read: if yo(uid);
       allow create, update: if yo(uid)
-        && docId.matches('^(nebula|ciudad|bloques|guerra|ajedrez|metropolis|buscaminas|celulas|serpientes|uno|magnate|cartas|gatos|colonos|conquista|turismo|domino|isla|hockey|pingpong|billar|bolos|minijuegos|notas|pizarra|mercados|apuestas|ofertas|contenido_imagenes|contenido_video|contenido_escritor|contenido_calendario|trabajos|trabajos_qr|trabajos_dispositivos|trabajos_drones|trabajos_automatizaciones|trabajos_video_ia|trabajos_reconstruccion_3d|trabajos_realidad_aumentada|trabajos_contenido_ia|trabajos_monetizacion|trabajos_analisis)(~[a-z0-9]{1,12})?(_p[1-7])?$')
+        && docId.matches('^(nebula|ciudad|bloques|guerra|ajedrez|metropolis|buscaminas|celulas|serpientes|uno|magnate|cartas|gatos|colonos|conquista|turismo|domino|isla|hockey|pingpong|billar|bolos|minijuegos|sudoku|notas|pizarra|mercados|apuestas|ofertas|contenido_imagenes|contenido_video|contenido_escritor|contenido_calendario|trabajos|trabajos_qr|trabajos_dispositivos|trabajos_drones|trabajos_automatizaciones|trabajos_video_ia|trabajos_reconstruccion_3d|trabajos_realidad_aumentada|trabajos_contenido_ia|trabajos_monetizacion|trabajos_analisis)(~[a-z0-9]{1,12})?(_p[1-7])?$')
         && (
           (docId.matches('.*_p[1-7]$')
             && request.resource.data.keys().hasOnly(['datos', 'actualizado'])
@@ -127,7 +128,7 @@ service cloud.firestore {
       allow get: if yo(uid) || esAmigo(uid);
       allow list: if false;
       allow create, update: if yo(uid)
-        && request.resource.data.keys().hasOnly(['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis', 'buscaminas', 'celulas', 'serpientes', 'uno', 'magnate', 'cartas', 'gatos', 'colonos', 'conquista', 'turismo', 'domino', 'isla', 'hockey', 'pingpong', 'billar', 'bolos', 'minijuegos', 'notas', 'pizarra', 'mercados', 'apuestas', 'ofertas', 'contenido_imagenes', 'contenido_video', 'contenido_escritor', 'contenido_calendario', 'trabajos', 'trabajos_qr', 'trabajos_dispositivos', 'trabajos_drones', 'trabajos_automatizaciones', 'trabajos_video_ia', 'trabajos_reconstruccion_3d', 'trabajos_realidad_aumentada', 'trabajos_contenido_ia', 'trabajos_monetizacion', 'trabajos_analisis', 'xpJuego', 'ultimo'])
+        && request.resource.data.keys().hasOnly(['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis', 'buscaminas', 'celulas', 'serpientes', 'uno', 'magnate', 'cartas', 'gatos', 'colonos', 'conquista', 'turismo', 'domino', 'isla', 'hockey', 'pingpong', 'billar', 'bolos', 'minijuegos', 'sudoku', 'notas', 'pizarra', 'mercados', 'apuestas', 'ofertas', 'contenido_imagenes', 'contenido_video', 'contenido_escritor', 'contenido_calendario', 'trabajos', 'trabajos_qr', 'trabajos_dispositivos', 'trabajos_drones', 'trabajos_automatizaciones', 'trabajos_video_ia', 'trabajos_reconstruccion_3d', 'trabajos_realidad_aumentada', 'trabajos_contenido_ia', 'trabajos_monetizacion', 'trabajos_analisis', 'xpJuego', 'ultimo'])
         && listaOk('nebula')
         && listaOk('ciudad')
         && listaOk('bloques')
@@ -145,6 +146,7 @@ service cloud.firestore {
         && listaOk('conquista')
         && listaOk('turismo')
         && listaOk('domino')
+        && listaOk('sudoku')
         && listaOk('minijuegos')
         && listaOk('isla')
         && listaOk('hockey')
@@ -254,7 +256,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasAll(['de', 'nombre', 'juego', 'oferta', 'estado', 'respuesta', 'creado', 'expira'])
         && request.resource.data.de == request.auth.uid
         && texto(request.resource.data.nombre, 3, 16)
-        && request.resource.data.juego in ['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis', 'buscaminas', 'celulas', 'serpientes', 'uno', 'magnate', 'cartas', 'gatos', 'colonos', 'conquista', 'turismo', 'domino', 'isla', 'hockey', 'pingpong', 'billar', 'bolos']
+        && request.resource.data.juego in ['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis', 'buscaminas', 'celulas', 'serpientes', 'uno', 'magnate', 'cartas', 'gatos', 'colonos', 'conquista', 'turismo', 'domino', 'isla', 'hockey', 'pingpong', 'billar', 'bolos', 'minijuegos', 'sudoku']
         && texto(request.resource.data.oferta, 1, 4000)
         && request.resource.data.estado == 'pendiente'
         && request.resource.data.respuesta == ''
