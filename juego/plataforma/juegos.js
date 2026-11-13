@@ -620,6 +620,30 @@
   ];
   /* Herramientas: apps del sitio (no son juegos: sin modos de puntaje, fuera de los rankings). ruta es relativa a juego/; carpeta, relativa a herramientas/. */
   var H = [
+    { id: 'minijuegos', nombre: 'Mesa de Minijuegos', ruta: 'minijuegos/', color: '#8a6cff', categoria: 'Mesa y cartas', descripcion: '24 minijuegos de 1 a 4 jugadores en un mismo teléfono, con bots y torneo.',
+      modos: [{ id: 'victorias', nombre: 'Rondas ganadas', mayorEsMejor: true, tope: 5000, unidad: 'victorias' }, { id: 'puntos', nombre: 'Puntos de torneo', mayorEsMejor: true, tope: 100000, unidad: 'pts' }],
+      logros: [
+        { id: 'primera_victoria', nombre: 'Primera victoria', desc: 'Gana una ronda contra otro jugador o bot.' },
+        { id: 'victorias_10', nombre: 'Diez victorias', desc: 'Acumula 10 rondas ganadas.' },
+        { id: 'victorias_50', nombre: 'Cincuenta victorias', desc: 'Acumula 50 rondas ganadas.' },
+        { id: 'rondas_100', nombre: 'Mesa fiel', desc: 'Juega 100 rondas.' },
+        { id: 'campeon', nombre: 'Campeón de la mesa', desc: 'Gana un torneo o un mejor de N.' },
+        { id: 'campeon_3', nombre: 'Tricampeón', desc: 'Gana 3 torneos o partidos completos.' },
+        { id: 'torneo_perfecto', nombre: 'Torneo redondo', desc: 'Gana un torneo de 10 juegos con 7 o más rondas ganadas.' },
+        { id: 'mesa_llena', nombre: 'Mesa llena', desc: 'Termina una ronda con 4 personas en el mismo dispositivo.' },
+        { id: 'variedad_10', nombre: 'Curioso', desc: 'Juega 10 minijuegos distintos.' },
+        { id: 'variedad_todos', nombre: 'Coleccionista de juegos', desc: 'Juega todos los minijuegos.' },
+        { id: 'bot_dificil', nombre: 'Domador de bots', desc: 'Vence a un bot difícil.' },
+        { id: 'racha_5', nombre: 'Racha de cinco', desc: 'Gana 5 rondas seguidas.' },
+        { id: 'ahorrador', nombre: 'Ahorrador', desc: 'Ten 300 monedas a la vez.' },
+        { id: 'coleccionista', nombre: 'Estilo propio', desc: 'Desbloquea 3 skins en la tienda.' },
+        { id: 'reflejos_rapidos', nombre: 'Reflejos de gato', desc: 'Reacciona en menos de 220 ms en Saque rápido.' },
+        { id: 'dedos_veloces', nombre: 'Dedos veloces', desc: 'Logra 70 toques en Carrera de toques.' },
+        { id: 'multitoque', nombre: 'Todos a la vez', desc: 'Juega con 2 o más dedos a la vez en la pantalla.' },
+        { id: 'con_mando', nombre: 'Mando en mano', desc: 'Juega una ronda con un mando.' },
+        { id: 'practicante', nombre: 'Practicante', desc: 'Juega 5 rondas en modo práctica.' },
+        { id: 'tableros', nombre: 'Estratega', desc: 'Gana Tres en raya, 4 en raya y Puntos y cajas.' }
+      ] },
     { id: 'notas', tipo: 'herramienta', nombre: 'Notas y Tareas', ruta: '../herramientas/notas/', carpeta: 'notas', color: '#ffd23d', categoria: 'Herramientas', descripcion: 'Notas, tareas y hábitos; funciona sin conexión', modos: [], logros: [
       { id: 'primera_tarea', nombre: 'Primera tarea', desc: 'Completa tu primera tarea.' },
       { id: 'racha_7', nombre: 'Constancia', desc: 'Mantén un hábito 7 días seguidos.' },
