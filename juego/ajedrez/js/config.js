@@ -1,3 +1,5 @@
+import { decodificar, resumen } from './relojcfg.js';
+
 // =============================================================
 //  ⚙  CONFIGURACIÓN
 //  Niveles del motor, bots con personalidad, relojes, calidades y
@@ -67,7 +69,7 @@ export function rivalPorId(id) {
   return { id: n.id, nombre: n.nombre, elo: n.elo, bot: null, motor: { prof: n.prof, tiempo: n.tiempo, ruido: n.ruido, azar: n.azar, apertura: n.apertura, sesgo: null, libro: n.elo >= 1200 } };
 }
 
-// Reloj: minutos y segundos de incremento por jugada (Fischer)
+// Reloj: minutos y segundos de incremento por jugada (Fischer). Los ids "kX+Y~..." son relojes completos (ver relojcfg.js)
 export const RELOJES = [
   { id: 'sin', nombre: 'Sin reloj', min: 0, inc: 0, cat: '' },
   { id: '1+0', nombre: '1 min', min: 1, inc: 0, cat: 'Bullet' },
@@ -82,14 +84,18 @@ export const RELOJES = [
   { id: '15+10', nombre: '15 min + 10 s', min: 15, inc: 10, cat: 'Rápidas' },
   { id: '30+0', nombre: '30 min', min: 30, inc: 0, cat: 'Clásicas' },
   { id: '30+20', nombre: '30 min + 20 s', min: 30, inc: 20, cat: 'Clásicas' },
+  { id: '60+0', nombre: '60 min', min: 60, inc: 0, cat: 'Clásicas' },
 ];
+export const PRESETS_RELOJ = ['1+0', '2+1', '3+0', '3+2', '5+0', '5+3', '10+0', '10+5', '15+10', '30+0', '60+0', 'sin'];
 // "c15+5" = personalizado (15 minutos, 5 s)
 export function relojPorId(id) {
   const f = RELOJES.find((r) => r.id === id);
-  if (f) return f;
+  if (f) return { ret: 0, brons: false, etapas: [], porJug: 0, w: null, b: null, ...f };
   const m = /^c(\d+(?:\.\d+)?)\+(\d+)$/.exec(id || '');
-  if (m) return { id, nombre: `${m[1]} min + ${m[2]} s`, min: +m[1], inc: +m[2], cat: 'Personalizado' };
-  return RELOJES[0];
+  if (m) return { id, nombre: `${m[1]} min + ${m[2]} s`, min: +m[1], inc: +m[2], cat: 'Personalizado', ret: 0, brons: false, etapas: [], porJug: 0, w: null, b: null };
+  const k = decodificar(id);
+  if (k) return { ...k, id, nombre: resumen(k), cat: 'Personalizado' };
+  return { ...RELOJES[0], ret: 0, brons: false, etapas: [], porJug: 0, w: null, b: null };
 }
 
 // Calidades: sombras 0 = no, 1 = duras, 2 = suaves; mapa = tamaño del mapa de sombras

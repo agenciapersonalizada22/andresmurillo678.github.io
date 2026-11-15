@@ -127,7 +127,14 @@
         { id: 'analista', nombre: 'Analista', desc: 'Revisa una partida completa con el motor.' },
         { id: 'nivel_de_club', nombre: 'Nivel de club', desc: 'Llega a 1500 de Elo.' },
         { id: 'nivel5', nombre: 'Gran reto', desc: 'Vence al nivel Maestro sin deshacer ni pistas.' },
-        { id: 'online', nombre: 'Jugador online', desc: 'Termina una partida online.' }
+        { id: 'online', nombre: 'Jugador online', desc: 'Termina una partida online.' },
+        { id: 'contra_el_reloj', nombre: 'Contra el reloj', desc: 'Gana al bot en una partida con reloj.' },
+        { id: 'ultimo_segundo', nombre: 'Último segundo', desc: 'Gana al bot con menos de 5 segundos en tu reloj.' },
+        { id: 'bala_certera', nombre: 'Bala certera', desc: 'Gana al bot en una partida de 2 minutos o menos.' },
+        { id: 'bandera_sin_mate', nombre: 'Bandera sin mate', desc: 'Cae la bandera pero el rival no puede dar mate: tablas.' },
+        { id: 'cara_a_cara', nombre: 'Cara a cara', desc: 'Termina una partida de 2 jugadores en el mismo teléfono.' },
+        { id: 'gran_revancha', nombre: 'Gran revancha', desc: 'Juega 3 partidas seguidas con revancha en modo mesa.' },
+        { id: 'relojero', nombre: 'Relojero', desc: 'Guarda un control de tiempo personalizado como favorito.' }
       ] },
     { id: 'metropolis', nombre: 'Metropolis', ruta: 'metropolis/', color: '#3df5a8', categoria: 'Estrategia', descripcion: 'Construye tu ciudad',
       modos: [{ id: 'poblacion', nombre: 'Poblacion', mayorEsMejor: true, tope: 100000000, unidad: 'hab.' }],

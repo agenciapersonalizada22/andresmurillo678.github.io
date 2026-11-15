@@ -40,6 +40,8 @@ export function pintarAyuda(tactil, mando) {
     ['Cámara', tactil ? 'Arrastra el fondo para girar; pellizca para acercar.' : 'Arrastra el fondo (o rueda) para girar y acercar.'],
     ['Teclado', 'Z deshacer · Y rehacer · H pista · A análisis · V vista · F girar · ←/→ jugadas · Esc pausa (se pueden cambiar en Ajustes).'],
     ['Mando Xbox', 'Stick/cruceta mueve el cursor · A elegir y mover · B cancelar · X deshacer · Y pista · LB/RB jugadas · L3 flecha · Menú pausa.'],
+    ['Reloj', 'Elige el control de tiempo en el selector previo o en Ajustes › Reloj: presets, incremento, retraso, tiempo extra, ventaja de tiempo y favoritos. Cae la bandera = pierdes (tablas si el rival no puede dar mate).'],
+    ['Mesa (mismo teléfono)', 'Deja el móvil entre dos personas: cada una tiene su reloj, el de arriba girado. Con «Tocando mi reloj» mueves y tocas tu zona para pasar el turno. Espacio/Enter pasa el turno · J reloj de abajo · K reloj de arriba · mando: A pasa turno y Y pausa (si está activado en Ajustes).'],
     ['Análisis', 'Activa «Análisis» para ver la barra de evaluación y las mejores líneas. «Revisión» clasifica todas tus jugadas.'],
   ];
   $('ayudaCuerpo').innerHTML = filas.map(([a, b]) => `<div class="fila-ay"><b>${a}</b><span>${b}</span></div>`).join('');

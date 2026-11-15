@@ -104,14 +104,15 @@ export function iniciarControl(ctx) {
     if (d) moverCursor(d);
 
     if (M.pulsado('A')) {
-      if (cursor === juego.sel) { ctx.limpiarSeleccion(); ctx.marcas(); } else ctx.alPulsar(cursor, false);
+      if (juego.sel < 0 && ctx.relojA && ctx.relojA()) { vibrar(0.2, 0.2, 40); }
+      else if (cursor === juego.sel) { ctx.limpiarSeleccion(); ctx.marcas(); } else ctx.alPulsar(cursor, false);
     }
     if (M.pulsado('B')) {
       if (juego.sel >= 0) { ctx.limpiarSeleccion(); ctx.marcas(); }
       else if (juego.pista) { juego.pista = null; ctx.marcas(); }
     }
     if (M.pulsado('X')) ctx.deshacer();
-    if (M.pulsado('Y')) ctx.accion('pista');
+    if (M.pulsado('Y')) { if (!(ctx.relojY && ctx.relojY())) ctx.accion('pista'); }
     if (M.pulsado('LB')) ctx.navegar('atras');
     if (M.pulsado('RB')) ctx.navegar('adelante');
     if (M.pulsado('VISTA')) ctx.accion('vista');
@@ -217,6 +218,7 @@ export function iniciarControl(ctx) {
       else document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     }
     if (nombre === 'Ajustes') { if (M.pulsado('RB')) ctx.cambiarPestanaAjustes(1); if (M.pulsado('LB')) ctx.cambiarPestanaAjustes(-1); }
+    if (M.pulsado('Y') && nombre === 'Pausa' && ctx.relojY) ctx.relojY();
     if (M.pulsado('MENU')) {
       if (nombre === 'Ajustes') ui.ocultar('Ajustes');
       else if (nombre === 'Inicio') ui.mostrar('Ajustes');
@@ -230,7 +232,7 @@ export function iniciarControl(ctx) {
     if (nombre) {
       h = pista('A', 'Aceptar') + pista('B', nombre === 'Inicio' ? 'Volver a la partida' : 'Atrás') + `<span><b>✥</b>Navegar</span>` + (nombre === 'Ajustes' ? '<span><b>LB</b><b>RB</b>Pestañas</span>' : '');
     } else {
-      h = pista('A', juego.sel >= 0 ? 'Mover' : 'Elegir') + pista('B', 'Cancelar') + pista('X', 'Deshacer') + pista('Y', 'Pista')
+      h = pista('A', juego.sel >= 0 ? 'Mover' : (opts.mandoPasar && juego.relojPend !== null ? 'Pasar turno' : 'Elegir')) + pista('B', 'Cancelar') + pista('X', 'Deshacer') + pista('Y', opts.mandoPasar && juego.mesa ? 'Pausa' : 'Pista')
         + `<span><b>LB</b><b>RB</b>Jugadas</span><span><b>RS</b>Cámara</span><span><b>LT</b><b>RT</b>Zoom</span>`
         + `<span><b>L3</b>Flecha</span><span><b>≡</b>Pausa</span>`;
     }

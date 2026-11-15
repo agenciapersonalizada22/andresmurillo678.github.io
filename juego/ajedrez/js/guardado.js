@@ -40,6 +40,9 @@ export const OPCIONES_BASE = () => ({
   tamBotones: 1, opBotones: 1, posBotones: 'abajo', zurdo: false, confirmarMov: false, premov: true, flechasDerecho: true,
   // accesibilidad
   textoGrande: false, daltonico: 'no', reducirMovimiento: false, altoContraste: false, leerJugadas: false,
+  // reloj y mesa (por dispositivo)
+  relojIa: true, relojDos: true, relojOnline: true, relojFavs: [], relojDecimas: 'minuto', relojAlertaSeg: 20, relojAlertaVis: true, relojClic: true, relojAlarma: true,
+  relojVibrar: true, relojPausaOculta: false, relojBotNatural: true, mesaPasar: 'auto', mesaGirarPiezas: false, mesaDeshacer: 'acordado', mandoPasar: false,
   // juego
   ayuda: true, girarAuto: false, analisisVivo: false, multiPV: 3, flechaMejor: true, mostrarApertura: true, tutorialVisto: false,
 });

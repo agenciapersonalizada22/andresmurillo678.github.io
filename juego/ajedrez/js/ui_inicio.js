@@ -3,7 +3,8 @@
 //  Pestañas: Jugar (variantes, rival, reloj), Rompecabezas, Lecciones,
 //  Biblioteca de partidas y Perfil (Elo, historial, logros).
 // =============================================================
-import { NIVELES, BOTS, RELOJES, VENTAJAS, PRACTICA } from './config.js';
+import { NIVELES, BOTS, VENTAJAS, PRACTICA } from './config.js';
+import { htmlEditor, clicEditor, cambioEditor } from './relojedit.js';
 import { MODOS, TIPOS } from './rompecabezas.js';
 import { LECCIONES } from './lecciones.js';
 import { LOGROS } from './perfil.js';
@@ -20,6 +21,7 @@ export class InicioUI {
     this.tab = 'jugar';
     this.sel = { modo: 'ia', color: 'blancas', nivel: 'medio', reloj: 'sin', variante: 'estandar', num960: -1, ventaja: 'dama', ventajaLado: 'tu', practica: 0, girarAuto: false, fen: '' };
     this.rival = 'niveles';
+    this.o = {};
     $('pestanasInicio').innerHTML = PEST.map(([id, n]) => `<button type="button" data-t="${id}">${n}</button>`).join('');
     $('pestanasInicio').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { this.tab = b.dataset.t; this.pintar(); } });
     $('panelesInicio').addEventListener('click', (e) => this._clic(e));
@@ -28,6 +30,7 @@ export class InicioUI {
 
   actualizarOpciones(o) {
     const s = this.sel;
+    this.o = o;
     for (const k of ['modo', 'color', 'nivel', 'reloj', 'variante', 'ventaja', 'ventajaLado', 'practica', 'girarAuto']) if (o[k] !== undefined) s[k] = o[k];
     if (this.tab === 'jugar') this.rival = String(s.nivel).startsWith('bot:') ? 'bots' : 'niveles';
     this.pintar();
@@ -48,7 +51,10 @@ export class InicioUI {
 
   _jugar() {
     const s = this.sel, ia = s.modo === 'ia';
-    let h = `<div class="campo"><label>Modo</label>${this._fichas('modo', [['ia', 'VS COMPUTADORA'], ['dos', '2 JUGADORES']], s.modo)}</div>`;
+    if (!['ia', 'dos', 'mesa'].includes(s.modo)) s.modo = 'ia';
+    let h = `<div class="campo"><label>Modo</label>${this._fichas('modo', [['ia', 'VS COMPUTADORA'], ['dos', '2 JUGADORES'], ['mesa', 'MISMO TELÉFONO · RELOJ']], s.modo)}`;
+    if (s.modo === 'mesa') h += '<p class="info">Pensado para dejar el móvil o la tablet entre dos personas: un reloj completo para cada jugador, el de arriba girado hacia él.</p>';
+    h += '</div>';
     h += `<div class="campo"><label>Variante</label>${this._fichas('variante', [['estandar', 'ESTÁNDAR'], ['960', 'CHESS960'], ['handicap', 'HANDICAP'], ['practica', 'PRÁCTICA']], s.variante)}`;
     if (s.variante === '960') h += `<div class="fila-in"><input type="number" id="in960" min="0" max="959" placeholder="Posición 0-959 (vacío = al azar)" value="${s.num960 >= 0 ? s.num960 : ''}"><button type="button" data-acc="azar960" class="chico">AL AZAR</button></div><p class="info">Las piezas de la fila trasera se colocan al azar; el enroque funciona igual (rey a g/c, torre a f/d).</p>`;
     if (s.variante === 'handicap') h += `<div class="fila-in"><select id="selVentaja">${VENTAJAS.map((v) => `<option value="${v.id}" ${s.ventaja === v.id ? 'selected' : ''}>${v.nombre}</option>`).join('')}</select></div>${this._fichas('ventajaLado', [['tu', 'TÚ RECIBES LA VENTAJA'], ['rival', 'EL RIVAL LA RECIBE']], s.ventajaLado)}<p class="info">La partida con ventaja no puntúa en tu Elo.</p>`;
@@ -61,16 +67,9 @@ export class InicioUI {
       else h += `<div class="bots">${BOTS.map((b) => `<button type="button" data-bot="${b.id}" class="${s.nivel === 'bot:' + b.id ? 'sel' : ''}"><span>${b.icono}</span><b>${esc(b.nombre)}</b><small>${b.elo} · ${b.estilo}</small></button>`).join('')}</div><p class="info">${s.nivel.startsWith('bot:') ? esc((BOTS.find((b) => 'bot:' + b.id === s.nivel) || {}).frase || '') : 'Elige un rival.'}</p>`;
       h += '</div>';
     }
-    h += `<div class="campo"><label>Reloj (Fischer: tiempo + incremento)</label><select id="selReloj">`;
-    let cat = null;
-    for (const r of RELOJES) {
-      if (r.cat !== cat) { if (cat !== null) h += '</optgroup>'; if (r.cat) h += `<optgroup label="${r.cat}">`; cat = r.cat; }
-      h += `<option value="${r.id}" ${s.reloj === r.id ? 'selected' : ''}>${r.nombre}</option>`;
-    }
-    h += `</optgroup><option value="custom" ${s.reloj.startsWith('c') ? 'selected' : ''}>Personalizado…</option></select>`;
-    if (s.reloj.startsWith('c')) { const m = /^c([\d.]+)\+(\d+)$/.exec(s.reloj) || [0, 10, 0]; h += `<div class="fila-in"><input type="number" id="cMin" min="0.5" max="180" step="0.5" value="${m[1]}"> min <input type="number" id="cInc" min="0" max="60" value="${m[2]}"> s</div>`; }
-    h += '</div>';
-    if (!ia) h += `<div class="campo"><label class="check"><input type="checkbox" id="chkGirarAuto" ${s.girarAuto ? 'checked' : ''}> Girar el tablero en cada turno</label></div>`;
+    const kRel = ia ? 'relojIa' : 'relojDos', rOn = this.o[kRel] !== false;
+    h += `<div class="campo"><label>Reloj</label><label class="check"><input type="checkbox" data-modoreloj="${kRel}" ${rOn ? 'checked' : ''}> Usar reloj en este modo</label>${rOn ? htmlEditor(s.reloj, this.o.relojFavs || []) : '<p class="info">El reloj está desactivado para este modo (se activa aquí o en Ajustes › Reloj).</p>'}</div>`;
+    if (s.modo === 'dos') h += `<div class="campo"><label class="check"><input type="checkbox" id="chkGirarAuto" ${s.girarAuto ? 'checked' : ''}> Girar el tablero en cada turno</label></div>`;
     h += `<details class="avanzado"><summary>Cargar posición (FEN)</summary><input id="campoFenInicio" type="text" placeholder="vacío = posición inicial" autocomplete="off" spellcheck="false" value="${esc(s.fen)}"><p class="info" id="errFenInicio"></p></details>`;
     h += '<button type="button" data-acc="empezar" class="principal">EMPEZAR</button>';
     return h;
@@ -127,11 +126,13 @@ export class InicioUI {
   _clic(e) {
     const b = e.target.closest('button'); if (!b) return;
     const s = this.sel, al = this.al;
+    if (clicEditor(e, this._ctxReloj())) { al.alClic(); return; }
     const f = b.closest('.fichas[data-campo]');
     if (f) {
       const c = f.dataset.campo;
       if (c === 'rival') { this.rival = b.dataset.v; if (this.rival === 'niveles' && s.nivel.startsWith('bot:')) s.nivel = 'medio'; if (this.rival === 'bots' && !s.nivel.startsWith('bot:')) s.nivel = 'bot:nico'; } else s[c] = b.dataset.v;
       if (c === 'variante' && b.dataset.v === 'practica') s.color = 'blancas';
+      if (c === 'modo' && b.dataset.v === 'mesa' && s.reloj === 'sin') { s.reloj = '10+0'; al.alReloj && al.alReloj('10+0'); }
       al.alClic(); this.pintar(); return;
     }
     if (b.dataset.bot) { s.nivel = 'bot:' + b.dataset.bot; al.alClic(); this.pintar(); return; }
@@ -156,20 +157,24 @@ export class InicioUI {
     }
   }
 
+  _ctxReloj() {
+    const o = this.o, s = this.sel;
+    return { id: s.reloj, favs: o.relojFavs || [], poner: (id) => { s.reloj = id; if (this.al.alReloj) this.al.alReloj(id); this.pintar(); }, ponerFavs: (f) => { o.relojFavs = f; if (this.al.alAjuste) this.al.alAjuste('relojFavs', f); this.pintar(); } };
+  }
+
   _leerCampos() {
     const s = this.sel;
     const v = $('campoFenInicio'); if (v) s.fen = v.value.trim();
     const n = $('in960'); if (n) s.num960 = n.value === '' ? -1 : Math.max(0, Math.min(959, +n.value));
     const c = $('chkGirarAuto'); if (c) s.girarAuto = c.checked;
-    const cm = $('cMin'); if (cm && s.reloj.startsWith('c')) s.reloj = `c${Math.max(0.5, +cm.value || 10)}+${Math.max(0, +$('cInc').value || 0)}`;
   }
 
   _cambio(e) {
     const t = e.target, s = this.sel;
-    if (t.id === 'selReloj') { s.reloj = t.value === 'custom' ? 'c10+0' : t.value; this._leerCampos(); this.pintar(); }
+    if (cambioEditor(e, this._ctxReloj())) return;
+    if (t.dataset && t.dataset.modoreloj) { this.al.alAjuste && this.al.alAjuste(t.dataset.modoreloj, t.checked); this.o[t.dataset.modoreloj] = t.checked; this.pintar(); }
     else if (t.id === 'selVentaja') s.ventaja = t.value;
     else if (t.id === 'selPractica') { s.practica = +t.value; this.pintar(); }
     else if (t.id === 'chkGirarAuto') s.girarAuto = t.checked;
-    else if (t.id === 'cMin' || t.id === 'cInc') this._leerCampos();
   }
 }

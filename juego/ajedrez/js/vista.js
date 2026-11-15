@@ -136,6 +136,7 @@ export class Vista {
     this.fijarTema(this.temaId);
   }
 
+  fijarGiroPiezas(c) { this.piezas.fijarGiro(c); this.pedir(); }
   fijarVista(nombre, inmediato = false) { this.camara.ir(nombre, inmediato); this.pedir(); }
   marcar(estado) { this.tablero.marcar(estado); this.pedir(); }
   sincronizar(b, pop = true) { this.piezas.sincronizar(b, pop); this.pedir(); }

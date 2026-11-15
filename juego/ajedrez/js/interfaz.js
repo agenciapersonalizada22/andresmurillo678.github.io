@@ -153,7 +153,7 @@ export class Interfaz {
       el.innerHTML = `<span class="ficha ${color ? 'n' : 'b'}">${GLIFOS[color][6]}</span>`
         + `<div class="nombre">${dot}${esc(info.nombres[color])}<small>${esc(info.subs[color] || '')}${info.extra && info.extra[color] ? ' · ' + esc(info.extra[color]) : ''}</small></div>`
         + `<div class="capt">${g}${dif > 0 ? `<em>+${dif}</em>` : ''}</div>`
-        + `<div class="reloj${info.conReloj ? '' : ' oculto'}" data-c="${color}">${formatoTiempo(info.relojes[color])}</div>`;
+        + `<div class="reloj${info.conReloj ? '' : ' oculto'}" data-c="${color}">${formatoTiempo(info.relojes[color], this.opts && this.opts.relojDecimas)}</div>`;
     };
     dibujar('jugArriba', arriba);
     dibujar('jugAbajo', arriba ^ 1);
@@ -165,9 +165,10 @@ export class Interfaz {
     for (const c of [0, 1]) {
       const el = document.querySelector(`.reloj[data-c="${c}"]`);
       if (!el) continue;
-      el.textContent = formatoTiempo(r[c]);
+      el.textContent = formatoTiempo(r[c], this.opts && this.opts.relojDecimas);
       el.classList.toggle('corre', !!corre && turno === c);
-      el.classList.toggle('poco', r[c] < 20000);
+      const lim = this.opts && this.opts.relojAlertaSeg !== undefined ? this.opts.relojAlertaSeg * 1000 : 20000;
+      el.classList.toggle('poco', lim > 0 && r[c] < lim);
     }
   }
 

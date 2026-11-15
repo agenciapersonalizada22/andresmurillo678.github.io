@@ -196,10 +196,10 @@ await t('logros: ids validos, sin repetidos, nombre y descripcion, dentro del to
   }
 });
 await t('logros: cobertura de lo que reportan los juegos', () => {
-  const n = { nebula: 21, ciudad: 24, guerra: 17, ajedrez: 15, buscaminas: 24, celulas: 24, serpientes: 20, uno: 24, magnate: 15, cartas: 48 }; for (const k in n) assert.equal(Juegos.juego(k).logros.length, n[k], k);
+  const n = { nebula: 21, ciudad: 24, guerra: 17, ajedrez: 22, buscaminas: 24, celulas: 24, serpientes: 20, uno: 24, magnate: 15, cartas: 48 }; for (const k in n) assert.equal(Juegos.juego(k).logros.length, n[k], k);
   const tiene = (j, ids) => ids.forEach(i => assert.ok(Juegos.juego(j).logros.some(l => l.id === i), j + ':' + i));
   tiene('ciudad', ['primera_mision', 'millonario', 'escapar', 'hist22']); tiene('metropolis', ['airelimpio', 'primero', 'primera_casa', 'pueblo', 'metropoli', 'dias100']);
-  tiene('ajedrez', ['primera_victoria', 'jaque_mate', 'mate_rapido', 'sin_red', 'gran_rival', 'rey_a_salvo', 'nueva_dama', 'estudiante', 'tactico', 'en_racha', 'aprendiz', 'analista', 'nivel_de_club', 'nivel5', 'online']);
+  tiene('ajedrez', ['primera_victoria', 'jaque_mate', 'mate_rapido', 'sin_red', 'gran_rival', 'rey_a_salvo', 'nueva_dama', 'estudiante', 'tactico', 'en_racha', 'aprendiz', 'analista', 'nivel_de_club', 'nivel5', 'online', 'contra_el_reloj', 'ultimo_segundo', 'bala_certera', 'bandera_sin_mate', 'cara_a_cara', 'gran_revancha', 'relojero']);
   tiene('guerra', ['primera_sangre', 'racha10', 'nivel10', 'bengalas']); tiene('nebula', ['vuelo', 'jefe1', 'oleada15', 'flota']);
   assert.ok(Juegos.lista.every(j => !/[A-Z]/.test(j.logros.map(l => l.id).join(''))), 'ids en minuscula');
 });
