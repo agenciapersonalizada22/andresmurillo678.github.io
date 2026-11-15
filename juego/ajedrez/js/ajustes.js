@@ -7,16 +7,33 @@
 import { CALIDADES } from './config.js';
 import * as Cu from './cuenta.js';
 import { TEMAS, ORDEN_TEMAS, SETS_3D } from './temas.js';
+import { htmlEditor, clicEditor, cambioEditor } from './relojedit.js';
 
 const F = (arr) => arr.map(([v, n]) => ({ v, n }));
 const NOM_TECLA = { deshacer: 'Deshacer', rehacer: 'Rehacer', vista: 'Cambiar vista', pista: 'Pista', analisis: 'Análisis', girar: 'Girar tablero', pausa: 'Pausa / menú', atras: 'Jugada anterior', adelante: 'Jugada siguiente', pantalla: 'Pantalla completa' };
 
 export const PESTANAS = [
-  ['graficos', 'Gráficos'], ['audio', 'Audio'], ['controles', 'Controles'], ['acces', 'Accesibilidad'], ['juego', 'Juego'], ['datos', 'Datos'],
+  ['reloj', 'Reloj'], ['graficos', 'Gráficos'], ['audio', 'Audio'], ['controles', 'Controles'], ['acces', 'Accesibilidad'], ['juego', 'Juego'], ['datos', 'Datos'],
 ];
 
 // tipo: check | rango (min, max, paso, fmt) | fichas (op) | tecla (accion)
 const TABLA = [
+  ['reloj', 'relojIa', 'check', 'Usar el reloj contra la computadora'],
+  ['reloj', 'relojDos', 'check', 'Usar el reloj en 2 jugadores / mismo teléfono'],
+  ['reloj', 'relojOnline', 'check', 'Usar el reloj en partidas online (anfitrión)'],
+  ['reloj', 'relojDecimas', 'fichas', 'Décimas de segundo', { op: [['minuto', 'Último minuto'], ['diez', 'Últimos 10 s'], ['no', 'Nunca']] }],
+  ['reloj', 'relojAlertaSeg', 'fichas', 'Alerta de poco tiempo', { op: [[0, 'Sin alerta'], [10, '10 s'], [20, '20 s'], [30, '30 s'], [60, '1 min']] }],
+  ['reloj', 'relojAlertaVis', 'check', 'Alerta visual (el reloj parpadea en rojo)'],
+  ['reloj', 'sonidoReloj', 'check', 'Tic sonoro con poco tiempo'],
+  ['reloj', 'relojClic', 'check', 'Clic al pasar el turno'],
+  ['reloj', 'relojAlarma', 'check', 'Alarma al caer la bandera'],
+  ['reloj', 'relojVibrar', 'check', 'Vibración (pasar turno, poco tiempo, bandera)'],
+  ['reloj', 'relojPausaOculta', 'check', 'Pausar el reloj al ocultar la pestaña (si no, sigue contando)'],
+  ['reloj', 'relojBotNatural', 'check', 'El bot gasta su tiempo como una persona'],
+  ['reloj', 'mesaPasar', 'fichas', 'Mesa: pasar el turno', { op: [['auto', 'Al mover la pieza'], ['tocar', 'Tocando mi reloj']], info: 'En «Tocando mi reloj» mueves la pieza y luego tocas tu zona del reloj, como en un reloj de verdad.' }],
+  ['reloj', 'mesaGirarPiezas', 'check', 'Mesa: girar 180° las piezas del jugador de arriba'],
+  ['reloj', 'mesaDeshacer', 'fichas', 'Mesa: deshacer jugada', { op: [['acordado', 'Con permiso'], ['libre', 'Libre'], ['no', 'No']] }],
+  ['reloj', 'mandoPasar', 'check', 'Mando: A pasa el turno con el reloj (Y pausa)'],
   ['graficos', 'tema', 'fichas', 'Tema del tablero', { op: ORDEN_TEMAS.map((t) => [t, TEMAS[t].nombre]) }],
   ['graficos', 'set3d', 'fichas', 'Piezas (3D)', { op: Object.entries(SETS_3D).map(([k, v]) => [k, v.nombre]) }],
   ['graficos', 'set2d', 'fichas', 'Piezas (2D)', { op: [['clasico', 'Clásicas'], ['moderno', 'Modernas'], ['contorno', 'Contorno']] }],
@@ -36,7 +53,6 @@ const TABLA = [
   ['audio', 'volMusica', 'rango', 'Volumen de la música', { min: 0, max: 100, paso: 5, esc: 100, fmt: (v) => v + '%' }],
   ['audio', 'volEfectos', 'rango', 'Volumen de efectos', { min: 0, max: 100, paso: 5, esc: 100, fmt: (v) => v + '%' }],
   ['audio', 'pausaOculta', 'check', 'Pausar el audio al ocultar la pestaña'],
-  ['audio', 'sonidoReloj', 'check', 'Tic del reloj con poco tiempo'],
   ['controles', 'sens', 'rango', 'Sensibilidad de la cámara', { min: 30, max: 250, paso: 10, esc: 100, fmt: (v) => (v / 100).toFixed(1) + 'x' }],
   ['controles', 'invertirY', 'check', 'Invertir eje vertical de la cámara'],
   ['controles', 'zonaMuerta', 'rango', 'Zona muerta del mando', { min: 0, max: 40, paso: 2, esc: 100, fmt: (v) => v + '%' }],
@@ -93,6 +109,7 @@ export class Ajustes {
     const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
     this.raiz.querySelectorAll('.pestanas button').forEach((b) => b.classList.toggle('sel', b.dataset.t === this.tab));
     let h = '';
+    if (this.tab === 'reloj') h += `<div class="campo"><label>Control de tiempo (también contra el bot, online y mesa)</label>${htmlEditor(o.reloj, o.relojFavs || [])}</div>`;
     for (const [tab, k, tipo, et, x] of TABLA) {
       if (tab !== this.tab) continue;
       if (tipo === 'check') h += `<div class="campo"><label class="check"><input type="checkbox" data-k="${k}" ${o[k] ? 'checked' : ''}> ${et}</label></div>`;
@@ -111,8 +128,10 @@ export class Ajustes {
       h += Cu.bloqueAjustes();
     }
     cuerpo.innerHTML = h;
+    const ctxR = { id: o.reloj, favs: o.relojFavs || [], poner: (id) => this.al.alAjuste('reloj', id), ponerFavs: (f) => this.al.alAjuste('relojFavs', f) };
     cuerpo.onchange = (e) => {
-      const i = e.target.closest('input'); if (!i) return;
+      if (cambioEditor(e, ctxR)) return;
+      const i = e.target.closest('input'); if (!i || !i.dataset.k) return;
       if (i.type === 'checkbox') this.al.alAjuste(i.dataset.k, i.checked);
       else if (i.type === 'range') { const k = i.dataset.k; this.al.alAjuste(k, ESCALADAS[k] ? i.value / ESCALADAS[k] : +i.value); }
     };
@@ -122,6 +141,7 @@ export class Ajustes {
       const k = i.dataset.k; this.al.alAjuste(k, ESCALADAS[k] ? i.value / ESCALADAS[k] : +i.value, true);
     };
     cuerpo.onclick = (e) => {
+      if (clicEditor(e, ctxR)) { this.al.alClic(); return; }
       const b = e.target.closest('button'); if (!b) return;
       const f = b.closest('.fichas[data-k]');
       if (f) {

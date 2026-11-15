@@ -187,7 +187,11 @@ export class Vista2D {
     if (this.alDibujar) this.alDibujar();
   }
 
+  fijarGiroPiezas(c) { this.giroColor = c; this.pedir(); }
   _pieza(q, x, y, c) {
+    if ((q >> 3) === this.giroColor) { this.g.save(); this.g.translate(x, y); this.g.rotate(Math.PI); this._piezaDib(q, 0, 0, c); this.g.restore(); } else this._piezaDib(q, x, y, c);
+  }
+  _piezaDib(q, x, y, c) {
     const g = this.g, t = q & 7, blanca = (q >> 3) === 0;
     g.textAlign = 'center'; g.textBaseline = 'middle';
     if (this.set2d === 'moderno') {

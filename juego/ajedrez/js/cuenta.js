@@ -21,6 +21,7 @@ export const ID_LOGRO = {
   primera: 'primera_victoria', mate: 'jaque_mate', rapido: 'mate_rapido', sinDeshacer: 'sin_red', bot2000: 'gran_rival',
   enroque: 'rey_a_salvo', corona: 'nueva_dama', p10: 'estudiante', p50: 'tactico', racha5: 'en_racha', lecciones: 'aprendiz',
   revision: 'analista', online: 'online', elo1500: 'nivel_de_club', nivel5: 'nivel5',
+  contraReloj: 'contra_el_reloj', ultimoSegundo: 'ultimo_segundo', balaMaestra: 'bala_certera', banderaSinMate: 'bandera_sin_mate', caraACara: 'cara_a_cara', revanchaMesa: 'gran_revancha', relojero: 'relojero',
 };
 
 const E = { sync: null, ultima: 0, estado: '', enCurso: false, pendientes: 0, listo: false, alBajar: null };

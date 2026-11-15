@@ -101,6 +101,8 @@ const SONIDOS = {
   clic(t) { tono(t, 900, 0.04, 0.12, 'square', 600); },
   error(t) { tono(t, 120, 0.16, 0.3, 'sawtooth', 80); },
   reloj(t) { tono(t, 1400, 0.05, 0.12, 'square'); },
+  relojClic(t) { tono(t, 520, 0.05, 0.22, 'square', 260); tono(t + 0.04, 780, 0.05, 0.12, 'triangle'); },
+  alarma(t) { for (let i = 0; i < 3; i++) tono(t + i * 0.22, 1100, 0.15, 0.25, 'square'); },
 };
 
 export function reproducir(nombre) {

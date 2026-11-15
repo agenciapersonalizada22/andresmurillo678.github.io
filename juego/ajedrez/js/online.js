@@ -24,19 +24,20 @@ export function iniciarOnline(ctx) {
   const idDeColor = (c) => (c === 0 ? S.idB : S.idN);
 
   // ---------------- configuración previa (solo el anfitrión)
-  const cfgUI = { c: 'azar', r: '5+3', v: 'estandar', p: false };
+  const cfgUI = { c: 'azar', r: '5+3', v: 'estandar', p: false, tocado: false };
+  const lblReloj = (r) => (r === 'sin' ? 'Sin reloj' : /^\d+\+\d+$/.test(r) ? r.replace('+', ' min + ') + ' s' : 'Mi reloj: ' + ctx.resumenReloj(r));
   function pintarCfg() {
     const f = (campo, lista) => `<div class="fichas" data-c="${campo}">${lista.map(([v, n]) => `<button type="button" data-v="${v}" class="${String(cfgUI[campo]) === String(v) ? 'sel' : ''}">${n}</button>`).join('')}</div>`;
     $('onlineCuerpo').innerHTML = `<div class="campo"><label>Tu color</label>${f('c', [['blancas', 'BLANCAS'], ['negras', 'NEGRAS'], ['azar', 'AL AZAR']])}</div>
-      <div class="campo"><label>Reloj</label><select id="onReloj">${['sin', '1+0', '1+1', '3+0', '3+2', '5+0', '5+3', '10+0', '10+5', '15+10', '30+0'].map((r) => `<option value="${r}" ${cfgUI.r === r ? 'selected' : ''}>${r === 'sin' ? 'Sin reloj' : r.replace('+', ' min + ') + ' s'}</option>`).join('')}</select></div>
+      <div class="campo"><label>Reloj</label><select id="onReloj">${(['sin', '1+0', '1+1', '3+0', '3+2', '5+0', '5+3', '10+0', '10+5', '15+10', '30+0'].includes(cfgUI.r) ? [] : [cfgUI.r]).concat(['sin', '1+0', '1+1', '3+0', '3+2', '5+0', '5+3', '10+0', '10+5', '15+10', '30+0']).map((r) => `<option value="${r}" ${cfgUI.r === r ? 'selected' : ''}>${lblReloj(r)}</option>`).join('')}</select></div>
       <div class="campo"><label>Variante</label>${f('v', [['estandar', 'ESTÁNDAR'], ['960', 'CHESS960']])}</div>
       <div class="campo"><label>Tipo</label>${f('p', [[false, 'AMISTOSA'], [true, 'PUNTÚA (ELO ONLINE)']])}<p class="info">En amistosa se puede deshacer con permiso del rival. El análisis del motor se desactiva durante la partida.</p></div>`;
   }
   $('onlineCuerpo').addEventListener('click', (e) => { const b = e.target.closest('button'); const f = b && b.closest('.fichas[data-c]'); if (f) { cfgUI[f.dataset.c] = f.dataset.c === 'p' ? b.dataset.v === 'true' : b.dataset.v; pintarCfg(); } });
-  $('onlineCuerpo').addEventListener('change', (e) => { if (e.target.id === 'onReloj') cfgUI.r = e.target.value; });
+  $('onlineCuerpo').addEventListener('change', (e) => { if (e.target.id === 'onReloj') { cfgUI.r = e.target.value; cfgUI.tocado = true; } });
   $('btnOnlineCerrar').addEventListener('click', () => ui.ocultar('Online'));
   // Mismas OPTS en todas las entradas al lobby (también las registradas para invitaciones de amigos)
-  const optsLobby = (conModo) => ({ juego: 'Ajedrez 3D', maxJugadores: 4, minJugadores: 2, modos: conModo ? [{ id: idModo(cfgUI), nombre: `${cfgUI.c} · ${cfgUI.r} · ${cfgUI.v}${cfgUI.p ? ' · puntúa' : ''}` }] : [{ id: idModo(cfgUI), nombre: 'Partida' }], alIniciar: () => {} });
+  const optsLobby = (conModo) => ({ juego: 'Ajedrez 3D', maxJugadores: 4, minJugadores: 2, modos: conModo ? [{ id: idModo(cfgUI), nombre: `${cfgUI.c} · ${lblReloj(cfgUI.r)} · ${cfgUI.v}${cfgUI.p ? ' · puntúa' : ''}` }] : [{ id: idModo(cfgUI), nombre: 'Partida' }], alIniciar: () => {} });
   if (Lobby.registrar) Lobby.registrar(optsLobby(false));
   const abrirLobby = (conModo) => {
     ui.ocultar('Online');
@@ -48,6 +49,7 @@ export function iniciarOnline(ctx) {
   api.abrir = () => {
     if (S.activo && Red.conectado) { Lobby.abrir(optsLobby(false)); return; }
     if (Lobby.hayEnlace && Lobby.hayEnlace()) { abrirLobby(false); return; }
+    if (!cfgUI.tocado) cfgUI.r = opts.relojOnline === false ? 'sin' : (opts.reloj || cfgUI.r);
     pintarCfg(); ui.mostrar('Online');
   };
   api.menu = () => api.abrir();
@@ -125,7 +127,7 @@ export function iniciarOnline(ctx) {
       case 'o_elo': if (d.id !== Red.miId) S.eloRival = d.elo; return;
       case 'o_flecha': if (opts.flechasDerecho !== false) ctx.flechas().alternar(d.a, d.b, '#ffb020'); return;
       case 'o_aviso': ui.toast(d.t); return;
-      case 'o_banderin': if (Red.esAnfitrion && S.jugando && reloj.restante[d.c] < 1500) terminar('tiempo', d.c ^ 1); return;
+      case 'o_banderin': if (Red.esAnfitrion && S.jugando && reloj.restante[d.c] < 1500) { if (ctx.sinMaterialMate(partida.pos.b, d.c ^ 1)) terminar('tiempoMat', -1); else terminar('tiempo', d.c ^ 1); } return;
       default: return;
     }
   }
@@ -173,7 +175,7 @@ export function iniciarOnline(ctx) {
   }
   const alFinRemoto = (d) => aplicarFin(d);
   api.tiempoAgotado = (color) => {
-    if (Red.esAnfitrion) terminar('tiempo', color ^ 1);
+    if (Red.esAnfitrion) { if (ctx.sinMaterialMate(partida.pos.b, color ^ 1)) terminar('tiempoMat', -1); else terminar('tiempo', color ^ 1); }
     else setTimeout(() => { if (!juego.est.fin) Red.enviar('o_banderin', { c: color }); }, 1500);
   };
   api.rendirse = () => { if (Red.esAnfitrion) terminar('rendicion', S.miColor ^ 1); else Red.enviar('o_rendir', {}); };

@@ -65,11 +65,17 @@ export class Piezas3D {
     }
   }
 
+  fijarGiro(c) {
+    this.giroColor = c;
+    for (const m of this.mallas) if (m) m.rotation.y = (m.userData.codigo >> 3) === c ? Math.PI : 0;
+  }
+
   _crear(codigo, sq = 0) {
     // los caballos miran un poco hacia el centro para que se reconozca su perfil
     const giro = (sq & 7) < 4 ? -1.35 : 1.35;
     const g = crearPieza(codigo & 7, codigo >> 3, this.mats[codigo >> 3], (codigo >> 3) ? -giro : giro);
     g.userData.codigo = codigo;
+    if (this.giroColor === (codigo >> 3)) g.rotation.y = Math.PI;
     return g;
   }
 

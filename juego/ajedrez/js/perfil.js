@@ -19,6 +19,13 @@ export const LOGROS = [
   { id: 'lecciones', nombre: 'Aprendiz', desc: 'Completa 3 lecciones.' },
   { id: 'revision', nombre: 'Analista', desc: 'Revisa una partida completa con el motor.' },
   { id: 'online', nombre: 'Jugador online', desc: 'Termina una partida online.' },
+  { id: 'contraReloj', nombre: 'Contra el reloj', desc: 'Gana al bot en una partida con reloj.' },
+  { id: 'ultimoSegundo', nombre: 'Último segundo', desc: 'Gana al bot con menos de 5 segundos en tu reloj.' },
+  { id: 'balaMaestra', nombre: 'Bala certera', desc: 'Gana al bot en una partida de 2 minutos o menos.' },
+  { id: 'banderaSinMate', nombre: 'Bandera sin mate', desc: 'Cae la bandera pero el rival no puede dar mate: tablas.' },
+  { id: 'caraACara', nombre: 'Cara a cara', desc: 'Termina una partida de 2 jugadores en el mismo teléfono (modo mesa).' },
+  { id: 'revanchaMesa', nombre: 'Gran revancha', desc: 'Juega 3 partidas seguidas con revancha en modo mesa.' },
+  { id: 'relojero', nombre: 'Relojero', desc: 'Guarda un control de tiempo personalizado como favorito.' },
   { id: 'elo1500', nombre: 'Nivel de club', desc: 'Llega a 1500 de Elo.' },
 ];
 

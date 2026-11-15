@@ -17,7 +17,9 @@ import { Interfaz } from './interfaz.js';
 import { InicioUI } from './ui_inicio.js';
 import { iniciarControl } from './control.js';
 import { IA } from './ia.js';
-import { Reloj, formatoTiempo } from './reloj.js';
+import { Reloj, formatoTiempo, jugadasPorBando, sinMaterialMate } from './reloj.js';
+import { Mesa } from './mesa.js';
+import { resumenId } from './relojedit.js';
 import * as Sonido from './sonido.js';
 import { iniciarMusica, detenerMusica } from './musica.js';
 import * as Guardado from './guardado.js';
@@ -91,6 +93,8 @@ const ui = new Interfaz({
 });
 const inicio = new InicioUI({
   alClic: () => Sonido.reproducir('clic'),
+  alReloj: (id) => ajuste('reloj', id),
+  alAjuste: (k, v) => ajuste(k, v),
   alNueva: (cfg) => nuevaDesdeUI(cfg),
   alPuzzle: (m) => iniciarPuzzle(m),
   alLeccion: (id) => iniciarLeccion(id),
@@ -100,6 +104,17 @@ const inicio = new InicioUI({
   alExportarBiblioteca: () => exportarBiblioteca(),
   alStats: () => ui.stats(Guardado.cargarStats()),
   alRanking: () => Cu.abrirRanking(),
+});
+
+const mesa = new Mesa({
+  clic: () => Sonido.reproducir('clic'),
+  toque: (c) => toqueReloj(c),
+  tablas: () => { partida.terminar('acuerdo', -1); juego.est = partida.estado(); finalizar(juego.est); },
+  rendir: (c) => { partida.terminar('rendicion', c ^ 1); juego.est = partida.estado(); finalizar(juego.est); },
+  deshacer: () => deshacerMesa(),
+  toast: (t) => ui.toast(t),
+  revancha: () => revancha(),
+  menu: () => { mesa.cerrarCapas(); abrirMenuInicio(); },
 });
 
 let vista, flechas, entrada;
@@ -138,9 +153,10 @@ const nombreRival = () => juego.rival.nombre;
 
 function puedeMover() {
   return !ui.hayModal() && !juego.est.fin && !juego.ocupado && !juego.pensando && !juego.pausa
-    && juego.modo !== 'archivo' && partida.alFinal && partida.turno === juego.humano_ok() && !(juego.online && juego.online.espectador);
+    && juego.relojPend === null && juego.modo !== 'archivo' && partida.alFinal && partida.turno === juego.humano_ok() && !(juego.online && juego.online.espectador);
 }
 juego.humano_ok = () => (juego.modo === 'dos' ? partida.turno : juego.humano);
+juego.relojPend = null; juego.mesa = false; juego.mesaInv = false; juego.mesaPuntos = [0, 0]; juego.mesaPartidas = 0;
 function puedePremover() {
   return opts.premov && !ui.hayModal() && !juego.est.fin && !juego.pausa && partida.alFinal
     && (juego.modo === 'ia' || (juego.modo === 'online' && juego.online && juego.online.jugando)) && partida.turno !== juego.humano && !juego.tarea && !(juego.online && juego.online.espectador);
@@ -300,7 +316,7 @@ async function ejecutar(m, origen = 'local') {
   const san = partida.pos.san(m, juego.legales);
   partida.jugar(m, juego.legales);
   juego.tiempos.length = partida.cursor;
-  if (reloj.habilitado) { if (partida.cursor === 1) reloj.iniciar(turnoAntes ^ 1); else reloj.movio(turnoAntes); }
+  relojTrasMover(turnoAntes);
   juego.tiempos[partida.cursor] = [reloj.restante[0], reloj.restante[1]];
   actualizarLegales();
   const est = partida.estado();
@@ -325,6 +341,41 @@ async function ejecutar(m, origen = 'local') {
   if (esIA(partida.turno)) pedirIA();
   else if (juego.premov && partida.turno === juego.humano && origen !== 'premov') ejecutarPremov();
 }
+
+// ---------------------------------------------------------- reloj: pasar turno, avisos, reanudar
+function relojTrasMover(turnoAntes) {
+  if (!reloj.habilitado) return;
+  if (juego.mesa && opts.mesaPasar === 'tocar') { juego.relojPend = turnoAntes; return; }
+  if (partida.cursor === 1) reloj.primera(turnoAntes); else reloj.movio(turnoAntes);
+  relojAviso('pasar');
+}
+const relojTurnoActual = () => (juego.relojPend !== null ? juego.relojPend : partida.turno);
+function reanudarReloj() { if (reloj.habilitado) reloj.iniciar(relojTurnoActual()); }
+function relojAviso(tipo) {
+  if (!reloj.habilitado) return;
+  if (tipo === 'pasar' && opts.relojClic && juego.modo !== 'online') Sonido.reproducir('relojClic');
+  if (tipo === 'bandera' && opts.relojAlarma) Sonido.reproducir('alarma');
+  if (opts.relojVibrar && navigator.vibrate) { try { navigator.vibrate(tipo === 'bandera' ? [80, 60, 80, 60, 160] : tipo === 'pasar' ? 18 : 30); } catch (e) { /* nada */ } }
+}
+// Toque en la zona del reloj de "c" (modo mesa): pasa el turno si ese jugador ya movió
+function pasarTurno() {
+  const c = juego.relojPend;
+  if (c === null || juego.est.fin) return false;
+  juego.relojPend = null;
+  if (partida.cursor === 1) reloj.primera(c); else reloj.movio(c);
+  juego.tiempos[partida.cursor] = [reloj.restante[0], reloj.restante[1]];
+  relojAviso('pasar');
+  refrescar(); guardar();
+  return true;
+}
+function toqueReloj(c) {
+  if (!juego.mesa || juego.est.fin || ui.hayModal()) return;
+  if (juego.relojPend === c) { pasarTurno(); return; }
+  if (juego.pausa) { ui.toast('El reloj está en pausa'); return; }
+  if (juego.relojPend !== null) return;
+  ui.toast(opts.mesaPasar === 'tocar' ? 'Primero mueve una pieza' : 'El reloj pasa solo al mover una pieza', 1400);
+}
+const bandoAbajo = () => (juego.mesaInv ? NEGRAS : BLANCAS);
 
 function ejecutarPremov() {
   const pm = juego.premov; juego.premov = null;
@@ -357,6 +408,19 @@ function cancelarIA() {
 }
 function cancelarPista() { juego.idPista++; }
 
+// Tiempo que "piensa" el bot cuando hay reloj: reparte su tiempo como una persona,
+// más en posiciones abiertas, menos en recapturas, libro o poco tiempo.
+function tiempoNaturalBot(libro) {
+  const rem = reloj.restante[partida.turno], ply = partida.cursor;
+  let media = reloj.porJug ? reloj.porJug * 0.3 : Math.min(rem / (ply < 20 ? 40 : 28), 5000);
+  media *= 0.6 + Math.min(1, juego.legales.length / 40) * 0.8;
+  if (libro) media = Math.min(media, 900) * (0.5 + Math.random() * 0.6);
+  if (partida.ultima && partida.ultima.cap && media > 600) media *= 0.6;
+  if (rem < 15000) media = Math.min(media, rem / 14);
+  const z = Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * Math.random());
+  return Math.max(CONFIG.tiempoMinimoIA, Math.min(media * Math.exp(0.45 * z - 0.1), rem * 0.35, 9000));
+}
+
 async function pedirIA() {
   if (juego.est.fin || !partida.alFinal || juego.pausa) return;
   const id = ++juego.idIA;
@@ -374,7 +438,7 @@ async function pedirIA() {
     try { r = await ia.pedir({ fen: partida.fenInicial, movs: partida.uciHasta(), nivel }); } catch (e) { console.warn('La IA falló:', e); }
   }
   if (id !== juego.idIA) return;
-  const espera = juego.modo === 'leccion' ? 350 : CONFIG.tiempoMinimoIA + (libro ? 250 + Math.random() * 500 : 0);
+  const espera = juego.modo === 'leccion' ? 350 : (reloj.habilitado && opts.relojBotNatural ? tiempoNaturalBot(!!libro) : CONFIG.tiempoMinimoIA + (libro ? 250 + Math.random() * 500 : 0));
   await dormir(Math.max(0, espera - (performance.now() - t0)));
   if (id !== juego.idIA) return;
   juego.pensando = false;
@@ -435,6 +499,7 @@ function nombresJugadores() {
       n[c] = c === juego.humano ? yo.nombre.toUpperCase() : (juego.rival.bot ? juego.rival.nombre.toUpperCase() : 'MOTOR');
       s[c] = c === juego.humano ? (c ? 'Negras' : 'Blancas') : `${juego.rival.nombre}${juego.rival.bot ? '' : ''} · ${juego.rival.elo}`;
     } else if (juego.modo === 'puzzle') { n[c] = c === juego.humano ? yo.nombre.toUpperCase() : 'RIVAL'; s[c] = c ? 'Negras' : 'Blancas'; }
+    else if (juego.mesa) { const asiento = c === bandoAbajo() ? 0 : 1; n[c] = `JUGADOR ${asiento + 1}`; s[c] = `${c ? 'Negras' : 'Blancas'} · ${juego.mesaPuntos[asiento]} pt`; }
     else { n[c] = c ? 'NEGRAS' : 'BLANCAS'; s[c] = 'Jugador ' + (c + 1); }
   }
   return [n, s];
@@ -449,6 +514,8 @@ function refrescar() {
     arriba: ladoInferior() ^ 1, nombres, subs, capt: partida.capturadas(), ventaja: mat, turno: partida.turno,
     relojes: reloj.restante, conReloj, corre: reloj.activo, fin: !!est.fin, colores: juego.online ? juego.online.colores : null, extra: juego.online ? juego.online.extra : null,
   });
+  if (juego.mesa) mesa.pintar({ abajo: bandoAbajo(), nombres, subs, capt: partida.capturadas(), ventaja: mat, turno: partida.turno, fin: !!est.fin, pend: juego.relojPend, pausa: juego.pausa, conReloj, puedeDeshacer: partida.cursor > 0 && partida.alFinal && !juego.ocupado, opts });
+  if (juego.mesa && conReloj) mesa.tiempos(reloj.restante, reloj.turno, reloj.activo, reloj.inicial);
   if (!analisisOn()) ui.ventaja(mat); else ui.evaluacion(juego.evalActual !== undefined ? juego.evalActual : 0);
   ui.jugadas(partida.jugadas, partida.cursor, juego.inicioTurno === NEGRAS, juego.revision ? juego.revision.cls : null);
   const final = partida.alFinal;
@@ -472,7 +539,7 @@ function refrescar() {
   else if (!final || juego.modo === 'archivo') txt = '';
   else if (juego.modo === 'ia' || juego.modo === 'leccion' || juego.modo === 'puzzle') txt = partida.turno === juego.humano ? (juego.tarea ? '' : 'TU TURNO') : '';
   else if (juego.modo === 'online') txt = juego.online ? juego.online.estadoTxt() : '';
-  else txt = 'TURNO: ' + (partida.turno ? 'NEGRAS' : 'BLANCAS');
+  else txt = juego.relojPend !== null ? 'TOCA TU RELOJ' : 'TURNO: ' + (partida.turno ? 'NEGRAS' : 'BLANCAS');
   ui.estado(txt, clase);
   // apertura
   const ap = (juego.tarea || !opts.mostrarApertura) ? null : nombreApertura(partida);
@@ -538,9 +605,9 @@ function irAPly(n, animar = false) {
   if (animar && partida.cursor === antes + 1) vista.jugar(partida.ultima.m, bAntes);
   else vista.sincronizar(partida.pos.b, false);
   if (!juego.online) {
-    reloj.detener();
-    if (reloj.habilitado) reloj.fijar(juego.tiempos[partida.cursor] || reloj.restante);
-    if (partida.alFinal && !juego.est.fin && reloj.habilitado && partida.cursor >= 1 && !juego.pausa) reloj.iniciar(partida.turno);
+    reloj.detener(); juego.relojPend = null;
+    if (reloj.habilitado) reloj.fijar(juego.tiempos[partida.cursor] || reloj.restante, jugadasPorBando(partida.cursor, juego.inicioTurno));
+    if (partida.alFinal && !juego.est.fin && reloj.habilitado && partida.cursor >= 1 && !juego.pausa) reanudarReloj();
   }
   refrescar();
   guardar();
@@ -548,6 +615,17 @@ function irAPly(n, animar = false) {
 }
 function deshacer() { const t = puedeDeshacerA(); if (t >= 0 && !juego.tarea) { juego.deshechas++; Sonido.reproducir('clic'); irAPly(t); } }
 function rehacer() { const t = puedeRehacerA(); if (t >= 0 && !juego.tarea) { Sonido.reproducir('clic'); irAPly(t, t === partida.cursor + 1); } }
+
+// Deshacer acordado en modo mesa: quita la última jugada y devuelve los relojes a su valor de entonces
+function deshacerMesa() {
+  if (partida.cursor === 0 || juego.ocupado || juego.est.fin) return;
+  const n = partida.cursor - 1;
+  juego.deshechas++;
+  reloj.detener();
+  truncarA(n);
+  if (reloj.habilitado) { reloj.fijar(juego.tiempos[n], jugadasPorBando(n, juego.inicioTurno)); if (n >= 1) reanudarReloj(); }
+  guardar(); refrescar();
+}
 
 function navegar(x) {
   const len = partida.jugadas.length;
@@ -560,8 +638,9 @@ function navegar(x) {
 function continuarDesdeAqui() {
   partida.jugadas.length = partida.cursor;
   juego.tiempos.length = partida.cursor + 1;
-  juego.est = partida.estado();
-  if (reloj.habilitado && partida.cursor >= 1 && !juego.est.fin) reloj.iniciar(partida.turno);
+  juego.est = partida.estado(); juego.relojPend = null;
+  if (reloj.habilitado) reloj.fijar(juego.tiempos[partida.cursor] || reloj.restante, jugadasPorBando(partida.cursor, juego.inicioTurno));
+  if (reloj.habilitado && partida.cursor >= 1 && !juego.est.fin) reanudarReloj();
   refrescar();
   guardar();
   if (!juego.est.fin && esIA(partida.turno)) pedirIA();
@@ -569,7 +648,7 @@ function continuarDesdeAqui() {
 
 function truncarA(n) {
   cancelarIA(); limpiarSeleccion();
-  partida.irA(n); partida.jugadas.length = n; juego.tiempos.length = n + 1;
+  partida.irA(n); partida.jugadas.length = n; juego.tiempos.length = n + 1; juego.relojPend = null;
   actualizarLegales(); juego.est = partida.estado();
   vista.sincronizar(partida.pos.b, false);
   refrescar();
@@ -589,6 +668,7 @@ function textoFin(est) {
     case 'repeticion': return { titulo: 'TABLAS', texto: 'Triple repetición de la posición.', corto: 'TABLAS · REPETICIÓN', res: -1 };
     case 'cincuenta': return { titulo: 'TABLAS', texto: 'Regla de los 50 movimientos sin capturas ni peones.', corto: 'TABLAS · 50 MOV.', res: -1 };
     case 'material': return { titulo: 'TABLAS', texto: 'Material insuficiente para dar mate.', corto: 'TABLAS · MATERIAL', res: -1 };
+    case 'tiempoMat': return { titulo: 'TABLAS', texto: 'Cayó la bandera, pero el rival no puede dar mate con su material: tablas (regla FIDE).', corto: 'TABLAS · BANDERA', res: -1 };
     case 'acuerdo': return { titulo: 'TABLAS', texto: 'Tablas por acuerdo.', corto: 'TABLAS · ACUERDO', res: -1 };
     case 'rendicion': return { titulo: 'RENDICIÓN', texto: quien(est.ganador), corto: 'RENDICIÓN', res: est.ganador };
     case 'tiempo': return { titulo: 'TIEMPO AGOTADO', texto: quien(est.ganador), corto: 'TIEMPO AGOTADO', res: est.ganador };
@@ -636,9 +716,29 @@ function finalizar(est) {
   } else if (juego.modo === 'online' && online.alFin) eloTxt = online.alFin(est, t, res) || '';
   if (juego.modo === 'ia' || juego.modo === 'dos' || juego.modo === 'online') autoguardarBiblioteca(est);
   Guardado.borrarPartida();
+  juego.relojPend = null;
+  if (reloj.habilitado && juego.modo === 'ia' && res === 'v') {
+    logro('contraReloj');
+    if (reloj.restante[juego.humano] < 5000 && !reloj.porJug) logro('ultimoSegundo');
+    const rp = relojPorId(juego.relojId);
+    if (!rp.porJug && rp.min <= 2 && rp.min > 0 && !juego.deshechas) logro('balaMaestra');
+  }
+  if (est.fin === 'tiempoMat') logro('banderaSinMate');
+  if (juego.mesa) {
+    const bajo = bandoAbajo();
+    if (t.res < 0) { juego.mesaPuntos = juego.mesaPuntos.map((x) => x + 0.5); } else juego.mesaPuntos[t.res === bajo ? 0 : 1] += 1;
+    logro('caraACara');
+    if (juego.mesaPartidas >= 2) logro('revanchaMesa');
+  }
   refrescar();
   setTimeout(() => Sonido.reproducir(sonido), est.fin === 'mate' ? 900 : 200);
-  setTimeout(() => ui.fin(t.titulo, t.texto, { revancha: juego.modo !== 'online' || !!(online.puedeRevancha && online.puedeRevancha()), elo: eloTxt }), est.fin === 'mate' ? 1500 : 700);
+  setTimeout(() => {
+    if (juego.mesa) {
+      const textos = [0, 1].map((c) => (t.res < 0 ? `TABLAS · ${t.texto}` : c === t.res ? `¡GANAS! ${t.titulo}` : `PIERDES · ${t.titulo}`));
+      mesa.pintar({ ...mesa.ult, fin: true, pend: null, nombres: nombresJugadores()[0], subs: nombresJugadores()[1] });
+      mesa.resultado(textos, { revancha: () => revancha(), menu: () => { mesa.cerrarCapas(); abrirMenuInicio(); } });
+    } else ui.fin(t.titulo, t.texto, { revancha: juego.modo !== 'online' || !!(online.puedeRevancha && online.puedeRevancha()), elo: eloTxt });
+  }, est.fin === 'mate' ? 1500 : 700);
   if (juego.modo === 'online' && online.finDeJuego) online.finDeJuego(est, t);
 }
 
@@ -646,11 +746,13 @@ function finalizar(est) {
 async function accion(a) {
   Sonido.reproducir('clic');
   switch (a) {
-    case 'deshacer': if (!(juego.online && juego.online.jugando)) deshacer(); else online.pedirDeshacer && online.pedirDeshacer(); break;
+    case 'deshacer':
+      if (juego.mesa) { if (opts.mesaDeshacer === 'no') ui.toast('Deshacer está desactivado en Ajustes › Reloj'); else if (partida.cursor > 0) mesa.pedirDeshacer(partida.turno ^ 1); break; }
+      if (!(juego.online && juego.online.jugando)) deshacer(); else online.pedirDeshacer && online.pedirDeshacer(); break;
     case 'rehacer': rehacer(); break;
     case 'pista': pedirPista(); break;
-    case 'vista': cambiarVista({ blancas: 'negras', negras: 'cenital', cenital: 'blancas' }[juego.vista] || 'blancas'); break;
-    case 'girar': cambiarVista(juego.vista === 'negras' ? 'blancas' : 'negras'); break;
+    case 'vista': if (juego.mesa) { ui.toast('En modo mesa el tablero no gira'); break; } cambiarVista({ blancas: 'negras', negras: 'cenital', cenital: 'blancas' }[juego.vista] || 'blancas'); break;
+    case 'girar': if (juego.mesa) { ui.toast('En modo mesa el tablero no gira'); break; } cambiarVista(juego.vista === 'negras' ? 'blancas' : 'negras'); break;
     case 'nueva': abrirMenuInicio(); break;
     case 'tablas': ofrecerTablas(); break;
     case 'rendirse': rendirse(); break;
@@ -665,6 +767,7 @@ async function accion(a) {
 
 async function ofrecerTablas() {
   if (juego.est.fin || !partida.alFinal) return;
+  if (juego.mesa) { mesa._tablas(partida.turno); return; }
   if (juego.modo === 'online') { online.ofrecerTablas && online.ofrecerTablas(); return; }
   if (juego.modo === 'dos') {
     const si = await ui.confirmar('OFERTA DE TABLAS', `${partida.turno ? 'Las negras' : 'Las blancas'} ofrecen tablas. ¿Aceptan?`, 'ACEPTAR', 'RECHAZAR');
@@ -683,6 +786,7 @@ async function ofrecerTablas() {
 
 async function rendirse() {
   if (juego.est.fin || !partida.alFinal) return;
+  if (juego.mesa) { mesa._rendir(partida.turno); return; }
   const si = await ui.confirmar('RENDIRSE', '¿Seguro que quieres rendirte?');
   if (!si) return;
   const perdedor = juego.modo === 'dos' ? partida.turno : juego.humano;
@@ -713,7 +817,7 @@ function metaPGN() {
     : { White: juego.online ? juego.online.nombres[0] : 'Jugador 1', Black: juego.online ? juego.online.nombres[1] : 'Jugador 2' };
   void n;
   if (juego.apertura) { meta.ECO = juego.apertura.eco; meta.Opening = juego.apertura.nombre; }
-  if (juego.relojId !== 'sin') meta.TimeControl = (() => { const r = relojPorId(juego.relojId); return `${r.min * 60}+${r.inc}`; })();
+  if (juego.relojId !== 'sin') meta.TimeControl = (() => { const r = relojPorId(juego.relojId); return r.porJug ? `*${r.porJug}` : `${Math.round(r.min * 60)}+${r.inc}`; })();
   return meta;
 }
 function mostrarPGN() {
@@ -838,13 +942,21 @@ function nuevaDesdeUI(cfg) {
   try { Posicion.desdeFen(fen); } catch (e) { return 'FEN no válido: ' + e.message; }
   for (const k of ['modo', 'color', 'nivel', 'reloj', 'girarAuto', 'variante', 'ventaja', 'ventajaLado', 'practica']) if (cfg[k] !== undefined) opts[k] = cfg[k];
   Guardado.guardarOpciones(opts);
-  iniciarPartida({ fen, modo: cfg.modo, nivel: cfg.nivel, relojId: cfg.reloj, girarAuto: cfg.girarAuto, humano: humanoF, variante, sinPuntuar: variante === 'handicap' || variante === 'practica' || variante === 'personalizada' });
+  const esMesa = cfg.modo === 'mesa', modo = esMesa ? 'dos' : cfg.modo;
+  const usaReloj = (modo === 'ia' ? opts.relojIa : opts.relojDos) !== false;
+  iniciarPartida({ fen, modo, mesa: esMesa, nivel: cfg.nivel, relojId: usaReloj ? cfg.reloj : 'sin', girarAuto: esMesa ? false : cfg.girarAuto, humano: humanoF, variante, sinPuntuar: variante === 'handicap' || variante === 'practica' || variante === 'personalizada' });
   return null;
 }
 
 function revancha() {
   ui.ocultar('Fin');
   if (juego.modo === 'online') { online.revancha && online.revancha(); return; }
+  if (juego.mesa) {
+    const f = juego.variante === '960' ? partida.fenInicial : FEN_INICIAL;
+    iniciarPartida({ fen: f, modo: 'dos', mesa: true, mesaInv: !juego.mesaInv, mesaPuntos: juego.mesaPuntos, mesaPartidas: juego.mesaPartidas + 1, nivel: juego.nivel, relojId: juego.relojId, girarAuto: false, humano: BLANCAS, variante: juego.variante, sinPuntuar: juego.sinPuntuar });
+    ui.toast('Revancha: cambian los colores', 2600);
+    return;
+  }
   iniciarPartida({ fen: juego.variante === '960' ? partida.fenInicial : FEN_INICIAL, modo: juego.modo, nivel: juego.nivel, relojId: juego.relojId, girarAuto: juego.girarAuto, humano: juego.modo === 'ia' ? juego.humano ^ 1 : BLANCAS, variante: juego.variante, sinPuntuar: juego.sinPuntuar });
 }
 
@@ -859,17 +971,19 @@ function iniciarPartida(c) {
     sel: -1, pista: null, pistaPaso: 0, cerrada: false, ocupado: false, pensando: false, inicioTurno: partida.pos.turno, cargada: true, pausaMenu: false, pausa: false,
     premov: null, ayudas: 0, deshechas: 0, notas: c.notas || {}, tarea: c.tarea || null, revision: null, sinPuntuar: !!c.sinPuntuar, idBiblioteca: null, pgnMeta: c.pgnMeta || null,
     nombres: c.nombres || null, online: c.online || null, evalActual: 0, mejorFlecha: null, confirmando: null,
+    relojPend: null, mesa: !!c.mesa && c.modo === 'dos', mesaInv: !!c.mesaInv, mesaPuntos: c.mesaPuntos ? [...c.mesaPuntos] : [0, 0], mesaPartidas: c.mesaPartidas || 0,
   });
+  mesa.cerrarCapas(); mesa.activar(juego.mesa); aplicarGiroPiezas();
   if (c.jugadas) for (const u of c.jugadas) partida.jugar(partida.pos.uciAMov(u));
   const rel = relojPorId(c.relojId);
-  reloj.configurar(rel.min, rel.inc);
+  reloj.configurar(rel);
   juego.tiempos = Array.from({ length: partida.jugadas.length + 1 }, () => [reloj.restante[0], reloj.restante[1]]);
   actualizarLegales();
   juego.est = partida.estado();
   ui.ocultar('Inicio'); ui.ocultar('Fin'); ui.ocultar('Pausa');
   if (control) control.reiniciarCursor();
   flechas.limpiarUsuario();
-  cambiarVista(c.vistaInicial || ((c.modo === 'ia' || c.modo === 'leccion' || c.modo === 'puzzle' || c.modo === 'online') && c.humano === NEGRAS ? 'negras' : 'blancas'), true);
+  cambiarVista(c.vistaInicial || (c.mesa && c.modo === 'dos' ? (c.mesaInv ? 'negras' : 'blancas') : null) || ((c.modo === 'ia' || c.modo === 'leccion' || c.modo === 'puzzle' || c.modo === 'online') && c.humano === NEGRAS ? 'negras' : 'blancas'), true);
   vista.sincronizar(partida.pos.b, true);
   panelTareaActualizar();
   refrescar();
@@ -886,6 +1000,7 @@ function guardar() {
     fenInicial: partida.fenInicial, movs: partida.jugadas.map((j) => j.uci), cursor: partida.cursor,
     modo: juego.modo, humano: juego.humano, nivel: juego.nivel, relojId: juego.relojId, girarAuto: juego.girarAuto,
     tiempos: juego.tiempos, vista: juego.vista, variante: juego.variante, notas: juego.notas, sinPuntuar: juego.sinPuntuar, ayudas: juego.ayudas, deshechas: juego.deshechas,
+    mesa: juego.mesa, mesaInv: juego.mesaInv, mesaPuntos: juego.mesaPuntos, mesaPartidas: juego.mesaPartidas, relojPend: juego.relojPend, relojVivo: reloj.habilitado ? reloj.estado() : null,
   });
 }
 
@@ -893,7 +1008,7 @@ function infoGuardada() {
   const d = Guardado.cargarPartida();
   if (!d) { ui.inicioConPartida(null); return; }
   const n = Math.ceil(d.movs.length / 2);
-  ui.inicioConPartida(`${d.modo === 'dos' ? '2 jugadores' : 'Vs computadora'} · ${n} jugada${n === 1 ? '' : 's'}`);
+  ui.inicioConPartida(`${d.mesa ? 'Mesa (mismo teléfono)' : d.modo === 'dos' ? '2 jugadores' : 'Vs computadora'}${d.relojId && d.relojId !== 'sin' ? ' · con reloj' : ''} · ${n} jugada${n === 1 ? '' : 's'}`);
 }
 
 function abrirMenuInicio() {
@@ -904,7 +1019,7 @@ function abrirMenuInicio() {
     reloj.detener();
     juego.pausaMenu = true;
     const n = Math.ceil(partida.jugadas.length / 2);
-    ui.inicioConPartida(`${juego.modo === 'dos' ? '2 jugadores' : 'Vs computadora'} · ${n} jugada${n === 1 ? '' : 's'}`, true);
+    ui.inicioConPartida(`${juego.mesa ? 'Mesa (mismo teléfono)' : juego.modo === 'dos' ? '2 jugadores' : 'Vs computadora'} · ${n} jugada${n === 1 ? '' : 's'}`, true);
   } else { infoGuardada(); }
   inicio.actualizarOpciones(opts);
   ui.mostrar('Inicio');
@@ -914,7 +1029,7 @@ function reanudar() {
   if (juego.cargada && juego.pausaMenu && !juego.est.fin) {
     juego.pausaMenu = false;
     ui.ocultar('Inicio');
-    if (reloj.habilitado && partida.alFinal && partida.cursor >= 1) reloj.iniciar(partida.turno);
+    if (reloj.habilitado && partida.alFinal && partida.cursor >= 1) reanudarReloj();
     refrescar();
     if (partida.alFinal && esIA(partida.turno)) pedirIA();
     return;
@@ -935,11 +1050,16 @@ function reanudar() {
       relojId: d.relojId, girarAuto: !!d.girarAuto, sel: -1, pista: null, cerrada: false, ocupado: false, pensando: false, pausa: false, premov: null,
       inicioTurno: Posicion.desdeFen(d.fenInicial).turno, cargada: true, pausaMenu: false, variante: d.variante || 'estandar', notas: d.notas || {},
       ayudas: d.ayudas || 0, deshechas: d.deshechas || 0, sinPuntuar: !!d.sinPuntuar, tarea: null, revision: null, online: null, nombres: null, idBiblioteca: null, pgnMeta: null,
+      mesa: !!d.mesa && d.modo === 'dos', mesaInv: !!d.mesaInv, mesaPuntos: Array.isArray(d.mesaPuntos) ? d.mesaPuntos : [0, 0], mesaPartidas: d.mesaPartidas || 0, relojPend: d.relojPend === 0 || d.relojPend === 1 ? d.relojPend : null,
     });
+    mesa.cerrarCapas(); mesa.activar(juego.mesa); aplicarGiroPiezas();
     const rel = relojPorId(d.relojId);
-    reloj.configurar(rel.min, rel.inc);
+    reloj.configurar(rel);
     juego.tiempos = Array.isArray(d.tiempos) && d.tiempos.length === d.movs.length + 1 ? d.tiempos : Array.from({ length: d.movs.length + 1 }, () => [reloj.restante[0], reloj.restante[1]]);
-    if (reloj.habilitado) reloj.fijar(juego.tiempos[partida.cursor]);
+    if (reloj.habilitado) {
+      reloj.fijar(juego.tiempos[partida.cursor], jugadasPorBando(partida.cursor, juego.inicioTurno));
+      if (partida.alFinal && d.relojVivo && !reloj.restaurar(d.relojVivo)) juego.relojPend = null;
+    }
     actualizarLegales();
     juego.est = partida.estado();
     ui.ocultar('Inicio');
@@ -947,10 +1067,11 @@ function reanudar() {
     cambiarVista(d.vista || 'blancas', true);
     vista.sincronizar(partida.pos.b, true);
     panelTareaActualizar();
-    if (reloj.habilitado && partida.alFinal && partida.cursor >= 1 && !juego.est.fin) reloj.iniciar(partida.turno);
     refrescar();
     if (juego.est.fin) finalizar(juego.est);
+    else if (reloj.habilitado && partida.alFinal && partida.cursor >= 1) { pausar(true); } // vuelve en pausa con los tiempos exactos
     else if (partida.alFinal && esIA(partida.turno)) pedirIA();
+    pedirWakeLock();
   } catch (e) {
     console.warn('No se pudo reanudar la partida:', e);
     Guardado.borrarPartida();
@@ -960,18 +1081,20 @@ function reanudar() {
 }
 
 // ---------------------------------------------------------- pausa, pantalla completa, wake lock
-function pausar() {
-  if (ui.hayModal() || !juego.cargada || juego.est.fin) return;
+function pausar(restaurada = false) {
+  if ((ui.hayModal() && !(restaurada && ui.visible('Inicio'))) || !juego.cargada || juego.est.fin) return;
+  $('pausaTxt').textContent = restaurada ? 'Partida restaurada: el reloj está en pausa con los tiempos exactos.' : 'La partida y el reloj están detenidos.';
   if (juego.online && juego.online.jugando) { ui.toast('Online: la partida no se pausa'); return; }
   juego.pausa = true;
   cancelarIA(); reloj.detener();
-  ui.mostrar('Pausa');
+  ui.ocultar('Inicio'); ui.mostrar('Pausa');
+  refrescar();
 }
 function seguir() {
   ui.ocultar('Pausa');
   if (!juego.pausa) return;
   juego.pausa = false;
-  if (reloj.habilitado && partida.alFinal && partida.cursor >= 1 && !juego.est.fin) reloj.iniciar(partida.turno);
+  if (reloj.habilitado && partida.alFinal && partida.cursor >= 1 && !juego.est.fin) reanudarReloj();
   if (partida.alFinal && esIA(partida.turno) && !juego.est.fin) pedirIA();
   refrescar();
 }
@@ -983,7 +1106,7 @@ function pantallaCompleta() {
 }
 let wake = null;
 async function pedirWakeLock() {
-  try { if (navigator.wakeLock && !wake && document.body.classList.contains('tactil')) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => { wake = null; }); } } catch (e) { /* nada */ }
+  try { if (navigator.wakeLock && !wake && (document.body.classList.contains('tactil') || juego.mesa)) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => { wake = null; }); } } catch (e) { /* nada */ }
 }
 
 // ---------------------------------------------------------- rompecabezas y lecciones
@@ -1183,6 +1306,12 @@ function ajuste(k, v, vivoCambio = false) {
     case 'volumen': Sonido.fijarVolumen(v); break;
     case 'volMusica': case 'volEfectos': Sonido.fijarVolumenes(opts.volMusica, opts.volEfectos); break;
     case 'ayuda': marcas(); break;
+    case 'reloj': case 'relojFavs': case 'relojIa': case 'relojDos': case 'relojOnline':
+      if (k === 'relojFavs' && v.length) logro('relojero');
+      inicio._leerCampos(); inicio.sel.reloj = opts.reloj; inicio.o = opts; inicio.pintar(); break;
+    case 'mesaGirarPiezas': aplicarGiroPiezas(); break;
+    case 'mesaPasar': if (v === 'auto' && juego.relojPend !== null) pasarTurno(); refrescar(); break;
+    case 'relojDecimas': case 'relojAlertaSeg': case 'relojAlertaVis': case 'mesaDeshacer': refrescar(); ui.relojes(reloj.restante, reloj.turno, reloj.activo); break;
     case 'girarAuto': juego.girarAuto = v; break;
     case 'vibracion': cfgVib.activa = v; break;
     case 'vibIntensidad': cfgVib.k = v; break;
@@ -1195,6 +1324,10 @@ function ajuste(k, v, vivoCambio = false) {
   }
   ui.aplicarOpciones(opts);
   if (k === 'tamBotones' || k === 'opBotones') vista.pedir();
+}
+
+function aplicarGiroPiezas() {
+  if (vista && vista.fijarGiroPiezas) vista.fijarGiroPiezas(juego.mesa && opts.mesaGirarPiezas ? bandoAbajo() ^ 1 : -1);
 }
 
 function datos(d) {
@@ -1264,10 +1397,12 @@ let relojPausadoPorOculta = false;
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     if (opts.pausaOculta) Sonido.pausar();
-    if (reloj.activo && !(juego.online && juego.online.jugando)) { reloj.detener(); relojPausadoPorOculta = true; }
+    if (juego.cargada && !juego.est.fin) guardar();
+    if (opts.relojPausaOculta && reloj.activo && !(juego.online && juego.online.jugando)) { reloj.detener(); relojPausadoPorOculta = true; }
   } else {
     Sonido.reanudar();
-    if (relojPausadoPorOculta) { relojPausadoPorOculta = false; if (!juego.est.fin && partida.alFinal && !juego.pausa) reloj.iniciar(partida.turno); }
+    reloj.revisar(); // con la pestaña oculta el reloj sigue contando: se pone al día al volver
+    if (relojPausadoPorOculta) { relojPausadoPorOculta = false; if (!juego.est.fin && partida.alFinal && !juego.pausa && !ui.hayModal()) reanudarReloj(); }
     vista.pedir(); pedirWakeLock();
   }
 });
@@ -1287,20 +1422,55 @@ document.addEventListener('keydown', (e) => {
   else if (k === T.pista) accion('pista');
   else if (k === T.analisis) accion('analisis');
   else if (k === T.pantalla) pantallaCompleta();
+  else if (juego.mesa && (k === ' ' || k === 'enter')) { e.preventDefault(); if (juego.relojPend !== null) pasarTurno(); }
+  else if (juego.mesa && k === 'j') toqueReloj(bandoAbajo());
+  else if (juego.mesa && k === 'k') toqueReloj(bandoAbajo() ^ 1);
 });
 
-let ultSeg = -1;
+// El reloj se detiene mientras hay ajustes, ayuda o confirmaciones abiertas
+const PAUSAN = ['Ajustes', 'Ayuda', 'Confirmar', 'Texto'];
+let relojPausaModal = false;
+{
+  const mostrar0 = ui.mostrar.bind(ui), ocultar0 = ui.ocultar.bind(ui);
+  ui.mostrar = (n) => {
+    mostrar0(n);
+    if (PAUSAN.includes(n) && reloj.activo && !(juego.online && juego.online.jugando)) { reloj.detener(); relojPausaModal = true; refrescar(); }
+  };
+  ui.ocultar = (n) => {
+    ocultar0(n);
+    if (relojPausaModal && PAUSAN.includes(n) && !PAUSAN.some((x) => ui.visible(x))) {
+      relojPausaModal = false;
+      if (!juego.est.fin && partida.alFinal && !juego.pausa && !juego.pausaMenu && !ui.visible('Inicio')) reanudarReloj();
+    }
+  };
+}
+// La partida con reloj se guarda cada 2 s para que, al recargar, los tiempos sean exactos
+setInterval(() => { if (juego.cargada && !juego.est.fin && reloj.activo && !juego.tarea && juego.modo !== 'online') guardar(); }, 2000);
+
+const ultSeg = [-1, -1];
 reloj.alCambiar = (r) => {
   ui.relojes(r, reloj.turno, reloj.activo);
-  if (opts.sonidoReloj && reloj.activo && reloj.turno === juego.humano_ok() && r[reloj.turno] < 10000) { const s = Math.ceil(r[reloj.turno] / 1000); if (s !== ultSeg) { ultSeg = s; Sonido.reproducir('reloj'); } }
+  if (juego.mesa) mesa.tiempos(r, reloj.turno, reloj.activo, reloj.inicial);
+  const c = reloj.turno, lim = opts.relojAlertaSeg * 1000;
+  if (reloj.activo && lim > 0 && r[c] < lim && (juego.modo === 'dos' || c === juego.humano_ok())) {
+    const sg = Math.ceil(r[c] / 1000);
+    if (sg !== ultSeg[c]) {
+      ultSeg[c] = sg;
+      if (opts.sonidoReloj) Sonido.reproducir('reloj');
+      if (opts.relojVibrar && sg <= 10 && navigator.vibrate) { try { navigator.vibrate(25); } catch (e) { /* nada */ } }
+    }
+  } else if (r[c] >= lim) ultSeg[c] = -1;
 };
 reloj.alAgotar = (color) => {
   if (juego.est.fin) return;
+  relojAviso('bandera');
   if (juego.modo === 'online') { online.tiempoAgotado && online.tiempoAgotado(color); return; }
-  partida.terminar('tiempo', color ^ 1);
+  juego.relojPend = null;
+  if (sinMaterialMate(partida.pos.b, color ^ 1)) partida.terminar('tiempoMat', -1); else partida.terminar('tiempo', color ^ 1);
   juego.est = partida.estado();
   finalizar(juego.est);
 };
+reloj.alEtapa = (c, e) => { ui.toast(`Tiempo extra: +${+(e.ms / 60000).toFixed(1)} min por llegar a la jugada ${e.jug}`, 2600); };
 
 // ---------------------------------------------------------- mando Xbox
 const control = iniciarControl({
@@ -1311,10 +1481,14 @@ const control = iniciarControl({
   pausar: () => (juego.pausa ? seguir() : pausar()),
   marcaFlecha: (a, b) => flechas.alternar(a, b),
   cambiarPestanaAjustes: (d) => ui.ajustes.cambiarPestana(d),
+  // mando: A pasa el turno (si está activado y hay un turno pendiente) y Y pausa/reanuda
+  relojA: () => opts.mandoPasar && juego.relojPend !== null && pasarTurno(),
+  relojY: () => { if (!opts.mandoPasar || !reloj.habilitado) return false; (juego.pausa ? seguir() : pausar()); return true; },
 });
 
 // ---------------------------------------------------------- online
 const online = iniciarOnline({
+  resumenReloj: resumenId, sinMaterialMate,
   juego, partida, reloj, opts, ui, yo, recibirJugada, iniciarPartida, finalizar, refrescar, ejecutar, cambiarVista, textoFin, flechas: () => flechas,
   puedeMover, marcas, vista: () => vista, irAPly, truncarA, partidaEnJuego: () => juego.est, Sonido, Perfil, logro, guardarBiblioteca, abrirMenuInicio, relojPorId, FEN_INICIAL, fen960,
 });
