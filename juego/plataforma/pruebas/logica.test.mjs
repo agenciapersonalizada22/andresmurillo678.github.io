@@ -116,7 +116,7 @@ console.log('Tablas');
 const reglasTxt = () => fs.readFileSync(path.join(dir, '..', 'firestore.rules'), 'utf8');
 await t('firestore.rules coincide con juegos.js (topes, menor-es-mejor, minimos, ids)', () => {
   const r = reglasTxt(), mapa = {};
-  const bloque = /function topes\(\) \{\s*return \{([\s\S]*?)\};/.exec(r)[1]; for (const m of bloque.matchAll(/'([a-z]+__[a-z0-9_]+)':\s*(\d+)/g)) mapa[m[1]] = +m[2];
+  const bloque = /function topes\(\) \{\s*return \{([\s\S]*?)\};/.exec(r)[1]; for (const m of bloque.matchAll(/'([a-z0-9]+__[a-z0-9_]+)':\s*(\d+)/g)) mapa[m[1]] = +m[2];
   const esperado = {}, menor = [], mins = {};
   for (const j of Juegos.lista) for (const m of j.modos) {
     esperado[Juegos.clave(j.id, m.id)] = m.tope; assert.ok(m.tope > 0 && /^[a-z0-9_]{1,40}$/.test(m.id), j.id + m.id);
@@ -145,7 +145,7 @@ await t('juegos nuevos: modos, direccion y datos exactos de cada juego', () => {
   assert.equal(Juegos.modo('cartas', 'conq_turnos').mayorEsMejor, false);
   assert.deepEqual(Juegos.lista.map(j => j.categoria).filter((c, i, a) => a.indexOf(c) === i).sort(), ['Acción', 'Estrategia', 'Mesa y cartas', 'Mundo abierto']);
   for (const j of Juegos.lista) assert.ok(j.categoria && j.ruta === j.id + '/' && j.nombre && j.descripcion && /^#[0-9a-f]{6}$/.test(j.color), j.id);
-  assert.ok(Juegos.claves().includes('cartas__conq_turnos') && Juegos.claves().length === 86);
+  assert.ok(Juegos.claves().includes('cartas__conq_turnos') && Juegos.claves().length === 90);
 });
 await t('direccion menor-es-mejor: mejor(), ranking y solo baja el valor (AdaptadorLocal)', async () => {
   assert.ok(L.mejor(40, 50, false) && !L.mejor(50, 40, false) && !L.mejor(40, 40, false) && L.mejor(40, null, false));
