@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#14301a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Jardín Zombi</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2314301a'/%3E%3Ccircle cx='32' cy='30' r='16' fill='%2362c943' stroke='%23245c1c' stroke-width='3'/%3E%3Crect x='42' y='25' width='14' height='10' rx='4' fill='%234aa931'/%3E%3Ccircle cx='28' cy='26' r='3' fill='%23fff'/%3E%3Cpath d='M30 46v10' stroke='%233c8f2e' stroke-width='5'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../comun/cuenta.css">
+</head>
+<body>
+<canvas id="fondoMenu" aria-hidden="true"></canvas>
+<canvas id="lienzo" aria-label="Tablero del jardín" style="display:none"></canvas>
+<div id="pantalla" role="main"></div>
+<button type="button" id="bPantalla" aria-label="Pantalla completa" title="Pantalla completa">⛶</button>
+<div id="avisoGiro" role="note"><span>📱 Gira el teléfono para jugar mejor (horizontal)</span><button type="button" aria-label="Cerrar aviso">✕</button></div>
+<script src="../comun/firebase-config.js"></script>
+<script src="../comun/mando.js"></script>
+<script src="../plataforma/juegos.js"></script>
+<script src="../comun/cuenta.js"></script>
+<script src="../comun/amigos.js"></script>
+<script type="module" src="js/arranque.js"></script>
+</body>
+</html>
