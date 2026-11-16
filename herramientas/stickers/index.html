@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Estudio de Stickers</title>
+<meta name="description" content="Crea stickers en tu navegador: recorta, añade contorno troquelado, texto y efectos, arma packs para WhatsApp, Telegram, Signal e iMessage, anímalos e imprime hojas de corte. Sin librerías ni subir tus fotos.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23d6336c'/%3E%3Cpath d='M14 12h28l10 10v30H14z' fill='%23fff'/%3E%3Cpath d='M42 12v10h10z' fill='%23fcc2d7'/%3E%3Ccircle cx='27' cy='34' r='3' fill='%23d6336c'/%3E%3Ccircle cx='39' cy='34' r='3' fill='%23d6336c'/%3E%3Cpath d='M25 42q8 8 16 0' stroke='%23d6336c' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../trabajos/comun/trabajos.css">
+<link rel="stylesheet" href="../../juego/comun/cuenta.css"><link rel="stylesheet" href="../trabajos/comun/cuenta-trabajos.css">
+<link rel="stylesheet" href="css/stickers.css">
+</head>
+<body>
+<a class="tr-solo-lector" href="#principal">Saltar al contenido</a>
+<div class="tr-cont">
+  <nav class="tr-barra" aria-label="Navegación">
+    <a class="tr-enlace" href="../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Herramientas</a>
+    <span class="tr-sep"></span>
+    <button type="button" class="tr-btn" id="btn-tema" aria-label="Cambiar tema"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span>Tema</span></button>
+  </nav>
+  <header><h1>Estudio de Stickers</h1><p class="tr-sub">Recorta, diseña, empaqueta y exporta tus stickers. Todo se calcula en tu dispositivo, sin librerías externas ni subir tus fotos.</p></header>
+  <div class="tr-pestanas" role="tablist" aria-label="Secciones del estudio" id="pestanas">
+    <button role="tab" id="t-estudio" data-vista="estudio" aria-controls="v-estudio" aria-selected="true">Estudio</button>
+    <button role="tab" id="t-anim" data-vista="anim" aria-controls="v-anim" aria-selected="false" tabindex="-1">Animación</button>
+    <button role="tab" id="t-packs" data-vista="packs" aria-controls="v-packs" aria-selected="false" tabindex="-1">Packs</button>
+    <button role="tab" id="t-imprimir" data-vista="imprimir" aria-controls="v-imprimir" aria-selected="false" tabindex="-1">Imprimir y cortar</button>
+    <button role="tab" id="t-lote" data-vista="lote" aria-controls="v-lote" aria-selected="false" tabindex="-1">Lote</button>
+    <button role="tab" id="t-historial" data-vista="historial" aria-controls="v-historial" aria-selected="false" tabindex="-1">Historial</button>
+    <button role="tab" id="t-cuenta" data-vista="cuenta" aria-controls="v-cuenta" aria-selected="false" tabindex="-1">Cuenta</button>
+  </div>
+  <main id="principal">
+    <section id="v-estudio" role="tabpanel" aria-labelledby="t-estudio"></section>
+    <section id="v-anim" role="tabpanel" aria-labelledby="t-anim" hidden></section>
+    <section id="v-packs" role="tabpanel" aria-labelledby="t-packs" hidden></section>
+    <section id="v-imprimir" role="tabpanel" aria-labelledby="t-imprimir" hidden></section>
+    <section id="v-lote" role="tabpanel" aria-labelledby="t-lote" hidden></section>
+    <section id="v-historial" role="tabpanel" aria-labelledby="t-historial" hidden></section>
+    <section id="v-cuenta" role="tabpanel" aria-labelledby="t-cuenta" hidden></section>
+  </main>
+  <p class="tr-ayuda">Aviso: no hay IA de recorte descargada en esta página; el recorte inteligente usa algoritmos clásicos guiados por tus marcadores. WhatsApp no importa packs desde archivos: solo a través de apps de terceros.</p>
+</div>
+<script src="../../juego/comun/firebase-config.js"></script><script src="../../juego/plataforma/juegos.js"></script><script src="../../juego/comun/cuenta.js"></script><script src="../../juego/comun/amigos.js"></script>
+<script src="../trabajos/comun/cuenta-trabajos.js"></script>
+<script src="../trabajos/comun/util.js"></script><script src="../trabajos/comun/almacen.js"></script><script src="../trabajos/comun/impresion.js"></script>
+<script src="../../juego/comun/mando.js"></script>
+<script src="js/ctx.js"></script><script src="js/nucleo.js"></script><script src="js/contorno.js"></script><script src="js/segmentar.js"></script><script src="js/empaque.js"></script>
+<script src="js/contenedores.js"></script><script src="js/gif.js"></script><script src="js/formatos.js"></script>
+<script src="js/datos.js"></script><script src="js/doc.js"></script><script src="js/render.js"></script><script src="js/herr.js"></script><script src="js/vista.js"></script>
+<script src="js/ui.js"></script><script src="js/plantillas.js"></script><script src="js/ia.js"></script><script src="js/exportar.js"></script>
+<script src="js/logros.js"></script><script src="js/vista-estudio.js"></script><script src="js/vista-diseno.js"></script><script src="js/vista-anim.js"></script><script src="js/vista-packs.js"></script><script src="js/vista-imprimir.js"></script><script src="js/vista-lote.js"></script><script src="js/vista-historial.js"></script>
+<script src="js/arranque.js"></script>
+</body>
+</html>
