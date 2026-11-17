@@ -42,6 +42,7 @@ service cloud.firestore {
         'conquista__victorias': 100000, 'conquista__territorios': 100000,
         'turismo__patrimonio_final': 30000, 'turismo__sellos_partida': 24, 'turismo__victorias': 2000,
         'domino__victorias': 100000, 'domino__puntos': 1000000, 'domino__capicuas': 100000,
+        'jardin2__sinfin': 100, 'jardin2__arena': 99999999, 'jardin2__estrellas': 360,
         'jardin1__oleadas': 500, 'jardin1__oleadas_duro': 500, 'jardin1__estrellas': 400, 'jardin1__monedas': 1000000,
         'mente__memoria': 1000, 'mente__atencion': 1000, 'mente__velocidad': 1000, 'mente__flexibilidad': 1000, 'mente__logica': 1000, 'mente__racha': 1000, 'mente__puntos': 2000000,
         'sudoku__tiempo_principiante': 36000, 'sudoku__tiempo_facil': 36000, 'sudoku__tiempo_medio': 36000, 'sudoku__tiempo_dificil': 36000, 'sudoku__tiempo_experto': 36000, 'sudoku__tiempo_demonio': 36000, 'sudoku__diario': 36000, 'sudoku__racha_diaria': 3650, 'sudoku__victorias': 100000, 'sudoku__contrarreloj': 100000, 'sudoku__maraton': 100000,
@@ -104,7 +105,7 @@ service cloud.firestore {
     match /guardados/{uid}/juegos/{docId} {
       allow read: if yo(uid);
       allow create, update: if yo(uid)
-        && docId.matches('^(nebula|ciudad|bloques|guerra|ajedrez|metropolis|buscaminas|celulas|serpientes|uno|magnate|cartas|gatos|colonos|conquista|turismo|domino|isla|hockey|pingpong|billar|bolos|minijuegos|sudoku|mente|jardin1|notas|pizarra|mercados|apuestas|ofertas|contenido_imagenes|contenido_video|contenido_escritor|contenido_calendario|trabajos|trabajos_qr|trabajos_dispositivos|trabajos_drones|trabajos_automatizaciones|trabajos_video_ia|trabajos_reconstruccion_3d|trabajos_realidad_aumentada|trabajos_contenido_ia|trabajos_monetizacion|trabajos_analisis|stickers|musica)(~[a-z0-9]{1,12})?(_p[1-7])?$')
+        && docId.matches('^(nebula|ciudad|bloques|guerra|ajedrez|metropolis|buscaminas|celulas|serpientes|uno|magnate|cartas|gatos|colonos|conquista|turismo|domino|isla|hockey|pingpong|billar|bolos|minijuegos|sudoku|mente|jardin1|jardin2|notas|pizarra|mercados|apuestas|ofertas|contenido_imagenes|contenido_video|contenido_escritor|contenido_calendario|trabajos|trabajos_qr|trabajos_dispositivos|trabajos_drones|trabajos_automatizaciones|trabajos_video_ia|trabajos_reconstruccion_3d|trabajos_realidad_aumentada|trabajos_contenido_ia|trabajos_monetizacion|trabajos_analisis|stickers|musica)(~[a-z0-9]{1,12})?(_p[1-7])?$')
         && (
           (docId.matches('.*_p[1-7]$')
             && request.resource.data.keys().hasOnly(['datos', 'actualizado'])
@@ -130,7 +131,7 @@ service cloud.firestore {
       allow get: if yo(uid) || esAmigo(uid);
       allow list: if false;
       allow create, update: if yo(uid)
-        && request.resource.data.keys().hasOnly(['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis', 'buscaminas', 'celulas', 'serpientes', 'uno', 'magnate', 'cartas', 'gatos', 'colonos', 'conquista', 'turismo', 'domino', 'isla', 'hockey', 'pingpong', 'billar', 'bolos', 'minijuegos', 'sudoku', 'mente', 'jardin1', 'notas', 'pizarra', 'mercados', 'apuestas', 'ofertas', 'contenido_imagenes', 'contenido_video', 'contenido_escritor', 'contenido_calendario', 'trabajos', 'trabajos_qr', 'trabajos_dispositivos', 'trabajos_drones', 'trabajos_automatizaciones', 'trabajos_video_ia', 'trabajos_reconstruccion_3d', 'trabajos_realidad_aumentada', 'trabajos_contenido_ia', 'trabajos_monetizacion', 'trabajos_analisis', 'stickers', 'musica', 'xpJuego', 'ultimo'])
+        && request.resource.data.keys().hasOnly(['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis', 'buscaminas', 'celulas', 'serpientes', 'uno', 'magnate', 'cartas', 'gatos', 'colonos', 'conquista', 'turismo', 'domino', 'isla', 'hockey', 'pingpong', 'billar', 'bolos', 'minijuegos', 'sudoku', 'mente', 'jardin1', 'jardin2', 'notas', 'pizarra', 'mercados', 'apuestas', 'ofertas', 'contenido_imagenes', 'contenido_video', 'contenido_escritor', 'contenido_calendario', 'trabajos', 'trabajos_qr', 'trabajos_dispositivos', 'trabajos_drones', 'trabajos_automatizaciones', 'trabajos_video_ia', 'trabajos_reconstruccion_3d', 'trabajos_realidad_aumentada', 'trabajos_contenido_ia', 'trabajos_monetizacion', 'trabajos_analisis', 'stickers', 'musica', 'xpJuego', 'ultimo'])
         && listaOk('nebula')
         && listaOk('ciudad')
         && listaOk('bloques')
@@ -148,6 +149,7 @@ service cloud.firestore {
         && listaOk('conquista')
         && listaOk('turismo')
         && listaOk('domino')
+        && listaOk('jardin2')
         && listaOk('jardin1')
         && listaOk('mente')
         && listaOk('sudoku')
@@ -262,7 +264,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasAll(['de', 'nombre', 'juego', 'oferta', 'estado', 'respuesta', 'creado', 'expira'])
         && request.resource.data.de == request.auth.uid
         && texto(request.resource.data.nombre, 3, 16)
-        && request.resource.data.juego in ['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis', 'buscaminas', 'celulas', 'serpientes', 'uno', 'magnate', 'cartas', 'gatos', 'colonos', 'conquista', 'turismo', 'domino', 'isla', 'hockey', 'pingpong', 'billar', 'bolos', 'minijuegos', 'sudoku', 'mente', 'jardin1']
+        && request.resource.data.juego in ['nebula', 'ciudad', 'bloques', 'guerra', 'ajedrez', 'metropolis', 'buscaminas', 'celulas', 'serpientes', 'uno', 'magnate', 'cartas', 'gatos', 'colonos', 'conquista', 'turismo', 'domino', 'isla', 'hockey', 'pingpong', 'billar', 'bolos', 'minijuegos', 'sudoku', 'mente', 'jardin1', 'jardin2']
         && texto(request.resource.data.oferta, 1, 4000)
         && request.resource.data.estado == 'pendiente'
         && request.resource.data.respuesta == ''
