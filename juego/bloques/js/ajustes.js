@@ -17,6 +17,7 @@ export const DEFECTO = {
   autoCalidad: true, antialias: true, fov: 75, particulas: true, minimapa: true, minimapaZoom: 2,
   // espacio y otras dimensiones
   efectosEspacio: 'auto', eclipses: true, tierraVisible: true, vibracionCohete: true, distanciaDim: 0,
+  planetasCielo: true, tormentasEspacio: true, mapaSolar3d: false, aceleracionViaje: 5,
   // audio
   volMaestro: 80, volMusica: 60, volEfectos: 80, silencio: false, pausaOculto: true,
   // controles
@@ -33,7 +34,7 @@ export const ACCIONES_TECLA = [
   ['saltar', 'Saltar', 'Space'], ['correr', 'Correr / bajar', 'ShiftLeft'], ['volar', 'Volar', 'KeyF'],
   ['inventario', 'Inventario', 'KeyI'], ['usar', 'Usar / vehículo', 'KeyE'], ['camara', 'Vista del vehículo', 'KeyC'],
   ['luces', 'Luces', 'KeyL'], ['repostar', 'Combustible', 'KeyG'], ['chat', 'Chat', 'KeyT'], ['datos', 'Datos (F3)', 'F3'],
-  ['musica', 'Música', 'KeyM'], ['minimapa', 'Minimapa', 'KeyN'], ['foto', 'Modo foto', 'F2'],
+  ['musica', 'Música', 'KeyM'], ['minimapa', 'Minimapa', 'KeyN'], ['mapaSolar', 'Mapa del sistema solar', 'KeyJ'], ['foto', 'Modo foto', 'F2'],
 ];
 export const TECLA_DEFECTO = Object.fromEntries(ACCIONES_TECLA.map((a) => [a[0], a[2]]));
 

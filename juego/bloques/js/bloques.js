@@ -18,6 +18,7 @@
 //  otro bloque).
 // =============================================================
 import { indiceTextura } from './texturas.js';
+import { FILAS_SOLAR, B_SOLAR } from './espacio/bloquesSolar.js';
 
 export const B = {
   AIRE: 0, PASTO: 1, TIERRA: 2, PIEDRA: 3, ADOQUIN: 4, ARENA: 5, GRAVA: 6, AGUA: 7,
@@ -52,6 +53,7 @@ export const B = {
   REGOLITO: 114, ROCA_LUNAR: 115, ROCA_ABISMO: 116, LAVA: 117, ROCA_BRASA: 118, PORTAL: 119,
   HORMIGON: 120, METAL: 121, PLATAFORMA: 122, PANEL_CONTROL: 123, CARGADOR: 124, FABRICA: 125,
   CONSOLA_NAV: 126, GENERADOR_O2: 127, TORRE_METAL: 128,
+  ...B_SOLAR,   // 129 en adelante: sistema solar (bloquesSolar.js)
 };
 
 const solo = (t) => [t, t, t];
@@ -208,6 +210,16 @@ cubo(B.CONSOLA_NAV, 'consola_nav', 'Consola de navegación', ['metal', 'metal', 
 cubo(B.GENERADOR_O2, 'generador_o2', 'Generador de oxígeno', ['metal', 'metal', 'metal'], 'piedra', { usable: 'oxigeno', frenteTodos: 'o2_frente' });
 def(B.TORRE_METAL, { clave: 'torre_metal', nombre: 'Torre metálica', dibujo: 'recorte', caras: solo('torre_metal'), sonido: 'piedra', enMenu: true });
 
+// ---- sistema solar (datos en espacio/bloquesSolar.js)
+for (const [clave, nombre, tipo, , , ex] of FILAS_SOLAR) {
+  const extra = { sonido: ex.sonido || 'piedra', enMenu: true };
+  if (ex.emision) extra.emision = ex.emision;
+  if (ex.usable) extra.usable = ex.usable;
+  if (clave === 'surtidor') { extra.frenteTodos = 'surtidor'; cubo(B_SOLAR[clave.toUpperCase()], clave, nombre, ['metal', 'metal', 'metal'], 'piedra', extra); continue; }
+  if (tipo === 'nube' || tipo === 'liquido') extra.enMenu = tipo === 'nube';
+  cubo(B_SOLAR[clave.toUpperCase()], clave, nombre, [clave, clave, clave], extra.sonido, extra);
+}
+
 // Los 4 lados de las mesas y hornos: el de enfrente es otro dibujo. Se resuelve en el mallador con "frenteTodos".
 
 // ----------------------------------------------------------- Tablas rápidas
@@ -263,6 +275,7 @@ BASE[B.PUERTA_X_ABIERTA] = BASE[B.PUERTA_Z_ABIERTA] = B.PUERTA_X;
 // Lava y portal se atraviesan; el portal no se puede señalar ni rompe la luz
 SOLIDO[B.LAVA] = 0;
 SOLIDO[B.PORTAL] = 0; APUNTABLE[B.PORTAL] = 0;
+SOLIDO[B.METANO] = 0;
 export const ES_FLUIDO_LAVA = B.LAVA;
 
 export const EN_MENU = BLOQUES.filter((b) => b.enMenu)

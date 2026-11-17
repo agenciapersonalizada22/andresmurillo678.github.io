@@ -17,6 +17,7 @@ import { B, DIBUJO, DIBUJO_AGUA } from './bloques.js';
 import { ALTO } from './medidas.js';
 import { crearJeep, crearBote, crearAvioneta, crearVagoneta } from './modelosVeh.js';
 import { Sonido } from './sonido.js';
+import { TIPOS_NAVE_VEH } from './espacio/modeloNave.js';
 import { TIPO_AEROAUTO, pasoVolador, alternarModo, actualizarModeloVolador, efectosVolador } from './espacio/cocheVolador.js';
 
 const VC = CONFIG.vehiculos;
@@ -45,6 +46,7 @@ export const TIPOS = {
   },
 };
 TIPOS.aeroauto = TIPO_AEROAUTO;
+Object.assign(TIPOS, TIPOS_NAVE_VEH);   // lanzadera, nave_ionica, nave_salto (clase 'nave': no se conducen, abren la consola)
 export const NOMBRES_VEH = Object.keys(TIPOS);
 
 let contadorId = 1;

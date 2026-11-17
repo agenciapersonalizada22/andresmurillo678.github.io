@@ -22,6 +22,7 @@ import { solEspacial, TIERRA_EN_LUNA, estadoCielo, proximoEclipse, nombreFase, M
 import { Cohetes } from './coheteVisual.js';
 import { leerProgreso, guardarProgreso } from './progresoEspacio.js';
 import { centroPlataforma, claveDe } from './plataforma.js';
+import { Solar } from './solarJuego.js';
 
 const R = () => window.Red;
 const el = (tag, cls, texto) => { const e = document.createElement(tag); if (cls) e.className = cls; if (texto !== undefined) e.textContent = texto; return e; };
@@ -47,6 +48,7 @@ export class Espacio {
     this.hastaDimAviso = 0;
     this.ultimaFase = '';
     this.crearHud();
+    this.solar = new Solar(this);
     c.mundo.escuchar((ev) => this.alCambiarBloque(ev));
   }
 
@@ -93,6 +95,7 @@ export class Espacio {
     this.paquetes = null;
     this.hud.cuenta.classList.add('oculto');
     this.hud.vuelo.classList.add('oculto');
+    this.solar.reiniciar();
     this.aplicarReglas();
   }
 
@@ -107,6 +110,7 @@ export class Espacio {
     this.viaje = null;
     this.sacudida = 0;
     this.hud.cuenta.classList.add('oculto'); this.hud.vuelo.classList.add('oculto');
+    this.solar.alSalir();
     document.body.style.setProperty('--portal', '0');
   }
 
@@ -126,6 +130,7 @@ export class Espacio {
       if (p && [p.x, p.y, p.z].every(Number.isFinite)) this.ultimoPad = { x: p.x | 0, y: p.y | 0, z: p.z | 0 };
       if (Number.isFinite(d.o2)) this.o2.o2 = Math.max(0, Math.min(TANQUE, d.o2));
     }
+    this.solar.importar(d);
     this.aplicarReglas();
     this.sincronizarPads();
   }
@@ -135,7 +140,7 @@ export class Espacio {
     for (const [k, p] of this.pads) if (p.etapas.length) pads[k] = { e: p.etapas.slice() };
     const veh = {};
     for (const k of Object.keys(this.vehPorDim)) if (this.vehPorDim[k] && this.vehPorDim[k].length && k !== this.dim) veh[k] = this.vehPorDim[k];
-    return { dim: this.dim, pads, veh, pad: this.ultimoPad || undefined, o2: Math.round(this.o2.o2), centro: this.c.mundo.opcionesGen && this.c.mundo.opcionesGen.centroEspacial ? 1 : 0 };
+    return { dim: this.dim, pads, veh, pad: this.ultimoPad || undefined, o2: Math.round(this.o2.o2), centro: this.c.mundo.opcionesGen && this.c.mundo.opcionesGen.centroEspacial ? 1 : 0, sol: this.solar.exportar() };
   }
 
   // ----------------------------------------------------------- Reglas de la dimensión
@@ -154,6 +159,7 @@ export class Espacio {
     const D = this.datos;
     if (D.cielo === 'vacio') return { cerca: 3, lejos: 3.2, color: null };
     if (D.cielo === 'cueva') return { cerca: 0.12, lejos: 0.78, color: D.niebla };
+    if (D.cielo === 'color') return this.solar.nieblaAjuste(D);
     return null;
   }
   animoMusica() { const m = this.datos.musica; return m === 'espacio' ? 'noche' : m === 'cueva' ? 'cueva' : null; }
@@ -207,6 +213,7 @@ export class Espacio {
     if (destino === 'luna') c.logros.sumar('visitaLuna');
     if (destino === 'abismo') c.logros.sumar('visitaAbismo');
     if (destino === 'superficie' && (desde === 'orbita' || desde === 'luna')) c.logros.sumar('idaVuelta');
+    this.solar.alViajar(destino, o.tipo);
     c.logros.revisar();
     return true;
   }
@@ -234,8 +241,12 @@ export class Espacio {
     if (!v) return;
     const m = c.mundo, j = c.jugador;
     if (v.portal) this.colocarEnPortal(v);
-    else if (v.destino !== 'orbita') {
-      const h = m.alturaSuelo(Math.floor(j.x), Math.floor(j.z));
+    else if (v.destino !== 'orbita' && v.destino !== 'transito') {
+      let h = m.alturaSuelo(Math.floor(j.x), Math.floor(j.z));
+      if (datosDim(v.destino).amb && v.destino !== 'luna') {   // mundos nuevos: el suelo bajo tus pies (no una nube o techo más arriba)
+        h = -1;
+        for (let y = Math.min(ALTO - 1, Math.floor(j.y) + 4); y > 0; y--) if (m.esSolido(Math.floor(j.x), y, Math.floor(j.z))) { h = y; break; }
+      }
       if (h >= 0 && v.tipo !== 'reaparecer') j.ponerEn(j.x, Math.max(h + 1.05, v.destino === 'luna' ? 0 : 0), j.z);
     }
     j.desatorar(m);
@@ -246,6 +257,7 @@ export class Espacio {
     if (!D.respirable) sub += ' · SIN AIRE: usa el traje espacial';
     if (v.destino === 'abismo') sub = 'Calor y lava · cuidado con los bichos';
     c.hud.toast(D.nombre.toUpperCase(), sub, 'logro');
+    this.solar.alTerminarCarga(v);
     if (v.destino === 'orbita' && v.tipo === 'cohete') c.interfaz.aviso('¡Estás en órbita! La consola de navegación te lleva a la Luna o de vuelta a casa', 6);
   }
 
@@ -300,7 +312,7 @@ export class Espacio {
       if (p) osc = oscuridadCielo(p.y + altura(p.t));
     }
     cielo.oscuridad = osc;
-    if (cielo.dim && D.cielo === 'vacio') {
+    if (cielo.dim && (D.cielo === 'vacio' || D.cielo === 'color')) {
       const E = cielo.espacial;
       const s = solEspacial(hora, dias + hora, cicloDias(this.dim));
       E.sol.set(s.x, s.y, s.z);
@@ -309,6 +321,7 @@ export class Espacio {
       else E.tierraR = 0;
       E.tierraFase = Math.max(0, Math.min(1, (1 + E.sol.dot(E.tierraDir)) / 2));
     }
+    if (cielo.dim) this.solar.preCielo(hora, dias, D); else this.solar.cieloS.ocultar();
   }
 
   // después de vehiculos.actualizar
@@ -317,6 +330,7 @@ export class Espacio {
     const jugando = c.estado === 'jugando' && !this.viaje && !c.esperando();
     this.cool = Math.max(0, this.cool - dt);
     this.progresoViaje(dt);
+    this.solar.actualizar(dt, jugando && !this.enCohete, !!c.vehiculos.actual, c.esCreativo(), jugando && this.generadorCerca(c.jugador.x, c.jugador.y, c.jugador.z, 6));
     // rótulo de la dimensión
     this.hud.dim.textContent = D.nombre.toUpperCase() + (D.gravedad !== 1 ? ' · ' + D.gravedad.toFixed(2) + ' g' : '');
     this.hud.dim.classList.toggle('oculto', this.dim === DIM_DEFECTO || c.estado === 'titulo');
@@ -441,6 +455,7 @@ export class Espacio {
 
   // Si se rompe el marco de obsidiana, el portal se apaga
   alCambiarBloque(ev) {
+    this.solar.alCambiarBloque(ev);
     if (ev.antes !== B.OBSIDIANA || ev.id === B.OBSIDIANA) return;
     const m = this.c.mundo;
     const poner = (a, b, d, i) => m.poner(a, b, d, i, true, 'mundo');
@@ -683,6 +698,7 @@ export class Espacio {
     if (id === B.PLATAFORMA) { this.abrirPlataforma(o.x, o.y, o.z); return true; }
     if (id === B.PANEL_CONTROL) { this.abrirControl(o.x, o.y, o.z); return true; }
     if (id === B.CONSOLA_NAV) { this.abrirNavegacion(); return true; }
+    if (id === B.SURTIDOR) return this.solar.usarSurtidor();
     if (id === B.FABRICA) { c.abrirInventario('recetas', true); return true; }
     if (id === B.CARGADOR) {
       const v = c.vehiculos.lista.filter((q) => q.T.clase === 'volador').sort((a, b) => (a.x - o.x) ** 2 + (a.z - o.z) ** 2 - (b.x - o.x) ** 2 - (b.z - o.z) ** 2)[0];
@@ -703,6 +719,8 @@ export class Espacio {
       if (c.colocarVehiculo('aeroauto')) { if (!c.esCreativo()) c.inv.quitar('kit_aeroauto', 1); c.refrescarBarra(); }
       return true;
     }
+    if (this.solar.usarKit(ob.clave) || this.solar.instalarMejora(ob.clave)) return true;
+    if (ob.clave === 'escudo_termico') { if (this.solar.nave) this.solar.instalarEscudo(); else c.interfaz.aviso('Instálalo en una nave: abre su consola (E) y ve a NAVE Y TRAJE', 4); return true; }
     const etapa = ETAPAS.find((e) => ITEM_ETAPA[e] === ob.clave);
     if (etapa && obj && obj.id === B.PLATAFORMA) { this.abrirPlataforma(obj.x, obj.y, obj.z); return true; }
     return false;
@@ -814,6 +832,7 @@ export class Espacio {
 
   abrirNavegacion() {
     const c = this.c, desde = this.dim;
+    if (desde === 'transito') { this.solar.abrirMapa('mapa'); return; }
     c.abrirContenedor({
       tipo: 'espacio', titulo: 'CONSOLA DE NAVEGACIÓN',
       pintar: (cuerpo, repintar, aviso) => {
@@ -832,9 +851,10 @@ export class Espacio {
           });
           cuerpo.appendChild(b);
         }
-        cuerpo.appendChild(el('p', 'info', 'Próximamente (sistema solar):'));
-        const fut = cuerposFuturos().map((q) => CUERPOS[q].nombre).join(' · ');
-        cuerpo.appendChild(el('p', 'info', fut));
+        const bm = el('button', 'principal', 'MAPA DEL SISTEMA SOLAR'); bm.type = 'button';
+        bm.addEventListener('click', () => { c.cerrarContenedor(true); this.solar.abrirMapa('mapa'); });
+        cuerpo.appendChild(bm);
+        cuerpo.appendChild(el('p', 'info', 'Planifica viajes en nave a todos los cuerpos del sistema solar: necesitas una nave (lanzadera, interplanetaria o de salto). Los cohetes llegan a la órbita terrestre.'));
       },
     });
   }

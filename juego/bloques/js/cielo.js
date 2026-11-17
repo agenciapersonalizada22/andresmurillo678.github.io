@@ -292,6 +292,9 @@ export class Cielo {
   ponerDimension(dim) {
     this.dim = dim && dim.cielo !== 'atmosfera' ? dim : null;
     this.sinNubes = !!this.dim;
+    this.uniformes.solR.value = RADIO_SOL;
+    this.uniformes.estrellas.value = this.estrellasQ === false ? 0 : 1;
+    this.tormenta = 0;
     if (this.nubesActivas) this.capasNubes.forEach((m, i) => { m.visible = !this.sinNubes && i < (this.nCapas || 1); });
   }
 
@@ -303,7 +306,7 @@ export class Cielo {
     this.nCapas = capas;
   }
 
-  ponerEstrellas(si) { this.uniformes.estrellas.value = si ? 1 : 0; }
+  ponerEstrellas(si) { this.estrellasQ = !!si; this.uniformes.estrellas.value = si ? 1 : 0; }
 
   // Bajo el agua se esconde todo el cielo (así se ve solo el azul del agua)
   bajoAgua(si) {
@@ -414,16 +417,18 @@ export class Cielo {
       this.factorDia = 0.15; this.luz = 0.62;
       return this.luz;
     }
+    if (D.cielo === 'color') return this.actualizarColor(D, E);
     // vacío: negro con estrellas, Sol duro y la Tierra a la vista
     this.solDir.copy(E.sol);
     u.solDir.value.copy(E.sol);
     u.cieloOff.value = 0; u.vacio.value = 1; u.noche.value = 1;
     this.arriba.setRGB(0, 0, 0); this.horizonte.setRGB(0, 0, 0);
     u.tierraDir.value.copy(E.tierraDir); u.tierraR.value = E.tierraR; u.tierraFase.value = E.tierraFase;
+    u.solR.value = E.solR || RADIO_SOL;
     const intSol = suave(-0.04, 0.12, E.sol.y);
     this.luzDir.copy(E.sol);
     if (this.luzDir.y < 0.12) { this.luzDir.y = 0.12; this.luzDir.normalize(); }
-    this.luzColor.setRGB(1.0, 0.97, 0.9).multiplyScalar(0.78 * intSol);
+    this.luzColor.setRGB(1.0, 0.97, 0.9).multiplyScalar(0.78 * intSol * (E.brillo || 1));
     const tierra = E.tierraR > 0 ? 0.035 + 0.05 * E.tierraFase : 0.02;
     this.ambCielo.setRGB(0.05 + tierra * 0.5 + 0.1 * intSol, 0.055 + tierra * 0.6 + 0.1 * intSol, 0.08 + tierra + 0.12 * intSol);
     this.ambSuelo.setRGB(0.035 + 0.06 * intSol, 0.035 + 0.06 * intSol, 0.045 + 0.07 * intSol);
@@ -432,4 +437,30 @@ export class Cielo {
     this.luz = 0.5 + 0.5 * intSol;
     return this.luz;
   }
+
+  // Atmósferas con color propio (Venus, Marte, Titán, Júpiter, Urano, Neptuno)
+  actualizarColor(D, E) {
+    const u = this.uniformes, C = D.cieloColor;
+    const dia = suave(-0.14, 0.24, E.sol.y);
+    const tor = this.tormenta || 0;
+    this.solDir.copy(E.sol); u.solDir.value.copy(E.sol);
+    u.cieloOff.value = 0; u.vacio.value = 0; u.noche.value = 1 - dia; u.tierraR.value = 0;
+    u.solR.value = (E.solR || RADIO_SOL) * (1 + 0.5 * (1 - dia));
+    u.estrellas.value = C.estrellas === false || this.estrellasQ === false ? 0 : 1;
+    this.arriba.set(C.noche[0]).lerp(this.colTmp(C.dia[0]), dia);
+    this.horizonte.set(C.noche[1]).lerp(this.colTmp(C.dia[1]), dia);
+    if (tor > 0) { this.arriba.lerp(this.colTmp(C.dia[1]), 0.6 * tor * dia); this.horizonte.lerp(this.colTmp(C.dia[1]), 0.8 * tor); }
+    u.fuerzaAtardecer.value = 0.22 * (1 - Math.min(1, Math.abs(E.sol.y) * 3));
+    this.luzDir.copy(E.sol);
+    if (this.luzDir.y < 0.12) { this.luzDir.y = 0.12; this.luzDir.normalize(); }
+    const b = (E.brillo || 1), k = C.tinte;
+    this.luzColor.setRGB(k[0], k[1], k[2]).multiplyScalar(0.72 * dia * Math.min(1.1, b + 0.2) * (1 - 0.35 * tor));
+    this.ambCielo.copy(this.arriba).multiplyScalar(0.9).addScalar(0.1 * dia + 0.03);
+    this.ambSuelo.copy(this.horizonte).multiplyScalar(0.6).addScalar(0.04);
+    this.colorNiebla.copy(this.horizonte);
+    this.factorDia = dia;
+    this.luz = 0.42 + 0.55 * dia;
+    return this.luz;
+  }
+  colTmp(c) { return (this._ct = this._ct || new THREE.Color()).set(c); }
 }
