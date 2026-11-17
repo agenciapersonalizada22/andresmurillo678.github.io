@@ -90,6 +90,7 @@ export function menuPrincipal() {
       btn('🏆 Logros y ranking', () => mostrar(() => App.ui2.ranking())), btn('⚙ Ajustes', () => mostrar(() => App.ajustes())), btn('❓ Cómo jugar', () => mostrar(ayuda)),
     ]),
     h('p', { cls: 'nota pie', txt: `Evento de hoy: ${ev.n}.` }),
+    h('a', { cls: 'link-portal', href: '../', 'data-f': 1, txt: '← Volver al portal' }),
   ]);
   return el;
 }

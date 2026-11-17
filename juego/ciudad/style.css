@@ -146,7 +146,7 @@ body.a-pie.armado #bRadio, body.a-pie.armado #bClaxon { display: none; }
   padding: 60px 16px 16px;
   box-sizing: border-box;
   background: radial-gradient(ellipse at center, rgba(5, 3, 15, 0.45) 0%, rgba(5, 3, 15, 0.86) 75%);
-  overflow: hidden;
+  overflow: hidden auto;
 }
 
 .caja {
@@ -154,6 +154,9 @@ body.a-pie.armado #bRadio, body.a-pie.armado #bClaxon { display: none; }
   width: 100%;
   text-align: center;
 }
+/* centrada si cabe; si no cabe (pantallas bajas) se alinea arriba y la capa se desplaza en vez de recortar el titulo */
+.capa > .caja { margin-top: auto; margin-bottom: auto; }
+.capa { align-items: flex-start; }
 
 h1 {
   margin: 0;

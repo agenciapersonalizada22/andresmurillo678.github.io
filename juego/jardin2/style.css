@@ -27,6 +27,7 @@ body.con-pantalla #pantalla[data-t=menu]{background:linear-gradient(rgba(5,18,18
 .btn.atras{min-height:38px;padding:6px 12px}
 .btn[disabled]{opacity:.5}
 .nota,.pie{color:var(--mut);font-size:.9rem;margin:.3em 0}
+.link-portal{position:relative;z-index:2;color:#fff;font-size:.85rem;padding:6px 12px;border-radius:999px;background:rgba(0,0,0,.45);text-decoration:none}
 .bloque{background:var(--panel);border:1px solid #2c6b62;border-radius:var(--r);padding:10px 14px;margin:8px 0;text-align:left}
 .bloque h3,.bloque h4{margin:.2em 0}
 .bloque p{margin:.4em 0}

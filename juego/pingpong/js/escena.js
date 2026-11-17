@@ -70,7 +70,7 @@ export class Escena {
       x.strokeStyle = col.borde; x.lineWidth = 14; x.strokeRect(7, 7, w - 14, h - 14);
       x.lineWidth = 5; x.beginPath(); x.moveTo(w / 2, 0); x.lineTo(w / 2, h); x.stroke(); x.beginPath(); x.moveTo(0, h / 2); x.lineTo(w, h / 2); x.lineWidth = 3; x.globalAlpha = 0.5; x.stroke();
     });
-    const top = new THREE.Mesh(new THREE.PlaneGeometry(C.W, C.L), new Mat({ map: tex, roughness: 0.35, metalness: 0 })); top.rotation.x = -Math.PI / 2; top.position.y = C.H + 0.0005; top.receiveShadow = true; g.add(top);
+    const top = new THREE.Mesh(new THREE.PlaneGeometry(C.W, C.L), new Mat(std ? { map: tex, roughness: 0.35, metalness: 0 } : { map: tex })); top.rotation.x = -Math.PI / 2; top.position.y = C.H + 0.0005; top.receiveShadow = true; g.add(top);
     const caja = new THREE.Mesh(new THREE.BoxGeometry(C.W, 0.04, C.L), new Mat({ color: new THREE.Color(col.mesa).multiplyScalar(0.6) })); caja.position.y = C.H - 0.02; caja.castShadow = true; g.add(caja);
     const pata = new THREE.MeshLambertMaterial({ color: 0x20232b });
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const p = new THREE.Mesh(new THREE.BoxGeometry(0.06, C.H - 0.04, 0.06), pata); p.position.set(sx * (C.W / 2 - 0.12), (C.H - 0.04) / 2, sz * (C.L / 2 - 0.2)); p.castShadow = true; g.add(p); }
@@ -104,7 +104,7 @@ export class Escena {
     const tex = lienzo(128, 64, (x, w, h) => { x.fillStyle = '#ffffff'; x.fillRect(0, 0, w, h); x.fillStyle = '#d0381f'; x.fillRect(0, h * 0.42, w, h * 0.16); x.fillStyle = '#222'; x.beginPath(); x.arc(w * 0.25, h * 0.5, 6, 0, 7); x.fill(); x.beginPath(); x.arc(w * 0.75, h * 0.5, 6, 0, 7); x.fill(); });
     const Mat = this.aj.gr.detalle >= 2 ? THREE.MeshStandardMaterial : THREE.MeshLambertMaterial;
     const seg = this.aj.gr.detalle >= 2 ? 24 : 12;
-    this.bola = new THREE.Mesh(new THREE.SphereGeometry(C.R, seg, Math.max(8, seg / 2)), new Mat({ map: tex, color: this.colores().bola, roughness: 0.4 }));
+    this.bola = new THREE.Mesh(new THREE.SphereGeometry(C.R, seg, Math.max(8, seg / 2)), new Mat(Mat === THREE.MeshStandardMaterial ? { map: tex, color: this.colores().bola, roughness: 0.4 } : { map: tex, color: this.colores().bola }));
     this.bola.castShadow = true; this.escena.add(this.bola);
     this.sombraBola = new THREE.Mesh(new THREE.CircleGeometry(0.03, 16), new THREE.MeshBasicMaterial({ color: 0, transparent: true, opacity: 0.4, depthWrite: false })); this.sombraBola.rotation.x = -Math.PI / 2; this.escena.add(this.sombraBola);
     if (this.linea) { this.escena.remove(this.linea); lim(this.linea); }

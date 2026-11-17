@@ -167,3 +167,6 @@ body.zurdo #mando { direction: rtl; } body.zurdo #mando > * { direction: ltr; }
 }
 body.sinmov * { animation-duration: 0s !important; transition-duration: 0s !important; }
 body.contraste #mensaje { background: #000; border-width: 2px; }
+/* telefonos estrechos (360 px): que los botones de la barra no se salgan de la pantalla */
+#barra .titulo { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } #barra .acciones { flex: none; }
+@media (max-width: 400px) { #barra { gap: 6px; padding-left: 8px; padding-right: 8px; } #barra .titulo { font-size: 1rem; letter-spacing: .06em; } #barra .icono { width: 36px; height: 36px; } }

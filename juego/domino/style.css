@@ -157,3 +157,6 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; colo
 .rk-tabla td:nth-child(2), .rk-tabla th:nth-child(2) { text-align: left; } .rk-tabla td:first-child { width: 2.4em; color: var(--suave); }
 .rk-tabla tr.rk-yo td { color: var(--aviso); font-weight: 800; } .rk-tabla tr.rk-yo td:nth-child(2) { border-left: 4px solid var(--c); }
 .cuenta-linea[hidden] { display: none; }
+/* telefonos estrechos (360 px): que los botones de la barra no se salgan de la pantalla */
+#barra .titulo { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } #barra .acciones { flex: none; }
+@media (max-width: 400px) { #barra { gap: 6px; padding-left: 8px; padding-right: 8px; } #barra .titulo { font-size: 1rem; letter-spacing: .06em; } #barra .icono { width: 36px; height: 36px; } }

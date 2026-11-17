@@ -58,7 +58,7 @@
         { id: 'atrapado', nombre: 'Con las manos en la masa', desc: 'Que te atrape la policía' }
       ] },
     { id: 'bloques', nombre: 'Mundo de Bloques', ruta: 'bloques/', color: '#7dd957', categoria: 'Mundo abierto', descripcion: 'Construye y sobrevive',
-      modos: [{ id: 'dias', nombre: 'Dias sobrevividos', mayorEsMejor: true, tope: 100000, unidad: 'dias' }],
+      modos: [{ id: 'dias', nombre: 'Días sobrevividos', mayorEsMejor: true, tope: 100000, unidad: 'dias' }],
       logros: [
         { id: 'romper', nombre: 'Manos a la obra', desc: 'Rompe un bloque' },
         { id: 'madera', nombre: 'Leñador', desc: 'Consigue madera de un árbol' },
@@ -183,8 +183,8 @@
         { id: 'gran_revancha', nombre: 'Gran revancha', desc: 'Juega 3 partidas seguidas con revancha en modo mesa.' },
         { id: 'relojero', nombre: 'Relojero', desc: 'Guarda un control de tiempo personalizado como favorito.' }
       ] },
-    { id: 'metropolis', nombre: 'Metropolis', ruta: 'metropolis/', color: '#3df5a8', categoria: 'Estrategia', descripcion: 'Construye tu ciudad',
-      modos: [{ id: 'poblacion', nombre: 'Poblacion', mayorEsMejor: true, tope: 100000000, unidad: 'hab.' }],
+    { id: 'metropolis', nombre: 'Metrópolis', ruta: 'metropolis/', color: '#3df5a8', categoria: 'Estrategia', descripcion: 'Construye tu ciudad',
+      modos: [{ id: 'poblacion', nombre: 'Población', mayorEsMejor: true, tope: 100000000, unidad: 'hab.' }],
       logros: [
         { id: 'primero', nombre: 'Primer edificio', desc: 'Construye tu primer edificio.' },
         { id: 'edif25', nombre: 'Constructor', desc: '25 edificios.' },

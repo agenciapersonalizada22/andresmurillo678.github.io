@@ -498,7 +498,9 @@ h2 {
 }
 
 .fila { display: flex; gap: 8px; align-items: center; }
-.fila > button { flex: 1; }
+.fila > button { flex: 1; min-width: 0; }
+.tarjeta .fila > button { padding-left: 6px; padding-right: 6px; letter-spacing: 0; }
+@media (max-width: 360px) { .tarjeta .fila > button { font-size: 12px; } }
 .fila.distancia { justify-content: center; margin: 8px 0; font-size: 13px; color: var(--suave); }
 .fila.distancia button { flex: 0 0 48px; width: 48px; margin: 0; padding: 6px 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; font-size: 22px; line-height: 1; }
 .fila.distancia b { min-width: 28px; font-size: 18px; color: #fff; }

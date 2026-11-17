@@ -23,7 +23,7 @@
   U.hayOverlay = function () { for (var i = 0; i < U.pantallas.length; i++) if (U.visible(U.pantallas[i])) return true; return false; };
   U.mostrar = function (id, vidrio) {
     var e = $(id); e.classList.remove('oculto'); e.classList.toggle('vidrio', !!vidrio); U.nav();
-    var el = e.querySelector('.principal'); if (el && C.Nav.raiz === e) setTimeout(function () { C.Nav.enfocar(el); }, 40);
+    var el = e.querySelector('.principal'); if (el && C.Nav.raiz === e) setTimeout(function () { C.Nav.enfocar(el, !(G.Mando && G.Mando.conectado)); }, 40); // sin mando: no desplazar el menu (ocultaria el titulo)
   };
   U.ocultar = function (id) { $(id).classList.add('oculto'); U.nav(); };
   U.nav = function () {

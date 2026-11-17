@@ -236,9 +236,11 @@ body.sinmov *, body.q-baja .chip { animation-duration: 0s !important; transition
 }
 @media (max-height: 620px) { #jugadores .ins { display: none; } .chip .sub { display: none; } }
 @media (max-height: 500px) { #barra { min-height: 36px; } .icono { width: 32px; height: 32px; } #mesa { font-size: 14px; } .rt small { display: none; } }
+/* movil en horizontal: las 6 herramientas del tablero no caben en una columna; se reparten en dos para que % y ☰ queden accesibles */
+@media (max-height: 500px) { #herramientas { top: 52px; max-height: calc(100% - 58px); flex-wrap: wrap-reverse; align-content: flex-start; } .icono.herr { width: 32px; height: 32px; } }
 .ventana { background: linear-gradient(180deg, #0f4560, #082a3c); }
 @media (max-width: 460px) {
   #barra { gap: 4px; padding-left: 6px; padding-right: 6px; } #barra .volver { padding: 6px 2px; font-size: .8em; }
-  #barra .titulo { font-size: .62rem; letter-spacing: .04em; margin-left: 0; }
+  #barra .titulo { font-size: .62rem; letter-spacing: .04em; margin-left: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; } #barra .acciones { flex: none; }
   #barra .acciones { gap: 3px; } #barra .icono { width: 33px; height: 36px; font-size: .95rem; border-radius: 10px; }
 }

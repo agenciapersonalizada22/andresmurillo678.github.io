@@ -14,11 +14,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .btn.grande { background: linear-gradient(180deg, #e8a21f, #c27a0e); font-size: 1.1em; min-height: 54px; color: #1a1030; }
 .btn.peq { min-height: 36px; padding: 6px 12px; font-size: .9em; } .btn:disabled { opacity: .45; cursor: default; }
 .capa { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 8px; padding: 16px; padding-top: calc(16px + env(safe-area-inset-top)); overflow: auto; background: radial-gradient(120% 90% at 50% 30%, #2a5a7d 0%, #16224a 55%, var(--bg) 100%); }
-.capa > :first-child { margin-top: auto; } .capa > :last-child { margin-bottom: auto; }
+.capa > :first-child { margin-top: auto; } .capa > :last-child { margin-bottom: auto; } .capa > * { flex-shrink: 0; }
 .gran { font: 800 clamp(1.8rem, 7vw, 3rem) Orbitron, system-ui, sans-serif; letter-spacing: .12em; margin: 4px 0; text-shadow: 0 0 20px #ffa43d; text-align: center; }
 .gran.ok { color: var(--ok); font-size: 1.4rem; letter-spacing: .04em; } .gran.mal { color: var(--mal); font-size: 1.3rem; letter-spacing: .02em; }
 .lema { color: var(--suave); margin: 0; text-align: center; } .monedas { margin: 2px 0 6px; color: var(--aviso); font-weight: 700; text-align: center; }
-.lista-menu { display: flex; flex-direction: column; gap: 10px; width: min(420px, 92vw); } .fila-botones { display: flex; gap: 8px; } .fila-botones .btn { flex: 1; padding: 8px; font-size: .9em; }
+.lista-menu { display: flex; flex-direction: column; gap: 10px; width: min(420px, 92vw); max-width: 100%; } .fila-botones { display: flex; gap: 8px; } .fila-botones .btn { flex: 1; padding: 8px; font-size: .9em; }
 .cuenta-linea { min-height: 0; }
 .logo { height: 100px; display: grid; place-items: center; }
 .figura { position: relative; width: 60px; height: 96px; margin: auto; }
