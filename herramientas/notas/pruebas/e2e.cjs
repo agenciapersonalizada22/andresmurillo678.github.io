@@ -13,8 +13,16 @@ let ok = 0, mal = 0;
 function chk(nombre, cond, extra) { if (cond) { ok++; console.log('  ok   ' + nombre); } else { mal++; console.log('  FALLA ' + nombre + (extra !== undefined ? '  -> ' + JSON.stringify(extra) : '')); } }
 const shot = (p, n) => p.screenshot({ path: path.join(SHOTS, n + '.png') });
 
+/* La pagina exige sesion (Cuenta.requerir): registra una cuenta demo local en el contexto antes de abrirla. */
+async function sesion(ctx) {
+  const q = await ctx.newPage();
+  await q.goto(BASE + '/juego/index.html'); await q.waitForFunction(() => window.Cuenta);
+  await q.evaluate(async () => { await Cuenta.iniciar(); if (!Cuenta.usuario) await Cuenta.registrar('Tester', 'clave1234', { recordar: true, color: '#3df5ff' }); });
+  await q.close();
+}
 async function nueva(b, op = {}) {
   const ctx = op.ctx || await b.newContext(Object.assign({ viewport: { width: 1280, height: 800 } }, op.contexto || {}));
+  if (!ctx.__sesion) { await sesion(ctx); ctx.__sesion = true; }
   const p = await ctx.newPage(); p.errs = [];
   p.on('pageerror', (e) => p.errs.push('pageerror: ' + e.message)); p.on('console', (m) => { if (m.type() === 'error' && !/favicon|ERR_FAILED|Failed to load resource/.test(m.text())) p.errs.push('console: ' + m.text()); });
   return p;
@@ -46,7 +54,7 @@ async function escritorio(b) {
   await p.click('.fila-n:has-text("Bienvenida")'); await p.waitForTimeout(400);
   chk('backlinks en la nota enlazada', (await p.textContent('.backlinks')).includes('Plan de proyecto'));
   // tecleo e inmediata recarga: el guardado al ocultar no pierde nada
-  await p.click('.fila-n:has-text("Plan de proyecto")'); await p.waitForTimeout(300); await p.click('.ed-vis'); await p.keyboard.press('Control+End'); await p.keyboard.type(' ULTIMO');
+  await p.click('.fila-n:has-text("Plan de proyecto")'); await p.waitForTimeout(300); await p.focus('.ed-vis'); await p.keyboard.press('Control+End'); await p.keyboard.type(' ULTIMO');
   await p.reload(); await p.waitForSelector('html[data-listo="1"]', { state: 'attached' }); await p.waitForTimeout(500);
   const t2 = await E(p, () => ({ n: __notas.store.lista('notas').find((n) => n.titulo === 'Plan de proyecto'), tareas: __notas.store.lista('tareas').length }));
   chk('recarga inmediata conserva lo ultimo escrito', t2.n && /ULTIMO/.test(t2.n.cuerpo), t2.n && t2.n.cuerpo.slice(-30));
@@ -205,12 +213,12 @@ async function colab(b) {
   await E(A, () => { const S = __notas.store; S.poner('listas', Modelo.lista({ id: 'compartida', nombre: 'Compra común', orden: 5 })); Tareas.crear({ id: 't_a1', titulo: 'Leche', lista: 'compartida' }); Tareas.crear({ id: 't_a2', titulo: 'Pan', lista: 'compartida' }); });
   await A.click('.nav[data-k="tareas:lista:compartida"]'); await A.waitForTimeout(300);
   await A.click('.p-lista button[aria-label="Opciones de la lista"]'); await A.click('.menu-i:has-text("Compartir en tiempo real")'); await A.click('.dlg-pie .prim'); await A.waitForTimeout(500);
-  await A.click('.lb-btn:has-text("Crear sala")'); await A.waitForFunction(() => document.querySelector('.lb-campo[aria-label="Enlace de invitacion"]') && document.querySelector('.lb-campo[aria-label="Enlace de invitacion"]').value.includes('sala='), null, { timeout: 20000 });
-  const enlace = await A.inputValue('.lb-campo[aria-label="Enlace de invitacion"]');
+  await A.click('.lb-btn:has-text("Crear sala")'); await A.waitForFunction(() => document.querySelector('.lb-campo[aria-label="Enlace de invitación"]') && document.querySelector('.lb-campo[aria-label="Enlace de invitación"]').value.includes('sala='), null, { timeout: 20000 });
+  const enlace = await A.inputValue('.lb-campo[aria-label="Enlace de invitación"]');
   const B = await nueva(b); await B.goto(enlace); await B.waitForSelector('html[data-listo="1"]', { state: 'attached' });
   await B.waitForFunction(() => { const t = document.querySelector('.lb-campo[aria-label="Tu código de respuesta"]'); return t && t.value.length > 20; }, null, { timeout: 30000 });
   const resp = await B.inputValue('.lb-campo[aria-label="Tu código de respuesta"]');
-  await A.fill('textarea[placeholder^="Codigo de respuesta"]', resp); await A.click('.lb-btn:has-text("Conectar")');
+  await A.fill('textarea[placeholder^="Código de respuesta"]', resp); await A.click('.lb-btn:has-text("Conectar")');
   await A.waitForFunction(() => Red.cuantos() === 2, null, { timeout: 30000 }); chk('dos jugadores conectados por WebRTC', true);
   await A.click('.lb-btn:has-text("Iniciar")'); await B.waitForFunction(() => __notas.store.get('listas', 'compartida') && __notas.store.lista('tareas').length >= 2, null, { timeout: 20000 });
   chk('el invitado recibe la lista y sus tareas', (await E(B, () => __notas.store.lista('tareas').filter((t) => t.lista === 'compartida').map((t) => t.titulo).sort().join())) === 'Leche,Pan');
