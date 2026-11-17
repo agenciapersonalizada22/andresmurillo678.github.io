@@ -16,7 +16,7 @@ El anfitrion reparte y arbitra. Cada cliente recibe solo su mano y el conteo de 
 - Cada asiento humano tiene un token. El cliente lo guarda en `uno_asiento` al recibir `uno_ini`.
 - Si un cliente se cae, el anfitrion marca el asiento ausente y un bot juega por el. Para volver: el anfitrion abre Menu > "Invitar / reconectar amigos", envia el enlace nuevo, el cliente lo abre (Lobby, conexion manual) y la pagina envia `uno_hola` con su token; el anfitrion lo reasigna a su asiento y le reenvia la vista. Sin token, se acepta un asiento vacante con el mismo nombre.
 - El anfitrion guarda la mesa en `uno_mesa_host` (cada cambio y al ocultar la pagina). Al recargar, el menu ofrece "Continuar partida": en solitario reanuda; en multijugador abre la sala, invita de nuevo (los clientes recuperan asiento por token) y al pulsar Iniciar la mesa se restaura.
-- Claves: `uno_ajustes` (sincronizable), `uno_progreso` (sincronizable), `uno_ajustes_dispositivo` (graficos/controles, nunca a la nube), `uno_mesa_host`, `uno_asiento`, `uno_tutorial`.
+- Claves: `uno_progreso` (unica clave que se sincroniza con la nube), `uno_ajustes` y `uno_ajustes_dispositivo` (ajustes; por dispositivo, nunca a la nube), `uno_mesa_host`, `uno_asiento`, `uno_tutorial`.
 
 ## Pruebas
 `node juego/uno/pruebas/pruebas.mjs [rapido]`

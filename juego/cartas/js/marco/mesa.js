@@ -227,7 +227,7 @@ export function vistaMesa(m, J, i, ahora) {
   const st = stacks(m, J);
   return {
     id: m.id, juego: m.juego, rev: m.rev, mano: m.mano, yo: i, fin: m.fin, premio: m.premio,
-    cfg: { n: m.cfg.nAsientos, torneo: m.cfg.torneo, recompra: m.cfg.recompra, compraMin: m.cfg.compraMin, compraMax: m.cfg.compraMax, tope: m.cfg.tope, turnoSeg: m.cfg.turnoSeg, baraja: m.cfg.baraja, reverso: m.cfg.reverso, op: m.cfg.op },
+    cfg: { n: m.cfg.nAsientos, fichasIni: m.cfg.fichasIni, torneo: m.cfg.torneo, recompra: m.cfg.recompra, compraMin: m.cfg.compraMin, compraMax: m.cfg.compraMax, tope: m.cfg.tope, turnoSeg: m.cfg.turnoSeg, baraja: m.cfg.baraja, reverso: m.cfg.reverso, op: m.cfg.op },
     asientos: m.asientos.map((a) => ({ i: a.i, tipo: a.tipo, nombre: a.nombre, color: a.color, avatar: a.avatar, nivel: a.nivel, conectado: a.conectado, silenciado: a.silenciado, host: !!a.host, salir: a.salir, pend: a.pend })),
     espectadores: m.espectadores.filter((s) => s.conectado).map((s) => s.nombre),
     j: J.vista(m.estado, i), neto: tablaSesion(m.asientos, st).map((r) => ({ i: r.i, neto: r.neto, compras: r.compras })),

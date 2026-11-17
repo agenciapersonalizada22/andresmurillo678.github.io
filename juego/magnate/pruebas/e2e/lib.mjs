@@ -1,10 +1,19 @@
 import { chromium } from 'playwright';
 export const URL = 'http://localhost:8765/magnate/index.html';
+export const PORTAL = 'http://localhost:8765/index.html';
+// La pagina del juego exige sesion (Cuenta.requerir): registra una cuenta demo local en el contexto antes de abrirla.
+export async function sesion(ctx, nombre = 'Tester', color = '#3df5ff') {
+  const p = await ctx.newPage();
+  await p.goto(PORTAL); await p.waitForFunction(() => window.Cuenta);
+  await p.evaluate(async (o) => { await Cuenta.iniciar(); if (!Cuenta.usuario) await Cuenta.registrar(o.nombre, 'clave1234', { recordar: true, color: o.color }); }, { nombre, color });
+  await p.close();
+}
 export async function lanzar() {
   return chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--no-sandbox', '--disable-features=WebRtcHideLocalIpsWithMdns'] });
 }
 export async function pagina(b, opts = {}) {
   const ctx = opts.ctx || await b.newContext({ viewport: opts.vp || { width: 390, height: 780 }, hasTouch: !!opts.touch, isMobile: !!opts.touch, deviceScaleFactor: 1 });
+  await sesion(ctx, opts.nombre || 'Tester', opts.color);
   const p = await ctx.newPage(); p.errs = [];
   p.on('console', (m) => { if (m.type() === 'error') p.errs.push(m.text()); });
   p.on('pageerror', (e) => p.errs.push('PAGEERR ' + e.message + ' ' + (e.stack||'').split('\n').slice(1,9).join(' | ')));

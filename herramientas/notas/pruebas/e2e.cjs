@@ -208,8 +208,8 @@ async function colab(b) {
   await A.click('.lb-btn:has-text("Crear sala")'); await A.waitForFunction(() => document.querySelector('.lb-campo[aria-label="Enlace de invitacion"]') && document.querySelector('.lb-campo[aria-label="Enlace de invitacion"]').value.includes('sala='), null, { timeout: 20000 });
   const enlace = await A.inputValue('.lb-campo[aria-label="Enlace de invitacion"]');
   const B = await nueva(b); await B.goto(enlace); await B.waitForSelector('html[data-listo="1"]', { state: 'attached' });
-  await B.waitForFunction(() => { const t = document.querySelector('.lb-campo[aria-label="Tu codigo de respuesta"]'); return t && t.value.length > 20; }, null, { timeout: 30000 });
-  const resp = await B.inputValue('.lb-campo[aria-label="Tu codigo de respuesta"]');
+  await B.waitForFunction(() => { const t = document.querySelector('.lb-campo[aria-label="Tu código de respuesta"]'); return t && t.value.length > 20; }, null, { timeout: 30000 });
+  const resp = await B.inputValue('.lb-campo[aria-label="Tu código de respuesta"]');
   await A.fill('textarea[placeholder^="Codigo de respuesta"]', resp); await A.click('.lb-btn:has-text("Conectar")');
   await A.waitForFunction(() => Red.cuantos() === 2, null, { timeout: 30000 }); chk('dos jugadores conectados por WebRTC', true);
   await A.click('.lb-btn:has-text("Iniciar")'); await B.waitForFunction(() => __notas.store.get('listas', 'compartida') && __notas.store.lista('tareas').length >= 2, null, { timeout: 20000 });

@@ -81,25 +81,25 @@
 
     // inicio
     E.vInicio = h('div', { cls: 'lb-vista' }, [
-      h('p', { txt: 'Juega con hasta 3 amigos en linea. No hace falta cuenta ni servidor: uno crea la sala y los demas entran con un enlace.' })]);
+      h('p', { txt: 'Juega con hasta 3 amigos en línea. No hace falta servidor: uno crea la sala y los demás entran con un enlace.' })]);
     L.editorPerfil(E.vInicio);
-    E.btnCrear = btn('Crear sala (soy el anfitrion)', function () { crearSala(); }, 'lb-prim lb-grande');
+    E.btnCrear = btn('Crear sala (soy el anfitrión)', function () { crearSala(); }, 'lb-prim lb-grande');
     E.btnUnirse = btn('Unirme a una sala', function () { irUnirse(''); }, 'lb-sec lb-grande');
     E.vInicio.appendChild(h('div', { cls: 'lb-fila' }, [E.btnCrear, E.btnUnirse]));
-    E.vInicio.appendChild(h('p', { txt: 'Si tu amigo ya te envio un enlace, basta con abrirlo: entrara solo en modo "unirse".' }));
+    E.vInicio.appendChild(h('p', { txt: 'Si tu amigo ya te envió un enlace, basta con abrirlo: entrarás solo en modo «unirse».' }));
 
     // unirse
-    E.inCodigo = campo('Pega aqui el enlace (o codigo) de invitacion', true);
+    E.inCodigo = campo('Pega aquí el enlace (o código) de invitación', true);
     E.btnPegarU = btn('Pegar', function () { pegar(E.inCodigo); }, 'lb-sec lb-peq');
     E.btnGenerar = btn('Generar mi respuesta', function () { generarRespuesta(); }, 'lb-prim lb-grande');
-    E.outResp = campo('', true, true); E.outResp.setAttribute('aria-label', 'Tu codigo de respuesta');
-    E.btnCopiarR = btn('Copiar codigo', function () { copiar(E.outResp.value, E.btnCopiarR); }, 'lb-grande');
+    E.outResp = campo('', true, true); E.outResp.setAttribute('aria-label', 'Tu código de respuesta');
+    E.btnCopiarR = btn('Copiar código', function () { copiar(E.outResp.value, E.btnCopiarR); }, 'lb-grande');
     E.btnCompR = btn('Compartir', function () { compartir(E.outResp.value); }, 'lb-sec');
-    E.bloqueResp = h('div', { hidden: '' }, [h('div', { cls: 'lb-h', txt: 'Paso 2: envia este codigo al anfitrion' }), E.outResp,
+    E.bloqueResp = h('div', { hidden: '' }, [h('div', { cls: 'lb-h', txt: 'Paso 2: envía este código al anfitrión' }), E.outResp,
       h('div', { cls: 'lb-fila' }, [E.btnCopiarR, navigator.share ? E.btnCompR : null]),
-      h('p', { txt: 'Cuando el anfitrion lo pegue en su pantalla, tu conexion se abrira sola. No cierres esta ventana.' })]);
-    E.btnAtrasU = btn('Atras', function () { Red.salir(); irInicio(); }, 'lb-sec');
-    E.vUnirse = h('div', { cls: 'lb-vista', hidden: '' }, [h('div', { cls: 'lb-h', txt: 'Paso 1: enlace de invitacion' }), E.inCodigo,
+      h('p', { txt: 'Cuando el anfitrión lo pegue en su pantalla, tu conexión se abrirá sola. No cierres esta ventana.' })]);
+    E.btnAtrasU = btn('Atrás', function () { Red.salir(); irInicio(); }, 'lb-sec');
+    E.vUnirse = h('div', { cls: 'lb-vista', hidden: '' }, [h('div', { cls: 'lb-h', txt: 'Paso 1: enlace de invitación' }), E.inCodigo,
       h('div', { cls: 'lb-fila' }, [E.btnGenerar, E.btnPegarU]), E.bloqueResp, h('div', { cls: 'lb-fila' }, [E.btnAtrasU])]);
 
     // sala
@@ -107,26 +107,26 @@
     E.modos = h('div', { cls: 'lb-modos', role: 'group', 'aria-label': 'Modo de juego' });
     E.bloqueModos = h('div', { hidden: '' }, [h('div', { cls: 'lb-h', txt: 'Modo' }), E.modos]);
     E.btnInvitar = btn('Invitar amigo', invitar, 'lb-prim');
-    E.outEnlace = campo('', false, true); E.outEnlace.setAttribute('aria-label', 'Enlace de invitacion');
+    E.outEnlace = campo('', false, true); E.outEnlace.setAttribute('aria-label', 'Enlace de invitación');
     E.btnCopiarE = btn('Copiar enlace', function () { copiar(E.outEnlace.value, E.btnCopiarE); }, 'lb-grande');
-    E.btnCompE = btn('Compartir', function () { compartir('Unete a mi sala de ' + (opts.juego || 'juego'), E.outEnlace.value); }, 'lb-sec');
-    E.inResp = campo('Codigo de respuesta de tu amigo', true);
+    E.btnCompE = btn('Compartir', function () { compartir('Únete a mi sala de ' + (opts.juego || 'juego'), E.outEnlace.value); }, 'lb-sec');
+    E.inResp = campo('Código de respuesta de tu amigo', true);
     E.btnPegarR = btn('Pegar', function () { pegar(E.inResp); }, 'lb-sec lb-peq');
     E.btnConectar = btn('Conectar', conectarAmigo, 'lb-prim lb-grande');
-    E.bloqueInv = h('div', { hidden: '' }, [h('p', { txt: 'Paso 1: envia este enlace a tu amigo (el abre el enlace y te devuelve un codigo).' }), E.outEnlace,
+    E.bloqueInv = h('div', { hidden: '' }, [h('p', { txt: 'Paso 1: envía este enlace a tu amigo (él abre el enlace y te devuelve un código).' }), E.outEnlace,
       h('div', { cls: 'lb-fila' }, [E.btnCopiarE, navigator.share ? E.btnCompE : null]),
-      h('p', { txt: 'Paso 2: pega aqui el codigo de respuesta que te mande.' }), E.inResp, h('div', { cls: 'lb-fila' }, [E.btnConectar, E.btnPegarR])]);
-    E.btnOnline = btn('Invitar amigo en linea', function () { amigosAbierto = !amigosAbierto; pintarAmigosOnline(); }, 'lb-sec'); E.btnOnline.hidden = true;
+      h('p', { txt: 'Paso 2: pega aquí el código de respuesta que te mande.' }), E.inResp, h('div', { cls: 'lb-fila' }, [E.btnConectar, E.btnPegarR])]);
+    E.btnOnline = btn('Invitar amigo en línea', function () { amigosAbierto = !amigosAbierto; pintarAmigosOnline(); }, 'lb-sec'); E.btnOnline.hidden = true;
     E.listaOnline = h('ul', { cls: 'lb-lista', hidden: '' });
     E.bloqueAnf = h('div', { hidden: '' }, [h('div', { cls: 'lb-fila' }, [E.btnInvitar, E.btnOnline]), E.listaOnline, E.bloqueInv]);
     E.chatLog = h('div', { cls: 'lb-chat', role: 'log', 'aria-label': 'Chat' });
     E.inChat = campo('Escribe un mensaje'); E.inChat.maxLength = 200;
     E.inChat.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') enviarChat(E.inChat.value, true); });
     E.btnChat = btn('Enviar', function () { enviarChat(E.inChat.value, true); }, 'lb-sec lb-peq');
-    var rapidos = ['Listo!', 'Esperen', 'GG'].map(function (t) { return btn(t, function () { enviarChat(t); }, 'lb-sec lb-peq'); });
+    var rapidos = ['¡Listo!', 'Esperen', 'GG'].map(function (t) { return btn(t, function () { enviarChat(t); }, 'lb-sec lb-peq'); });
     E.btnListo = btn('Estoy listo', function () { var j = Red.jugadores[Red.miId]; Red.listo(!(j && j.listo)); }, 'lb-grande');
     E.btnIniciar = btn('Iniciar', iniciar, 'lb-prim lb-grande');
-    E.esperaAnf = h('p', { txt: 'Esperando a que el anfitrion inicie la partida...', hidden: '' });
+    E.esperaAnf = h('p', { txt: 'Esperando a que el anfitrión inicie la partida…', hidden: '' });
     E.btnSalir = btn('Salir de la sala', function () { Red.salir(); irInicio(); }, 'lb-sec');
     E.perfilSala = h('details', { cls: 'lb-ayuda' }, [h('summary', { txt: 'Mi perfil' })]);
     L.editorPerfil(E.perfilSala);
@@ -134,8 +134,8 @@
       h('div', { cls: 'lb-h', txt: 'Chat' }), E.chatLog, h('div', { cls: 'lb-fila' }, [h('div', { style: 'flex:1 1 140px' }, [E.inChat]), E.btnChat]), h('div', { cls: 'lb-fila' }, rapidos),
       h('div', { cls: 'lb-fila' }, [E.btnListo, E.btnIniciar]), E.esperaAnf, h('div', { cls: 'lb-fila' }, [E.btnSalir]), E.perfilSala]);
 
-    E.ayuda = h('details', { cls: 'lb-ayuda' }, [h('summary', { txt: 'No conecta? Consejos' }), h('ul', {}, Red.consejos.map(function (c) { return h('li', { txt: c }); }))]);
-    E.pista = h('div', { cls: 'lb-pista', 'aria-hidden': 'true' }, [h('span', {}, [h('b', { txt: '+' }), 'mover']), h('span', {}, [h('b', { txt: 'A' }), 'aceptar']), h('span', {}, [h('b', { txt: 'B' }), 'atras / cerrar'])]);
+    E.ayuda = h('details', { cls: 'lb-ayuda' }, [h('summary', { txt: '¿No conecta? Consejos' }), h('ul', {}, Red.consejos.map(function (c) { return h('li', { txt: c }); }))]);
+    E.pista = h('div', { cls: 'lb-pista', 'aria-hidden': 'true' }, [h('span', {}, [h('b', { txt: '+' }), 'mover']), h('span', {}, [h('b', { txt: 'A' }), 'aceptar']), h('span', {}, [h('b', { txt: 'B' }), 'atrás / cerrar'])]);
 
     tarjeta = h('div', { cls: 'lb-tarjeta', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'lb-titulo' }, [h('div', { cls: 'lb-cab' }, [E.titulo, E.x]), E.estado, E.vInicio, E.vUnirse, E.vSala, E.ayuda, E.pista]);
     raiz = h('div', { cls: 'lb-fondo' }, [tarjeta]);
@@ -166,21 +166,21 @@
       pend[r.id] = true; E.outEnlace.value = r.enlace; E.bloqueInv.hidden = false; E.inResp.value = ''; pintarSala();
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(r.enlace).then(function () { L.aviso('Enlace copiado'); }, function () {});
       setTimeout(enfocarPrimero, 0);
-    }).catch(function (e) { estado('No se pudo crear la invitacion: ' + e.message, 'mal'); }).then(function () { E.btnInvitar.disabled = false; pintarSala(); });
+    }).catch(function (e) { estado('No se pudo crear la invitación: ' + e.message, 'mal'); }).then(function () { E.btnInvitar.disabled = false; pintarSala(); });
   }
   function conectarAmigo() {
-    var v = E.inResp.value.trim(); if (!v) { estado('Pega primero el codigo de respuesta de tu amigo', 'mal'); return; }
-    E.btnConectar.disabled = true; estado('Conectando con tu amigo...');
+    var v = E.inResp.value.trim(); if (!v) { estado('Pega primero el código de respuesta de tu amigo', 'mal'); return; }
+    E.btnConectar.disabled = true; estado('Conectando con tu amigo…');
     Red.aceptarRespuesta(v).then(function () { estado(''); E.bloqueInv.hidden = true; E.inResp.value = ''; }).catch(function (e) { estado(e.message, 'mal'); }).then(function () { E.btnConectar.disabled = false; });
   }
   function generarRespuesta() {
-    var v = E.inCodigo.value.trim(); if (!v) { estado('Pega primero el enlace de invitacion', 'mal'); return; }
-    rolPrevio = 'amigo'; E.btnGenerar.disabled = true; estado('Preparando la conexion (puede tardar unos segundos)...');
+    var v = E.inCodigo.value.trim(); if (!v) { estado('Pega primero el enlace de invitación', 'mal'); return; }
+    rolPrevio = 'amigo'; E.btnGenerar.disabled = true; estado('Preparando la conexión (puede tardar unos segundos)…');
     Red.unirse(v).then(function (c) {
-      E.outResp.value = c; E.bloqueResp.hidden = false; E.inCodigo.readOnly = true; estado('Listo. Envia el codigo al anfitrion.', 'ok'); setTimeout(function () { E.btnCopiarR.focus(); }, 0);
+      E.outResp.value = c; E.bloqueResp.hidden = false; E.inCodigo.readOnly = true; estado('Listo. Envía el código al anfitrión.', 'ok'); setTimeout(function () { E.btnCopiarR.focus(); }, 0);
       if (invId && G.Cuenta && G.Cuenta.usuario) {
         var id = invId; invId = '';
-        G.Cuenta.responderInvitacion(id, true, c).then(function () { estado('Respuesta enviada al anfitrion: conectando...', 'ok'); }, function (e) { estado('No se pudo responder la invitacion (' + e.message + '). Usa el codigo manualmente.', 'mal'); });
+        G.Cuenta.responderInvitacion(id, true, c).then(function () { estado('Respuesta enviada al anfitrión: conectando…', 'ok'); }, function (e) { estado('No se pudo responder la invitación (' + e.message + '). Usa el código manualmente.', 'mal'); });
       }
     }).catch(function (e) { E.btnGenerar.disabled = false; estado(e.message, 'mal'); });
   }
@@ -196,9 +196,9 @@
       var j = Red.jugadores[i], li;
       if (j) {
         n++;
-        li = h('li', { cls: 'lb-jug', style: '--c:' + colorTxt(j.color) }, [h('span', { cls: 'lb-punto' }), h('span', { cls: 'lb-nom' }, [j.nombre, h('small', { txt: (i === 0 ? 'anfitrion' : '') + (i === Red.miId ? (i === 0 ? ' · tu' : 'tu') : '') })]),
+        li = h('li', { cls: 'lb-jug', style: '--c:' + colorTxt(j.color) }, [h('span', { cls: 'lb-punto' }), h('span', { cls: 'lb-nom' }, [j.nombre, h('small', { txt: (i === 0 ? 'anfitrión' : '') + (i === Red.miId ? (i === 0 ? ' · tú' : 'tú') : '') })]),
           i === 0 ? null : h('span', { cls: 'lb-ping ' + pingClase(j.ping), txt: Math.round(j.ping) + ' ms' }), h('span', { cls: 'lb-listo' + (j.listo ? ' lb-si' : ''), txt: j.listo ? 'Listo' : 'Espera' })]);
-      } else li = h('li', { cls: 'lb-jug lb-vacio', txt: pend[i] ? 'Invitacion pendiente (esperando respuesta)' : 'Lugar libre' });
+      } else li = h('li', { cls: 'lb-jug lb-vacio', txt: pend[i] ? 'Invitación pendiente (esperando respuesta)' : 'Lugar libre' });
       E.lista.appendChild(li);
     }
     E.bloqueAnf.hidden = !host;
@@ -222,33 +222,33 @@
   }
 
   /* ---------- invitacion directa a amigos en linea (requiere comun/cuenta.js con sesion) ---------- */
-  var ESTADOS = { en_linea: 'en linea', jugando: 'jugando', ausente: 'ausente', desconectado: 'desconectado' };
+  var ESTADOS = { en_linea: 'en línea', jugando: 'jugando', ausente: 'ausente', desconectado: 'desconectado' };
   function juegoId() { return (G.Cuenta && G.Cuenta.juegoActual()) || opts.juegoId || ''; }
   function pintarAmigosOnline() {
     if (!E.listaOnline) return;
     E.listaOnline.hidden = !amigosAbierto; E.btnOnline.setAttribute('aria-expanded', String(amigosAbierto)); E.listaOnline.textContent = '';
     if (!amigosAbierto || !(G.Cuenta && G.Cuenta.usuario)) return;
     var am = G.Cuenta.amigos.lista.filter(function (a) { return a.estado !== 'desconectado'; });
-    if (!am.length) { E.listaOnline.appendChild(h('li', { cls: 'lb-jug lb-vacio', txt: G.Cuenta.amigos.lista.length ? 'Ningun amigo esta conectado ahora' : 'Aun no tienes amigos: agregalos en el portal' })); return; }
+    if (!am.length) { E.listaOnline.appendChild(h('li', { cls: 'lb-jug lb-vacio', txt: G.Cuenta.amigos.lista.length ? 'Ningún amigo está conectado ahora' : 'Aún no tienes amigos: agrégalos en el portal' })); return; }
     am.forEach(function (a) {
       E.listaOnline.appendChild(h('li', { cls: 'lb-jug', style: '--c:' + colorTxt(a.color) }, [h('span', { cls: 'lb-punto' }), h('span', { cls: 'lb-nom' }, [a.nombre, h('small', { txt: ESTADOS[a.estado] || '' })]), btn('Invitar', function () { invitarAmigo(a); }, 'lb-prim lb-peq')]));
     });
   }
   function invitarAmigo(a) {
     if (!Red.esAnfitrion || !G.Cuenta || !G.Cuenta.usuario) return;
-    estado('Invitando a ' + a.nombre + '...'); amigosAbierto = false; pintarAmigosOnline();
+    estado('Invitando a ' + a.nombre + '…'); amigosAbierto = false; pintarAmigosOnline();
     Red.invitar().then(function (r) {
       pend[r.id] = true; pintarSala();
       return G.Cuenta.invitar(a.uid, juegoId(), r.codigo).then(function (inv) {
-        estado('Invitacion enviada a ' + a.nombre + '. Esperando su respuesta (caduca en 5 minutos)...', 'ok');
-        var fin = false, un = function () {}, cierra = setTimeout(function () { if (fin) return; fin = true; un(); G.Cuenta.cancelarInvitacion(a.uid, inv.id); estado('La invitacion a ' + a.nombre + ' caduco.', 'mal'); }, 300000);
+        estado('Invitación enviada a ' + a.nombre + '. Esperando su respuesta (caduca en 5 minutos)…', 'ok');
+        var fin = false, un = function () {}, cierra = setTimeout(function () { if (fin) return; fin = true; un(); G.Cuenta.cancelarInvitacion(a.uid, inv.id); estado('La invitación a ' + a.nombre + ' caducó.', 'mal'); }, 300000);
         un = G.Cuenta.escucharRespuesta(a.uid, inv.id, function (d) {
           if (fin || d.estado === 'pendiente') return;
           fin = true; clearTimeout(cierra); un();
           if (d.estado === 'aceptada' && d.respuesta) {
-            estado(a.nombre + ' acepto: conectando...');
+            estado(a.nombre + ' aceptó: conectando…');
             Red.aceptarRespuesta(d.respuesta).then(function () { estado(''); }).catch(function (e) { estado('No se pudo conectar con ' + a.nombre + ': ' + e.message, 'mal'); }).then(function () { G.Cuenta.borrarInvitacion(a.uid, inv.id); });
-          } else { estado(a.nombre + (d.estado === 'rechazada' ? ' rechazo la invitacion.' : ' no esta disponible.'), 'mal'); G.Cuenta.borrarInvitacion(a.uid, inv.id); }
+          } else { estado(a.nombre + (d.estado === 'rechazada' ? ' rechazó la invitación.' : ' no está disponible.'), 'mal'); G.Cuenta.borrarInvitacion(a.uid, inv.id); }
         });
       });
     }).catch(function (e) { estado('No se pudo invitar: ' + (e && e.message), 'mal'); });
@@ -271,18 +271,18 @@
     Red.on('jugadores', function () { if (raiz && L.abierto) pintarSala(); });
     Red.on('sala', function () { if (raiz && L.abierto) pintarSala(); });
     Red.on('jugadorUnido', function (id, j) {
-      delete pend[id]; if (L.avisos && j) L.aviso(j.nombre + ' se unio', j.color);
+      delete pend[id]; if (L.avisos && j) L.aviso(j.nombre + ' se unió', j.color);
       if (raiz && L.abierto) { if (Red.esAnfitrion) { E.bloqueInv.hidden = true; } pintarSala(); }
     });
-    Red.on('jugadorSalio', function (id, j, motivo) { if (L.avisos && j) L.aviso(j.nombre + ' se desconecto', '#ff6b6b'); if (raiz && L.abierto) pintarSala(); });
+    Red.on('jugadorSalio', function (id, j, motivo) { if (L.avisos && j) L.aviso(j.nombre + ' se desconectó', '#ff6b6b'); if (raiz && L.abierto) pintarSala(); });
     Red.on('invitacion', function (id, ev) { if (ev === 'expirada') { delete pend[id]; if (raiz && L.abierto) pintarSala(); } });
     Red.on('conectado', function () { if (raiz && L.abierto) { chat = []; pintarChat(); estado(''); irVista('sala'); } });
     Red.on('chat', function (de, texto, j) { chat.push({ nombre: j ? j.nombre : 'Jugador', color: j ? j.color : '#fff', texto: texto }); if (raiz && L.abierto) pintarChat(); });
     Red.on('cerrado', function (motivo) {
       if (motivo === 'salir') return;
-      if (L.avisos) L.aviso('Conexion cerrada: ' + motivo, '#ff6b6b');
+      if (L.avisos) L.aviso('Conexión cerrada: ' + motivo, '#ff6b6b');
       if (raiz && L.abierto) {
-        irInicio('Conexion perdida (' + motivo + '). Puedes volver a intentarlo.', 'mal');
+        irInicio('Conexión perdida (' + motivo + '). Puedes volver a intentarlo.', 'mal');
         if (rolPrevio) { if (!E.btnReconectar) { E.btnReconectar = btn('Reconectar', reconectar, 'lb-prim lb-grande'); E.btnCrear.parentNode.insertBefore(E.btnReconectar, E.btnCrear); } E.btnReconectar.hidden = false; }
       }
     });
@@ -308,7 +308,7 @@
       if (G.Cuenta) G.Cuenta.iniciar().then(function () {
         var intentos = 0, espera = setInterval(function () {
           var a = G.Cuenta.amigos.lista.filter(function (x) { return x.uid === uidAmigo; })[0];
-          if (a) { clearInterval(espera); invitarAmigo(a); } else if (++intentos > 20) { clearInterval(espera); estado('No se encontro a ese amigo en tu lista.', 'mal'); }
+          if (a) { clearInterval(espera); invitarAmigo(a); } else if (++intentos > 20) { clearInterval(espera); estado('No se encontró a ese amigo en tu lista.', 'mal'); }
         }, 250);
       });
     } else if (Red.conectado) irVista('sala'); else if (Red.estado === 'uniendo') irVista('unirse'); else irInicio();

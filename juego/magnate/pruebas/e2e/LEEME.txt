@@ -1,1 +1,3 @@
 # E2E con Playwright (Chromium): servir juego/ con `python3 -m http.server 8765` y ejecutar `node archivo.mjs <carpeta_capturas>`. Requiere el paquete playwright resoluble desde esta carpeta.
+
+La pagina exige sesion: lib.mjs (`pagina()` y `sesion(ctx, nombre, color)`) registra una cuenta demo local en el contexto antes de abrir el juego (firebase-config.js vacio). Si creas contextos a mano, llama a `sesion(ctx)` antes de `goto`.

@@ -6,7 +6,7 @@ Juego `cartas` (id propuesto). Marco reutilizable + Póker Texas Hold'em, Veinti
 js/marco/   rng barajas dibujo sonido economia mesa sesion almacen cartera progreso   (sin lógica de ningún juego)
 js/ui/      dom mesaUI acciones entrada paneles ajustes creador entrar red-util          (UI genérica)
 js/juegos/  registro.js + <juego>/{reglas,bot,ui,index}.js
-pruebas/    *.test.mjs (Node, sin DOM):  poker | veintiuno | mesa | dompe_combos | dompe | conquian_melds | conquian | pescar | nuevos_mesa
+pruebas/    *.test.mjs (Node, sin DOM):  poker | veintiuno | mesa | dompe_combos | dompe | conquian_melds | conquian | pescar | nuevos_mesa | ranking
 ```
 
 ## Arquitectura (anfitrión autoritativo)
@@ -21,7 +21,8 @@ pruebas/    *.test.mjs (Node, sin DOM):  poker | veintiuno | mesa | dompe_combos
 - Cliente: guarda `cartas_asiento_<mesa>` = `{tok,...}`. Tras caerse/recargar, el anfitrión pulsa 👥 → «Reconectar» (un clic: genera el enlace nuevo `?sala=…&m=<mesa>`), el jugador lo abre (o lo pega en «Unirme con enlace»), devuelve el código de respuesta (flujo manual de `Red`) y recupera asiento, fichas y mano **sin nueva entrada ni descuento del monedero**. Un asiento sin conexión se retira/pasa automáticamente.
 - Límite de `Red`: host + 3 conexiones (jugadores o espectadores).
 - Monedero: `cartas_monedero` (saldo, regalo diario configurable, historial). Entrada se descuenta al sentarse; se acredita al levantarse/cerrar (`cobro`).
-- Claves: `cartas_ajustes` (sincronizable), `cartas_ajustes_dispositivo` (gráficos/controles, NO sincronizar), `cartas_stats`, `cartas_logros`, `cartas_historial`. Todo vía `almacen.js`.
+- **Ranking protegido** (`economia.js` `REF`, `progreso.js` `puntajes()`): a la plataforma solo van los valores `*Rank`. `monedero`: no cuenta si el monedero empezo con mas de 5000 fichas (`monederoInflado`, hasta reiniciarlo) y descuenta el exceso del regalo diario por encima de 500 y las ganancias en mesas no clasificables (`mesaLimpia`: fichas de bots/torneo <= 1000). `bote`: solo manos de mesas clasificables con monedero no inflado. `dompe_racha`, `conq_turnos`, `pesc_libros`: solo con las opciones de reglas por defecto (`opcionesEstandar`; la ana/apuestas no importan) y, en pescar, baraja `fr52`. Los ajustes y el formulario de crear mesa avisan «no cuenta para el ranking». Las estadisticas locales (`maxMonedero`, `mayorBote`, ...) no cambian.
+- Claves: `cartas_monedero`, `cartas_stats`, `cartas_logros` y `cartas_historial` (las unicas que viajan a la nube, `CLAVES_NUBE` de `marco/cuenta.js`); `cartas_ajustes` y `cartas_ajustes_dispositivo` son por dispositivo. Todo vía `almacen.js`.
 
 ## Cómo añadir un juego
 1. Crea `js/juegos/<id>/reglas.js` (reglas puras), `bot.js`, `ui.js`, `index.js`.

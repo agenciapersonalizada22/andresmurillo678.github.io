@@ -36,8 +36,8 @@ await trazo(host, [[300, 300], [380, 330], [460, 300], [520, 380]]);
 await host.evaluate(() => { Red.config.iceServers = []; Red.crearSala({ max: 4 }); });
 // --- g1 se une (enlace real con ?sala=)
 async function codigoLobby(guest) {
-  await guest.waitForFunction(() => { const t = document.querySelector('textarea[aria-label="Tu codigo de respuesta"]'); return t && t.value.length > 40; }, null, { timeout: 15000 });
-  return guest.evaluate(() => document.querySelector('textarea[aria-label="Tu codigo de respuesta"]').value);
+  await guest.waitForFunction(() => { const t = document.querySelector('textarea[aria-label="Tu código de respuesta"]'); return t && t.value.length > 40; }, null, { timeout: 15000 });
+  return guest.evaluate(() => document.querySelector('textarea[aria-label="Tu código de respuesta"]').value);
 }
 async function unir(guest) {
   const enlace = await host.evaluate(async () => (await Red.invitar()).enlace);

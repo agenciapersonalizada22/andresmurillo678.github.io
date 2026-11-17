@@ -10,6 +10,7 @@ import { pantallaCrear } from './ui/creador.js';
 import * as Aj from './ui/ajustes.js';
 import { motorDe, CATALOGO } from './juegos/registro.js';
 import { Cartera } from './marco/cartera.js';
+import * as E from './marco/economia.js';
 import * as Pro from './marco/progreso.js';
 import * as A from './marco/almacen.js';
 import { Sonido, vol, desbloquear } from './marco/sonido.js';
@@ -103,6 +104,9 @@ function resultadoMano(vm) {
   const nuevo = ['dompe', 'conquian', 'pescar'].includes(vm.juego), gano = nuevo ? (j.res.ganadores || []).includes(vm.yo) : delta > 0;
   const info = { juego: vm.juego === 'poker' ? 'poker' : (vm.juego === 'veintiuno' || vm.juego === 'sietemedio') ? 'veintiuno' : vm.juego, meta: j.res.meta || null, yo: vm.yo, delta, ganada: gano, bote: j.res.total, mano: j.res.manos && j.res.manos[vm.yo] ? j.res.manos[vm.yo].nombre : '', variante: vm.juego === 'sietemedio' ? 'sm' : 'bj' };
   if (vm.juego === 'veintiuno' || vm.juego === 'sietemedio') { const ms = j.jug[vm.yo].manos; info.natural = ms.some((m) => m.res === 'blackjack' || m.res === 'real'); info.doblada = ms.some((m) => m.doblada && m.res === 'gana'); }
+  // ranking: bote/monedero solo con fichas de bots de referencia y monedero no inflado; rachas, turnos y libros solo con reglas estandar
+  const limpia = E.mesaLimpia(vm.cfg); if (!limpia && delta) Cartera.excesoMano(delta);
+  info.rank = limpia && !Cartera.inflado(); info.estandar = E.opcionesEstandar((CATALOGO[vm.juego] || {}).J && CATALOGO[vm.juego].J.opciones, vm.cfg.op);
   Pro.registrarMano(info);
   if (gano) Sonido.ganar(); else if (delta < 0 || (nuevo && j.res.ganadores.length)) Sonido.perder();
   window.Mando && window.Mando.vibrar && A.dispositivo.obtener().controles.vibracion && gano && window.Mando.vibrar(0.3, 0.5, 160);
@@ -220,7 +224,7 @@ async function arrancar() {
   await Cta.iniciarNube(alBajarNube, 4000); // antes de leer/escribir guardados; nunca espera mas de 4 s
   try { if (window.Red && !localStorage.getItem('juego_perfil')) window.Red.perfil.guardar({ nombre: window.Red.perfil.nombreAleatorio(), color: window.Red.perfil.paleta[Math.floor(Math.random() * 8)] }); } catch (e) {}
   Aj.aplicar(); iniciarSuscripcion(); Entrada.iniciar(); requestAnimationFrame(medirFps);
-  Pro.revisarMonedero(Cartera.saldo());
+  Pro.revisarMonedero(Cartera.saldo(), Cartera.valorRanking());
   Cta.reportarLogrosLocales();
   irEntrar();
   if (window.Lobby && window.Lobby.hayEnlace()) { previstaDesdeUrl(); window.Lobby.abrir(OPTS_LOBBY); }

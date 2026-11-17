@@ -1,5 +1,5 @@
 import { chromium } from 'playwright';
-import { lanzar, URL } from './lib.mjs';
+import { lanzar, URL, sesion } from './lib.mjs';
 const S = process.argv[2];
 const b = await lanzar();
 const chk = (c, m) => { console.log((c ? 'ok   ' : 'FALLA ') + m); if (!c) process.exitCode = 1; };
@@ -12,6 +12,7 @@ const nuevoCtx = async (nombre, color) => {
     localStorage.setItem('magnate_progreso', JSON.stringify({ v: 1, visto: 1 }));
     if (!localStorage.getItem('juego_perfil')) localStorage.setItem('juego_perfil', JSON.stringify(o));
   } catch (e) {} }, { nombre, color });
+  await sesion(ctx, nombre, color);
   return ctx;
 };
 const abrir = async (ctx, url) => { const p = await ctx.newPage(); p.errs = []; p.on('console', (m) => { if (m.type() === 'error') p.errs.push(m.text()); }); p.on('pageerror', (e) => p.errs.push('PAGEERR ' + e.message)); await p.goto(url || URL); await p.waitForTimeout(700); return p; };
@@ -24,8 +25,8 @@ async function invitar(host, clic = true) { // devuelve enlace
 }
 async function unir(host, ctxCli, enlace) {
   const cli = await abrir(ctxCli, enlace);
-  await cli.waitForFunction(() => { const t = document.querySelector('textarea[aria-label="Tu codigo de respuesta"]'); return !!t && t.value.length > 20; }, null, { timeout: 20000 });
-  const resp = await cli.evaluate(() => document.querySelector('textarea[aria-label="Tu codigo de respuesta"]').value);
+  await cli.waitForFunction(() => { const t = document.querySelector('textarea[aria-label="Tu código de respuesta"]'); return !!t && t.value.length > 20; }, null, { timeout: 20000 });
+  const resp = await cli.evaluate(() => document.querySelector('textarea[aria-label="Tu código de respuesta"]').value);
   await host.evaluate((r) => { const t = [...document.querySelectorAll('textarea.lb-campo')].find((x) => !x.readOnly && x.offsetParent); t.value = r; [...document.querySelectorAll('.lb-btn')].find((x) => x.textContent === 'Conectar').click(); }, resp);
   try { await cli.waitForFunction(() => window.Red && window.Red.conectado, null, { timeout: 25000 }); } catch (e) { console.log('DEBUG host:', await host.evaluate(() => Red.estado + ' ' + (document.querySelector('.lb-aviso-estado') || {}).textContent)); console.log('DEBUG cli:', await cli.evaluate(() => Red.estado + ' ' + (document.querySelector('.lb-aviso-estado') || {}).textContent)); await host.screenshot({ path: S + '/dbg_host.png' }); await cli.screenshot({ path: S + '/dbg_cli.png' }); throw e; }
   return cli;
@@ -53,7 +54,7 @@ await host.click('text=Multijugador en línea'); await host.waitForTimeout(300);
 await host.evaluate(() => { [...document.querySelectorAll('.hoja button')].filter((x) => x.textContent === '✕' && x.getAttribute('aria-label') === 'Quitar bot').slice(1).forEach((x) => x.click()); });
 await host.waitForTimeout(300);
 await host.click('text=Crear sala…'); await host.waitForTimeout(500);
-await host.click('text=Crear sala (soy el anfitrion)');
+await host.click('text=Crear sala (soy el anfitrión)');
 const enl1 = await invitar(host, false);
 const ana = await unir(host, cA, enl1);
 chk(await nombreWR(ana), 'Ana conectada al anfitrion');
@@ -106,7 +107,7 @@ chk(await host.isVisible('text=Continuar partida'), 'el anfitrion ve Continuar t
 await host.click('text=Continuar partida'); await host.waitForTimeout(1200);
 chk(await host.isVisible('text=Abrir sala para reconectar'), 'dialogo de reanudar multijugador');
 await host.click('text=Abrir sala para reconectar'); await host.waitForTimeout(500);
-await host.click('text=Crear sala (soy el anfitrion)');
+await host.click('text=Crear sala (soy el anfitrión)');
 const enl4 = await invitar(host, false);
 let hres = await E(host); chk(hres.id === antes.id && hres.seq >= antes.seq, 'estado del anfitrion restaurado (seq ' + hres.seq + ')');
 // Beto (que perdio la conexion por la recarga) se reconecta con enlace nuevo; recarga su pagina

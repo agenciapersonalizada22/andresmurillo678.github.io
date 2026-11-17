@@ -6,6 +6,7 @@ import { vol, Sonido } from '../marco/sonido.js';
 import { cfgUI } from './mesaUI.js';
 import * as Acc from './acciones.js';
 import { Cartera } from '../marco/cartera.js';
+import { REF } from '../marco/economia.js';
 import * as Cta from '../marco/cuenta.js';
 import { bloqueNube } from './cuentaUI.js';
 
@@ -90,8 +91,8 @@ export function ajustesDialogo(pestana) {
       const nube = bloqueNube(); limpiar = nube.limpiar || null;
       return [nube, h('p', { txt: 'El guardado incluye monedero, estadísticas, logros y mesas guardadas. No incluye los ajustes de gráficos y controles de este dispositivo.' }), area,
         h('div', { cls: 'fila' }, [boton('Exportar', () => { area.value = A.exportar(); area.select(); }, 'sec'), boton('Importar', () => { const r = A.importar(area.value); if (r.ok) { aviso(`Importado (${r.n} datos). Recargando…`, '#6dff6d'); Cartera.recargar(); setTimeout(() => location.reload(), 700); } else aviso(r.error, '#ff6b6b'); }, 'sec')]),
-        fila('Fichas iniciales del monedero', deslizador(aj.economia.inicial, 500, 50000, 500, (v) => cambiar((a) => { a.economia.inicial = v; })), 'se usa al reiniciar el monedero'),
-        fila('Regalo diario (fichas, 0 = desactivado)', deslizador(aj.economia.regalo, 0, 5000, 100, (v) => cambiar((a) => { a.economia.regalo = v; }))),
+        fila('Fichas iniciales del monedero', deslizador(aj.economia.inicial, 500, 50000, 500, (v) => cambiar((a) => { a.economia.inicial = v; })), `se usa al reiniciar el monedero; con más de ${fmt(REF.inicial)} fichas no cuenta para el ranking`),
+        fila('Regalo diario (fichas, 0 = desactivado)', deslizador(aj.economia.regalo, 0, 5000, 100, (v) => cambiar((a) => { a.economia.regalo = v; })), `lo que supere ${fmt(REF.regalo)} fichas al día no cuenta para el ranking`),
         h('div', { cls: 'fila' }, [boton('Reiniciar monedero', () => confirmar('El saldo vuelve a las fichas iniciales.', 'Reiniciar monedero', () => { Cartera.reiniciar(); aviso('Monedero reiniciado'); }), 'sec'),
           boton('Borrar todo el progreso', () => confirmar('Se borran monedero, estadísticas, logros y mesas guardadas' + (Cta.hay() ? ' (y en la próxima sincronización también tu copia de la nube)' : '') + '. No se puede deshacer.', 'Borrar progreso', () => { A.borrarTodo(false); Cartera.recargar(); setTimeout(() => location.reload(), 300); }, 'Borrar'), 'peligro')])];
     },

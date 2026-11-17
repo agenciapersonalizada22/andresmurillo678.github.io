@@ -1,6 +1,6 @@
 // Unico modulo de almacenamiento (localStorage). Claves prefijadas con "cartas_".
-// *_dispositivo (graficos/controles) es por dispositivo y NO debe sincronizarse a la nube; todo lo demas si.
-import { monederoNuevo } from './economia.js';
+// A la nube solo van monedero, stats, logros e historial (ver CLAVES_NUBE en cuenta.js); los ajustes son por dispositivo.
+import { monederoNuevo, REF } from './economia.js';
 
 const P = 'cartas_';
 export const CLAVES = { ajustes: P + 'ajustes', dispositivo: P + 'ajustes_dispositivo', monedero: P + 'monedero', stats: P + 'stats', logros: P + 'logros', historial: P + 'historial', mesas: P + 'mesas', ultima: P + 'ultima', cobros: P + 'cobros' };
@@ -8,7 +8,7 @@ export const AJUSTES_DEF = {
   audio: { maestro: 0.8, efectos: 0.9, pausaOculta: true },
   accesibilidad: { textoGrande: false, daltonico: false, contraste: false, reducirMov: false },
   mesa: { reverso: 'azul', turnoSeg: 30, avatar: '', avisos: true },
-  economia: { inicial: 5000, regalo: 500 },
+  economia: { inicial: REF.inicial, regalo: REF.regalo },
 };
 export const DISPOSITIVO_DEF = {
   graficos: { preset: 'media', animaciones: true, sombras: true, fps: false, autoBajar: true },

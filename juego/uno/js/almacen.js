@@ -1,5 +1,5 @@
 // Unico modulo de almacenamiento (localStorage con prefijo "uno_"), pensado para sincronizarse luego con la nube.
-// uno_ajustes_dispositivo NO se sincroniza (graficos/controles por dispositivo); el resto si.
+// A la nube solo va uno_progreso; uno_ajustes y uno_ajustes_dispositivo quedan por dispositivo.
 export const CLAVES = {
   ajustes: 'uno_ajustes', dispositivo: 'uno_ajustes_dispositivo', progreso: 'uno_progreso',
   mesa: 'uno_mesa_host', asiento: 'uno_asiento', tutorial: 'uno_tutorial'
