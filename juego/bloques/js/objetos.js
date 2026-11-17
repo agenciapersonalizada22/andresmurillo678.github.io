@@ -7,6 +7,7 @@
 //  (texto) para que añadir objetos nuevos nunca rompa una partida.
 // =============================================================
 import { B, BASE, BLOQUES, nombreBloque } from './bloques.js';
+import { ITEMS_MENA } from './espacio/bloquesSolar.js';
 
 export const ID_OBJETO = 1000;
 export const OBJETOS_LISTA = [];
@@ -87,6 +88,21 @@ def('cohete_motores', 'Cohete: motores', { forma: 'cohete', color: '#ffa13a', pi
 def('cohete_combustible', 'Cohete: combustible', { forma: 'cohete', color: '#e2483a', pila: 1 });
 def('cohete_cabina', 'Cohete: cabina', { forma: 'cohete', color: '#5ab6ff', pila: 1 });
 def('traje_espacial', 'Traje espacial', { forma: 'peto', color: '#f2f4f8', pila: 1 });
+
+// ---- sistema solar: minerales exclusivos, naves y mejoras del traje (siempre al final)
+for (const m of ITEMS_MENA) def(m.clave, m.nombre, { forma: 'gema', color: m.color });
+def('kit_lanzadera', 'Kit de lanzadera', { forma: 'kit', color: '#e8ecf2', pila: 1 });
+def('kit_nave_ionica', 'Kit de nave interplanetaria', { forma: 'kit', color: '#5ab6ff', pila: 1 });
+def('kit_nave_salto', 'Kit de nave de salto', { forma: 'kit', color: '#b06cff', pila: 1 });
+def('motor_ionico', 'Motor iónico', { forma: 'motor', color: '#5ab6ff', pila: 8 });
+def('escudo_termico', 'Escudo térmico', { forma: 'cohete', color: '#ff8a3a', pila: 4 });
+def('celda_xenon', 'Celda de xenón', { forma: 'bateria', color: '#9a7aff', pila: 16 });
+def('aislante_termico', 'Aislante térmico', { forma: 'lingote', color: '#ffb35a', pila: 16 });
+def('blindaje_plomo', 'Blindaje anti-radiación', { forma: 'lingote', color: '#6a7a8a', pila: 16 });
+def('sello_presion', 'Sello de presión', { forma: 'motor', color: '#7ad0a0', pila: 16 });
+def('mejora_termica', 'Mejora térmica del traje', { forma: 'kit', color: '#ff8a3a', pila: 4 });
+def('mejora_radiacion', 'Mejora anti-radiación del traje', { forma: 'kit', color: '#9aff5a', pila: 4 });
+def('mejora_presion', 'Mejora anti-presión del traje', { forma: 'kit', color: '#5ad0ff', pila: 4 });
 
 // ---- consultas
 export const esObjeto = (id) => id >= ID_OBJETO;

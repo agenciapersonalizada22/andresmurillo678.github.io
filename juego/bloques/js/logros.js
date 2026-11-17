@@ -1,6 +1,8 @@
 // =============================================================
 //  🏆  LOGROS Y ESTADÍSTICAS (se guardan en el navegador, para todos los mundos)
 // =============================================================
+import { LOGROS_SISTEMA } from './espacio/logros_sistema.js';
+
 const CLAVE = 'bloques_logros_v1';
 
 export const LOGROS = [
@@ -32,6 +34,7 @@ export const LOGROS = [
   { id: 'portal_abismo', nombre: 'Constructor de portales', desc: 'Enciende un portal con un marco de obsidiana', cond: (s) => s.portales >= 1 },
   { id: 'al_abismo', nombre: 'Al otro lado', desc: 'Entra en el Abismo', cond: (s) => s.visitaAbismo >= 1 },
   { id: 'eclipse_total', nombre: 'Sombra en pleno día', desc: 'Mira un eclipse solar total', cond: (s) => s.eclipses >= 1 },
+  ...LOGROS_SISTEMA.map((l) => ({ ...l, cond: (s) => !!s.tiene[l.id] })),
 ];
 
 const NUMEROS = ['bloquesRotos', 'bloquesPuestos', 'distancia', 'segundos', 'malosMatados', 'animalesMatados', 'muertes', 'fundidos',

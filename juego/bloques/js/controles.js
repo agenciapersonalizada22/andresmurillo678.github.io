@@ -221,6 +221,7 @@ export class Controles {
         case 'KeyG': this.alAccion('repostar'); break;
         case 'KeyT': e.preventDefault(); this.alAccion('chat'); break;
         case 'KeyN': this.alAccion('minimapa'); break;
+        case 'KeyJ': this.alAccion('mapaSolar'); break;
         case 'F2': e.preventDefault(); this.alAccion('foto'); break;
         case 'Tab': e.preventDefault(); this.alAccion('jugadores', true); break;
         case 'KeyL': this.alAccion('luces'); break;
@@ -463,6 +464,7 @@ export class Controles {
       if (M.soltado('LT') || (this.padPoner && lt < 0.3)) { if (this.padPoner) this.mantener.poner = false; this.padPoner = false; }
       if (pul('Y')) this.alAccion('usar');
       if (pul('X')) this.alAccion('inventario');
+      if (pul('R3')) this.alAccion('mapaSolar');
       if (pul('LB')) this.alAccion('rueda', -1);
       if (pul('RB')) this.alAccion('rueda', 1);
       if (pul('ARRIBA')) this.alAccion('rueda', -1);

@@ -52,6 +52,7 @@ import { Cta, pintarFilas, textoMiPosicion } from './cuentaJuego.js';
 import * as Nube from './nube.js';
 import { Espacio } from './espacio/espacio.js';
 import './espacio/recetasEspacio.js';
+import './espacio/recetasSolar.js';
 
 const V = CONFIG.vista;
 const J = CONFIG.jugador;
@@ -350,6 +351,7 @@ const controles = new Controles({
       case 'cancelarMenu': atras(); break;
       case 'depuracion': alternarDepuracion(); break;
       case 'musica': alternarMusica(); break;
+      case 'mapaSolar': if (estado === 'jugando') espacio.solar.abrirMapa(); break;
       case 'minimapa': verMinimapa = !verMinimapa; Aj.set('minimapa', verMinimapa); break;
       case 'foto': if (estado === 'jugando') entrarFoto(); else if (estado === 'foto') salirFoto(); break;
       case 'chat': if (estado === 'jugando' || estado === 'pausa') abrirChat(); break;
@@ -561,14 +563,14 @@ function herirJugador(n, dx, dz, causa, opc, tgt) {
   jugador.vx += (dx / d) * e; jugador.vz += (dz / d) * e; if (jugador.enSuelo) jugador.vy = 4.5;
   // la armadura se gasta
   const piezas = inv.armadura.map((a, i) => (a ? i : -1)).filter((i) => i >= 0);
-  if (piezas.length && causa !== 'caida' && causa !== 'ahogado' && causa !== 'hambre' && causa !== 'lava' && causa !== 'asfixia') {
+  if (piezas.length && causa !== 'caida' && causa !== 'ahogado' && causa !== 'hambre' && causa !== 'lava' && causa !== 'asfixia' && causa !== 'calor' && causa !== 'frio' && causa !== 'radiacion' && causa !== 'acido' && causa !== 'presion' && causa !== 'rayo') {
     const i = piezas[Math.floor(Math.random() * piezas.length)];
     if (inv.gastar(inv.armadura[i], 1)) interfaz.aviso('Se rompió una pieza de tu armadura');
   }
   if (causa === 'creeper') logros.sumar('explosiones');
 }
 
-const CAUSAS = { lava: 'Te quemaste en la lava', asfixia: 'Te quedaste sin oxígeno', diablillo: 'Te mató un diablillo del Abismo', caida: 'Te caíste desde muy alto', ahogado: 'Te ahogaste', hambre: 'Te moriste de hambre', zombi: 'Te mató un zombi', arana: 'Te mató una araña', flecha: 'Te mató un esqueleto', creeper: 'Un creeper explotó cerca de ti', pvp: 'Te derrotó otro jugador' };
+const CAUSAS = { calor: 'Te abrasó el calor extremo', frio: 'Te congelaste', radiacion: 'La radiación te mató', acido: 'El ácido de Venus te disolvió', presion: 'La presión te aplastó', rayo: 'Te alcanzó un rayo', lava: 'Te quemaste en la lava', asfixia: 'Te quedaste sin oxígeno', diablillo: 'Te mató un diablillo del Abismo', caida: 'Te caíste desde muy alto', ahogado: 'Te ahogaste', hambre: 'Te moriste de hambre', zombi: 'Te mató un zombi', arana: 'Te mató una araña', flecha: 'Te mató un esqueleto', creeper: 'Un creeper explotó cerca de ti', pvp: 'Te derrotó otro jugador' };
 function morir(causa) {
   if (estado === 'muerte') return;
   logros.sumar('muertes');
@@ -883,6 +885,7 @@ function tecleoVehiculo() {
   }
   const v = vehiculos.cercano(jugador.x, jugador.y + 0.9, jugador.z);
   if (!v) return false;
+  if (v.T.clase === 'nave') return espacio.solar.alSubirNave(v);
   vehiculos.camaraTercera = CONFIG.vehiculos.camaraTercera;
   vehiculos.subir(v, jugador);
   interfaz.volando(false);
@@ -905,7 +908,7 @@ function colocarVehiculo(tipo) {
   cerrarInventario();
   if (vehiculos.actual) return false;
   const fx = -Math.sin(jugador.yaw), fz = -Math.cos(jugador.yaw);
-  const largo = tipo === 'avioneta' ? 5 : 3;
+  const largo = tipo === 'avioneta' || TIPOS_VEH[tipo].clase === 'nave' ? 5 : 3;
   let lugar = null;
   for (let d = 5; d <= 12 && !lugar; d++) {
     const x = jugador.x + fx * d, z = jugador.z + fz * d;
@@ -2357,6 +2360,7 @@ espacio = new Espacio({
   escena, camara, mundo, jugador, cielo, interfaz, vehiculos, mobs, animales, drops, ambiente, remotos, multi, Aj, inv, vitales, logros, hud, Sonido, uniformes,
   get estado() { return estado; }, get hora() { return hora; }, get dias() { return dias; }, get spawn() { return spawn; },
   tactil: () => tactil, esCreativo, esperando: () => esperandoMundo,
+  saltarDias: (n) => { dias += Math.max(0, Math.floor(n)); logros.maximo('diasMax', dias); },
   setEsperando: (v) => { esperandoMundo = v; buscarSuelo = false; },
   guardar, abrirContenedor, cerrarContenedor: (esc) => cerrarContenedor(esc), abrirInventario,
   danio: (n, causa) => { if (!esCreativo() && !vitales.muerto && estado === 'jugando') vitales.daniar(ctxVitales, n, causa, { sinArmadura: true, sinInvulnerable: true }); },

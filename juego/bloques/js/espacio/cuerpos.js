@@ -6,17 +6,15 @@
 //  apunten a ellos: ningún otro módulo cambia.
 // =============================================================
 
+import { CUERPOS_SOLARES, DIMENSIONES_SOLARES } from './cuerposSolares.js';
+
 // gravedad: múltiplo de la de la Tierra · atmosfera: se puede respirar y hay cielo azul
 export const CUERPOS = {
   tierra: { nombre: 'Tierra', gravedad: 1, atmosfera: true, tipo: 'planeta', orbitaDe: 'sol' },
   luna: { nombre: 'Luna', gravedad: 0.165, atmosfera: false, tipo: 'satelite', orbitaDe: 'tierra', distanciaKm: 384400 },
   abismo: { nombre: 'Abismo', gravedad: 1, atmosfera: true, tipo: 'inframundo', orbitaDe: null },
-  // ---- futuro sistema solar (no se pueden visitar todavía)
-  mercurio: { nombre: 'Mercurio', gravedad: 0.38, atmosfera: false, tipo: 'planeta', orbitaDe: 'sol', futuro: true },
-  venus: { nombre: 'Venus', gravedad: 0.9, atmosfera: 'densa', tipo: 'planeta', orbitaDe: 'sol', futuro: true },
-  marte: { nombre: 'Marte', gravedad: 0.38, atmosfera: 'fina', tipo: 'planeta', orbitaDe: 'sol', futuro: true },
-  jupiter: { nombre: 'Júpiter', gravedad: 2.53, atmosfera: 'gas', tipo: 'gigante', orbitaDe: 'sol', futuro: true },
-  europa: { nombre: 'Europa', gravedad: 0.134, atmosfera: false, tipo: 'satelite', orbitaDe: 'jupiter', futuro: true },
+  // ---- sistema solar: ver cuerposSolares.js
+  ...CUERPOS_SOLARES,
 };
 
 // tipo de cielo: 'atmosfera' (día y noche), 'vacio' (negro con estrellas), 'cueva' (sin cielo)
@@ -42,6 +40,8 @@ export const DIMENSIONES = {
     niebla: '#4a1208', brillo: 0.55, reglas: { cohete: false, vuelo: true },
   },
 };
+
+Object.assign(DIMENSIONES, DIMENSIONES_SOLARES);
 
 export const DIM_DEFECTO = 'superficie';
 export const IDS_DIM = Object.keys(DIMENSIONES);

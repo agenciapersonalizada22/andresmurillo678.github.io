@@ -12,6 +12,7 @@
 // =============================================================
 import { azarConSemilla, hash2 } from './ruido.js';
 import { NUEVAS_TEXTURAS, PINTORES_ESPACIO, RELIEVE_ESPACIO } from './espacio/texturasEspacio.js';
+import { NUEVAS_TEXTURAS_SOLAR, PINTORES_SOLAR, RELIEVE_SOLAR } from './espacio/texturasSolar.js';
 
 // El orden de esta lista es el orden dentro del atlas
 export const LISTA_TEXTURAS = [
@@ -29,6 +30,7 @@ export const LISTA_TEXTURAS = [
   'piedra_pulida', 'cristal_oscuro', 'tejas', 'esmeralda', 'diamante',
   'diamante_mineral', 'esmeralda_mineral',
   ...NUEVAS_TEXTURAS,
+  ...NUEVAS_TEXTURAS_SOLAR,
 ];
 
 export const TAM = 32;          // pixeles por textura
@@ -930,11 +932,12 @@ const PINTORES = {
   esmeralda_mineral: (u) => pintarMineral(u, [30, 150, 70], [140, 245, 175]),
 };
 
-Object.assign(PINTORES, PINTORES_ESPACIO);
+Object.assign(PINTORES, PINTORES_ESPACIO, PINTORES_SOLAR);
 
 // Cuánto relieve tiene cada textura (1 = normal, 0 = lisa)
 const RELIEVE = {
   ...RELIEVE_ESPACIO,
+  ...RELIEVE_SOLAR,
   agua: 0, vidrio: 0.2, cristal_oscuro: 0.2, nieve: 0.3, hielo: 0.4, lana_blanca: 0.5, lana_roja: 0.5, lana_naranja: 0.5,
   lana_amarilla: 0.5, lana_verde: 0.5, lana_azul: 0.5, lana_morada: 0.5, lana_rosa: 0.5, lana_negra: 0.5, lana_gris: 0.5,
   piedra_luminosa: 0.3, obsidiana: 0.5, cofre_frente: 0.6, antorcha: 0.8, riel: 0.8, arbusto_muerto: 0.5, flor_roja: 0.6,

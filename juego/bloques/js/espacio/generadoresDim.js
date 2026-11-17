@@ -12,6 +12,8 @@ import { B } from '../bloques.js';
 import { CAPA, ALTO, LADO } from '../medidas.js';
 import { crearRuido, hash2, hash3 } from '../ruido.js';
 import { crearGenerador } from '../generador.js';
+import { crearGeneradorSolar } from './generadoresSolar.js';
+import { baseAgencia, aplanar } from './baseEspacial.js';
 
 const NADA = { buscar: () => null, instancia: () => null, planDe: () => null, aplicarChunk: () => ({ tope: 0, humos: [], puntos: [], cofres: [] }) };
 const suave = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
@@ -249,12 +251,35 @@ export function crearGeneradorAbismo(semilla) {
   return { generarChunk, alturaEn, buscarInicio, biomaEn: () => 'abismo', version: 2, estructuras: NADA };
 }
 
+// Segunda base lunar estilo agencia ("Base Selene"), lejos de la plataforma de aterrizaje (el terreno de siempre no cambia)
+const SELENE = { x: 150, z: -130 };
+function conBaseSelene(g) {
+  const gen = g.generarChunk, h0 = LUNA.SUELO;
+  g.generarChunk = (cx, cz) => {
+    const r = gen(cx, cz);
+    if (cx * LADO + 15 >= SELENE.x - 28 && cx * LADO <= SELENE.x + 28 && cz * LADO + 15 >= SELENE.z - 28 && cz * LADO <= SELENE.z + 28) {
+      aplanar(r.datos, cx, cz, SELENE.x, SELENE.z, 30, h0, B.REGOLITO, 24);
+      r.alturaMax = Math.max(r.alturaMax, baseAgencia(r.datos, cx, cz, h0, { ox: SELENE.x, oz: SELENE.z }));
+    }
+    return r;
+  };
+  return g;
+}
+
+// Añade un surtidor (reabastecimiento de naves) en el módulo de mando de las estaciones
+function conSurtidor(g, Y) {
+  const gen = g.generarChunk;
+  g.generarChunk = (cx, cz) => { const r = gen(cx, cz); if (cx === 0 && cz === 0) r.datos[(Y + 1) * CAPA + 13 * LADO + 6] = B.SURTIDOR; return r; };
+  return g;
+}
+
 // ----------------------------------------------------------- Fábrica
 export function crearGeneradorDim(id, semilla, version, opciones) {
   switch (id) {
-    case 'luna': return crearGeneradorLuna(semilla);
-    case 'orbita': return crearGeneradorOrbita(semilla);
+    case 'luna': return conBaseSelene(crearGeneradorLuna(semilla));
+    case 'orbita': return conSurtidor(crearGeneradorOrbita(semilla), ORBITA.Y0);
     case 'abismo': return crearGeneradorAbismo(semilla);
-    default: return crearGenerador(semilla, version, opciones);
+    case 'orbita_luna': case 'orbita_marte': case 'orbita_jupiter': return conSurtidor(crearGeneradorOrbita((semilla | 0) ^ (id.length * 7919)), ORBITA.Y0);
+    default: return crearGeneradorSolar(id, semilla) || crearGenerador(semilla, version, opciones);
   }
 }

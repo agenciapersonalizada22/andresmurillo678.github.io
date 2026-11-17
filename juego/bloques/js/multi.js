@@ -195,7 +195,7 @@ export class Multi {
     datos.jugador = { x: c.jugador.x + 1.5, y: c.jugador.y + 0.2, z: c.jugador.z, yaw: c.jugador.yaw, pitch: 0, volando: false };
     // las otras dimensiones no viajan aquí: se piden por paquetes al viajar (dimPedir)
     delete datos.dimensiones;
-    if (datos.espacio) datos.espacio = { ...datos.espacio, dim: 'superficie', veh: undefined, pad: undefined };
+    if (datos.espacio) datos.espacio = { ...datos.espacio, dim: 'superficie', veh: undefined, pad: undefined, sol: undefined };
     if (c.espacio && c.espacio.dim !== 'superficie') datos.jugador = c.spawn ? { x: c.spawn.x, y: c.spawn.y + 0.2, z: c.spawn.z, yaw: 0, pitch: 0, volando: false } : undefined;
     // lo personal de cada jugador no viaja
     delete datos.inventario; delete datos.vitales; delete datos.cama; delete datos.vehiculos; delete datos.vehiculosUsados;

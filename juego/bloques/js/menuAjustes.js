@@ -31,6 +31,10 @@ const SECCIONES = [
     { t: 'bool', k: 'tierraVisible', n: 'Mostrar la Tierra en el cielo de la Luna y la órbita' },
     { t: 'bool', k: 'eclipses', n: 'Eclipses de Sol y de Luna' },
     { t: 'bool', k: 'vibracionCohete', n: 'Sacudida de cámara en el cohete' },
+    { t: 'bool', k: 'planetasCielo', n: 'Dibujar los planetas en el cielo de otros mundos' },
+    { t: 'bool', k: 'tormentasEspacio', n: 'Tormentas de polvo y rayos (Marte, Júpiter)' },
+    { t: 'op', k: 'aceleracionViaje', n: 'Velocidad del tiempo en los viajes en nave', v: [[1, 'x1'], [2, 'x2'], [5, 'x5'], [10, 'x10'], [25, 'x25'], [50, 'x50']] },
+    { t: 'bool', k: 'mapaSolar3d', n: 'Mapa del sistema solar en 3D' },
   ] },
   { id: 'audio', nombre: 'AUDIO', filas: [
     { t: 'num', k: 'volMaestro', n: 'Volumen general', min: 0, max: 100, paso: 10, fmt: (v) => v + '%' },

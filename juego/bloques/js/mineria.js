@@ -8,6 +8,7 @@
 import * as THREE from '../lib/three.module.min.js';
 import { B, BLOQUES, BASE, DIBUJO, DIBUJO_PLANTA } from './bloques.js';
 import { idInventario } from './objetos.js';
+import { FILAS_SOLAR, B_SOLAR, ITEM_DE_MENA } from './espacio/bloquesSolar.js';
 
 const NINGUNA = 0, PICO = 1, HACHA = 2, PALA = 3;
 const NOMBRE_HERR = [null, 'pico', 'hacha', 'pala'];
@@ -56,6 +57,10 @@ fijar([B.ROCA_LUNAR, B.ROCA_ABISMO, B.ROCA_BRASA], 1.8, PICO, 0, true);
 fijar([B.HORMIGON, B.METAL, B.PLATAFORMA, B.TORRE_METAL], 2.5, PICO, 0, true);
 fijar([B.PANEL_CONTROL, B.CARGADOR, B.FABRICA, B.CONSOLA_NAV, B.GENERADOR_O2], 2.5, PICO, 0, false);
 fijar([B.LAVA, B.PORTAL], 0, NINGUNA);
+for (const [clave, , , , , ex] of FILAS_SOLAR) {
+  const id = B_SOLAR[clave.toUpperCase()];
+  fijar(id, ex.dur, ex.herr === 'pico' ? PICO : ex.herr === 'pala' ? PALA : NINGUNA, ex.tier || 0, !!ex.pide);
+}
 
 export function propsBloque(id) {
   return { dureza: dureza[id], herr: NOMBRE_HERR[herr[id]], tier: tierMin[id], requiere: !!requiere[id] };
@@ -89,6 +94,8 @@ export function botinDeBloque(id, o, azar = Math.random) {
   if (id === B.ORO) return [['oro_crudo', 1]];
   if (id === B.MINERAL_DIAMANTE) return [['diamante', 1]];
   if (id === B.MINERAL_ESMERALDA) return [['esmeralda', 1]];
+  if (ITEM_DE_MENA[id]) return [[ITEM_DE_MENA[id], 1]];
+  if (id === B.METANO || id === B.NUBE_ACIDA || id >= B.NUBE_AMBAR && id <= B.NUBE_ROJA || id === B.NUBE_URANO || id === B.NUBE_NEPTUNO || id === B.HIELO_SECO || id === B.HIELO_EUROPA || id === B.HIELO_AGRIETADO) return [];
   if (id === B.TRIGO) return [['trigo', 1 + (azar() < 0.3 ? 1 : 0)]];
   if (id === B.ARBUSTO_MUERTO) return azar() < 0.6 ? [['palo', 1 + (azar() < 0.4 ? 1 : 0)]] : [];
   if (id === B.PASTO_ALTO) return [];

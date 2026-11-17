@@ -285,8 +285,8 @@ export const Sonido = {
   get efectosActivos() { return efectosActivos; },
 
   // Volúmenes de 0 a 1 (los pone el menú de ajustes)
-  ponerVolumenes({ maestro, efectos: ef, silenciar, pausarAlOcultar }) {
-    if (Number.isFinite(maestro)) volMaestro = maestro;
+  ponerVolumenes({ maestro: vm, efectos: ef, silenciar, pausarAlOcultar }) {
+    if (Number.isFinite(vm)) volMaestro = vm;
     if (Number.isFinite(ef)) volEfectos = ef;
     if (typeof silenciar === 'boolean') silencio = silenciar;
     if (typeof pausarAlOcultar === 'boolean') pausarOculto = pausarAlOcultar;

@@ -54,3 +54,81 @@ body.cargandoDim[data-dim="abismo"] #barraCarga { background: linear-gradient(90
 body.enVehiculo.vehVolador #btnVolar { display: flex; right: calc(10px + var(--seguro-der)); top: calc(294px + var(--seguro-arriba)); bottom: auto; }
 body.enVehiculo.vueloVolador #btnBajar { display: flex; right: calc(10px + var(--seguro-der)); top: calc(352px + var(--seguro-arriba)); bottom: auto; }
 body.enVehiculo.vehVolador #btnSaltar { display: flex; }
+
+/* =============================================================
+   Sistema solar: mapa, traje, viaje en vivo, eventos, entrada atmosférica
+   ============================================================= */
+.espBtnMapa {
+  position: absolute; left: 10px; top: calc(86px + var(--seguro-arriba)); pointer-events: auto; padding: 5px 12px; border-radius: 8px;
+  background: rgba(0, 12, 24, 0.7); border: 1px solid rgba(255, 210, 61, 0.7); color: #ffe9a8; font: 800 11px Orbitron, monospace; letter-spacing: 1px; cursor: pointer;
+}
+body.tactil .espBtnMapa { top: calc(92px + var(--seguro-arriba)); left: calc(10px + var(--seguro-izq)); }
+.espBtnMapa.oculto, #espTraje.oculto, #espViaje.oculto, #espEvento.oculto, #espFx.oculto, #espRayo.oculto { display: none; }
+#espTraje {
+  position: absolute; left: 50%; bottom: calc(134px + var(--seguro-abajo)); transform: translateX(-50%); width: min(430px, 92vw); padding: 4px 8px; border-radius: 8px;
+  background: rgba(0, 8, 14, 0.66); border: 1px solid rgba(255, 190, 80, 0.55); overflow: hidden;
+}
+body.tactil #espTraje { bottom: calc(152px + var(--seguro-abajo)); }
+#espTraje span { position: relative; z-index: 1; font: 800 10px system-ui, sans-serif; letter-spacing: 0.5px; color: #ffe2a8; white-space: nowrap; }
+#espTraje i { position: absolute; inset: auto 0 0 0; height: 3px; width: 100%; background: linear-gradient(90deg, #ffb03d, #ffe58a); transition: width 0.3s; }
+#espTraje.mal { border-color: #ff4a3a; animation: parpadeo 0.5s infinite alternate; }
+#espTraje.mal span { color: #ffb0a6; }
+#espViaje {
+  position: absolute; left: 50%; top: calc(46px + var(--seguro-arriba)); transform: translateX(-50%); width: min(560px, 62vw); padding: 6px 10px; border-radius: 10px; pointer-events: auto;
+  background: rgba(0, 8, 20, 0.72); border: 1px solid rgba(91, 233, 255, 0.6); display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center;
+}
+#espViaje b { font: 800 12px Orbitron, monospace; letter-spacing: 1px; color: #bff6ff; }
+#espViaje .barra, #espFx .barra { flex: 1 1 100%; height: 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.16); overflow: hidden; }
+#espViaje .barra i, #espFx .barra i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #3d9bff, #8be0ff); }
+#espViaje span { font: 11px system-ui, sans-serif; color: #d6ecff; flex: 1 1 100%; }
+#espViaje .vel { display: flex; gap: 4px; flex-wrap: wrap; }
+#espViaje .vel.oculto { display: none; }
+#espViaje button { padding: 3px 9px; border-radius: 6px; border: 1px solid rgba(160, 220, 255, 0.5); background: rgba(10, 30, 50, 0.8); color: #bff6ff; font: 800 10px Orbitron, monospace; cursor: pointer; }
+#espViaje button.on { background: #ffd23d; color: #281c00; border-color: #ffd23d; }
+#espEvento {
+  position: absolute; left: 50%; top: 32%; transform: translate(-50%, -50%); width: min(420px, 92vw); padding: 14px; border-radius: 12px; pointer-events: auto; z-index: 5;
+  background: rgba(30, 8, 6, 0.9); border: 2px solid #ff8a3a; display: flex; flex-direction: column; gap: 8px; text-align: center;
+}
+#espEvento b { font: 800 14px Orbitron, monospace; color: #ffd0a0; }
+#espEvento small { color: #ffb08a; font: 12px system-ui, sans-serif; }
+#espEvento button { padding: 10px; border-radius: 8px; border: 1px solid #ffb35a; background: rgba(60, 24, 8, 0.9); color: #ffe2c0; font: 800 12px Orbitron, monospace; cursor: pointer; }
+#espFx { position: absolute; left: 50%; bottom: calc(30px + var(--seguro-abajo)); transform: translateX(-50%); width: min(520px, 92vw); text-align: center; display: flex; flex-direction: column; gap: 8px; }
+#espFx b { font: 800 14px Orbitron, monospace; letter-spacing: 2px; color: #ffe2a8; text-shadow: 0 1px 3px #000; }
+#espRayo { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+#espRayo.flash { animation: rayoFlash 0.25s ease-out; }
+@keyframes rayoFlash { 0% { opacity: 0.9; } 100% { opacity: 0; } }
+body.entrando::before, body.despegando::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 15;
+}
+body.entrando::before { background: radial-gradient(ellipse at 50% 120%, rgba(255, 200, 80, calc(0.9 * var(--fxk, 0))) 0%, rgba(255, 90, 20, calc(0.6 * var(--fxk, 0))) 35%, rgba(120, 20, 0, calc(0.35 * var(--fxk, 0))) 65%, rgba(0, 0, 0, 0) 100%); animation: sacudir 0.12s infinite alternate; }
+body.despegando::before { background: linear-gradient(0deg, rgba(255, 170, 70, calc(0.5 * var(--fxk, 0))), rgba(0, 0, 0, calc(0.7 * var(--fxk, 0)))); }
+body.entrando #lienzo { animation: sacudir 0.08s infinite alternate; }
+@keyframes sacudir { from { transform: translate(-2px, 1px); } to { transform: translate(2px, -1px); } }
+body[data-dim="transito"] #espDim { border-color: rgba(255, 210, 61, 0.7); color: #ffe9a8; }
+body.cargandoDim[data-dim="marte"] #pantallaCarga, body.cargandoDim[data-dim="venus"] #pantallaCarga, body.cargandoDim[data-dim="titan"] #pantallaCarga { background: radial-gradient(ellipse at center, rgba(70, 26, 8, 0.9), rgba(10, 4, 0, 0.97)); color: #ffd0a0; text-shadow: 0 0 12px rgba(255, 140, 60, 0.6); }
+body.cargandoDim[data-dim="marte"] #barraCarga, body.cargandoDim[data-dim="venus"] #barraCarga, body.cargandoDim[data-dim="titan"] #barraCarga { background: linear-gradient(90deg, #ff6a1a, #ffc03d); }
+/* paneles del mapa */
+.solTabs { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+.solTabs button { width: auto !important; flex: 1 1 auto; margin: 0 !important; padding: 8px 10px; font: 800 11px Orbitron, monospace; letter-spacing: 1px; }
+.solTabs button.on { background: #ffd23d; color: #281c00; }
+.solMapa { position: relative; }
+.solCanvas { width: 100%; max-width: 560px; height: auto; border-radius: 10px; border: 1px solid rgba(91, 233, 255, 0.4); display: block; margin: 0 auto; touch-action: manipulation; }
+.solBarra { display: flex; gap: 6px; justify-content: center; margin-top: 6px; }
+.solBarra button { width: auto !important; margin: 0 !important; padding: 5px 12px; font: 800 10px Orbitron, monospace; }
+.solChips { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; justify-content: center; }
+.solChips button { width: auto !important; margin: 0 !important; padding: 4px 9px; font: 700 11px system-ui, sans-serif; border-radius: 12px; }
+.solChips button.on { background: #ffd23d; color: #281c00; }
+.solAcc { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.solAcc button { width: auto !important; flex: 1 1 140px; margin: 0 !important; }
+.solAviso { display: block; color: #ffb08a; font: 12px system-ui, sans-serif; margin: 3px 0; text-align: left; }
+.espInfo small { display: block; color: #9fc4d8; margin-top: 4px; }
+.solMed { position: relative; height: 18px; margin: 5px 0; border-radius: 6px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+.solMed i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #3d9bff, #8be0ff); }
+.solMed.mal i { background: linear-gradient(90deg, #ff3d3d, #ff9a5c); }
+.solMed span { position: relative; font: 800 10px/18px system-ui, sans-serif; padding-left: 8px; color: #fff; text-shadow: 0 1px 2px #000; }
+.solDiario { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 6px; margin: 6px 0; }
+.solTarj { padding: 6px 9px; border-radius: 8px; background: rgba(255, 255, 255, 0.06); font: 11px system-ui, sans-serif; text-align: left; display: flex; flex-direction: column; gap: 2px; position: relative; }
+.solTarj.ok { background: rgba(125, 217, 87, 0.15); }
+.solTarj b { font: 800 11px Orbitron, monospace; }
+.solTarj i { position: absolute; right: 8px; top: 8px; width: 12px; height: 12px; border-radius: 3px; }
+.solSub { display: block; margin: 10px 0 2px; font: 800 12px Orbitron, monospace; color: #bff6ff; text-align: left; }
