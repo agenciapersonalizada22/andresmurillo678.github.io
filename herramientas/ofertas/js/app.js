@@ -43,6 +43,7 @@
     cont.appendChild(t); setTimeout(function () { t.remove(); }, o.ms || 3500);
   };
   A.copiar = function (txt, msg) {
+    if (/^Cup/.test(msg || '')) if (Of.logro) Of.logro('primer_cupon');
     var ok = function () { A.toast(msg || 'Copiado'); };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, function () { viejoCopiar(txt); ok(); });
     else { viejoCopiar(txt); ok(); }
@@ -121,7 +122,7 @@
       var r = await Promise.all([Datos.cargar('ofertas/ofertas.json', { forzar: forzar }), Datos.cargar('ofertas/historial.json', { forzar: forzar }).catch(function () { return {}; }),
         Datos.cargar('mercados/divisas.json').catch(function () { return null; }), Datos.estado().catch(function () { return null; })]);
       if (!r[0] || !r[0].items || !r[0].items.length) throw new Error('El archivo de ofertas esta vacio.');
-      S.demo = false; S.motivoDemo = ''; tomarDatos({ ofertas: r[0], historial: r[1], divisas: r[2], estado: r[3] });
+      S.demo = false; S.motivoDemo = ''; tomarDatos({ ofertas: r[0], historial: r[1], divisas: r[2], estado: r[3] }); if (Of.logro) Of.logro('datos_en_vivo');
     } catch (e) {
       datosDemo(e.message === 'demo-manual' ? 'manual' : 'No se pudieron cargar las ofertas reales (' + e.message + ').');
     }
@@ -182,7 +183,7 @@
     S.parsed = r.parsed; var ahora = Date.now(), lista = [], punt = {}, i, it;
     if (r.idx) for (i = 0; i < r.idx.length; i++) { it = S.items[r.idx[i]]; if (A.pasa(it, ahora)) { lista.push(it); punt[it.id] = r.puntaje[i]; } }
     else for (i = 0; i < S.items.length; i++) { it = S.items[i]; if (A.pasa(it, ahora)) lista.push(it); }
-    S.totalFiltrado = lista.length;
+    S.totalFiltrado = lista.length; if (A.filtrosActivos()) if (Of.logro) Of.logro('primer_filtro');
     if (S.aj.agrupar && S.grupoDe) {
       var mejor = {};
       lista.forEach(function (x) { var g = S.grupoDe[x._i]; if (!mejor[g] || x._usd < mejor[g]._usd) mejor[g] = x; });
@@ -194,7 +195,7 @@
     S.vis = lista; S.sel = -1;
     if (A.alRecalcular) A.alRecalcular();
   };
-  A.setQ = function (q) { S.q = q; if (!S.ordenManual) S.orden = q.trim() && /[a-z0-9]/i.test(q.replace(/\b\w+[:<>=]\S*/g, '')) ? 'relevancia' : S.aj.orden || 'calor'; A.recalcular(); };
+  A.setQ = function (q) { S.q = q; if (q.trim()) if (Of.logro) Of.logro('primera_busqueda'); if (!S.ordenManual) S.orden = q.trim() && /[a-z0-9]/i.test(q.replace(/\b\w+[:<>=]\S*/g, '')) ? 'relevancia' : S.aj.orden || 'calor'; A.recalcular(); };
 
   /* ---------- nuevas ---------- */
   A.calcNuevas = function () {
@@ -209,6 +210,7 @@
   A.regGuardado = function (id) { return S.guardados[id]; };
   A.guardarReg = function (r) {
     if (!r.guardada && !r.usada) { delete S.guardados[r.id]; St.borrar('g:' + r.id); } else { S.guardados[r.id] = r; St.set('g:' + r.id, r); }
+    if (r.guardada) if (Of.logro) Of.logro('primera_guardada'); if (r.usada) if (Of.logro) Of.logro('oferta_usada');
     A.pintarNav(); if (A.alGuardar) A.alGuardar(r.id);
   };
   A.toggleGuardar = function (it, forzar) {
@@ -227,7 +229,7 @@
   };
   A.nuevaCarpeta = function (nombre) {
     var c = { id: 'c' + Date.now().toString(36), nombre: nombre.trim().slice(0, 40) }; if (!c.nombre) return null;
-    S.carpetas.push(c); St.set('c:' + c.id, c); return c;
+    S.carpetas.push(c); St.set('c:' + c.id, c); if (Of.logro) Of.logro('primera_carpeta'); return c;
   };
   A.borrarCarpeta = function (id) {
     S.carpetas = S.carpetas.filter(function (c) { return c.id !== id; }); St.borrar('c:' + id);
@@ -235,7 +237,7 @@
   };
 
   /* ---------- alertas ---------- */
-  A.guardarAlerta = function (a) { var i = S.alertas.findIndex(function (x) { return x.id === a.id; }); if (i >= 0) S.alertas[i] = a; else S.alertas.push(a); St.set('al:' + a.id, a); };
+  A.guardarAlerta = function (a) { var i = S.alertas.findIndex(function (x) { return x.id === a.id; }); if (i >= 0) S.alertas[i] = a; else S.alertas.push(a); St.set('al:' + a.id, a); if (Of.logro) Of.logro('primera_alerta'); };
   A.borrarAlerta = function (id) { S.alertas = S.alertas.filter(function (a) { return a.id !== id; }); St.borrar('al:' + id); };
   A.evaluarAlertas = function () {
     var ctx = { ahora: Date.now(), convertir: A.conv, descReal: function (it) { return it._an.sinHistorial ? 0 : it._an.descReal * 100; } };
@@ -243,6 +245,7 @@
     S.hits = Al.evaluar(S.alertas, items, ctx);
     var nuevos = 0, primera = null;
     S.hits.forEach(function (h) { if (h.nuevas.length) { nuevos += h.nuevas.length; primera = primera || h; } });
+    if (nuevos && Of.logro) Of.logro('alerta_coincide');
     if (nuevos && !S.demo) {
       var msg = nuevos + (nuevos === 1 ? ' oferta coincide' : ' ofertas coinciden') + ' con tus alertas';
       A.toast(msg, { accion: { texto: 'Ver', fn: function () { A.ir('alertas'); } }, ms: 7000 });

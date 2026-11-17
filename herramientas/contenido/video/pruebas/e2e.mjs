@@ -31,7 +31,9 @@ const pixel = (pg, fx, fy) => A(pg, ([fx, fy]) => { const c = document.getElemen
 const bajar = async (pg) => { const b64 = await A(pg, async () => { const ab = await window.__ultimaExportacion.blob.arrayBuffer(); let s = ''; const u = new Uint8Array(ab); for (let i = 0; i < u.length; i += 32768) s += String.fromCharCode.apply(null, u.subarray(i, i + 32768)); return btoa(s); }); const f = M('exp' + Math.random().toString(36).slice(2, 6) + '.webm'); fs.writeFileSync(f, Buffer.from(b64, 'base64')); return f; };
 const sonda = (f) => JSON.parse(execFileSync('ffprobe', ['-v', 'error', '-count_frames', '-show_streams', '-show_format', '-of', 'json', f]).toString());
 
+const entrarDemo = async (c, origen) => { const p = await c.newPage(); await p.goto(origen + '/juego/'); await p.evaluate(async () => { await Cuenta.iniciar(); if (!Cuenta.usuario) await Cuenta.registrar('probador', 'clave12345', { recordar: true }); }); await p.close(); };  // las herramientas exigen sesion: se registra una cuenta demo local antes
 const b = await lanzar();
+const _nc = b.newContext.bind(b); b.newContext = async (o) => { const c = await _nc(o); await entrarDemo(c, new URL(BASE).origin); return c; };
 let ctx = await b.newContext({ viewport: { width: 1360, height: 820 }, acceptDownloads: true });
 let pg = await ctx.newPage(); const errs = []; vigilar(pg, errs);
 await abrir(pg);

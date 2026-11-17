@@ -23,6 +23,7 @@
 
   E.guardarCfg = function (parche) {
     for (var k in parche) S.cfg[k] = parche[k];
+    if (A.logrosCfg) A.logrosCfg(parche);
     var copia = JSON.parse(JSON.stringify(S.cfg)); delete copia.id; delete copia._t;
     return store.set('ajustes', 'cfg', copia).then(function () { avisar('cfg'); });
   };
@@ -33,6 +34,7 @@
 
   E.guardarApuesta = function (a) {
     a.actualizado = Date.now();
+    if (A.logrosApuesta) A.logrosApuesta(a, !S.apuestas.some(function (x) { return x.id === a.id; }));
     return store.set('apuestas', a.id, a).then(function (v) {
       var i = S.apuestas.findIndex(function (x) { return x.id === a.id; });
       if (i >= 0) S.apuestas[i] = v; else S.apuestas.push(v);
@@ -80,7 +82,7 @@
     }).catch(function (e) { S.estadoDatos = 'error'; S.errorDatos = e.message; S.datos = null; }).then(post);
   };
   function post() {
-    avisar('datos');
+    avisar('datos'); if (A.logrosDatos) A.logrosDatos(S);
     return E.guardarCaptura().catch(function () {}).then(E.evaluarAlertas);
   }
 

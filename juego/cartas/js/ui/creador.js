@@ -2,6 +2,7 @@
 import { h, fmt, boton, aviso } from './dom.js';
 import { lista, CATALOGO } from '../juegos/registro.js';
 import { Cartera } from '../marco/cartera.js';
+import { REF, mesaLimpia, opcionesEstandar } from '../marco/economia.js';
 import * as A from '../marco/almacen.js';
 import { crearMesa, CFG_BASE, semilla8 } from '../marco/mesa.js';
 
@@ -42,15 +43,18 @@ export function pantallaCrear(cont, alCrear, alVolver) {
     }
     while (e.asientos.length < 8) e.asientos.push(e.asientos.length % 3 === 0 ? 'medio' : e.asientos.length % 3 === 1 ? 'novato' : 'experto');
     const c = e.cfg;
+    const notaRank = h('p', { cls: 'nota', role: 'status' });
+    const actNota = () => { notaRank.textContent = (mesaLimpia(c) ? 'Esta mesa cuenta para el ranking del bote y del monedero.' : 'Esta mesa no cuenta para el ranking del bote ni del monedero (fichas de bots por encima de ' + fmt(REF.fichasBots) + ').') + (opcionesEstandar(J.opciones, c.op) ? '' : ' Con reglas personalizadas tampoco cuentan las rachas, turnos ni libros.'); };
+    actNota();
     const juegos = h('div', { cls: 'juegos' }, lista().map((g) => h('button', { type: 'button', cls: 'juego-op' + (g.id === e.juego ? ' on' : ''), 'data-f': 1, 'aria-pressed': String(g.id === e.juego), on: { click: () => { e.juego = g.id; pintar(); } } }, [h('b', { txt: g.emoji }), h('span', { txt: g.corto }), h('small', { txt: g.desc })])));
     const grupos = {};
     J.opciones.forEach((o) => { (grupos[o.grupo || 'Opciones'] = grupos[o.grupo || 'Opciones'] || []).push(o); });
     const opcionesUI = Object.keys(grupos).map((g) => h('details', { cls: 'grupo', open: g === Object.keys(grupos)[0] ? '' : null }, [h('summary', { txt: g }), ...grupos[g].map((o) => {
       const v = c.op[o.id];
-      if (o.tipo === 'num') return f(o.etiqueta, num(v, o.min, o.max, o.paso, (x) => { c.op[o.id] = x; }));
-      if (o.tipo === 'bool') return f(o.etiqueta, chk(v, (x) => { c.op[o.id] = x; }));
-      if (o.tipo === 'orden') return listaOrden(o, v, (x) => { c.op[o.id] = x; });
-      return f(o.etiqueta, sel(v, o.opciones, (x) => { c.op[o.id] = typeof o.def === 'number' ? +x : x; }));
+      if (o.tipo === 'num') return f(o.etiqueta, num(v, o.min, o.max, o.paso, (x) => { c.op[o.id] = x; actNota(); }));
+      if (o.tipo === 'bool') return f(o.etiqueta, chk(v, (x) => { c.op[o.id] = x; actNota(); }));
+      if (o.tipo === 'orden') return listaOrden(o, v, (x) => { c.op[o.id] = x; actNota(); });
+      return f(o.etiqueta, sel(v, o.opciones, (x) => { c.op[o.id] = typeof o.def === 'number' ? +x : x; actNota(); }));
     })]));
     const asientosUI = [];
     for (let i = 1; i < e.n; i++) asientosUI.push(f('Asiento ' + (i + 1), sel(e.asientos[i], [['novato', 'Bot novato'], ['medio', 'Bot medio'], ['experto', 'Bot experto'], ['abierto', 'Jugador humano (invitar)']], (x) => { e.asientos[i] = x; })));
@@ -58,7 +62,7 @@ export function pantallaCrear(cont, alCrear, alVolver) {
     const torneo = J.torneo ? f('Modo torneo (sin recompra, ciegas crecientes)', chk(c.torneo, (x) => { c.torneo = x; if (x && c.op.escTipo === '') c.op.escTipo = 'manos'; pintar(); })) : null;
     const eco = [
       f(c.torneo ? 'Inscripción (se descuenta de tu monedero)' : 'Tu entrada a la mesa', num(Math.min(c.compra, saldo), 1, 100000000, 50, (x) => { c.compra = x; }), 'Tu monedero: ' + fmt(saldo) + ' fichas'),
-      f(c.torneo ? 'Fichas de torneo para cada jugador' : 'Fichas de los bots', num(c.fichasIni, 10, 100000000, 100, (x) => { c.fichasIni = x; })),
+      f(c.torneo ? 'Fichas de torneo para cada jugador' : 'Fichas de los bots', num(c.fichasIni, 10, 100000000, 100, (x) => { c.fichasIni = x; actNota(); }), `con más de ${fmt(REF.fichasBots)} no cuenta para el ranking`),
       c.torneo ? null : f('Entrada mínima (otros jugadores)', num(c.compraMin, 1, 100000000, 50, (x) => { c.compraMin = x; })),
       c.torneo ? null : f('Entrada máxima', num(c.compraMax, 1, 100000000, 50, (x) => { c.compraMax = x; })),
       c.torneo ? null : f('Permitir recompra', chk(c.recompra, (x) => { c.recompra = x; })),
@@ -66,6 +70,7 @@ export function pantallaCrear(cont, alCrear, alVolver) {
     ];
     raiz.replaceChildren(
       h('h2', { txt: 'Crear mesa' }), h('p', { cls: 'nota', txt: 'Solo fichas virtuales, sin valor real.' }), juegos,
+      notaRank,
       f('Baraja', sel(c.baraja, J.barajas, (x) => { c.baraja = x; })), jugadores, ...asientosUI,
       f('Privacidad', sel(e.privada ? 'privada' : 'abierta', [['abierta', 'Abierta: entra quien tenga el enlace'], ['privada', 'Privada: apruebo cada asiento']], (x) => { e.privada = x === 'privada'; })),
       h('details', { cls: 'grupo', open: '' }, [h('summary', { txt: 'Economía' }), torneo, ...eco].filter(Boolean)),

@@ -223,7 +223,7 @@
         var t = e.target.closest('button,label'); if (!t) return;
         if (t.dataset.aj) { var p = {}; p[t.dataset.aj] = t.dataset.v; A.setAj(p); if (t.dataset.aj === 'vista') Object.keys(A.vistas).forEach(function (k) { var l = A.vistas[k].lista; if (l) l.virt.modo(S.aj.vista); }); A.vistas.ajustes.mostrar(); }
         else if (t.dataset.fav) { var f = aj.favoritas.slice(), i = f.indexOf(t.dataset.fav); if (i >= 0) f.splice(i, 1); else f.push(t.dataset.fav); A.setAj({ favoritas: f }); A.vistas.ajustes.mostrar(); A.recalcular(); }
-        else if (t.id === 'ajExp') { var b = new Blob([JSON.stringify(St.exportar(), null, 1)], { type: 'application/json' }), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'ofertas-copia.json'; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000); }
+        else if (t.id === 'ajExp') { if (Of.logro) Of.logro('exportar'); var b = new Blob([JSON.stringify(St.exportar(), null, 1)], { type: 'application/json' }), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'ofertas-copia.json'; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000); }
         else if (t.id === 'ajBor') { if (confirm('Borrar guardadas, alertas, carpetas y ajustes de este dispositivo?')) { var ex = St.exportar(); Object.keys(ex).forEach(function (k) { St.borrar(k.replace(/^ofertas:/, '')); }); location.reload(); } }
         else if (t.id === 'ajAtajos') A.ayudaTeclas(); else if (t.id === 'ajAvisos') A.avisosLegales();
       };

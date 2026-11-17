@@ -5,8 +5,10 @@ const BASE = process.env.BASE || 'http://localhost:8123/herramientas/contenido/e
 const SHOTS = process.env.SHOTS || '/tmp';
 const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'POST, OPTIONS' };
 const sse = (arr) => arr.map(([e, d]) => `event: ${e}\ndata: ${JSON.stringify(d)}\n\n`).join('');
+const entrarDemo = async (c, origen) => { const p = await c.newPage(); await p.goto(origen + '/juego/'); await p.evaluate(async () => { await Cuenta.iniciar(); if (!Cuenta.usuario) await Cuenta.registrar('probador', 'clave12345', { recordar: true }); }); await p.close(); };  // las herramientas exigen sesion: se registra una cuenta demo local antes
 (async () => {
   const br = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  const _nc = br.newContext.bind(br); br.newContext = async (o) => { const c = await _nc(o); await entrarDemo(c, new URL(BASE).origin); return c; };
   const ctx = await br.newContext({ viewport: { width: 1280, height: 800 }, acceptDownloads: true });
   const page = await ctx.newPage(); const errs = [];
   page.on('console', m => { if (m.type() === 'error') errs.push(m.text()); }); page.on('pageerror', e => errs.push(String(e)));

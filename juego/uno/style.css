@@ -16,7 +16,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 #barra { display: flex; align-items: center; gap: 8px; padding: 6px 10px; padding-top: calc(6px + env(safe-area-inset-top)); min-height: 46px; flex: none; z-index: 5; }
 #barra .volver { color: var(--suave); text-decoration: none; padding: 6px 4px; font-size: .9em; white-space: nowrap; }
 #barra .titulo { font: 800 1.15rem Orbitron, system-ui, sans-serif; letter-spacing: .2em; margin: 0 auto 0 4px; color: #fff; text-shadow: 0 0 14px var(--col0); }
-.acciones { display: flex; gap: 4px; }
+.acciones { display: flex; gap: 4px; flex: none; }
+@media (max-width: 460px) { #barra { gap: 4px; padding-left: 6px; padding-right: 6px; } #barra .titulo { letter-spacing: .12em; margin-left: 0; } .acciones { gap: 3px; } .acciones .icono { width: 34px; height: 34px; border-radius: 10px; font-size: .95rem; } }
+@media (max-width: 360px) { #barra .titulo { font-size: 1rem; letter-spacing: .06em; } .acciones .icono { width: 31px; height: 31px; } }
 .icono { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--borde); background: var(--panel); font-size: 1.05rem; display: grid; place-items: center; padding: 0; }
 .icono:hover { background: rgba(255, 255, 255, .16); }
 

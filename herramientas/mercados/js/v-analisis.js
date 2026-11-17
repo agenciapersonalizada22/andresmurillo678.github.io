@@ -142,7 +142,7 @@
         if (hr.velas.length < 60) throw new Error('Historial insuficiente (' + hr.velas.length + ' velas)'); if (est === 'cruce' && P.cruce.rapida >= P.cruce.lenta) throw new Error('La SMA rapida debe ser menor que la lenta');
         return Calc.llamar('backtest', { velas: hr.velas, estrategia: { tipo: est, params: P[est] }, opciones: { capital: +capital.value, comisionPct: +com.value, deslizamientoPct: +desl.value } }).then(function (r) { return { r: r, hr: hr, a: a }; });
       }).then(function (o) {
-        if (!vivo) return; UI.vaciar(area); var m = o.r.metricas, v = o.hr.velas, xs = v.map(function (b) { return b[0]; });
+        if (!vivo) return; UI.vaciar(area); if (window.Logros) Logros.dar('primer_backtest'); var m = o.r.metricas, v = o.hr.velas, xs = v.map(function (b) { return b[0]; });
         var grid = h('div.rejilla.g4.m2'); function k(t, val, cl) { grid.appendChild(h('div.tarjeta', { style: 'padding:8px' }, h('div.muted.peq', t), h('div', { style: 'font-size:17px;font-weight:600', class: cl || '' }, val))); }
         k('Retorno total', F.pct(m.retornoTotal * 100), UI.clasePct(m.retornoTotal)); k('Buy & hold', F.pct(m.retornoBH * 100), UI.clasePct(m.retornoBH)); k('CAGR', F.pct(m.cagr * 100)); k('Max drawdown', F.pct(m.maxDD * 100), 'baja'); k('Sharpe', F.num(m.sharpe, 2)); k('% aciertos', F.ok(m.aciertos) ? F.num(m.aciertos * 100, 0) + '%' : '-'); k('Operaciones', m.operaciones); k('Capital final', F.num(m.capitalFinal, 0));
         area.appendChild(grid); area.appendChild(lineasSVG([{ nombre: 'Estrategia', color: 'var(--c2)', x: xs, y: o.r.equity }, { nombre: 'Buy&hold', color: 'var(--c1)', x: xs, y: o.r.buyHold }], { base: +capital.value }));

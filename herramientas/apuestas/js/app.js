@@ -25,7 +25,7 @@
     if (S.sinPersistencia) avisos.push(U.aviso('Tu navegador no permite guardar datos de forma persistente: lo que registres se perderá al cerrar. Exporta el CSV con frecuencia.', 'peligro'));
     var vista = h('div', { class: 'vista-' + ruta });
     U.montar(cont, avisos, vista);
-    V[ruta](vista);
+    V[ruta](vista); if (A.logrosRuta) A.logrosRuta(ruta, S);
     document.title = RUTAS.filter(function (r) { return r[0] === ruta; })[0][1] + ' · Apuestas: análisis y registro';
   };
 

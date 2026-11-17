@@ -65,7 +65,8 @@ export const MODOS_PUNTAJE = [
 // valores de cada modo de puntaje segun las estadisticas locales (la plataforma los lee de aqui)
 export function puntajes() {
   const s = A.stats.obtener();
-  return { monedero: s.maxMonedero || 0, bote: s.mayorBote || 0, dompe_racha: s.mejorRachaDompe || 0, conq_turnos: s.mejorConqTurnos || 0, pesc_libros: s.mejorLibros || 0 };
+  // solo los valores "Rank" (mesas y reglas estandar, monedero no inflado): los ajustes de economia/mesa no pueden inflar el ranking
+  return { monedero: s.maxMonederoRank || 0, bote: s.mayorBoteRank || 0, dompe_racha: s.mejorRachaDompeRank || 0, conq_turnos: s.mejorConqTurnosRank || 0, pesc_libros: s.mejorLibrosRank || 0 };
 }
 export const grupoDe = (id) => (/^poker_/.test(id) ? 'Póker' : /^(bj_|sm_)/.test(id) ? 'Veintiuno y siete y medio' : /^dompe_/.test(id) ? 'Dompe' : /^conq_/.test(id) ? 'Conquián' : /^pesc_/.test(id) ? 'Ve a pescar' : 'General');
 const avisos = [];
@@ -82,6 +83,7 @@ export function registrarMano(info) {
   const s = stat((s) => {
     s.manos = (s.manos || 0) + 1; if (info.ganada) s.ganadas = (s.ganadas || 0) + 1;
     s.neto = (s.neto || 0) + info.delta; s.mayorBote = Math.max(s.mayorBote || 0, info.ganada ? info.bote || 0 : 0);
+    if (info.rank && info.ganada) s.mayorBoteRank = Math.max(s.mayorBoteRank || 0, info.bote || 0);
     s['racha_' + info.juego] = info.ganada ? (s['racha_' + info.juego] || 0) + 1 : 0;
     s['manos_' + info.juego] = (s['manos_' + info.juego] || 0) + 1;
   });
@@ -108,7 +110,12 @@ export function registrarMano(info) {
 function nuevosJuegos(info, s) {
   const m = info.meta || {}, g = info.ganada, racha = s['racha_' + info.juego] || 0;
   if (info.juego === 'dompe') {
-    stat((x) => { if (racha > (x.mejorRachaDompe || 0)) x.mejorRachaDompe = racha; });
+    stat((x) => {
+      if (racha > (x.mejorRachaDompe || 0)) x.mejorRachaDompe = racha;
+      // racha de ranking: solo suman las victorias con reglas estandar; perder la corta siempre
+      if (!g) x.rachaRankDompe = 0; else if (info.estandar) x.rachaRankDompe = (x.rachaRankDompe || 0) + 1;
+      if ((x.rachaRankDompe || 0) > (x.mejorRachaDompeRank || 0)) x.mejorRachaDompeRank = x.rachaRankDompe;
+    });
     if (!g) return;
     desbloquear('dompe_primera');
     const c = { tresPares: 'dompe_tres_pares', escalera: 'dompe_escalera', dosTercias: 'dompe_dos_tercias', cuartetoPar: 'dompe_cuarteto_par', escCol: 'dompe_escalera_color' }[m.combo]; if (c) desbloquear(c);
@@ -129,14 +136,14 @@ function nuevosJuegos(info, s) {
     if (m.campeon === info.yo) desbloquear('conq_campeon');
     if (racha >= 3) desbloquear('conq_racha_3');
     if (m.nJug >= 4) desbloquear('conq_cuatro_jugadores');
-    stat((x) => { if (m.turnosPropios > 0 && (!x.mejorConqTurnos || m.turnosPropios < x.mejorConqTurnos)) x.mejorConqTurnos = m.turnosPropios; x.victorias_conquian = (x.victorias_conquian || 0) + 1; if (x.victorias_conquian >= 10) desbloquear('conq_diez'); });
+    stat((x) => { if (m.turnosPropios > 0 && (!x.mejorConqTurnos || m.turnosPropios < x.mejorConqTurnos)) x.mejorConqTurnos = m.turnosPropios; if (info.estandar && m.turnosPropios > 0 && (!x.mejorConqTurnosRank || m.turnosPropios < x.mejorConqTurnosRank)) x.mejorConqTurnosRank = m.turnosPropios; x.victorias_conquian = (x.victorias_conquian || 0) + 1; if (x.victorias_conquian >= 10) desbloquear('conq_diez'); });
   } else {
     const mios = (m.libros || [])[info.yo] || 0;
     if (mios >= 1) desbloquear('pesc_libro');
     if (mios >= 5) desbloquear('pesc_5_libros');
     if (mios >= 8) desbloquear('pesc_8_libros');
     if ((m.suertes || [])[info.yo] > 0) desbloquear('pesc_suerte');
-    stat((x) => { if (mios > (x.mejorLibros || 0)) x.mejorLibros = mios; });
+    stat((x) => { if (mios > (x.mejorLibros || 0)) x.mejorLibros = mios; if (info.estandar && m.baraja === 'fr52' && mios > (x.mejorLibrosRank || 0)) x.mejorLibrosRank = mios; });
     if (!g) return;
     desbloquear('pesc_primera');
     if (m.familiar) desbloquear('pesc_familiar');
@@ -153,8 +160,8 @@ export function sesionTerminada(neto, torneoGanado) {
   if (torneoGanado) { desbloquear('poker_torneo'); Cta.xp(50); }
   Cta.programarPuntajes(puntajes);
 }
-export function revisarMonedero(saldo) {
-  stat((s) => { s.maxMonedero = Math.max(s.maxMonedero || 0, saldo); });
+export function revisarMonedero(saldo, valorRank) {
+  stat((s) => { s.maxMonedero = Math.max(s.maxMonedero || 0, saldo); if (valorRank > 0) s.maxMonederoRank = Math.max(s.maxMonederoRank || 0, valorRank); });
   if (saldo >= 10000) desbloquear('monedero_10k');
   Cta.programarPuntajes(puntajes);
 }
