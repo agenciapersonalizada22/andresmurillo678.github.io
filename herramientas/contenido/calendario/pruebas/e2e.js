@@ -4,8 +4,10 @@ const assert = require('node:assert/strict'); const fs = require('node:fs');
 const BASE = process.env.BASE || 'http://localhost:8123/herramientas/contenido/calendario/';
 const SHOTS = process.env.SHOTS || '/tmp';
 const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'POST, OPTIONS' };
+const entrarDemo = async (c, origen) => { const p = await c.newPage(); await p.goto(origen + '/juego/'); await p.evaluate(async () => { await Cuenta.iniciar(); if (!Cuenta.usuario) await Cuenta.registrar('probador', 'clave12345', { recordar: true }); }); await p.close(); };  // las herramientas exigen sesion: se registra una cuenta demo local antes
 (async () => {
   const br = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  const _nc = br.newContext.bind(br); br.newContext = async (o) => { const c = await _nc(o); await entrarDemo(c, new URL(BASE).origin); return c; };
   const ctx = await br.newContext({ viewport: { width: 1280, height: 850 }, acceptDownloads: true, permissions: ['notifications'] });
   const page = await ctx.newPage(); const errs = [];
   page.on('console', m => { if (m.type() === 'error') errs.push(m.text()); }); page.on('pageerror', e => errs.push(String(e)));
@@ -23,7 +25,7 @@ const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-headers
   await page.waitForSelector('.pub[data-id]'); assert.equal(await page.locator('.mes .pub').count(), 1);
   // plan 30 dias
   await page.click('#tabs [data-ir=plan]'); await page.fill('#pl-nicho', 'cocina saludable'); await page.click('#p-form button[type=submit]'); await page.waitForSelector('#pl-add'); await page.click('#pl-add');
-  await page.waitForSelector('.cab-cal'); await page.click('.seg [data-modo=lista]'); const filas = await page.locator('#v-calendario tbody tr').count(); assert.ok(filas >= 8, 'filas ' + filas);
+  await page.waitForSelector('.cab-cal'); await page.click('.seg [data-modo=lista]'); const filas = await page.locator('#v-calendario tbody tr').count(); assert.ok(filas >= 3 && (await page.evaluate(() => App.est.pubs.length)) >= 15, 'filas ' + filas);  // la lista solo muestra el mes en curso: con el plan a mitad de mes caben pocas filas
   // mes + dnd
   await page.click('.seg [data-modo=mes]'); await page.screenshot({ path: SHOTS + '/cal-mes.png' });
   await page.click('[data-nav="0"]');

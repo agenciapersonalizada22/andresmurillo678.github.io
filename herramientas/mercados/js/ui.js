@@ -37,7 +37,7 @@
     return p >= 0 ? 'hsl(145,' + (25 + 45 * k) + '%,' + (22 + 12 * k) + '%)' : 'hsl(2,' + (25 + 50 * k) + '%,' + (24 + 12 * k) + '%)';
   }
   function clasePct(p) { return p == null || !isFinite(p) ? '' : p > 0 ? 'sube' : p < 0 ? 'baja' : ''; }
-  function descargar(nombre, texto, tipo) { var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([texto], { type: tipo || 'application/json' })); a.download = nombre; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+  function descargar(nombre, texto, tipo) { if (window.Logros) Logros.dar('exportar'); var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([texto], { type: tipo || 'application/json' })); a.download = nombre; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
   function debounce(f, ms) { var t; return function () { var a = arguments, s = this; clearTimeout(t); t = setTimeout(function () { f.apply(s, a); }, ms); }; }
   /* control de seleccion tipo pestanas */
   function pestanas(items, activa, alCambiar, etiqueta) {

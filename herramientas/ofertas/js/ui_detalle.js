@@ -6,6 +6,7 @@
   function stat(l, v) { return '<div><div class="muted peq">' + l + '</div><b>' + v + '</b></div>'; }
 
   A.abrirDetalle = function (it) {
+    if (Of.logro) Of.logro('detalle_oferta');
     var enFeed = S.porId[it.id] === it, miembros = enFeed ? A.miembros(it) : [it], an = it._an, g = S.guardados[it.id] || {};
     var mon = it._mv, a = Of.moneda, cv = function (v, de) { return A.conv(v, de, mon); };
     var et = [];

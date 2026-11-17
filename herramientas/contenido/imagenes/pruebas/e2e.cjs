@@ -26,8 +26,10 @@ async function trazo(page, pts, o = {}) {
 }
 const capas = (page) => page.evaluate(() => IM.E.pagina().capas.length);
 
+const entrarDemo = async (c, origen) => { const p = await c.newPage(); await p.goto(origen + '/juego/'); await p.evaluate(async () => { await Cuenta.iniciar(); if (!Cuenta.usuario) await Cuenta.registrar('probador', 'clave12345', { recordar: true }); }); await p.close(); };  // las herramientas exigen sesion: se registra una cuenta demo local antes
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox', '--enable-unsafe-swiftshader'] });
+  const _nc = b.newContext.bind(b); b.newContext = async (o) => { const c = await _nc(o); await entrarDemo(c, URL.replace(/^(https?:\/\/[^/]+).*$/, "$1")); return c; };
   const ctx = await b.newContext({ viewport: { width: 1440, height: 860 }, acceptDownloads: true });
   const page = await ctx.newPage(); page.on('console', (m) => { if (m.type() === 'error') errores.push(m.text()); }); page.on('pageerror', (e) => errores.push('PAGEERR ' + e.message));
   await page.goto(URL); await page.waitForFunction('window.IM && window.IM.listo', null, { timeout: 15000 });

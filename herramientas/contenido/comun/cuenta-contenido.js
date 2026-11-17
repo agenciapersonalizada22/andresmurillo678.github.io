@@ -100,6 +100,7 @@
       } else E.pendiente = 0;
       E.fase = E.pendiente ? 'pendiente' : 'ok'; E.ultima = Date.now();
       escribir(cfg.id + '_nube_ultima_' + usuario().uid, String(E.ultima));
+      if (E.fase === 'ok') CC.logro('en_la_nube');
       if (cambios && cfg.alAplicar) { try { cfg.alAplicar(cambios); } catch (e) { console.warn(e); } }
     } catch (e) {
       E.fase = 'error'; E.error = (g.Cuenta && g.Cuenta.mensajeError ? g.Cuenta.mensajeError(e) : e.message) || 'No se pudo sincronizar.';
@@ -123,6 +124,21 @@
     var u = usuario(); if (u) E.ultima = +leer(cfg.id + '_nube_ultima_' + u.uid) || 0;
     CC.sincronizar();
   }
+
+  /* ---------- logros (una sola vez; sin sesion no hace nada; nunca bloquea ni lanza) ---------- */
+  var enVuelo = {};
+  CC.logro = function (id) {
+    try {
+      var u = usuario(); if (!cfg || !u || !g.Cuenta.logro) return;
+      if (g.Cuenta.logros(cfg.id).indexOf(id) >= 0) return;
+      var k = cfg.id + '_logros_dados_' + u.uid, dados = json(k, []);
+      if (dados.indexOf(id) >= 0 || enVuelo[id]) return;
+      enVuelo[id] = 1;
+      var fin = function (ok) { delete enVuelo[id]; if (ok) { dados.push(id); escribir(k, JSON.stringify(dados)); } };
+      var p = g.Cuenta.logro(cfg.id, id);
+      if (p && p.then) p.then(function () { fin(true); }, function () { fin(false); }); else fin(true);
+    } catch (e) {}
+  };
 
   /* ---------- XP moderada (tope diario, nunca por tiempo de uso) ---------- */
   CC.xp = function (n) {

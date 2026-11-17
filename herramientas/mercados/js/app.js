@@ -55,7 +55,7 @@ window.App = (function () {
     var chip = document.getElementById('chip-datos'); if (!Mercado.ultimaCarga) return;
     var demo = Mercado.hayDemo(), viejos = Object.keys(Mercado.sec).filter(Mercado.obsoleto);
     var cl = 'chip' + (demo.length ? ' demo' : viejos.length ? ' viejo' : ' ok');
-    chip.className = cl; var e = Mercado.edad('cripto');
+    chip.className = cl; var e = Mercado.edad('cripto'); if (window.Logros && !demo.length && !viejos.length && Object.keys(Mercado.sec).some(function (k) { return Mercado.sec[k].origen === 'vivo'; })) Logros.dar('datos_en_vivo');
     chip.textContent = demo.length === 5 ? 'DEMO' : (viejos.length ? 'Obsoletos' : 'En vivo') + ' · ' + window.Fmt.edad(Math.max.apply(null, Object.keys(Mercado.sec).filter(function (k) { return Mercado.sec[k].origen !== 'demo'; }).map(Mercado.edad).concat([0])));
     var b = bannersEl; UI.vaciar(b);
     if (demo.length) b.appendChild(h('div.banner', h('b', 'Modo demo: '), 'se muestran datos de ejemplo inventados para: ' + demo.join(', ') + '. No son precios reales. ', h('a', { href: '#', onclick: function (e) { e.preventDefault(); A.detalleDatos(); } }, 'Ver estado de los datos')));
@@ -124,7 +124,7 @@ window.App = (function () {
     document.querySelectorAll('#nav a').forEach(function (a) { if (a.dataset.id === r.seccion) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     UI.vaciar(vistaEl);
     if (!Mercado.ultimaCarga) { vistaEl.appendChild(h('div.cargando', h('span.gira'), 'Cargando mercados…')); return; }
-    try { actual = vistas[r.seccion](vistaEl, r) || {}; actual.seccion = r.seccion; }
+    try { actual = vistas[r.seccion](vistaEl, r) || {}; actual.seccion = r.seccion; if (window.Logros) Logros.ruta(r); }
     catch (e) { console.error(e); actual = null; vistaEl.appendChild(h('div.banner.rojo', 'Error al mostrar la seccion: ' + e.message)); }
     if (!recarga) document.getElementById('main').scrollTop = 0;
   }

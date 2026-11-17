@@ -120,7 +120,7 @@
       }
       pintar(); App.dialogo('Indicadores', cuerpo, [{ t: 'Listo', pri: true }]);
     }
-    function guardarSpecs() { App.setAjuste('indicadores', specs); calcular(false); }
+    function guardarSpecs() { if (window.Logros && specs.length > 1) Logros.dar('primer_indicador'); App.setAjuste('indicadores', specs); calcular(false); }
 
     function niveles() {
       if (!G || !resumen) return; var lv = [];

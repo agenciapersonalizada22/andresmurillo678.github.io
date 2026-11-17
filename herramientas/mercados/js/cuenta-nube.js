@@ -89,6 +89,7 @@
         pend = !!(r && r.pendiente);
       }
       est.ultima = Date.now(); est.pendiente = pend;
+      if (!pend) P.logro('en_la_nube');
       poner(pend ? 'pendiente' : 'ok', pend ? 'Pendiente de enviar (sin conexión).' : '');
       if (n && prov.alAplicar) { try { prov.alAplicar(n, primera); } catch (e) { console.error(e); } }
       primera = false;
@@ -102,6 +103,19 @@
   }
   function sucio() { if (!prov || !sesion()) return; clearTimeout(temporizador); temporizador = setTimeout(sincronizar, 4000); }
 
+  /* Logros de la herramienta (una vez por logro; sin sesion no hace nada; nunca bloquea ni lanza). */
+  var enVuelo = {};
+  P.logro = function (id) {
+    try {
+      var c = g.Cuenta, u = c && c.usuario, pid = (prov && prov.id) || (P.proveedor && P.proveedor.id);
+      if (!u || !c.logro || !pid || c.logros(pid).indexOf(id) >= 0) return;
+      var k = pid + '_logros_dados_' + u.uid, dados = []; try { dados = JSON.parse(localStorage.getItem(k) || '[]'); } catch (e) {}
+      if (dados.indexOf(id) >= 0 || enVuelo[id]) return;
+      enVuelo[id] = 1;
+      var fin = function (ok) { delete enVuelo[id]; if (ok) { dados.push(id); try { localStorage.setItem(k, JSON.stringify(dados)); } catch (e) {} } };
+      var p = c.logro(pid, id); if (p && p.then) p.then(function () { fin(true); }, function () { fin(false); }); else fin(true);
+    } catch (e) {}
+  };
   P.estado = est;
   P.alCambiar = function (f) { escuchas.push(f); try { f(est); } catch (e) {} return function () { escuchas = escuchas.filter(function (x) { return x !== f; }); }; };
   P.ahora = sincronizar;

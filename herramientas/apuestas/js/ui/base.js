@@ -157,6 +157,7 @@
     });
   };
   U.descargar = function (nombre, texto, tipo) {
+    if (g.Apuestas && g.Apuestas.logro) g.Apuestas.logro('exportar');
     var url = URL.createObjectURL(new Blob([texto], { type: tipo || 'text/csv;charset=utf-8' }));
     var a = h('a', { href: url, download: nombre }); document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
