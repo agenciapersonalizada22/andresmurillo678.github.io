@@ -202,3 +202,6 @@ textarea.txt { width: 100%; min-height: 96px; border-radius: 12px; border: 1px s
 .c.celebra { animation: celebra .5s ease both; animation-delay: calc(var(--k, 0) * 14ms); }
 @keyframes celebra { 50% { transform: scale(1.12); } }
 .pasos { display: flex; gap: 6px; flex-wrap: wrap; }
+/* telefonos estrechos (360 px): que los botones de la barra no se salgan de la pantalla */
+#barra .titulo { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } #barra .acciones { flex: none; }
+@media (max-width: 400px) { #barra { gap: 6px; padding-left: 8px; padding-right: 8px; } #barra .titulo { font-size: 1rem; letter-spacing: .06em; } #barra .icono { width: 36px; height: 36px; } }

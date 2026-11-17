@@ -127,6 +127,8 @@ body.es-tactil #hudInfo div { min-width: 54px; padding: 3px 6px; }
 .cu-chip { display: inline-flex; align-items: center; gap: 8px; max-width: 42vw; min-height: 44px; padding: 4px 10px 4px 6px; border-radius: 22px; border: 1px solid var(--borde); background: rgba(12, 9, 34, .7); font-size: .78em; }
 .cu-chip:hover, .cu-chip:focus-visible, .cu-chip.nav-foco { border-color: var(--cian); outline: 2px solid var(--cian); outline-offset: 1px; }
 .cu-chip .cu-nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.m-cab .cu-chip { min-width: 0; flex-shrink: 1; }
+@media (max-width: 400px) { .m-titulo { font-size: 1.25rem; letter-spacing: .08em; } }
 .cu-chip .cu-avatar { flex: none; display: inline-flex; }
 .cu-bloque { margin-top: 16px; padding: 12px; border: 1px solid var(--borde); border-radius: 14px; background: rgba(0, 0, 0, .22); }
 .cu-bloque h3 { margin: 0 0 8px; font-size: .85em; letter-spacing: .12em; color: var(--suave); font-weight: 500; }

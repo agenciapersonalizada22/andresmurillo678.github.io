@@ -7,6 +7,9 @@ body.texto-grande{--fs:19px}
 .volver{color:var(--ac);text-decoration:none;font-size:.9rem;white-space:nowrap}
 .titulo{font:800 .95rem Orbitron,system-ui,sans-serif;letter-spacing:.12em;margin:0 auto 0 4px;color:var(--tx)}
 .acciones{display:flex;gap:4px}
+/* telefonos estrechos: el titulo cede espacio para que los botones de la barra no se salgan */
+#barra .titulo{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#barra .acciones{flex:none}
+@media (max-width:400px){#barra{gap:6px;padding:0 8px}#barra .titulo{letter-spacing:.04em}}
 .icono{background:#12204a;border:1px solid var(--lin);color:var(--tx);width:36px;height:34px;border-radius:9px;font-size:1rem;cursor:pointer}
 .icono[hidden]{display:none}
 [data-f]:focus-visible,[data-f]:focus{outline:3px solid var(--ac);outline-offset:2px}

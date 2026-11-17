@@ -21,6 +21,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .pantalla[hidden] { display: none; }
 .menu-cab { width: 100%; max-width: 760px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .menu-der { display: flex; align-items: center; gap: 10px; }
+.menu-der { min-width: 0; } .menu-der > * { min-width: 0; } .menu-der .cuenta-chip { max-width: 100%; }
+@media (max-width: 420px) { .cuenta-chip .cc-v { display: none; } .menu-der { gap: 6px; } }
 .volver { color: var(--suave); text-decoration: none; padding: 10px 6px; }
 .saldo { color: #ffd23d; font-size: .95rem; white-space: nowrap; }
 .gran { font-family: Orbitron, system-ui, sans-serif; font-size: clamp(1.6rem, 6vw, 2.8rem); margin: 6px 0 0; letter-spacing: .08em; text-align: center; background: linear-gradient(90deg, var(--acc), var(--acc2)); -webkit-background-clip: text; background-clip: text; color: transparent; }

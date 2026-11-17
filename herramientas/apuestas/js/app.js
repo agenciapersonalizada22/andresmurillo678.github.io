@@ -43,7 +43,7 @@
         h('label', { class: 'check' }, c1, ' Soy mayor de edad según la ley de mi jurisdicción (18+ o la edad mínima que corresponda).'),
         h('label', { class: 'check' }, c2, ' Sé que apostar puede estar restringido donde vivo y soy responsable de cumplir la ley.'),
         U.campo('Jurisdicción', pais)),
-        pie: [h('a', { class: 'btn', href: '../../' }, 'Salir'), entrar] });
+        pie: [h('a', { class: 'btn', href: '../' }, 'Salir'), entrar] });
     });
   }
 

@@ -381,7 +381,7 @@
     if (Cu.errorInicio) {
       vista('acceso'); errorAcceso(Cu.mensajeError(Cu.errorInicio) + ' (' + (Cu.errorInicio.message || '') + ')'); $('btnAcceso').disabled = true; return;
     }
-    Cu.on('sesion', function (u) { if (u) { yaPanel = false; entrarPanel(); } else { mejores = {}; yaPanel = false; vista('acceso'); ponerModoAcceso('entrar'); setTimeout(function () { $('inUsuario').focus({ preventScroll: true }); }, 50); } });
+    Cu.on('sesion', function (u) { if (u) { yaPanel = false; entrarPanel(); } else { mejores = {}; yaPanel = false; $('inAmigo').value = ''; ayuda('ayAmigo', '', ''); vista('acceso'); ponerModoAcceso('entrar'); setTimeout(function () { $('inUsuario').focus({ preventScroll: true }); }, 50); } });
     Cu.on('perfil', function () { pintarCabecera(); if (tab === 'logros') pintarLogros(); });
     Cu.on('amigos', function () { if (Cu.usuario) { pintarAmigos(); if (tab === 'amigos') pintarInvitaciones(); } });
     Cu.on('invitaciones', function () { if (Cu.usuario) pintarInvitaciones(); });

@@ -68,6 +68,8 @@ const Entrada = (() => {
     const tocarPantalla = () => { mandoDejaDeUsarse(); mostrarTactil(); };
     window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') tocarPantalla(); }, true);
     window.addEventListener('touchstart', tocarPantalla, { capture: true, passive: true });
+    // Telefono o tableta sin raton (no una laptop tactil): la portada ya muestra la ayuda tactil desde el inicio
+    try { if (window.matchMedia && matchMedia('(hover: none) and (pointer: coarse)').matches) mostrarTactil(); } catch (e) { /* nada */ }
     document.addEventListener('visibilitychange', () => { if (document.hidden) soltarTodo(); });
     toastEl = document.createElement('div');
     toastEl.id = 'avisoMando';
