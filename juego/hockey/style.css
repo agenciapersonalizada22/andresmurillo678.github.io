@@ -82,3 +82,4 @@ body.texto-grande{--fs:19px}
 body.reducir *{animation:none!important;transition:none!important}
 @media (min-width:700px){.lista-menu{max-width:460px}.gran{font-size:2rem}}
 @media (max-height:520px) and (orientation:landscape){.logo{display:none}}
+@media (max-width:340px){#barra{gap:4px;padding:0 6px}#barra .acciones{gap:2px}.icono{width:30px}#barra .volver{padding:0 6px}}

@@ -135,3 +135,4 @@ body.esperando #app, body.esperando #inicio { visibility: hidden; }
 .rank-tipos { margin-bottom: 8px; }
 .tabla tr.yo td { color: var(--acento); font-weight: 700; }
 .pos-mundial { text-align: center; color: var(--acento); }
+@media (max-width: 360px) { .titulo { font-size: 13px; letter-spacing: .04em; } .btn.icono { width: 32px; height: 32px; font-size: 16px; } #barra { gap: 4px; padding: 6px 6px; } .acciones { gap: 3px; } }
