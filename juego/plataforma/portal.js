@@ -417,7 +417,7 @@
   UI.mando.empujar({
     enfocables: enfocables,
     atras: function () { if (Cu.usuario && tab !== 'juegos') irTab('juegos'); else if (!Cu.usuario && modoAcceso === 'crear') ponerModoAcceso('entrar'); else location.href = '../'; },
-    boton: function (n) { if (!Cu.usuario) return; var i = TABS.indexOf(tab); if (n === 'LB') irTab(TABS[(i + 4) % 5]); if (n === 'RB') irTab(TABS[(i + 1) % 5]); }
+    boton: function (n) { if (!Cu.usuario) return; var i = TABS.indexOf(tab); if (n !== 'LB' && n !== 'RB') return; irTab(TABS[(i + (n === 'LB' ? 4 : 1)) % 5]); var t = document.querySelector('#navPanel button[data-tab="' + tab + '"]'); if (t) t.focus({ preventScroll: true }); }
   });
   Cu.iniciar().then(arrancar);
 })();
