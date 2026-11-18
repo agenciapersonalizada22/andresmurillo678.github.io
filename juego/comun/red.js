@@ -45,10 +45,10 @@
     urlBase: null, maxBufFiable: 262144, maxBufRapido: 32768, maxCola: 2000, timeoutInvitacion: 300000, timeoutConexion: 30000, timeoutUnirse: 120000
   };
   Red.consejos = [
-    'Funciona sin servidor: la conexion es directa entre los dispositivos (WebRTC).',
-    'Sin servidor TURN, algunas redes (datos moviles con CGNAT, NAT estricto, redes de oficina/colegio, VPN) pueden impedir la conexion.',
-    'Prueba: que ambos esten en la misma Wi-Fi, o que uno cambie de Wi-Fi a datos moviles; desactiva VPN y bloqueadores.',
-    'Si falla, genera un enlace nuevo y reintenta; el anfitrion con mejor conexion (cable/Wi-Fi 5 GHz) da mas estabilidad.'
+    'Funciona sin servidor: la conexión es directa entre los dispositivos (WebRTC).',
+    'Sin servidor TURN, algunas redes (datos móviles con CGNAT, NAT estricto, redes de oficina/colegio, VPN) pueden impedir la conexión.',
+    'Prueba: que ambos estén en la misma Wi-Fi, o que uno cambie de Wi-Fi a datos móviles; desactiva VPN y bloqueadores.',
+    'Si falla, genera un enlace nuevo y reintenta; el anfitrión con mejor conexión (cable/Wi-Fi 5 GHz) da más estabilidad.'
   ];
 
   /* ---------- perfil ---------- */
@@ -97,7 +97,7 @@
     return new Response(cs.readable).arrayBuffer().then(function (ab) { return new Uint8Array(ab); });
   }
   function comprimir(bytes) { return typeof CompressionStream === 'undefined' ? Promise.resolve(null) : transformar(bytes, 'CompressionStream').catch(function () { return null; }); }
-  function descomprimir(bytes) { return typeof DecompressionStream === 'undefined' ? Promise.reject(new Error('Este navegador no puede leer codigos comprimidos')) : transformar(bytes, 'DecompressionStream'); }
+  function descomprimir(bytes) { return typeof DecompressionStream === 'undefined' ? Promise.reject(new Error('Este navegador no puede leer códigos comprimidos')) : transformar(bytes, 'DecompressionStream'); }
 
   function ipv4Bytes(ip) { var p = ip.split('.'); return p.length === 4 ? p.map(Number) : null; }
   function ipv6Bytes(ip) {
@@ -189,7 +189,7 @@
       else { var a = Array.prototype.slice.call(b, i, i + 16); i += 16; if (f === 1) ip = ipv6Texto(a); else { var h = hex(a); ip = h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20) + '.local'; } }
       info.cands.push({ tipo: TIPOS[k], ip: ip, puerto: (b[i] << 8) | b[i + 1] }); i += 2;
     }
-    if (i > b.length) throw new Error('codigo truncado');
+    if (i > b.length) throw new Error('código truncado');
     return info;
   }
   // codigo = base64url( [flags: bit0 deflate, bit1 respuesta] + cuerpo(+deflate) + checksum(2) )
@@ -209,7 +209,7 @@
   }
   function leerCodigo(txt) {
     var b;
-    try { b = b64uDec(extraerCodigo(txt)); } catch (e) { return Promise.reject(new Error('Codigo no valido (caracteres extranos)')); }
+    try { b = b64uDec(extraerCodigo(txt)); } catch (e) { return Promise.reject(new Error('Código no válido (caracteres extraños)')); }
     if (b.length < 40) return Promise.reject(new Error('Codigo demasiado corto o incompleto'));
     var ck = checksum(b, 0, b.length - 2);
     if (ck[0] !== b[b.length - 2] || ck[1] !== b[b.length - 1]) return Promise.reject(new Error('Codigo incompleto o con errores: copialo de nuevo entero'));
@@ -324,8 +324,8 @@
     c.f.onmessage = c.r.onmessage = function (e) { p.ultimoRx = performance.now(); Red.stats.recibidos++; Red.stats.bytesRx += e.data.length || 0; recibir(p, Red.desempaquetar(e.data)); };
     c.pc.onconnectionstatechange = function () {
       var s = c.pc.connectionState; clearTimeout(p.tDesc);
-      if (s === 'failed' || s === 'closed') soltar(p, s === 'failed' ? 'conexion fallida' : 'cerrado');
-      else if (s === 'disconnected') p.tDesc = setTimeout(function () { soltar(p, 'conexion perdida'); }, 4000);
+      if (s === 'failed' || s === 'closed') soltar(p, s === 'failed' ? 'conexión fallida' : 'cerrado');
+      else if (s === 'disconnected') p.tDesc = setTimeout(function () { soltar(p, 'conexión perdida'); }, 4000);
     };
     return p;
   }
@@ -402,10 +402,10 @@
   function idLibre() { for (var i = 1; i < Red.max; i++) if (!peers[i]) return i; return -1; }
   function urlBase() { return Red.config.urlBase || (G.location.origin + G.location.pathname); }
   Red.invitar = function () {
-    if (!Red.esAnfitrion) return Promise.reject(new Error('Solo el anfitrion invita'));
+    if (!Red.esAnfitrion) return Promise.reject(new Error('Solo el anfitrión invita'));
     var id = idLibre(); if (id < 0) return Promise.reject(new Error('La sala esta llena'));
     var p = crearPeer(id); p.pendiente = true;
-    p.expira = setTimeout(function () { if (!p.unido) soltar(p, 'invitacion caducada'); }, Red.config.timeoutInvitacion);
+    p.expira = setTimeout(function () { if (!p.unido) soltar(p, 'invitación caducada'); }, Red.config.timeoutInvitacion);
     return p.pc.createOffer().then(function (o) { return p.pc.setLocalDescription(o); }).then(function () { return esperarICE(p.pc); }).then(function () {
       var info = infoDesdeSDP(p.pc.localDescription.sdp); info.id = id;
       return generarCodigo(info, false);
@@ -416,9 +416,9 @@
   };
   Red.aceptarRespuesta = function (codigo) {
     return leerCodigo(codigo).then(function (info) {
-      if (!info.respuesta) throw new Error('Ese es un codigo de invitacion, pega el codigo de RESPUESTA del amigo');
+      if (!info.respuesta) throw new Error('Ese es un código de invitación, pega el código de RESPUESTA del amigo');
       var p = peers[info.id];
-      if (!p || !p.pendiente || p.respondida) throw new Error('No hay invitacion pendiente para ese codigo (puede haber caducado o ya usarse)');
+      if (!p || !p.pendiente || p.respondida) throw new Error('No hay invitación pendiente para ese código (puede haber caducado o ya usarse)');
       p.respondida = true;
       return p.pc.setRemoteDescription({ type: 'answer', sdp: sdpDesdeInfo(info) }).then(function () {
         return new Promise(function (ok, mal) {
@@ -434,17 +434,17 @@
     if (Red.estado !== 'inactivo') Red.salir();
     var p, info;
     return leerCodigo(txt).then(function (i) {
-      info = i; if (info.respuesta) throw new Error('Ese es un codigo de respuesta; necesitas el ENLACE de invitacion del anfitrion');
+      info = i; if (info.respuesta) throw new Error('Ese es un código de respuesta; necesitas el ENLACE de invitación del anfitrión');
       Red.esAnfitrion = false; Red.miId = info.id; tabla = {}; var pf = Red.perfil.obtener(); tabla.yo = { id: info.id, nombre: pf.nombre, color: pf.color, ping: 0, listo: false };
       muestras = []; offset = 0; Red.rtt = 0; Red.sala = {}; Red.jugadores = {};
       ponerEstado('uniendo'); p = crearPeer(0); p.respondida = true;
       return p.pc.setRemoteDescription({ type: 'offer', sdp: sdpDesdeInfo(info) });
     }).then(function () { return p.pc.createAnswer(); }).then(function (a) { return p.pc.setLocalDescription(a); }).then(function () { return esperarICE(p.pc); }).then(function () {
       var r = infoDesdeSDP(p.pc.localDescription.sdp); r.id = info.id;
-      if (!r.cands.length) throw new Error('No se obtuvo ninguna direccion de red. ' + Red.consejos[2]);
+      if (!r.cands.length) throw new Error('No se obtuvo ninguna dirección de red. ' + Red.consejos[2]);
       return generarCodigo(r, true);
     }).then(function (codigo) {
-      p.tCon = setTimeout(function () { if (!p.unido) { soltar(p, 'el anfitrion no respondio a tiempo'); } }, Red.config.timeoutUnirse);
+      p.tCon = setTimeout(function () { if (!p.unido) { soltar(p, 'el anfitrión no respondió a tiempo'); } }, Red.config.timeoutUnirse);
       iniciarHeartbeat(); return codigo;
     }).catch(function (e) { if (p) destruirPeer(p); reiniciar(); ponerEstado('inactivo'); throw e; });
   };
@@ -545,7 +545,7 @@
   }
   Red.salir = function () {
     if (Red.estado === 'inactivo') return;
-    if (Red.esAnfitrion) Object.keys(peers).forEach(function (k) { if (peers[k].unido) enviarCrudo(peers[k], Red.empaquetar('_cierre', { motivo: 'El anfitrion cerro la sala' }), true); });
+    if (Red.esAnfitrion) Object.keys(peers).forEach(function (k) { if (peers[k].unido) enviarCrudo(peers[k], Red.empaquetar('_cierre', { motivo: 'El anfitrión cerró la sala' }), true); });
     else if (peers[0] && peers[0].unido) enviarCrudo(peers[0], Red.empaquetar('_salir'), true);
     var cola = Object.keys(peers).map(function (k) { return peers[k]; });
     // deja un instante para que el mensaje de salida salga antes de cerrar
