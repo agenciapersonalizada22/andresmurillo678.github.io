@@ -1,0 +1,1 @@
+Rama generada automaticamente por el proceso programado de datos (scripts/datos). No edites a mano: se reemplaza en cada ejecucion.
